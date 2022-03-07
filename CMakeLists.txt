@@ -1,33 +1,67 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(be2r_cmpc_unitree)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
-
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  unitree_legged_msgs
 )
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES be2r_cmpc_unitree
+ INCLUDE_DIRS
+ LIBRARIES ${PROJECT_NAME}
 #  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
 
+# вынести пути к исходникам отдельных частей mit контроллера в отдельные паременные и уже их кидать в include_directories. Для наглядности
+
 include_directories(
-  include
+  src/be2r_cmpc_unitree
+  src/mit
+  src/mit/lcm-types
+  src/mit/lcm-types/cpp
+  src/mit/fsm_states
+  src/mit/controllers
+  src/mit/controllers/convexMPC
+  src/mit/common
+  src/mit/common/FootstepPlanner
+  src/mit/common/include
+  src/mit/common/include/Controllers
+  src/mit/common/include/ControlParameters
+  src/mit/common/include/Dynamics
+  src/mit/common/include/Math
+  src/mit/common/include/SimUtilities
+  src/mit/common/include/SparseCMPC
+  # src/mit/common/include/Utilities
+  src/mit/robot/include
+  src/third_party
+  src/third_party/ParamHandler
+  src/third_party/qpOASES/include
   ${catkin_INCLUDE_DIRS}
+  ${CMAKE_BINARY_DIR}
 )
 
-add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree.cpp)
-target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES})
+set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
+-Wextra -Wcast-align -Wdisabled-optimization -Wformat=2 \
+-Winit-self -Woverloaded-virtual \
+-Wsign-promo")
 
-add_executable(be2r_unitree_ctrl src/be2r_cmpc_unitree_node.cpp)
+set(CMAKE_C_FLAGS "-O3  -ggdb  -march=native -std=gnu99 -I.")
 
-add_dependencies(be2r_unitree_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(be2r_unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib)
+
+add_subdirectory(src/third_party)
+add_subdirectory(src/mit)
+
+#основная либа ноды
+add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
+target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} mit_ctrl_lib)
+
+#бинарник ноды
+add_executable(unitree_ctrl src/be2r_cmpc_unitree_node.cpp)
+
+#зависимости ноды
+add_dependencies(unitree_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+#линкуем либы к бинарнику
+target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib)
