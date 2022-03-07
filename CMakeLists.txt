@@ -4,6 +4,7 @@ project(be2r_cmpc_unitree)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   unitree_legged_msgs
+  geometry_msgs
 )
 
 catkin_package(

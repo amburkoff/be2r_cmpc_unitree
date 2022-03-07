@@ -95,16 +95,11 @@ void Body_Manager::init()
 
 void Body_Manager::run()
 {
-  // ROS_INFO("Run");
-  // cout << "[Body Manager] Run start" << endl;
-
   // Run the state estimator step
   _stateEstimator->run();
 
   // Update the data from the robot
   setupStep();
-
-  // cout << "[Body Manager] Setup step done" << endl;
 
   static int count_ini(0);
   ++count_ini;
@@ -125,32 +120,8 @@ void Body_Manager::run()
   {
     _legController->setEnabled(true);
 
-    // // Run Control
-    // _robot_ctrl->runController();
-
-    // if (!is_stand)
-    if (0)
-    {
-      Mat3<float> kpMat;
-      Mat3<float> kdMat;
-      // Update the jpos feedback gains
-
-      kpMat << 5, 0, 0, 0, 5, 0, 0, 0, 5;
-      kdMat << 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1;
-
-      for (int leg = 0; leg < 4; leg++)
-      {
-        _legController->commands[leg].kpJoint = kpMat;
-        _legController->commands[leg].kdJoint = kdMat;
-      }
-    }
-    else
-    {
-      // Run Control
-      _robot_ctrl->runController();
-
-      // cout << "[Body Manager] CTRL loop done" << endl;
-    }
+    // Run Control
+    _robot_ctrl->runController();
   }
 
   // Sets the leg controller commands for the robot appropriate commands
@@ -166,8 +137,7 @@ void Body_Manager::run()
   {
     ROS_INFO_STREAM_ONCE("Locomotion " << count_ini);
 
-    controlParameters.control_mode = 3;
-    // controlParameters.control_mode = 4;
+    controlParameters.control_mode = FSM;
   }
 }
 
@@ -228,6 +198,7 @@ void Body_Manager::initializeStateEstimator()
 void Body_Manager::_initSubscribers()
 {
   _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
 }
 
 void Body_Manager::_initPublishers()
@@ -269,6 +240,14 @@ void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
   vectorNavData.quat[1] = msg.imu.quaternion[2]; //x
   vectorNavData.quat[2] = msg.imu.quaternion[3]; //y
   vectorNavData.quat[3] = msg.imu.quaternion[0]; //z
+}
+
+void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
+{
+  driverCommand.leftStickAnalog[1] = msg.linear.x;
+  driverCommand.leftStickAnalog[0] = -msg.linear.y;
+
+  driverCommand.rightStickAnalog[0] = -msg.angular.z;
 }
 
 /*!

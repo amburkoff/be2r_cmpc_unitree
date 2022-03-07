@@ -7,6 +7,7 @@
 #include <ros/ros.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
+#include <geometry_msgs/Twist.h>
 
 //MIT
 #include "Controllers/StateEstimatorContainer.h"
@@ -28,6 +29,8 @@
 #include "Controllers/PositionVelocityEstimator.h"
 
 #define MAIN_LOOP_RATE 500
+
+#define FSM 4
 
 const float max_torque[3] = {17.f, 17.f, 26.f};        // TODO CHECK WITH BEN
 const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
@@ -60,7 +63,10 @@ private:
 
   ros::Publisher _pub_low_cmd;
   ros::Subscriber _sub_low_state;
+  ros::Subscriber _sub_cmd_vel;
+
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
+  void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
 
   Quadruped<float> _quadruped;

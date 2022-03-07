@@ -30,45 +30,10 @@ void DesiredStateCommand<T>::convertToStateCommands()
 
   //T height_cmd(0.3);
 
-  // THIS SHOULD be DISABLE Soon
-  if (parameters->use_rc)
-  {
-    if (rcCommand->mode == RC_mode::QP_STAND)
-    {                       // Stand
-      joystickLeft[0] = 0.; // Y
-      joystickLeft[1] = 0.;
-      joystickRight[0] = rcCommand->rpy_des[2]; // Yaw
-      //height_cmd = rcCommand->height_variation;
-    }
-    else if (rcCommand->mode == RC_mode::LOCOMOTION ||
-             rcCommand->mode == RC_mode::VISION)
-    {                                             // Walking
-      joystickLeft[0] = rcCommand->v_des[1];      // Y
-      joystickLeft[1] = rcCommand->v_des[0];      // X
-      joystickRight[0] = rcCommand->omega_des[2]; // Yaw
-      joystickRight[1] = rcCommand->omega_des[1]; // Pitch
-      //height_cmd = rcCommand->height_variation;
-    }
-    else if (rcCommand->mode == RC_mode::TWO_LEG_STANCE)
-    { // Two Contact Stand
-      //joystickLeft[0] = rcCommand->p_des[1]; // Y
-      joystickLeft[1] = rcCommand->p_des[0];    // X
-      joystickRight[0] = rcCommand->rpy_des[2]; // Yaw
-      joystickRight[1] = rcCommand->rpy_des[1]; // Pitch
-      joystickLeft[0] = rcCommand->rpy_des[0];  // Roll
-    }
-    else
-    {
-      joystickLeft.setZero();
-      joystickRight.setZero();
-    }
-  }
-  else
-  { // No Remote Controller
-    joystickLeft = gamepadCommand->leftStickAnalog;
-    joystickRight = gamepadCommand->rightStickAnalog;
-    trigger_pressed = gamepadCommand->a;
-  }
+  joystickLeft = gamepadCommand->leftStickAnalog;
+  joystickRight = gamepadCommand->rightStickAnalog;
+  trigger_pressed = gamepadCommand->a;
+
   // Warning!!!!
   // Recommend not to use stateDes
   // We are going to remove it soon
