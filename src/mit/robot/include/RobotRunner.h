@@ -15,7 +15,7 @@
 #include "Controllers/LegController.h"
 #include "Controllers/StateEstimatorContainer.h"
 #include "Dynamics/Quadruped.h"
-#include "JPosInitializer.h"
+// #include "JPosInitializer.h"
 #include "SimUtilities/IMUTypes.h"
 #include "rt/rt_rc_interface.h"
 
@@ -50,8 +50,6 @@ public:
   CheaterState<double>* cheaterState;
   SpiData* spiData;
   SpiCommand* spiCommand;
-  TiBoardCommand* tiBoardCommand;
-  TiBoardData* tiBoardData;
   RobotControlParameters* controlParameters;
   VisualizationData* visualizationData;
   CheetahVisualization* cheetahMainVisualization;
@@ -64,7 +62,6 @@ private:
   void setupStep();
   void finalizeStep();
 
-  JPosInitializer<float>* _jpos_initializer;
   Quadruped<float> _quadruped;
   LegController<float>* _legController = nullptr;
   StateEstimate<float> _stateEstimate;
@@ -72,10 +69,10 @@ private:
   bool _cheaterModeEnabled = false;
   DesiredStateCommand<float>* _desiredStateCommand;
   rc_control_settings rc_control;
-  lcm::LCM _lcm;
-  leg_control_command_lcmt leg_control_command_lcm;
-  state_estimator_lcmt state_estimator_lcm;
-  leg_control_data_lcmt leg_control_data_lcm;
+  // lcm::LCM _lcm;
+  // leg_control_command_lcmt leg_control_command_lcm;
+  // state_estimator_lcmt state_estimator_lcm;
+  // leg_control_data_lcmt leg_control_data_lcm;
   // Contact Estimator to calculate estimated forces and contacts
 
   FloatingBaseModel<float> _model;

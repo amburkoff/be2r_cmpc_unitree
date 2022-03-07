@@ -49,7 +49,8 @@ set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
 
 set(CMAKE_C_FLAGS "-O3  -ggdb  -march=native -std=gnu99 -I.")
 
-
+SET (THIS_COM "${PROJECT_SOURCE_DIR}/" )
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/Configuration.h)
 
 add_subdirectory(src/third_party)
 add_subdirectory(src/mit)
