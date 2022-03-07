@@ -108,14 +108,6 @@ void Body_Manager::run()
   {
     _legController->setEnabled(false);
   }
-  else if (20 < count_ini && count_ini < 30)
-  {
-    _legController->setEnabled(false);
-  }
-  else if (40 < count_ini && count_ini < 50)
-  {
-    _legController->setEnabled(false);
-  }
   else
   {
     _legController->setEnabled(true);
@@ -127,13 +119,13 @@ void Body_Manager::run()
   // Sets the leg controller commands for the robot appropriate commands
   finalizeStep();
 
-  if (count_ini > 100 && count_ini < 2000)
+  if (count_ini > 100 && count_ini < 1500)
   {
     ROS_INFO_STREAM_ONCE("Stand up " << count_ini);
 
     controlParameters.control_mode = 1;
   }
-  else if (count_ini > 2000)
+  else if (count_ini > 1500)
   {
     ROS_INFO_STREAM_ONCE("Locomotion " << count_ini);
 
@@ -149,8 +141,6 @@ void Body_Manager::setupStep()
   _legController->zeroCommand();
   _legController->setEnabled(true);
   _legController->setMaxTorqueCheetah3(208.5);
-
-  // get_rc_control_settings(&rc_control);
 
   // todo safety checks, sanity checks, etc...
 }
