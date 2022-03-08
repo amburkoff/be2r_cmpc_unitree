@@ -19,8 +19,7 @@ catkin_package(
 include_directories(
   src/be2r_cmpc_unitree
   src/mit
-  src/mit/lcm-types
-  src/mit/lcm-types/cpp
+  src/lcm-types
   src/fsm
   src/fsm/fsm_states
   src/mit/controllers
