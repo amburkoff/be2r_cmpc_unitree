@@ -4,21 +4,23 @@
 #include <iostream>
 
 //ROS
+#include <geometry_msgs/Twist.h>
 #include <ros/ros.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
-#include <geometry_msgs/Twist.h>
 
 //MIT
+#include "Configuration.h"
+#include "ControlFSM.h"
 #include "Controllers/StateEstimatorContainer.h"
 #include "LegController.h"
 #include "MiniCheetah.h"
 #include "RobotParameters.h"
-#include "Configuration.h"
-#include "MIT_Controller.hpp"
 #include "spi_command_t.hpp"
 #include "spi_data_t.hpp"
 #include "spi_torque_t.hpp"
+// #include "Controllers/ContactEstimator.h"
+#include "Controllers/GaitScheduler.h"
 
 #include <ros/transport_hints.h>
 
@@ -39,7 +41,7 @@ const float disabled_torque[3] = {0.f, 0.f, 0.f};
 class Body_Manager
 {
 public:
-  Body_Manager(RobotController* robot_ctrl);
+  Body_Manager();
   ~Body_Manager();
 
   void init();
@@ -64,6 +66,9 @@ private:
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
 
+  void _initSubscribers();
+  void _initPublishers();
+
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
@@ -73,12 +78,15 @@ private:
   LegController<float>* _legController = nullptr;
   StateEstimatorContainer<float>* _stateEstimator;
   StateEstimate<float> _stateEstimate;
-  RobotController* _robot_ctrl;
   DesiredStateCommand<float>* _desiredStateCommand;
   GamepadCommand driverCommand;
 
   spi_torque_t _spi_torque;
 
-  void _initSubscribers();
-  void _initPublishers();
+  ControlFSM<float>* _controlFSM;
+
+  // Gait Scheduler controls the nominal contact schedule for the feet
+  GaitScheduler<float>* _gaitScheduler;
+  MIT_UserParameters userParameters;
+
 };

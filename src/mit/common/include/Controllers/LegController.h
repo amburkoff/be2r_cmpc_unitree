@@ -14,8 +14,8 @@
 #include "Dynamics/Quadruped.h"
 #include "SimUtilities/SpineBoard.h"
 #include "cppTypes.h"
-#include <ros/ros.h>
 #include <iostream>
+#include <ros/ros.h>
 
 /*!
  * Data sent from the control algorithm to the legs.
@@ -69,12 +69,6 @@ public:
   void updateData(const SpiData* spiData);
   void updateCommand(SpiCommand* spiCommand);
   void setEnabled(bool enabled) { _legsEnabled = enabled; };
-  // void setLcm(leg_control_data_lcmt* data, leg_control_command_lcmt* command);
-
-  /*!
-   * Set the maximum torque.  This only works on cheetah 3!
-   */
-  void setMaxTorqueCheetah3(T tau) { _maxTorque = tau; }
 
   LegControllerCommand<T> commands[4];
   LegControllerData<T> datas[4];

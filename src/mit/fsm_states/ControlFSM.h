@@ -120,9 +120,6 @@ private:
   int printIter = 0; // make larger than printNum to not print
 
   int iter = 0;
-
-  //lcm::LCM state_estimator_lcm;
-  //state_estimator_lcmt _state_estimator;
 };
 
 #endif // CONTROLFSM_H

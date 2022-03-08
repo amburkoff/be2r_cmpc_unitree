@@ -14,14 +14,9 @@ include_directories("/usr/local/include/eigen3")   # lcm includes
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 
-# file(GLOB_RECURSE sources
-# "./*.cpp"
-# "FSM_States/*.cpp" 
-# "Controllers/BalanceController/*.cpp" 
-# "Controllers/convexMPC/*.cpp")
-
-file(GLOB_RECURSE sources "fsm_states/*.cpp" "controllers/convexMPC/*.cpp"
-                                             "controllers/BackFlip/*.cpp")
+file(GLOB_RECURSE sources "fsm_states/*.cpp" 
+                          "controllers/convexMPC/*.cpp"
+                          "controllers/BackFlip/*.cpp")
 
 # add_subdirectory(robot)
 add_subdirectory(common)
@@ -29,13 +24,13 @@ add_subdirectory(controllers/WBC_Ctrl)
 add_subdirectory(controllers/WBC)
 
 add_library(ctrl_fsm_lib ${sources})
-target_link_libraries(ctrl_fsm_lib WBC_Ctrl)
+target_link_libraries(ctrl_fsm_lib WBC_Ctrl controllers_lib qpOASES)
 
 
 # add_library(mit_ctrl_lib MIT_Controller.cpp ${sources})
-add_library(mit_ctrl_lib MIT_Controller.cpp)
+# add_library(mit_ctrl_lib MIT_Controller.cpp)
 # target_link_libraries(mit_ctrl_lib ${catkin_LIBRARIES} gait_lib ctrl_fsm_lib)
-target_link_libraries(mit_ctrl_lib ${catkin_LIBRARIES} controllers_lib ctrl_fsm_lib qpOASES)
+# target_link_libraries(mit_ctrl_lib ${catkin_LIBRARIES} controllers_lib ctrl_fsm_lib qpOASES)
 
 
 

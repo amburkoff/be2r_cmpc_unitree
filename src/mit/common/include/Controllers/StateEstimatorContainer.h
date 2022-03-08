@@ -14,7 +14,6 @@
 #include "Controllers/LegController.h"
 #include "SimUtilities/IMUTypes.h"
 #include "SimUtilities/VisualizationData.h"
-// #include "state_estimator_lcmt.hpp"
 
 /*!
  * Result of state estimation
@@ -34,24 +33,6 @@ struct StateEstimate
   Vec3<T> omegaWorld;
   Vec3<T> vWorld;
   Vec3<T> aBody, aWorld;
-
-  //   void setLcm(state_estimator_lcmt& lcm_data)
-  //   {
-  //     for (int i = 0; i < 3; i++)
-  //     {
-  //       lcm_data.p[i] = position[i];
-  //       lcm_data.vWorld[i] = vWorld[i];
-  //       lcm_data.vBody[i] = vBody[i];
-  //       lcm_data.rpy[i] = rpy[i];
-  //       lcm_data.omegaBody[i] = omegaBody[i];
-  //       lcm_data.omegaWorld[i] = omegaWorld[i];
-  //     }
-
-  //     for (int i = 0; i < 4; i++)
-  //     {
-  //       lcm_data.quat[i] = orientation[i];
-  //     }
-  //   }
 };
 
 /*!

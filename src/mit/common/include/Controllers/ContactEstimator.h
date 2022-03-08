@@ -17,16 +17,16 @@
  * A "passthrough" contact estimator which returns the expected contact state
  */
 template <typename T>
-class ContactEstimator : public GenericEstimator<T> {
- public:
-
+class ContactEstimator : public GenericEstimator<T>
+{
+public:
   /*!
    * Set the estimated contact by copying the exptected contact state into the
    * estimated contact state
    */
-  virtual void run() {
-    this->_stateEstimatorData.result->contactEstimate =
-        *this->_stateEstimatorData.contactPhase;
+  virtual void run()
+  {
+    this->_stateEstimatorData.result->contactEstimate = *this->_stateEstimatorData.contactPhase;
   }
 
   /*!
@@ -35,4 +35,4 @@ class ContactEstimator : public GenericEstimator<T> {
   virtual void setup() {}
 };
 
-#endif  // PROJECT_CONTACTESTIMATOR_H
+#endif // PROJECT_CONTACTESTIMATOR_H

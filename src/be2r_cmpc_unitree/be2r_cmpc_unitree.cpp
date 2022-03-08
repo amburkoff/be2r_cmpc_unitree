@@ -2,10 +2,9 @@
 
 using namespace std;
 
-Body_Manager::Body_Manager(RobotController* robot_ctrl)
+Body_Manager::Body_Manager()
 {
-  _robot_ctrl = robot_ctrl;
-  _userControlParameters = robot_ctrl->getUserControlParameters();
+
 }
 
 Body_Manager::~Body_Manager()
@@ -39,11 +38,13 @@ void Body_Manager::init()
 
   printf("Loaded robot parameters\n");
 
-  if (_userControlParameters)
+  // if (_userControlParameters)
+  if (&userParameters)
   {
     try
     {
-      _userControlParameters->initializeFromYamlFile(THIS_COM "config/mc-mit-ctrl-user-parameters.yaml");
+      // _userControlParameters->initializeFromYamlFile(THIS_COM "config/mc-mit-ctrl-user-parameters.yaml");
+      userParameters.initializeFromYamlFile(THIS_COM "config/mc-mit-ctrl-user-parameters.yaml");
     }
     catch (std::exception& e)
     {
@@ -51,7 +52,8 @@ void Body_Manager::init()
       exit(1);
     }
 
-    if (!_userControlParameters->isFullyInitialized())
+    // if (!_userControlParameters->isFullyInitialized())
+    if (!userParameters.isFullyInitialized())
     {
       printf("Failed to initialize all user parameters\n");
       exit(1);
@@ -78,19 +80,19 @@ void Body_Manager::init()
   // Initialize the DesiredStateCommand object
   _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
 
-  // Controller initializations
-  _robot_ctrl->_model = &_model;
-  _robot_ctrl->_quadruped = &_quadruped;
-  _robot_ctrl->_legController = _legController;
-  _robot_ctrl->_stateEstimator = _stateEstimator;
-  _robot_ctrl->_stateEstimate = &_stateEstimate;
-  // _robot_ctrl->_visualizationData = visualizationData;
-  _robot_ctrl->_robotType = RobotType::MINI_CHEETAH;
-  _robot_ctrl->_driverCommand = &driverCommand;
-  _robot_ctrl->_controlParameters = &controlParameters;
-  _robot_ctrl->_desiredStateCommand = _desiredStateCommand;
+  // Initialize a new GaitScheduler object
+  _gaitScheduler = new GaitScheduler<float>(&userParameters, controlParameters.controller_dt);
 
-  _robot_ctrl->initializeController();
+  // Initialize a new ContactEstimator object
+  //_contactEstimator = new ContactEstimator<double>();
+  //_contactEstimator->initialize();
+
+  // Initializes the Control FSM with all the required data
+  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator,
+                                      _legController, _gaitScheduler,
+                                      _desiredStateCommand,
+                                      &controlParameters,
+                                      &userParameters);
 }
 
 void Body_Manager::run()
@@ -113,7 +115,14 @@ void Body_Manager::run()
     _legController->setEnabled(true);
 
     // Run Control
-    _robot_ctrl->runController();
+    // Find the current gait schedule
+    _gaitScheduler->step();
+
+    // Find the desired state trajectory
+    _desiredStateCommand->convertToStateCommands();
+
+    // Run the Control FSM code
+    _controlFSM->runFSM();
   }
 
   // Sets the leg controller commands for the robot appropriate commands
@@ -140,7 +149,6 @@ void Body_Manager::setupStep()
   // Setup the leg controller for a new iteration
   _legController->zeroCommand();
   _legController->setEnabled(true);
-  _legController->setMaxTorqueCheetah3(208.5);
 
   // todo safety checks, sanity checks, etc...
 }
@@ -177,6 +185,7 @@ void Body_Manager::initializeStateEstimator()
 {
   _stateEstimator->removeAllEstimators();
   _stateEstimator->addEstimator<ContactEstimator<float>>();
+
   Vec4<float> contactDefault;
   contactDefault << 0.5, 0.5, 0.5, 0.5;
   _stateEstimator->setContactPhase(contactDefault);

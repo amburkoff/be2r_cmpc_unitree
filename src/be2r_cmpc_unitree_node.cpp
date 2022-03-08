@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 
   ROS_INFO("Initialization...");
 
-  Body_Manager unitree(new MIT_Controller());
+  Body_Manager unitree;
 
   unitree.init();
 

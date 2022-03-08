@@ -15,11 +15,11 @@
 #ifndef PROJECT_CONTROLPAREMETERS_H
 #define PROJECT_CONTROLPAREMETERS_H
 
+#include "Utilities/utilities.h"
+#include "cTypes.h"
 #include <map>
 #include <mutex>
 #include <string>
-#include "Utilities/utilities.h"
-#include "cTypes.h"
 
 #define CONTROL_PARAMETER_MAXIMUM_NAME_LENGTH 64
 
@@ -31,7 +31,8 @@
 /*!
  * Data types supported for control parameters
  */
-enum class ControlParameterValueKind : u64 {
+enum class ControlParameterValueKind : u64
+{
   FLOAT = 0,
   DOUBLE = 1,
   S64 = 2,
@@ -47,7 +48,8 @@ std::string controlParameterValueKindToString(
 /*!
  * Pointer to control parameter data
  */
-union ControlParameterValuePtr {
+union ControlParameterValuePtr
+{
   float* f;
   double* d;
   s64* i;
@@ -58,7 +60,8 @@ union ControlParameterValuePtr {
 /*!
  * Value of a control parameter
  */
-union ControlParameterValue {
+union ControlParameterValue
+{
   float f;
   double d;
   s64 i;
@@ -74,8 +77,9 @@ class ControlParameter;
 /*!
  * ControlParameterCollections contains a map of all the control parameters.
  */
-class ControlParameterCollection {
- public:
+class ControlParameterCollection
+{
+public:
   explicit ControlParameterCollection(const std::string& name) : _name(name) {}
 
   /*!
@@ -85,8 +89,10 @@ class ControlParameterCollection {
    *
    * Throws exception if you try to add a parameter twice.
    */
-  void addParameter(ControlParameter* param, const std::string& name) {
-    if (mapContains(_map, name)) {
+  void addParameter(ControlParameter* param, const std::string& name)
+  {
+    if (mapContains(_map, name))
+    {
       printf(
           "[ERROR] ControlParameterCollection %s: tried to add parameter %s "
           "twice!\n",
@@ -102,10 +108,14 @@ class ControlParameterCollection {
    *
    * Throws exception if parameter isn't found
    */
-  ControlParameter& lookup(const std::string& name) {
-    if (mapContains(_map, name)) {
+  ControlParameter& lookup(const std::string& name)
+  {
+    if (mapContains(_map, name))
+    {
       return *_map[name];
-    } else {
+    }
+    else
+    {
       throw std::runtime_error("Control parameter " + name +
                                " wasn't found in parameter collection " +
                                _name);
@@ -113,16 +123,16 @@ class ControlParameterCollection {
   }
 
   std::string
-  printToIniString();  //!< print all control parameters in the INI file format
-  std::string printToYamlString();  //!< print all control parameters in the
-                                    //!< YAML file format
-  bool checkIfAllSet();  //!< are all the control parameters initialized?
+  printToIniString();              //!< print all control parameters in the INI file format
+  std::string printToYamlString(); //!< print all control parameters in the
+                                   //!< YAML file format
+  bool checkIfAllSet();            //!< are all the control parameters initialized?
   void clearAllSet();
   void deleteAll();
 
   std::map<std::string, ControlParameter*> _map;
 
- private:
+private:
   std::string _name;
 };
 
@@ -130,9 +140,9 @@ class ControlParameterCollection {
  * A single control parameter.  Note that this representation doesn't store the value, just a pointer
  * to an existing variable.
  */
-class ControlParameter {
- public:
-
+class ControlParameter
+{
+public:
   /*!
    * Construct control parameter for a double
    * @param name : name of parameter
@@ -142,7 +152,8 @@ class ControlParameter {
    */
   ControlParameter(const std::string& name, double& value,
                    ControlParameterCollection& collection,
-                   const std::string& units = "") {
+                   const std::string& units = "")
+  {
     _name = name;
     truncateName();
     _units = units;
@@ -160,7 +171,8 @@ class ControlParameter {
    */
   ControlParameter(const std::string& name, float& value,
                    ControlParameterCollection& collection,
-                   const std::string& units = "") {
+                   const std::string& units = "")
+  {
     _name = name;
     truncateName();
     _units = units;
@@ -178,7 +190,8 @@ class ControlParameter {
    */
   ControlParameter(const std::string& name, s64& value,
                    ControlParameterCollection& collection,
-                   const std::string& units = "") {
+                   const std::string& units = "")
+  {
     _name = name;
     truncateName();
     _units = units;
@@ -196,7 +209,8 @@ class ControlParameter {
    */
   ControlParameter(const std::string& name, Vec3<float>& value,
                    ControlParameterCollection& collection,
-                   const std::string& units = "") {
+                   const std::string& units = "")
+  {
     _name = name;
     truncateName();
     _units = units;
@@ -214,7 +228,8 @@ class ControlParameter {
    */
   ControlParameter(const std::string& name, Vec3<double>& value,
                    ControlParameterCollection& collection,
-                   const std::string& units = "") {
+                   const std::string& units = "")
+  {
     _name = name;
     truncateName();
     _units = units;
@@ -229,7 +244,8 @@ class ControlParameter {
    * @param name : name of parameter
    * @param kind : type of data to be stored
    */
-  ControlParameter(const std::string& name, ControlParameterValueKind kind) {
+  ControlParameter(const std::string& name, ControlParameterValueKind kind)
+  {
     _name = name;
     truncateName();
     _kind = kind;
@@ -240,8 +256,10 @@ class ControlParameter {
    * Make sure that the control parameter name is short enough to fit
    * in the control parameter request message.
    */
-  void truncateName() {
-    if (_name.length() > CONTROL_PARAMETER_MAXIMUM_NAME_LENGTH) {
+  void truncateName()
+  {
+    if (_name.length() > CONTROL_PARAMETER_MAXIMUM_NAME_LENGTH)
+    {
       printf("[Error] control parameter name %s is too long, shortening to ", _name.c_str());
       _name.resize(CONTROL_PARAMETER_MAXIMUM_NAME_LENGTH - 1);
       printf("%s\n", _name.c_str());
@@ -252,8 +270,10 @@ class ControlParameter {
    * Set initial value of the control parameter.
    * Checks to see that the types are correct
    */
-  void initializeDouble(double d) {
-    if (_kind != ControlParameterValueKind::DOUBLE) {
+  void initializeDouble(double d)
+  {
+    if (_kind != ControlParameterValueKind::DOUBLE)
+    {
       throw std::runtime_error("Tried to initialize control parameter " +
                                _name + " as a double!");
     }
@@ -261,13 +281,14 @@ class ControlParameter {
     *_value.d = d;
   }
 
-
   /*!
    * Set initial value of the control parameter.
    * Checks to see that the types are correct
    */
-  void initializeFloat(float f) {
-    if (_kind != ControlParameterValueKind::FLOAT) {
+  void initializeFloat(float f)
+  {
+    if (_kind != ControlParameterValueKind::FLOAT)
+    {
       throw std::runtime_error("Tried to initialize control parameter " +
                                _name + " as a float!");
     }
@@ -279,8 +300,10 @@ class ControlParameter {
    * Set initial value of the control parameter.
    * Checks to see that the types are correct
    */
-  void initializeInteger(s64 i) {
-    if (_kind != ControlParameterValueKind::S64) {
+  void initializeInteger(s64 i)
+  {
+    if (_kind != ControlParameterValueKind::S64)
+    {
       throw std::runtime_error("Tried to initialize control parameter " +
                                _name + " as an integer!");
     }
@@ -292,8 +315,10 @@ class ControlParameter {
    * Set initial value of the control parameter.
    * Checks to see that the types are correct
    */
-  void initializeVec3f(const Vec3<float>& v) {
-    if (_kind != ControlParameterValueKind::VEC3_FLOAT) {
+  void initializeVec3f(const Vec3<float>& v)
+  {
+    if (_kind != ControlParameterValueKind::VEC3_FLOAT)
+    {
       throw std::runtime_error("Tried to initialize control parameter " +
                                _name + " as a vector3f");
     }
@@ -307,8 +332,10 @@ class ControlParameter {
    * Set initial value of the control parameter.
    * Checks to see that the types are correct
    */
-  void initializeVec3d(const Vec3<double>& v) {
-    if (_kind != ControlParameterValueKind::VEC3_DOUBLE) {
+  void initializeVec3d(const Vec3<double>& v)
+  {
+    if (_kind != ControlParameterValueKind::VEC3_DOUBLE)
+    {
       throw std::runtime_error("Tried to initialize control parameter " +
                                _name + " as a vector3d");
     }
@@ -324,32 +351,35 @@ class ControlParameter {
    * @param value : value to set
    * @param kind : kind of the value
    */
-  void set(ControlParameterValue value, ControlParameterValueKind kind) {
-    if (kind != _kind) {
+  void set(ControlParameterValue value, ControlParameterValueKind kind)
+  {
+    if (kind != _kind)
+    {
       throw std::runtime_error("Control parameter type mismatch in set");
     }
-    switch (kind) {
-      case ControlParameterValueKind::FLOAT:
-        *_value.f = value.f;
-        break;
-      case ControlParameterValueKind::DOUBLE:
-        *_value.d = value.d;
-        break;
-      case ControlParameterValueKind::S64:
-        *_value.i = value.i;
-        break;
-      case ControlParameterValueKind::VEC3_FLOAT:
-        _value.vec3f[0] = value.vec3f[0];
-        _value.vec3f[1] = value.vec3f[1];
-        _value.vec3f[2] = value.vec3f[2];
-        break;
-      case ControlParameterValueKind::VEC3_DOUBLE:
-        _value.vec3d[0] = value.vec3d[0];
-        _value.vec3d[1] = value.vec3d[1];
-        _value.vec3d[2] = value.vec3d[2];
-        break;
-      default:
-        throw std::runtime_error("Control parameter invalid kind in set");
+    switch (kind)
+    {
+    case ControlParameterValueKind::FLOAT:
+      *_value.f = value.f;
+      break;
+    case ControlParameterValueKind::DOUBLE:
+      *_value.d = value.d;
+      break;
+    case ControlParameterValueKind::S64:
+      *_value.i = value.i;
+      break;
+    case ControlParameterValueKind::VEC3_FLOAT:
+      _value.vec3f[0] = value.vec3f[0];
+      _value.vec3f[1] = value.vec3f[1];
+      _value.vec3f[2] = value.vec3f[2];
+      break;
+    case ControlParameterValueKind::VEC3_DOUBLE:
+      _value.vec3d[0] = value.vec3d[0];
+      _value.vec3d[1] = value.vec3d[1];
+      _value.vec3d[2] = value.vec3d[2];
+      break;
+    default:
+      throw std::runtime_error("Control parameter invalid kind in set");
     }
     _set = true;
   }
@@ -360,33 +390,36 @@ class ControlParameter {
    * @param kind : the kind of the control parameter
    * @return the value of the control parameter
    */
-  ControlParameterValue get(ControlParameterValueKind kind) {
+  ControlParameterValue get(ControlParameterValueKind kind)
+  {
     ControlParameterValue value;
-    if (kind != _kind) {
+    if (kind != _kind)
+    {
       throw std::runtime_error("Control parameter type mismatch in get");
     }
-    switch (_kind) {
-      case ControlParameterValueKind::FLOAT:
-        value.f = *_value.f;
-        break;
-      case ControlParameterValueKind::DOUBLE:
-        value.d = *_value.d;
-        break;
-      case ControlParameterValueKind::S64:
-        value.i = *_value.i;
-        break;
-      case ControlParameterValueKind::VEC3_FLOAT:
-        value.vec3f[0] = _value.vec3f[0];
-        value.vec3f[1] = _value.vec3f[1];
-        value.vec3f[2] = _value.vec3f[2];
-        break;
-      case ControlParameterValueKind::VEC3_DOUBLE:
-        value.vec3d[0] = _value.vec3d[0];
-        value.vec3d[1] = _value.vec3d[1];
-        value.vec3d[2] = _value.vec3d[2];
-        break;
-      default:
-        throw std::runtime_error("Control parameter invalid kind in get");
+    switch (_kind)
+    {
+    case ControlParameterValueKind::FLOAT:
+      value.f = *_value.f;
+      break;
+    case ControlParameterValueKind::DOUBLE:
+      value.d = *_value.d;
+      break;
+    case ControlParameterValueKind::S64:
+      value.i = *_value.i;
+      break;
+    case ControlParameterValueKind::VEC3_FLOAT:
+      value.vec3f[0] = _value.vec3f[0];
+      value.vec3f[1] = _value.vec3f[1];
+      value.vec3f[2] = _value.vec3f[2];
+      break;
+    case ControlParameterValueKind::VEC3_DOUBLE:
+      value.vec3d[0] = _value.vec3d[0];
+      value.vec3d[1] = _value.vec3d[1];
+      value.vec3d[2] = _value.vec3d[2];
+      break;
+    default:
+      throw std::runtime_error("Control parameter invalid kind in get");
     }
     return value;
   }
@@ -394,34 +427,36 @@ class ControlParameter {
   /*!
    * Convert the value to a string that works in a YAML file
    */
-  std::string toString() {
+  std::string toString()
+  {
     std::string result;
-    switch (_kind) {
-      case ControlParameterValueKind::DOUBLE:
-        result += numberToString(*_value.d);
-        break;
-      case ControlParameterValueKind::FLOAT:
-        result += numberToString(*_value.f);
-        break;
-      case ControlParameterValueKind::S64:
-        result += std::to_string(*_value.i);
-        break;
-      case ControlParameterValueKind::VEC3_FLOAT:
-        result += "[";
-        result += numberToString(_value.vec3f[0]) + ", ";
-        result += numberToString(_value.vec3f[1]) + ", ";
-        result += numberToString(_value.vec3f[2]) + "]";
-        break;
-      case ControlParameterValueKind::VEC3_DOUBLE:
-        result += "[";
-        result += numberToString(_value.vec3d[0]) + ", ";
-        result += numberToString(_value.vec3d[1]) + ", ";
-        result += numberToString(_value.vec3d[2]) + "]";
-        break;
-      default:
-        result += "<unknown type " + std::to_string((u32)(_kind)) +
-                  "> (add it yourself in ControlParameters.h!)";
-        break;
+    switch (_kind)
+    {
+    case ControlParameterValueKind::DOUBLE:
+      result += numberToString(*_value.d);
+      break;
+    case ControlParameterValueKind::FLOAT:
+      result += numberToString(*_value.f);
+      break;
+    case ControlParameterValueKind::S64:
+      result += std::to_string(*_value.i);
+      break;
+    case ControlParameterValueKind::VEC3_FLOAT:
+      result += "[";
+      result += numberToString(_value.vec3f[0]) + ", ";
+      result += numberToString(_value.vec3f[1]) + ", ";
+      result += numberToString(_value.vec3f[2]) + "]";
+      break;
+    case ControlParameterValueKind::VEC3_DOUBLE:
+      result += "[";
+      result += numberToString(_value.vec3d[0]) + ", ";
+      result += numberToString(_value.vec3d[1]) + ", ";
+      result += numberToString(_value.vec3d[2]) + "]";
+      break;
+    default:
+      result += "<unknown type " + std::to_string((u32)(_kind)) +
+                "> (add it yourself in ControlParameters.h!)";
+      break;
     }
     return result;
   }
@@ -433,31 +468,37 @@ class ControlParameter {
    * @param value : the string representing the value
    * @return if the set was successful
    */
-  bool setFromString(const std::string& value) {
-    switch (_kind) {
-      case ControlParameterValueKind::DOUBLE:
-        *_value.d = std::stod(value);
-        break;
-      case ControlParameterValueKind::FLOAT:
-        *_value.f = std::stof(value);
-        break;
-      case ControlParameterValueKind::S64:
-        *_value.i = std::stoll(value);
-        break;
-      case ControlParameterValueKind::VEC3_FLOAT: {
-        Vec3<float> v = stringToVec3<float>(value);
-        _value.vec3f[0] = v[0];
-        _value.vec3f[1] = v[1];
-        _value.vec3f[2] = v[2];
-      } break;
-      case ControlParameterValueKind::VEC3_DOUBLE: {
-        Vec3<double> v = stringToVec3<double>(value);
-        _value.vec3d[0] = v[0];
-        _value.vec3d[1] = v[1];
-        _value.vec3d[2] = v[2];
-      } break;
-      default:
-        return false;
+  bool setFromString(const std::string& value)
+  {
+    switch (_kind)
+    {
+    case ControlParameterValueKind::DOUBLE:
+      *_value.d = std::stod(value);
+      break;
+    case ControlParameterValueKind::FLOAT:
+      *_value.f = std::stof(value);
+      break;
+    case ControlParameterValueKind::S64:
+      *_value.i = std::stoll(value);
+      break;
+    case ControlParameterValueKind::VEC3_FLOAT:
+    {
+      Vec3<float> v = stringToVec3<float>(value);
+      _value.vec3f[0] = v[0];
+      _value.vec3f[1] = v[1];
+      _value.vec3f[2] = v[2];
+    }
+    break;
+    case ControlParameterValueKind::VEC3_DOUBLE:
+    {
+      Vec3<double> v = stringToVec3<double>(value);
+      _value.vec3d[0] = v[0];
+      _value.vec3d[1] = v[1];
+      _value.vec3d[2] = v[2];
+    }
+    break;
+    default:
+      return false;
     }
     return true;
   }
@@ -469,7 +510,7 @@ class ControlParameter {
   ControlParameterValueKind _kind;
   ControlParameterValue _staticValue;
 
- private:
+private:
 };
 
 /*!
@@ -478,8 +519,9 @@ class ControlParameter {
  * This will track if all parameters are initialized so you are sure
  * that the robot has received all parameters before starting
  */
-class ControlParameters {
- public:
+class ControlParameters
+{
+public:
   /*!
    * Construct a control parameter group
    * @param name : Each control parameter group must have a unique name so the ini files don't
@@ -497,7 +539,8 @@ class ControlParameters {
    * @param name : name of parameter to initialize
    * @param d : double value to initialize with
    */
-  void initializeDouble(const std::string& name, double d) {
+  void initializeDouble(const std::string& name, double d)
+  {
     collection.lookup(name).initializeDouble(d);
   }
 
@@ -506,7 +549,8 @@ class ControlParameters {
    * @param name : name of parameter to initialize
    * @param f : float value to initialize with
    */
-  void initializeFloat(const std::string& name, float f) {
+  void initializeFloat(const std::string& name, float f)
+  {
     collection.lookup(name).initializeFloat(f);
   }
 
@@ -515,7 +559,8 @@ class ControlParameters {
    * @param name : name of parameter to initialize
    * @param i : s64 value to initialize with
    */
-  void initializeInteger(const std::string& name, s64 i) {
+  void initializeInteger(const std::string& name, s64 i)
+  {
     collection.lookup(name).initializeInteger(i);
   }
 
@@ -524,7 +569,8 @@ class ControlParameters {
    * @param name : name of parameter to initialize
    * @param v : list of 3 floats value to initialize with
    */
-  void initializeVec3f(const std::string& name, Vec3<float>& v) {
+  void initializeVec3f(const std::string& name, Vec3<float>& v)
+  {
     collection.lookup(name).initializeVec3f(v);
   }
 
@@ -533,7 +579,8 @@ class ControlParameters {
    * @param name : name of parameter to initialize
    * @param v : list of 3 double value to initialize with
    */
-  void initializeVec3d(const std::string& name, Vec3<double>& v) {
+  void initializeVec3d(const std::string& name, Vec3<double>& v)
+  {
     collection.lookup(name).initializeVec3d(v);
   }
 
@@ -558,9 +605,9 @@ class ControlParameters {
 
   ControlParameterCollection collection;
 
- protected:
+protected:
   std::string _name;
   std::mutex _mutex;
 };
 
-#endif  // PROJECT_CONTROLPAREMETERS_H
+#endif // PROJECT_CONTROLPAREMETERS_H
