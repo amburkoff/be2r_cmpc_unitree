@@ -21,7 +21,8 @@ include_directories(
   src/mit
   src/mit/lcm-types
   src/mit/lcm-types/cpp
-  src/mit/fsm_states
+  src/fsm
+  src/fsm/fsm_states
   src/mit/controllers
   src/mit/controllers/convexMPC
   src/mit/common
@@ -34,7 +35,6 @@ include_directories(
   src/mit/common/include/SimUtilities
   src/mit/common/include/SparseCMPC
   # src/mit/common/include/Utilities
-  src/mit/robot/include
   src/third_party
   src/third_party/ParamHandler
   src/third_party/qpOASES/include
@@ -54,11 +54,11 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/Co
 
 add_subdirectory(src/third_party)
 add_subdirectory(src/mit)
+add_subdirectory(src/fsm)
 
 #основная либа ноды
 add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
-# target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} mit_ctrl_lib)
-target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} ctrl_fsm_lib)
+target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} ctrl_fsm_lib fsm_lib)
 
 #бинарник ноды
 add_executable(unitree_ctrl src/be2r_cmpc_unitree_node.cpp)

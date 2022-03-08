@@ -6,7 +6,7 @@
 #include <Dynamics/Quadruped.h>
 #include <WBC/WBIC/KinWBC.hpp>
 #include <WBC/WBIC/WBIC.hpp>
-#include <fsm_states/ControlFSMData.h>
+#include <ControlFSMData.h>
 
 #include "wbc_test_data_t.hpp"
 #include <lcm-cpp.hpp>

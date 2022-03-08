@@ -4,22 +4,17 @@ include_directories("common/FootstepPlanner")
 include_directories("../third-party")
 include_directories(SYSTEM "../third-party/qpOASES/include")
 include_directories("../third-party/ParamHandler")
+include_directories("fsm_states")
 include_directories("/usr/local/include/lcm/")   # lcm includes
-include_directories("/usr/local/include/eigen3")
+include_directories("/usr/local/include/eigen3")  
+include_directories("../mit/controllers/convexMPC")
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 
-file(GLOB_RECURSE sources "controllers/convexMPC/*.cpp"
-                          "controllers/BackFlip/*.cpp")
+file(GLOB_RECURSE sources "fsm_states/*.cpp" "*.cpp")
 
-add_subdirectory(common)
-add_subdirectory(controllers/WBC_Ctrl)
-add_subdirectory(controllers/WBC)
-# add_subdirectory(Controllers/VisionMPC)
-
-
-add_library(ctrl_fsm_lib ${sources})
-target_link_libraries(ctrl_fsm_lib WBC_Ctrl controllers_lib qpOASES)
+add_library(fsm_lib ${sources})
+target_link_libraries(fsm_lib WBC_Ctrl controllers_lib qpOASES ctrl_fsm_lib)
 
 # add_executable(mit_ctrl ${sources} MIT_Controller.cpp main.cpp)
 # target_link_libraries(mit_ctrl robot biomimetics)
