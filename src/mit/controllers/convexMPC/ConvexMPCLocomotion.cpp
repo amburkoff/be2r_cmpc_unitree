@@ -6,8 +6,6 @@
 #include "GraphSearch.h"
 #include "convexMPC_interface.h"
 
-#include "rt/rt_rc_interface.h"
-
 #include "Gait.h"
 
 // #define DRAW_DEBUG_SWINGS

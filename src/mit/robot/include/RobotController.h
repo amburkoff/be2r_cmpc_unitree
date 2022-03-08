@@ -17,7 +17,6 @@
  */
 class RobotController
 {
-  friend class RobotRunner;
 
 public:
   RobotController() {}
@@ -28,7 +27,6 @@ public:
  * Called one time every control loop 
  */
   virtual void runController() = 0;
-  // virtual void updateVisualization() = 0;
   virtual ControlParameters* getUserControlParameters() = 0;
   virtual void Estop() {}
 

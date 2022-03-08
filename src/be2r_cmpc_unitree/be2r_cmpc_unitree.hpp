@@ -14,7 +14,6 @@
 #include "LegController.h"
 #include "MiniCheetah.h"
 #include "RobotParameters.h"
-// #include "RobotController.h"
 #include "Configuration.h"
 #include "MIT_Controller.hpp"
 #include "spi_command_t.hpp"
@@ -77,7 +76,6 @@ private:
   RobotController* _robot_ctrl;
   DesiredStateCommand<float>* _desiredStateCommand;
   GamepadCommand driverCommand;
-  rc_control_settings rc_control;
 
   spi_torque_t _spi_torque;
 

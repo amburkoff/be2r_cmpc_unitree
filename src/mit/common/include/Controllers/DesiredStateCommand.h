@@ -18,7 +18,6 @@
 #include "cppTypes.h"
 
 #include "GamepadCommand.h"
-#include "robot/include/rt/rt_rc_interface.h"
 
 /**
  *
@@ -50,12 +49,11 @@ class DesiredStateCommand
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // Initialize with the GamepadCommand struct
-  DesiredStateCommand(GamepadCommand* command, rc_control_settings* rc_command,
+  DesiredStateCommand(GamepadCommand* command,
                       RobotControlParameters* _parameters,
                       StateEstimate<T>* sEstimate, float _dt)
   {
     gamepadCommand = command;
-    rcCommand = rc_command;
     stateEstimate = sEstimate;
     parameters = _parameters;
 
@@ -99,7 +97,6 @@ public:
   // Holds the instantaneous desired state and future desired state trajectory
   DesiredStateData<T> data;
 
-  const rc_control_settings* rcCommand;
   const GamepadCommand* gamepadCommand;
 
   bool trigger_pressed = false;

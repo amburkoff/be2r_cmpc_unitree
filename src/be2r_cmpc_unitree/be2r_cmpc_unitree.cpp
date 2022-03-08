@@ -76,7 +76,7 @@ void Body_Manager::init()
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &rc_control, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
+  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
 
   // Controller initializations
   _robot_ctrl->_model = &_model;

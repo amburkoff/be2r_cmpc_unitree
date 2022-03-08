@@ -239,27 +239,13 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
 
   // cout << "init rpy: " << _ini_body_ori_rpy << endl;
 
-  if (this->_data->controlParameters->use_rc)
-  {
-    const rc_control_settings* rc_cmd = this->_data->_desiredStateCommand->rcCommand;
-    // Orientation
-    _wbc_data->pBody_RPY_des[0] = rc_cmd->rpy_des[0] * 1.4;
-    _wbc_data->pBody_RPY_des[1] = rc_cmd->rpy_des[1] * 0.46;
-    _wbc_data->pBody_RPY_des[2] -= rc_cmd->rpy_des[2];
+  // Orientation
+  _wbc_data->pBody_RPY_des[1] = 0.3 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
+  _wbc_data->pBody_RPY_des[0] = 0.5 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
+  _wbc_data->pBody_RPY_des[2] -= 0.3 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
 
-    // Height
-    _wbc_data->pBody_des[2] += 0.12 * rc_cmd->height_variation;
-  }
-  else
-  {
-    // Orientation
-    _wbc_data->pBody_RPY_des[1] = 0.3 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
-    _wbc_data->pBody_RPY_des[0] = 0.5 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
-    _wbc_data->pBody_RPY_des[2] -= 0.3 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
-
-    // Height
-    _wbc_data->pBody_des[2] += 0.12 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
-  }
+  // Height
+  _wbc_data->pBody_des[2] += 0.12 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
 
   // cout << "des rpy: " << _wbc_data->pBody_RPY_des[0] << " " << _wbc_data->pBody_RPY_des[1] << " " << _wbc_data->pBody_RPY_des[2] << endl;
 

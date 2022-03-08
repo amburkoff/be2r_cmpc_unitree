@@ -84,7 +84,7 @@ public:
 
   //
   void runControls();
-  void runBalanceController();
+  // void runBalanceController();
   // void runWholeBodyController();
   // void runConvexModelPredictiveController();
   // void runRegularizedPredictiveController();
