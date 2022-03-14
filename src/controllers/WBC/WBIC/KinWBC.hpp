@@ -6,8 +6,9 @@
 #include <vector>
 
 template <typename T>
-class KinWBC {
- public:
+class KinWBC
+{
+public:
   KinWBC(size_t num_qdot);
   ~KinWBC() {}
 
@@ -18,7 +19,7 @@ class KinWBC {
 
   DMat<T> Ainv_;
 
- private:
+private:
   void _PseudoInverse(const DMat<T> J, DMat<T>& Jinv);
   void _BuildProjectionMatrix(const DMat<T>& J, DMat<T>& N);
 

@@ -17,22 +17,23 @@ catkin_package(
 # вынести пути к исходникам отдельных частей mit контроллера в отдельные паременные и уже их кидать в include_directories. Для наглядности
 
 include_directories(
+  src
   src/be2r_cmpc_unitree
-  src/mit
+  # src/mit
   src/lcm-types
   src/fsm
   src/fsm/fsm_states
-  src/mit/controllers
-  src/mit/controllers/convexMPC
-  src/mit/common
-  src/mit/common/FootstepPlanner
-  src/mit/common/include
-  src/mit/common/include/Controllers
-  src/mit/common/include/ControlParameters
-  src/mit/common/include/Dynamics
-  src/mit/common/include/Math
-  src/mit/common/include/SimUtilities
-  src/mit/common/include/SparseCMPC
+  src/controllers
+  src/controllers/convexMPC
+  src/common
+  src/common/FootstepPlanner
+  src/common/include
+  src/common/include/Controllers
+  src/common/include/ControlParameters
+  src/common/include/Dynamics
+  src/common/include/Math
+  src/common/include/SimUtilities
+  src/common/include/SparseCMPC
   # src/mit/common/include/Utilities
   src/third_party
   src/third_party/ParamHandler
@@ -52,7 +53,8 @@ SET (THIS_COM "${PROJECT_SOURCE_DIR}/" )
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/Configuration.h)
 
 add_subdirectory(src/third_party)
-add_subdirectory(src/mit)
+add_subdirectory(src/common)
+add_subdirectory(src/controllers)
 add_subdirectory(src/fsm)
 
 #основная либа ноды

@@ -1,4 +1,3 @@
-# Source/Include files
 include_directories(".")
 include_directories("include/" )                       # common includes
 include_directories("/usr/local/include/lcm/")         # lcm includes

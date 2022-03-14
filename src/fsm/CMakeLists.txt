@@ -1,13 +1,11 @@
-include_directories("controllers")
-include_directories("common/include")
-include_directories("common/FootstepPlanner")
 include_directories("../third-party")
 include_directories(SYSTEM "../third-party/qpOASES/include")
 include_directories("../third-party/ParamHandler")
 include_directories("fsm_states")
 include_directories("/usr/local/include/lcm/")   # lcm includes
 include_directories("/usr/local/include/eigen3")  
-include_directories("../mit/controllers/convexMPC")
+include_directories("../controllers/convexMPC")
+include_directories("../controllers")
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 

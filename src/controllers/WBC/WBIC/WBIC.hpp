@@ -1,15 +1,16 @@
 #ifndef WHOLE_BODY_IMPULSE_CONTROL_H
 #define WHOLE_BODY_IMPULSE_CONTROL_H
 
-#include <Utilities/Utilities_print.h>
 #include <Goldfarb_Optimizer/QuadProg++.hh>
+#include <Utilities/Utilities_print.h>
 #include <WBC/ContactSpec.hpp>
 #include <WBC/Task.hpp>
 #include <WBC/WBC.hpp>
 
 template <typename T>
-class WBIC_ExtraData {
- public:
+class WBIC_ExtraData
+{
+public:
   // Output
   DVec<T> _opt_result;
   DVec<T> _qddot;
@@ -24,8 +25,9 @@ class WBIC_ExtraData {
 };
 
 template <typename T>
-class WBIC : public WBC<T> {
- public:
+class WBIC : public WBC<T>
+{
+public:
   WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list,
        const std::vector<Task<T>*>* task_list);
   virtual ~WBIC() {}
@@ -36,7 +38,7 @@ class WBIC : public WBC<T> {
 
   virtual void MakeTorque(DVec<T>& cmd, void* extra_input = NULL);
 
- private:
+private:
   const std::vector<ContactSpec<T>*>* _contact_list;
   const std::vector<Task<T>*>* _task_list;
 
@@ -48,10 +50,10 @@ class WBIC : public WBC<T> {
   void _SetCost();
   void _SetOptimizationSize();
 
-  size_t _dim_opt;      // Contact pt delta, First task delta, reaction force
-  size_t _dim_eq_cstr;  // equality constraints
+  size_t _dim_opt;     // Contact pt delta, First task delta, reaction force
+  size_t _dim_eq_cstr; // equality constraints
 
-  size_t _dim_rf;  // inequality constraints
+  size_t _dim_rf; // inequality constraints
   size_t _dim_Uf;
 
   size_t _dim_floating;

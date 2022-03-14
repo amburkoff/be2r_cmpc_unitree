@@ -1,20 +1,20 @@
-include_directories("controllers")
-include_directories("common/include")
-include_directories("common/FootstepPlanner")
 include_directories("../third-party")
 include_directories(SYSTEM "../third-party/qpOASES/include")
 include_directories("../third-party/ParamHandler")
 include_directories("/usr/local/include/lcm/")   # lcm includes
 include_directories("/usr/local/include/eigen3")
+include_directories(".")
+# include_directories("WBC")
+# include_directories("WBC/WBIC")
+# include_directories("WBC_Ctrl")
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 
-file(GLOB_RECURSE sources "controllers/convexMPC/*.cpp"
-                          "controllers/BackFlip/*.cpp")
+file(GLOB_RECURSE sources "convexMPC/*.cpp"
+                          "BackFlip/*.cpp")
 
-add_subdirectory(common)
-add_subdirectory(controllers/WBC_Ctrl)
-add_subdirectory(controllers/WBC)
+add_subdirectory(WBC)
+add_subdirectory(WBC_Ctrl)
 # add_subdirectory(Controllers/VisionMPC)
 
 
