@@ -57,7 +57,7 @@ add_subdirectory(src/fsm)
 
 #основная либа ноды
 add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
-target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} ctrl_fsm_lib fsm_lib)
+target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} controllers_lib fsm_lib)
 
 #бинарник ноды
 add_executable(unitree_ctrl src/be2r_cmpc_unitree_node.cpp)

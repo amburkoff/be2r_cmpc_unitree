@@ -12,7 +12,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 file(GLOB_RECURSE sources "fsm_states/*.cpp" "*.cpp")
 
 add_library(fsm_lib ${sources})
-target_link_libraries(fsm_lib WBC_Ctrl controllers_lib qpOASES ctrl_fsm_lib)
+target_link_libraries(fsm_lib WBC_Ctrl common_lib qpOASES controllers_lib)
 
 # add_executable(mit_ctrl ${sources} MIT_Controller.cpp main.cpp)
 # target_link_libraries(mit_ctrl robot biomimetics)

@@ -5,7 +5,3 @@ add_subdirectory(osqp)
 add_subdirectory(JCQP)
 add_subdirectory(qpOASES)
 add_subdirectory(SOEM)
-
-if(CMAKE_SYSTEM_NAME MATCHES Linux)
-add_subdirectory(vectornav)
-endif()
