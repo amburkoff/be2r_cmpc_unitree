@@ -6,10 +6,12 @@
 #define Contact ContactSpec<T>
 
 template <typename T>
-class ContactSpec {
- public:
-  ContactSpec(size_t dim) : dim_contact_(dim), b_set_contact_(false) {
-    idx_Fz_ = dim - 1;  // because normally (tau_x,y,z , linear_x,y,z)
+class ContactSpec
+{
+public:
+  ContactSpec(size_t dim) : dim_contact_(dim), b_set_contact_(false)
+  {
+    idx_Fz_ = dim - 1; // because normally (tau_x,y,z , linear_x,y,z)
     Fr_des_ = DVec<T>::Zero(dim);
   }
   virtual ~ContactSpec() {}
@@ -27,7 +29,8 @@ class ContactSpec {
   const DVec<T>& getRFDesired() { return Fr_des_; }
   void setRFDesired(const DVec<T>& Fr_des) { Fr_des_ = Fr_des; }
 
-  bool UpdateContactSpec() {
+  bool UpdateContactSpec()
+  {
     _UpdateJc();
     _UpdateJcDotQdot();
     _UpdateUf();
@@ -36,7 +39,7 @@ class ContactSpec {
     return true;
   }
 
- protected:
+protected:
   virtual bool _UpdateJc() = 0;
   virtual bool _UpdateJcDotQdot() = 0;
   virtual bool _UpdateUf() = 0;

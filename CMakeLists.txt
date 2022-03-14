@@ -19,22 +19,20 @@ catkin_package(
 include_directories(
   src
   src/be2r_cmpc_unitree
-  # src/mit
-  src/lcm-types
-  src/fsm
-  src/fsm/fsm_states
-  src/controllers
-  src/controllers/convexMPC
   src/common
   src/common/FootstepPlanner
-  src/common/include
-  src/common/include/Controllers
-  src/common/include/ControlParameters
-  src/common/include/Dynamics
-  src/common/include/Math
-  src/common/include/SimUtilities
-  src/common/include/SparseCMPC
-  # src/mit/common/include/Utilities
+  src/common/Controllers
+  src/common/ControlParameters
+  src/common/Dynamics
+  src/common/Math
+  src/common/SimUtilities
+  src/common/SparseCMPC
+  src/common/Utilities
+  src/controllers
+  src/controllers/convexMPC
+  src/fsm
+  src/fsm/fsm_states
+  src/lcm-types
   src/third_party
   src/third_party/ParamHandler
   src/third_party/qpOASES/include
