@@ -17,12 +17,3 @@ add_subdirectory(WBC_Ctrl)
 
 add_library(controllers_lib ${sources})
 target_link_libraries(controllers_lib WBC_Ctrl common_lib qpOASES)
-
-# add_executable(mit_ctrl ${sources} MIT_Controller.cpp main.cpp)
-# target_link_libraries(mit_ctrl robot biomimetics)
-# target_link_libraries(mit_ctrl dynacore_param_handler qpOASES)
-# target_link_libraries(mit_ctrl Goldfarb_Optimizer osqp)
-# target_link_libraries(mit_ctrl WBC_Ctrl)
-# target_link_libraries(mit_ctrl VisionMPC)
-# target_link_libraries(mit_ctrl ${catkin_LIBRARIES})
-# add_dependencies(mit_ctrl ${PROJECT_NAME}_gencfg)

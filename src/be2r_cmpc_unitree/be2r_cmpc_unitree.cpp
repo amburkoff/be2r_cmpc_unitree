@@ -38,12 +38,10 @@ void Body_Manager::init()
 
   printf("Loaded robot parameters\n");
 
-  // if (_userControlParameters)
   if (&userParameters)
   {
     try
     {
-      // _userControlParameters->initializeFromYamlFile(THIS_COM "config/mc-mit-ctrl-user-parameters.yaml");
       userParameters.initializeFromYamlFile(THIS_COM "config/mc-mit-ctrl-user-parameters.yaml");
     }
     catch (std::exception& e)
@@ -52,7 +50,6 @@ void Body_Manager::init()
       exit(1);
     }
 
-    // if (!_userControlParameters->isFullyInitialized())
     if (!userParameters.isFullyInitialized())
     {
       printf("Failed to initialize all user parameters\n");
@@ -70,7 +67,6 @@ void Body_Manager::init()
 
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
-  // _jpos_initializer = new JPosInitializer<float>(3., controlParameters->controller_dt); // HERE mb delete this?
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
@@ -230,15 +226,10 @@ void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
   vectorNavData.accelerometer[1] = msg.imu.accelerometer[1];
   vectorNavData.accelerometer[2] = msg.imu.accelerometer[2];
 
-  // vectorNavData.quat[0] = msg.imu.quaternion[0]; //w
-  // vectorNavData.quat[1] = msg.imu.quaternion[1]; //x
-  // vectorNavData.quat[2] = msg.imu.quaternion[2]; //y
-  // vectorNavData.quat[3] = msg.imu.quaternion[3]; //z
-
-  vectorNavData.quat[0] = msg.imu.quaternion[1]; //w
-  vectorNavData.quat[1] = msg.imu.quaternion[2]; //x
-  vectorNavData.quat[2] = msg.imu.quaternion[3]; //y
-  vectorNavData.quat[3] = msg.imu.quaternion[0]; //z
+  vectorNavData.quat[0] = msg.imu.quaternion[0]; //w
+  vectorNavData.quat[1] = msg.imu.quaternion[1]; //x
+  vectorNavData.quat[2] = msg.imu.quaternion[2]; //y
+  vectorNavData.quat[3] = msg.imu.quaternion[3]; //z
 }
 
 void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
