@@ -64,6 +64,7 @@ add_executable(unitree_ctrl src/be2r_cmpc_unitree_node.cpp)
 
 #зависимости ноды
 add_dependencies(unitree_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(unitree_ctrl unitree_legged_msgs_generate_messages_cpp)
 
 #линкуем либы к бинарнику
 target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib)
