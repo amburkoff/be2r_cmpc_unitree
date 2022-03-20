@@ -1,12 +1,15 @@
 #ifndef CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
 #define CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
 
+#include "Controllers/DesiredStateCommand.h"
 #include "Gait.h"
 #include "cppTypes.h"
-#include <FootSwingTrajectory.h>
 #include <ControlFSMData.h>
+#include <FootSwingTrajectory.h>
 #include <SparseCMPC/SparseCMPC.h>
-#include "Controllers/DesiredStateCommand.h"
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
+#include <ros/ros.h>
 
 #include <cstdio>
 
@@ -166,6 +169,8 @@ private:
   Vec3<float> pFoot[4];
   CMPC_Result<float> result;
   float trajAll[12 * 36];
+  ros::Publisher _pub_des_traj[4];
+  ros::NodeHandle _nh;
 
   MIT_UserParameters* _parameters = nullptr;
   CMPC_Jump jump_state;

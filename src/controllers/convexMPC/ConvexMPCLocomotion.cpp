@@ -62,6 +62,11 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   pBody_des.setZero();
   vBody_des.setZero();
   aBody_des.setZero();
+
+  _pub_des_traj[0] = _nh.advertise<nav_msgs::Path>("/des_traj_0", 1);
+  _pub_des_traj[1] = _nh.advertise<nav_msgs::Path>("/des_traj_1", 1);
+  _pub_des_traj[2] = _nh.advertise<nav_msgs::Path>("/des_traj_2", 1);
+  _pub_des_traj[3] = _nh.advertise<nav_msgs::Path>("/des_traj_3", 1);
 }
 
 void ConvexMPCLocomotion::initialize()
@@ -367,6 +372,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   // static bool is_stance[4] = {0, 0, 0, 0};
 
+  static nav_msgs::Path path[4];
+  static geometry_msgs::PoseStamped pose[4];
+
   for (int foot = 0; foot < 4; foot++)
   {
     float contactState = contactStates[foot];
@@ -396,6 +404,10 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         firstSwing[foot] = false;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
         // is_stance[foot] = 0;
+
+        path[foot].poses.clear();
+        geometry_msgs::PoseStamped Emptypose;
+        pose[foot] = Emptypose;
       }
 
       // #ifdef DRAW_DEBUG_SWINGS
@@ -439,6 +451,22 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
+
+      pose[foot].pose.position.x = pDesFootWorld.x();
+      pose[foot].pose.position.y = pDesFootWorld.y();
+      pose[foot].pose.position.z = pDesFootWorld.z();
+
+      pose[foot].pose.orientation.x = 0;
+      pose[foot].pose.orientation.y = 0;
+      pose[foot].pose.orientation.z = 0;
+      pose[foot].pose.orientation.w = 1;
+
+      path[foot].poses.push_back(pose[foot]);
+
+      path[foot].header.stamp = ros::Time::now();
+      path[foot].header.frame_id = "map";
+
+      _pub_des_traj[foot].publish(path[foot]);
 
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;

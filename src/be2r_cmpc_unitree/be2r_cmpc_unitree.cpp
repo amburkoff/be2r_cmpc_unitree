@@ -136,33 +136,7 @@ void Body_Manager::run()
     controlParameters.control_mode = FSM;
   }
 
-    sensor_msgs::JointState msg;
-
-  msg.header.stamp = ros::Time::now();
-
-  msg.name.push_back("FR_hip_joint");
-  msg.name.push_back("FR_thigh_joint");
-  msg.name.push_back("FR_calf_joint");
-
-  msg.name.push_back("FL_hip_joint");
-  msg.name.push_back("FL_thigh_joint");
-  msg.name.push_back("FL_calf_joint");
-
-  msg.name.push_back("RR_hip_joint");
-  msg.name.push_back("RR_thigh_joint");
-  msg.name.push_back("RR_calf_joint");
-
-  msg.name.push_back("RL_hip_joint");
-  msg.name.push_back("RL_thigh_joint");
-  msg.name.push_back("RL_calf_joint");
-
-  for (uint8_t joint_num = 0; joint_num < 12; joint_num++)
-  {
-    msg.position.push_back(_low_state.motorState[joint_num].q);
-    msg.velocity.push_back(_low_state.motorState[joint_num].dq);
-  }
-
-  _pub_joint_states.publish(msg);
+  _updateVisualization();
 }
 
 void Body_Manager::setupStep()
@@ -425,4 +399,53 @@ void Body_Manager::_initParameters()
   // readRosParam("/gait_max_leg_angle", userParameters.gait_max_leg_angle);
   // readRosParam("/gait_max_stance_time", userParameters.gait_max_stance_time);
   // readRosParam("/gait_min_stance_time", userParameters.gait_min_stance_time);
+}
+
+void Body_Manager::_updateVisualization()
+{
+  sensor_msgs::JointState msg;
+  geometry_msgs::Quaternion odom_quat;
+  geometry_msgs::TransformStamped odom_trans;
+
+  msg.header.stamp = ros::Time::now();
+
+  msg.name.push_back("FR_hip_joint");
+  msg.name.push_back("FR_thigh_joint");
+  msg.name.push_back("FR_calf_joint");
+
+  msg.name.push_back("FL_hip_joint");
+  msg.name.push_back("FL_thigh_joint");
+  msg.name.push_back("FL_calf_joint");
+
+  msg.name.push_back("RR_hip_joint");
+  msg.name.push_back("RR_thigh_joint");
+  msg.name.push_back("RR_calf_joint");
+
+  msg.name.push_back("RL_hip_joint");
+  msg.name.push_back("RL_thigh_joint");
+  msg.name.push_back("RL_calf_joint");
+
+  for (uint8_t joint_num = 0; joint_num < 12; joint_num++)
+  {
+    msg.position.push_back(_low_state.motorState[joint_num].q);
+    msg.velocity.push_back(_low_state.motorState[joint_num].dq);
+  }
+
+  _pub_joint_states.publish(msg);
+
+  odom_trans.header.stamp = ros::Time::now();
+  odom_trans.header.frame_id = "map";
+  odom_trans.child_frame_id = "base";
+
+  odom_quat.x = _stateEstimator->getResult().orientation.y();
+  odom_quat.y = _stateEstimator->getResult().orientation.z();
+  odom_quat.z = _stateEstimator->getResult().orientation.w();
+  odom_quat.w = _stateEstimator->getResult().orientation.x();
+
+  odom_trans.transform.translation.x = _stateEstimator->getResult().position.x();
+  odom_trans.transform.translation.y = _stateEstimator->getResult().position.y();
+  odom_trans.transform.translation.z = _stateEstimator->getResult().position.z();
+  odom_trans.transform.rotation = odom_quat;
+
+  odom_broadcaster.sendTransform(odom_trans);
 }

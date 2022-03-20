@@ -4,11 +4,14 @@
 #include <iostream>
 
 //ROS
+#include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
-#include <sensor_msgs/JointState.h>
+#include <tf/transform_broadcaster.h>
 
 //MIT
 #include "Configuration.h"
@@ -71,6 +74,7 @@ private:
   void _initSubscribers();
   void _initPublishers();
   void _initParameters();
+  void _updateVisualization();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
@@ -84,8 +88,9 @@ private:
   DesiredStateCommand<float>* _desiredStateCommand;
   GamepadCommand driverCommand;
   unitree_legged_msgs::LowState _low_state;
+  tf::TransformBroadcaster odom_broadcaster;
 
-  spi_torque_t _spi_torque;
+      spi_torque_t _spi_torque;
 
   ControlFSM<float>* _controlFSM;
 
