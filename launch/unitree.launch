@@ -1,7 +1,0 @@
-<launch>
-
-<rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/ros_config.yaml"/>
-
-<node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen"/>
-
-</launch> 
