@@ -454,8 +454,7 @@ void GaitScheduler<T>::createGait()
     T oldGaitPeriodTimeNominal = gaitData.periodTimeNominal;
     gaitData.periodTimeNominal = 3 * gaitData.periodTimeNominal;
     gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal =
-        (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.switchingPhaseNominal - 1)) / gaitData.periodTimeNominal;
+    gaitData.switchingPhaseNominal = (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.switchingPhaseNominal - 1)) / gaitData.periodTimeNominal;
     gaitData.phaseOffset << (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(0) - 1)) / gaitData.periodTimeNominal,
         (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(1) - 1)) / gaitData.periodTimeNominal,
         (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(2) - 1)) / gaitData.periodTimeNominal,
@@ -509,23 +508,19 @@ void GaitScheduler<T>::calcAuxiliaryGaitData()
     if (gaitData.gaitEnabled(foot) == 1)
     {
       // The scaled period time for each foot
-      gaitData.periodTime(foot) =
-          gaitData.periodTimeNominal / gaitData.phaseScale(foot);
+      gaitData.periodTime(foot) = gaitData.periodTimeNominal / gaitData.phaseScale(foot);
 
       // Phase at which to switch the foot from stance to swing
       gaitData.switchingPhase(foot) = gaitData.switchingPhaseNominal;
 
       // Initialize the phase variables according to offset
-      gaitData.phaseVariable(foot) =
-          gaitData.initialPhase + gaitData.phaseOffset(foot);
+      gaitData.phaseVariable(foot) = gaitData.initialPhase + gaitData.phaseOffset(foot);
 
       // Find the total stance time over the gait cycle
-      gaitData.timeStance(foot) =
-          gaitData.periodTime(foot) * gaitData.switchingPhase(foot);
+      gaitData.timeStance(foot) = gaitData.periodTime(foot) * gaitData.switchingPhase(foot);
 
       // Find the total swing time over the gait cycle
-      gaitData.timeSwing(foot) =
-          gaitData.periodTime(foot) * (1.0 - gaitData.switchingPhase(foot));
+      gaitData.timeSwing(foot) = gaitData.periodTime(foot) * (1.0 - gaitData.switchingPhase(foot));
     }
     else
     {

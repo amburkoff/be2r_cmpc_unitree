@@ -3,6 +3,7 @@
 
 #include <queue>
 #include <string>
+#include <iostream>
 
 #include "cppTypes.h"
 
