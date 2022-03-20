@@ -67,6 +67,11 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   _pub_des_traj[1] = _nh.advertise<nav_msgs::Path>("/des_traj_1", 1);
   _pub_des_traj[2] = _nh.advertise<nav_msgs::Path>("/des_traj_2", 1);
   _pub_des_traj[3] = _nh.advertise<nav_msgs::Path>("/des_traj_3", 1);
+
+  _vis_pub[0] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_0", 1);
+  _vis_pub[1] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_1", 1);
+  _vis_pub[2] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_2", 1);
+  _vis_pub[3] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_3", 1);
 }
 
 void ConvexMPCLocomotion::initialize()
@@ -481,6 +486,44 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kpCartesian = Kp;
         data._legController->commands[foot].kdCartesian = Kd;
       }
+
+      std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
+
+      marker[foot].header.frame_id = names[foot];
+      marker[foot].header.stamp = ros::Time();
+      marker[foot].ns = "my_namespace";
+      marker[foot].id = 0;
+      marker[foot].type = visualization_msgs::Marker::ARROW;
+      marker[foot].action = visualization_msgs::Marker::ADD;
+      // pose and orientation must be zero, except orientation.w = 1
+      marker[foot].pose.position.x = 0;
+      marker[foot].pose.position.y = 0;
+      marker[foot].pose.position.z = 0;
+      marker[foot].pose.orientation.x = 0.0;
+      marker[foot].pose.orientation.y = 0.0;
+      marker[foot].pose.orientation.z = 0.0;
+      marker[foot].pose.orientation.w = 1.0;
+      marker[foot].scale.x = 0.005; // shaft diameter
+      marker[foot].scale.y = 0.01;  // head diameter
+      marker[foot].scale.z = 0.0;   // if not zero, specifies head length
+      marker[foot].color.a = 1.0;   // Don't forget to set the alpha!
+      marker[foot].color.r = 1.0;
+      marker[foot].color.g = 0.0;
+      marker[foot].color.b = 0.0;
+      geometry_msgs::Point p1, p2;
+      // start point
+      p1.x = 0;
+      p1.y = 0;
+      p1.z = 0;
+      // finish point
+      p2.x = 0;
+      p2.y = 0;
+      p2.z = 0;
+      marker[foot].points.clear();
+      marker[foot].points.push_back(p1);
+      marker[foot].points.push_back(p2);
+
+      _vis_pub[foot].publish(marker[foot]);
     }
     else // foot is in stance
     {
@@ -525,6 +568,42 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
       // Update for WBC
       //Fr_des[foot] = -f_ff[foot];
+      std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
+      marker[foot].header.frame_id = names[foot];
+      marker[foot].header.stamp = ros::Time();
+      marker[foot].ns = "my_namespace";
+      marker[foot].id = 0;
+      marker[foot].type = visualization_msgs::Marker::ARROW;
+      marker[foot].action = visualization_msgs::Marker::ADD;
+      // pose and orientation must be zero, except orientation.w = 1
+      marker[foot].pose.position.x = 0;
+      marker[foot].pose.position.y = 0;
+      marker[foot].pose.position.z = 0;
+      marker[foot].pose.orientation.x = 0.0;
+      marker[foot].pose.orientation.y = 0.0;
+      marker[foot].pose.orientation.z = 0.0;
+      marker[foot].pose.orientation.w = 1.0;
+      marker[foot].scale.x = 0.005; // shaft diameter
+      marker[foot].scale.y = 0.01;  // head diameter
+      marker[foot].scale.z = 0.0;   // if not zero, specifies head length
+      marker[foot].color.a = 0.8;   // Don't forget to set the alpha!
+      marker[foot].color.r = 1.0;
+      marker[foot].color.g = 0.0;
+      marker[foot].color.b = 0.0;
+      geometry_msgs::Point p1, p2;
+      // start point
+      p1.x = pDesLeg[0];
+      p1.y = pDesLeg[1];
+      p1.z = pDesLeg[2];
+      // finish point
+      float koef = 500;
+      p2.x = pDesLeg[0] + (-f_ff[foot][0] / koef);
+      p2.y = pDesLeg[1] + (-f_ff[foot][1] / koef);
+      p2.z = pDesLeg[2] + (-f_ff[foot][2] / koef);
+      marker[foot].points.clear();
+      marker[foot].points.push_back(p1);
+      marker[foot].points.push_back(p2);
+      _vis_pub[foot].publish(marker[foot]);
     }
   }
 

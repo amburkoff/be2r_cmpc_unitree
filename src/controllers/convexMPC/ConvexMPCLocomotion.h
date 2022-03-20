@@ -10,6 +10,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <ros/ros.h>
+#include <visualization_msgs/Marker.h>
 
 #include <cstdio>
 
@@ -171,6 +172,8 @@ private:
   float trajAll[12 * 36];
   ros::Publisher _pub_des_traj[4];
   ros::NodeHandle _nh;
+  visualization_msgs::Marker marker[4];
+  ros::Publisher _vis_pub[4];
 
   MIT_UserParameters* _parameters = nullptr;
   CMPC_Jump jump_state;

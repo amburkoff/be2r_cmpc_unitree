@@ -1,0 +1,6 @@
+<launch>
+
+    <arg name="rvizconfig" default="$(find be2r_cmpc_unitree)/rviz/unitree.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch> 
