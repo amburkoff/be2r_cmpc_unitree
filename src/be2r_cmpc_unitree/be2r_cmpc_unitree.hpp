@@ -8,6 +8,7 @@
 #include <ros/ros.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
+#include <sensor_msgs/JointState.h>
 
 //MIT
 #include "Configuration.h"
@@ -65,6 +66,7 @@ private:
   ros::Publisher _pub_low_cmd;
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
+  ros::Publisher _pub_joint_states;
 
   void _initSubscribers();
   void _initPublishers();

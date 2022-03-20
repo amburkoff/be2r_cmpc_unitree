@@ -135,6 +135,34 @@ void Body_Manager::run()
 
     controlParameters.control_mode = FSM;
   }
+
+    sensor_msgs::JointState msg;
+
+  msg.header.stamp = ros::Time::now();
+
+  msg.name.push_back("FR_hip_joint");
+  msg.name.push_back("FR_thigh_joint");
+  msg.name.push_back("FR_calf_joint");
+
+  msg.name.push_back("FL_hip_joint");
+  msg.name.push_back("FL_thigh_joint");
+  msg.name.push_back("FL_calf_joint");
+
+  msg.name.push_back("RR_hip_joint");
+  msg.name.push_back("RR_thigh_joint");
+  msg.name.push_back("RR_calf_joint");
+
+  msg.name.push_back("RL_hip_joint");
+  msg.name.push_back("RL_thigh_joint");
+  msg.name.push_back("RL_calf_joint");
+
+  for (uint8_t joint_num = 0; joint_num < 12; joint_num++)
+  {
+    msg.position.push_back(_low_state.motorState[joint_num].q);
+    msg.velocity.push_back(_low_state.motorState[joint_num].dq);
+  }
+
+  _pub_joint_states.publish(msg);
 }
 
 void Body_Manager::setupStep()
@@ -199,12 +227,13 @@ void Body_Manager::_initSubscribers()
 void Body_Manager::_initPublishers()
 {
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
+  _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
 {
   _low_state = msg;
-  
+
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
     spiData.q_abad[leg_num] = msg.motorState[leg_num * 3 + 0].q;
