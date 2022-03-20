@@ -278,7 +278,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       swingTimeRemaining[i] -= dt;
     }
     //if(firstSwing[i]) {
-    //footSwingTrajectories[i].setHeight(.05);
     footSwingTrajectories[i].setHeight(.06);
 
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
@@ -323,10 +322,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   // calc gait
   iterationCounter++;
 
-  // load LCM leg swing gains
-  // Kp << 1000, 0, 0,
-  //     0, 1000, 0,
-  //     0, 0, 500;
   Kp << 700, 0, 0,
       0, 700, 0,
       0, 0, 200;
@@ -335,10 +330,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   Kd << 10, 0, 0,
       0, 10, 0,
       0, 0, 10;
-  // Kd << 7, 0, 0,
-  //     0, 7, 0,
-  //     0, 0, 7;
+
   Kd_stance = Kd;
+
   // gait
   Vec4<float> contactStates = gait->getContactState();
   Vec4<float> swingStates = gait->getSwingState();
@@ -348,6 +342,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   //  StateEstimator* se = hw_i->state_estimator;
   Vec4<float> se_contactState(0, 0, 0, 0);
+  // se_contactState = data._stateEstimator->getResult().is_contact;
+
+  // ROS_INFO_STREAM("is contact: " << se_contactState(0));
 
   // #ifdef DRAW_DEBUG_PATH
   //   auto* trajectoryDebug = data.visualizationData->addPath();
@@ -368,10 +365,29 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   //   }
   // #endif
 
+  // static bool is_stance[4] = {0, 0, 0, 0};
+
   for (int foot = 0; foot < 4; foot++)
   {
     float contactState = contactStates[foot];
     float swingState = swingStates[foot];
+
+    // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot] == 0))
+    // if ((se_contactState(foot) == 2) && (swingState > 0))
+    // {
+    //   swingState = 1;
+    //   is_stance[foot] = 2;
+    //   ROS_INFO_STREAM("Foot " << foot << " in contact early: " << swingState);
+    // }
+
+    // if(foot == 1)
+    // {
+    //   ROS_INFO_STREAM("contact: " << contactState);
+    //   ROS_INFO_STREAM("swing: " << swingState);
+    // }
+
+    // contactState = data._stateEstimator->getResult().contactEstimate[foot];
+    // swingState = 1 - data._stateEstimator->getResult().contactEstimate[foot];
 
     if (swingState > 0) // foot is in swing
     {
@@ -379,6 +395,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       {
         firstSwing[foot] = false;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+        // is_stance[foot] = 0;
       }
 
       // #ifdef DRAW_DEBUG_SWINGS
@@ -483,7 +500,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     }
   }
 
-  // se->set_contact_state(se_contactState); todo removed
   data._stateEstimator->setContactPhase(se_contactState);
 
   // Update For WBC
@@ -505,7 +521,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   vBody_Ori_des[1] = 0.;
   vBody_Ori_des[2] = _yaw_turn_rate;
 
-  //contact_state = gait->getContactState();
   contact_state = gait->getContactState();
   // END of WBC Update
 }

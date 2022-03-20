@@ -23,6 +23,7 @@ struct StateEstimate
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Vec4<T> contactEstimate;
+  Vec4<T> is_contact;
   Vec3<T> position;
   Vec3<T> vBody;
   Quat<T> orientation;

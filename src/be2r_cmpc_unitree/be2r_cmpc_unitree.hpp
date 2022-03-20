@@ -68,6 +68,7 @@ private:
 
   void _initSubscribers();
   void _initPublishers();
+  void _initParameters();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
@@ -80,6 +81,7 @@ private:
   StateEstimate<float> _stateEstimate;
   DesiredStateCommand<float>* _desiredStateCommand;
   GamepadCommand driverCommand;
+  unitree_legged_msgs::LowState _low_state;
 
   spi_torque_t _spi_torque;
 
@@ -89,4 +91,18 @@ private:
   GaitScheduler<float>* _gaitScheduler;
   MIT_UserParameters userParameters;
 
+  template <typename T>
+  bool readRosParam(std::string param_name, T& param_var)
+  {
+    if (!_nh.getParam(param_name, param_var))
+    {
+      ROS_WARN_STREAM("Can't read param " << param_name);
+
+      return false;
+    }
+
+    // std::cout << "[ROS PARAM] " << param_name << ": " << param_var << std::endl;
+
+    return true;
+  }
 };
