@@ -4,7 +4,7 @@ using namespace std;
 
 Body_Manager::Body_Manager()
 {
-
+  footContactState = Vec4<uint8_t>::Zero();
 }
 
 Body_Manager::~Body_Manager()
@@ -70,11 +70,13 @@ void Body_Manager::init()
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &_stateEstimate, &controlParameters);
+  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
+                                                       &_stateEstimate, &controlParameters);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
+  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters,
+                                                        &_stateEstimate, controlParameters.controller_dt);
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&userParameters, controlParameters.controller_dt);
@@ -169,6 +171,12 @@ void Body_Manager::finalizeStep()
     _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
   }
+  // DEBUG
+  for (size_t i = 0; i < 4; i++)
+  {
+      _low_cmd.ff[i].x = _stateEstimator->getResult().swingProgress[i];
+      _low_cmd.ff[i].y = _stateEstimator->getResult().contactEstimate[i];
+  }
 
   _pub_low_cmd.publish(_low_cmd);
 }
@@ -230,6 +238,23 @@ void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
   vectorNavData.quat[1] = msg.imu.quaternion[1]; //x
   vectorNavData.quat[2] = msg.imu.quaternion[2]; //y
   vectorNavData.quat[3] = msg.imu.quaternion[3]; //z
+
+  // Датчики контакта на лапах
+  for (size_t leg=0; leg < 4; leg++)
+  {
+    footContactState(leg) = msg.footForce[leg];
+//    if ((_stateEstimator->getResult().contactEstimate[leg] <= 0.001) &&
+//      (footContactState(leg) == 1) )
+//    {
+////      std::cout << "EARLY CONTACT" << std::endl;
+
+//    }
+  }
+
+  _stateEstimator->setContactSensorData(footContactState);
+
+  // Фильтрация данных
+//  _filterInput();
 }
 
 void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
@@ -300,4 +325,16 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
 
   // cout << "Leg: " << board_num << " q0_e: " << q0_e << " q1_e: " << q1_e << " q2_e: " << q2_e << endl;
   // cout << "Leg: " << board_num << " t0: " << torque_out->tau_abad[board_num] << " t1: " << torque_out->tau_hip[board_num] << " t2: " << torque_out->tau_knee[board_num] << endl;
+}
+
+//int expRunningAverage(int newVal) {
+//  static float k = 0.1;
+//  static float filVal = 0;
+//  filVal += (newVal - filVal) * k;
+//  return filVal;
+//}
+
+void Body_Manager::_filterInput()
+{
+
 }

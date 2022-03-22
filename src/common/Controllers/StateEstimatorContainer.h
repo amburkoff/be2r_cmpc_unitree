@@ -23,6 +23,8 @@ struct StateEstimate
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Vec4<T> contactEstimate;
+  Vec4<T> swingProgress;
+  Vec4<uint8_t> contactSensor;
   Vec3<T> position;
   Vec3<T> vBody;
   Quat<T> orientation;
@@ -49,6 +51,7 @@ struct StateEstimatorData
   CheaterState<double>* cheaterState;
   LegControllerData<T>* legControllerData;
   Vec4<T>* contactPhase;
+  Vec4<uint8_t>* contactSensor;
   RobotControlParameters* parameters;
 };
 
@@ -84,6 +87,7 @@ public:
    */
   StateEstimatorContainer(VectorNavData* vectorNavData,
                           LegControllerData<T>* legControllerData,
+                          Vec4<uint8_t>* footContactState,
                           StateEstimate<T>* stateEstimate,
                           RobotControlParameters* parameters)
   {
@@ -92,6 +96,7 @@ public:
     _data.result = stateEstimate;
     _phase = Vec4<T>::Zero();
     _data.contactPhase = &_phase;
+    _data.contactSensor = footContactState;
     _data.parameters = parameters;
   }
 
@@ -133,6 +138,28 @@ public:
   void setContactPhase(Vec4<T>& phase)
   {
     *_data.contactPhase = phase;
+  }
+
+  /*!
+   * Set the contact phase
+   */
+  void setSwingPhase(Vec4<T> phase)
+  {
+    _data.result->swingProgress = phase;
+  }
+
+
+  /*!
+   * Set the contact state (binary)
+   */
+  void setContactSensorData(Vec4<uint8_t>& state)
+  {
+    *_data.contactSensor = state;
+  }
+
+  void setContactSensorData(Vec4<uint8_t>* state)
+  {
+    _data.contactSensor = state;
   }
 
   /*!

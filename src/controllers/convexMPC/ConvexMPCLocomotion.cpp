@@ -17,26 +17,30 @@ using namespace std;
 // Controller
 ////////////////////
 
-ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters) : iterationsBetweenMPC(_iterations_between_mpc),
-                                                                                                                   horizonLength(14),
-                                                                                                                   //  horizonLength(10),
-                                                                                                                   dt(_dt),
-                                                                                                                   trotting(horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0), Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0), "Trotting"),
-                                                                                                                   bounding(horizonLength, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding"),
-                                                                                                                   //bounding(horizonLength, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
-                                                                                                                   pronking(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking"),
-                                                                                                                   jumping(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping"),
-                                                                                                                   //galloping(horizonLength, Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
-                                                                                                                   //galloping(horizonLength, Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
-                                                                                                                   galloping(horizonLength, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping"),
-                                                                                                                   standing(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(10, 10, 10, 10), "Standing"),
-                                                                                                                   //trotRunning(horizonLength, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot Running"),
-                                                                                                                   trotRunning(horizonLength, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running"),
-                                                                                                                   walking(horizonLength, Vec4<int>(0, 3, 5, 8), Vec4<int>(5, 5, 5, 5), "Walking"),
-                                                                                                                   walking2(horizonLength, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2"),
-                                                                                                                   pacing(horizonLength, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing"),
-                                                                                                                   random(horizonLength, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot"),
-                                                                                                                   random2(horizonLength, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
+ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters)
+  : iterationsBetweenMPC(_iterations_between_mpc),
+  horizonLength(14),
+  //  horizonLength(10),
+  dt(_dt),
+  trotting(horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0),
+           Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0), "Trotting"),
+  trotting_copy(horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0),
+           Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0), "Trotting_copy"),
+  bounding(horizonLength, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding"),
+  //bounding(horizonLength, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
+  pronking(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking"),
+  jumping(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping"),
+  //galloping(horizonLength, Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
+  //galloping(horizonLength, Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
+  galloping(horizonLength, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping"),
+  standing(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(10, 10, 10, 10), "Standing"),
+  //trotRunning(horizonLength, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot Running"),
+  trotRunning(horizonLength, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running"),
+  walking(horizonLength, Vec4<int>(0, 3, 5, 8), Vec4<int>(5, 5, 5, 5), "Walking"),
+  walking2(horizonLength, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2"),
+  pacing(horizonLength, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing"),
+  random(horizonLength, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot"),
+  random2(horizonLength, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
 {
   _parameters = parameters;
   dtMPC = dt * iterationsBetweenMPC;
@@ -170,8 +174,12 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     gait = &pacing;
   }
   current_gait = gaitNumber;
+  *gait = trotting_copy;
 
+  gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
+  gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
+//  std::cout << "iterationCounter " << iterationCounter << std::endl;
 
   jumping.setIterations(iterationsBetweenMPC, iterationCounter);
 
@@ -247,7 +255,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     for (int i = 0; i < 4; i++)
     {
 
-      footSwingTrajectories[i].setHeight(0.06);
+      footSwingTrajectories[i].setHeight(0.09);
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       footSwingTrajectories[i].setFinalPosition(pFoot[i]);
     }
@@ -279,7 +287,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     }
     //if(firstSwing[i]) {
     //footSwingTrajectories[i].setHeight(.05);
-    footSwingTrajectories[i].setHeight(.06);
+    footSwingTrajectories[i].setHeight(.09);
 
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
 
@@ -305,12 +313,12 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     // Using the estimated velocity is correct
     //Vec3<float> des_vel_world = seResult.rBody.transpose() * des_vel;
     float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time +
-                    .03f * (seResult.vWorld[0] - v_des_world[0]) +
-                    (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
+        .03f * (seResult.vWorld[0] - v_des_world[0]) +
+        (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
 
     float pfy_rel = seResult.vWorld[1] * .5 * stance_time * dtMPC +
-                    .03f * (seResult.vWorld[1] - v_des_world[1]) +
-                    (0.5f * seResult.position[2] / 9.81f) * (-seResult.vWorld[0] * _yaw_turn_rate);
+        .03f * (seResult.vWorld[1] - v_des_world[1]) +
+        (0.5f * seResult.position[2] / 9.81f) * (-seResult.vWorld[0] * _yaw_turn_rate);
     pfx_rel = fminf(fmaxf(pfx_rel, -p_rel_max), p_rel_max);
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
@@ -485,6 +493,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   // se->set_contact_state(se_contactState); todo removed
   data._stateEstimator->setContactPhase(se_contactState);
+  data._stateEstimator->setSwingPhase(gait->getSwingState());
 
   // Update For WBC
   pBody_des[0] = world_position_desired[0];

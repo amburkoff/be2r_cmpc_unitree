@@ -56,6 +56,7 @@ public:
   SpiData spiData;
   SpiCommand spiCommand;
   u64 _iterations = 0;
+  Vec4<uint8_t> footContactState;
 
   bool is_stand = false;
 
@@ -68,6 +69,7 @@ private:
 
   void _initSubscribers();
   void _initPublishers();
+  void _filterInput();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
