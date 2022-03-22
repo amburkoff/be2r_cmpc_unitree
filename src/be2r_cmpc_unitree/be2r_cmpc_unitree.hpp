@@ -35,7 +35,7 @@
 
 #define MAIN_LOOP_RATE 500
 
-#define FSM 4
+#define FSM 3
 
 const float max_torque[3] = {17.f, 17.f, 26.f};        // TODO CHECK WITH BEN
 const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
