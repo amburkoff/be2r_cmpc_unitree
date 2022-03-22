@@ -85,6 +85,16 @@ void Body_Manager::init()
                                       _desiredStateCommand,
                                       &controlParameters,
                                       &userParameters);
+
+  _leg_contoller_params[0].zero();
+  _leg_contoller_params[1].zero();
+  _leg_contoller_params[2].zero();
+  _leg_contoller_params[3].zero();
+
+  f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
+  server.setCallback(f);
+  ROS_INFO("START SERVER");
+  controlParameters.control_mode = 0;
 }
 
 void Body_Manager::run()
@@ -123,6 +133,8 @@ void Body_Manager::run()
   // Sets the leg controller commands for the robot appropriate commands
   finalizeStep();
 
+#ifdef FSM_AUTO
+  //оставляю эту часть для автоматического перехода между режимами, если понадобится
   if (count_ini > 100 && count_ini < 1500)
   {
     ROS_INFO_STREAM_ONCE("Stand up " << count_ini);
@@ -135,6 +147,7 @@ void Body_Manager::run()
 
     controlParameters.control_mode = FSM;
   }
+#endif
 
   _updateVisualization();
 }
@@ -144,7 +157,7 @@ void Body_Manager::setupStep()
   _legController->updateData(&spiData);
 
   // Setup the leg controller for a new iteration
-  _legController->zeroCommand();
+  _legController->zeroCommand(); //нельзя убирать
   _legController->setEnabled(true);
 
   // todo safety checks, sanity checks, etc...
@@ -152,6 +165,11 @@ void Body_Manager::setupStep()
 
 void Body_Manager::finalizeStep()
 {
+  // for (uint8_t i = 0; i < 4; i++)
+  // {
+  //   _legController->commands[i].kpCartesian = _leg_contoller_params[i].kpCartesian;
+  //   _legController->commands[i].kdCartesian = _leg_contoller_params[i].kdCartesian;
+  // }
 
   _legController->updateCommand(&spiCommand);
 
@@ -448,4 +466,24 @@ void Body_Manager::_updateVisualization()
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
+}
+
+void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
+{
+  ROS_INFO_STREAM("NEW data Kp: " << config.Kp0 << " " << config.Kp1 << " " << config.Kp2);
+  ROS_INFO_STREAM("NEW data Kd: " << config.Kd0 << " " << config.Kd1 << " " << config.Kd2);
+  ROS_INFO_STREAM("NEW data FSM_State: " << config.FSM_State);
+
+  controlParameters.control_mode = config.FSM_State;
+
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    // _legController->commands[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
+    // _legController->commands[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
+
+    // _leg_contoller_params[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
+    // _leg_contoller_params[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
+  }
+
+  ROS_INFO_STREAM("New dynamic data!");
 }
