@@ -240,9 +240,9 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   // cout << "init rpy: " << _ini_body_ori_rpy << endl;
 
   // Orientation
-  _wbc_data->pBody_RPY_des[1] = 0.3 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
-  _wbc_data->pBody_RPY_des[0] = 0.5 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
-  _wbc_data->pBody_RPY_des[2] -= 0.3 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
+  _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
+  _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
+  _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
 
   // Height
   _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];

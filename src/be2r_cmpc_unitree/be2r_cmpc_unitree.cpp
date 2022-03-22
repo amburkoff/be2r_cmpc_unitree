@@ -258,6 +258,7 @@ void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
   driverCommand.leftStickAnalog[1] = msg.linear.x;
   driverCommand.leftStickAnalog[0] = -msg.linear.y;
 
+  driverCommand.rightStickAnalog[1] = msg.angular.x;
   driverCommand.rightStickAnalog[0] = -msg.angular.z;
 }
 
