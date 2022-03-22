@@ -29,8 +29,6 @@ public:
 
   TransitionData<T> testTransition();
 
-  // dynamic_reconfigure::Server<mit_original_ros::ros_dynamic_paramsConfig> server;
-  // dynamic_reconfigure::Server<mit_original_ros::ros_dynamic_paramsConfig>::CallbackType f;
 
 private:
   // Keep track of the control iterations

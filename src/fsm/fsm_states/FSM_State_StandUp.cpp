@@ -8,27 +8,6 @@
 
 using namespace std;
 
-static uint16_t Kp0 = 500;
-static uint16_t Kp1 = 500;
-static uint16_t Kp2 = 500;
-static uint16_t Kd0 = 8;
-static uint16_t Kd1 = 8;
-static uint16_t Kd2 = 8;
-
-// void callbackROSros(mit_original_ros::ros_dynamic_paramsConfig& config, uint32_t level)
-// {
-//   ROS_INFO_STREAM("NEW data Kp: " << config.Kp0 << " " << config.Kp1 << " " << config.Kp2);
-//   ROS_INFO_STREAM("NEW data Kd: " << config.Kd0 << " " << config.Kd1 << " " << config.Kd2);
-//   ROS_INFO_STREAM("New dynamic data!");
-
-//   Kp0 = config.Kp0;
-//   Kp1 = config.Kp1;
-//   Kp2 = config.Kp2;
-//   Kd0 = config.Kd0;
-//   Kd1 = config.Kd1;
-//   Kd2 = config.Kd2;
-// }
-
 /**
  * Constructor for the FSM State that passes in state specific info to
  * the generic FSM State constructor.
@@ -87,11 +66,8 @@ void FSM_State_StandUp<T>::run()
 
   for (int i = 0; i < 4; i++)
   {
-    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(500, 500, 500).asDiagonal();
-    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(8, 8, 8).asDiagonal();
-
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(Kp0, Kp1, Kp2).asDiagonal();
-    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(Kd0, Kd1, Kd2).asDiagonal();
+    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(600, 600, 600).asDiagonal();
+    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
