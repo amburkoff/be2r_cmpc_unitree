@@ -361,7 +361,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   //  StateEstimator* se = hw_i->state_estimator;
   Vec4<float> se_contactState(0, 0, 0, 0);
-  // se_contactState = data._stateEstimator->getResult().is_contact;
 
   // ROS_INFO_STREAM("is contact: " << se_contactState(0));
 

@@ -80,6 +80,8 @@ private:
   void _initSubscribers();
   void _initPublishers();
   void _filterInput();
+  void _initParameters();
+  void _updateVisualization();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);

@@ -103,7 +103,6 @@ void Body_Manager::init()
 void Body_Manager::run()
 {
   Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
-  _stateEstimate.is_contact = contact_states;
 
   // Run the state estimator step
   _stateEstimator->run();
