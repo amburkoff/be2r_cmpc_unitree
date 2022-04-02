@@ -65,10 +65,7 @@ void LocomotionCtrl<T>::_ContactTaskUpdate(void* input, ControlFSMData<T>& data)
     }
     else
     { // No Contact (swing)
-      _foot_task[leg]->UpdateTask(
-          &(_input_data->pFoot_des[leg]),
-          _input_data->vFoot_des[leg],
-          _input_data->aFoot_des[leg]);
+      _foot_task[leg]->UpdateTask(&(_input_data->pFoot_des[leg]), _input_data->vFoot_des[leg], _input_data->aFoot_des[leg]);
       //zero_vec3);
       WBCtrl::_task_list.push_back(_foot_task[leg]);
     }

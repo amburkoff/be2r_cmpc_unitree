@@ -10,7 +10,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   unitree_legged_msgs
   geometry_msgs
+  tf
+  nav_msgs
+  visualization_msgs
+  dynamic_reconfigure
 )
+
+generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)
 
 catkin_package(
  INCLUDE_DIRS
@@ -73,5 +79,4 @@ add_dependencies(unitree_ctrl unitree_legged_msgs_generate_messages_cpp)
 
 #линкуем либы к бинарнику
 target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib)
-
-
+add_dependencies(unitree_ctrl ${PROJECT_NAME}_gencfg)

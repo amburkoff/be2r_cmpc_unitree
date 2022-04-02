@@ -1,5 +1,7 @@
 #include "be2r_cmpc_unitree.hpp"
 
+using namespace std;
+
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "unitree_ctrl");
@@ -23,6 +25,10 @@ int main(int argc, char* argv[])
   }
 
   ROS_INFO("Initialization Done!");
+
+  // cout << "CONTROLER READY!" << endl;
+  // cout << "Press ENTER to start!... " << endl;
+  // std::cin.ignore();
 
   while (ros::ok())
   {
