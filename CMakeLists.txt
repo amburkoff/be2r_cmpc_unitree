@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(be2r_cmpc_unitree)
 
+# Запуск скрипта для создания типов lcm
+execute_process(
+  COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_types_no_java.sh
+)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   unitree_legged_msgs
@@ -68,3 +73,5 @@ add_dependencies(unitree_ctrl unitree_legged_msgs_generate_messages_cpp)
 
 #линкуем либы к бинарнику
 target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib)
+
+

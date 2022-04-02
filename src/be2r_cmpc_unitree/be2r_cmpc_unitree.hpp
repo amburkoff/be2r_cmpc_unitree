@@ -16,9 +16,9 @@
 #include "LegController.h"
 #include "MiniCheetah.h"
 #include "RobotParameters.h"
-#include "spi_command_t.hpp"
-#include "spi_data_t.hpp"
-#include "spi_torque_t.hpp"
+#include "lcm_msgs/spi_command_t.hpp"
+#include "lcm_msgs/spi_data_t.hpp"
+#include "lcm_msgs/spi_torque_t.hpp"
 // #include "Controllers/ContactEstimator.h"
 #include "Controllers/GaitScheduler.h"
 

@@ -8,7 +8,7 @@
 #include <WBC/WBIC/WBIC.hpp>
 #include <ControlFSMData.h>
 
-#include "wbc_test_data_t.hpp"
+#include "lcm_msgs/wbc_test_data_t.hpp"
 #include <lcm-cpp.hpp>
 
 #define WBCtrl WBC_Ctrl<T>

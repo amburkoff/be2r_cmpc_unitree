@@ -220,7 +220,7 @@ inline Matrix<fpt,3,3> cross_mat(Matrix<fpt,3,3> I_inv, Matrix<fpt,3,1> r)
   return I_inv * cm;
 }
 //continuous time state space matrices.
-void vision_ct_ss_mats(Matrix<fpt,3,3> vI_world, fpt m, Matrix<fpt,3,4> r_feet, 
+void vision_ct_ss_mats(Matrix<fpt,3,3> vI_world, fpt m, Matrix<fpt,3,4> r_feet,
     Matrix<fpt,3,3> R_yaw, Matrix<fpt,13,13>& A, Matrix<fpt,13,12>& B, float x_drag)
 {
   A.setZero();
