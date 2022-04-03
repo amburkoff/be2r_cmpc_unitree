@@ -182,6 +182,8 @@ void Body_Manager::finalizeStep()
 
   static unitree_legged_msgs::LowCmd _low_cmd;
 
+  _low_cmd.header.stamp = ros::Time::now();
+
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
     _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
@@ -477,7 +479,6 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
 
   controlParameters.control_mode = config.FSM_State;
   userParameters.use_wbc = config.WBC;
-
 
   for (uint8_t i = 0; i < 4; i++)
   {
