@@ -471,11 +471,13 @@ void Body_Manager::_updateVisualization()
 
 void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
 {
-  ROS_INFO_STREAM("NEW data Kp: " << config.Kp0 << " " << config.Kp1 << " " << config.Kp2);
-  ROS_INFO_STREAM("NEW data Kd: " << config.Kd0 << " " << config.Kd1 << " " << config.Kd2);
-  ROS_INFO_STREAM("NEW data FSM_State: " << config.FSM_State);
+  // ROS_INFO_STREAM("NEW data Kp: " << config.Kp0 << " " << config.Kp1 << " " << config.Kp2);
+  // ROS_INFO_STREAM("NEW data Kd: " << config.Kd0 << " " << config.Kd1 << " " << config.Kd2);
+  // ROS_INFO_STREAM("NEW data FSM_State: " << config.FSM_State);
 
   controlParameters.control_mode = config.FSM_State;
+  userParameters.use_wbc = config.WBC;
+
 
   for (uint8_t i = 0; i < 4; i++)
   {
