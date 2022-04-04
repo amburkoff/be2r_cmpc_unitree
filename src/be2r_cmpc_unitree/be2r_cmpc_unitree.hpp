@@ -14,6 +14,7 @@
 #include <tf/transform_broadcaster.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
+#include <nav_msgs/Odometry.h>
 
 //MIT
 #include "Configuration.h"
@@ -72,6 +73,9 @@ private:
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
   ros::Publisher _pub_joint_states;
+  ros::Publisher _pub_state_error;
+  ros::Time _time_start;
+  const ros::Time _zero_time;
 
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig> server;
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig>::CallbackType f;
@@ -80,6 +84,7 @@ private:
   void _initPublishers();
   void _initParameters();
   void _updateVisualization();
+  void _updatePlot();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);

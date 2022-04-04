@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Body_Manager::Body_Manager()
+Body_Manager::Body_Manager() : _zero_time(0)
 {
 }
 
@@ -17,6 +17,8 @@ void Body_Manager::init()
   _initSubscribers();
   _initPublishers();
   // _initParameters();
+
+  _time_start = ros::Time::now();
 
   printf("[Hardware Bridge] Loading parameters from file...\n");
 
@@ -94,6 +96,7 @@ void Body_Manager::init()
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
   server.setCallback(f);
   ROS_INFO("START SERVER");
+
   controlParameters.control_mode = 0;
 }
 
@@ -150,6 +153,7 @@ void Body_Manager::run()
 #endif
 
   _updateVisualization();
+  _updatePlot();
 }
 
 void Body_Manager::setupStep()
@@ -182,7 +186,9 @@ void Body_Manager::finalizeStep()
 
   static unitree_legged_msgs::LowCmd _low_cmd;
 
-  _low_cmd.header.stamp = ros::Time::now();
+  ros::Duration delta_t = ros::Time::now() - _time_start;
+  // _low_cmd.header.stamp = ros::Time::now();
+  _low_cmd.header.stamp = _zero_time + delta_t;
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
@@ -222,6 +228,7 @@ void Body_Manager::_initPublishers()
 {
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
+  _pub_state_error = _nh.advertise<nav_msgs::Odometry>("/state_error", 1);
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
@@ -458,6 +465,7 @@ void Body_Manager::_updateVisualization()
   odom_trans.header.frame_id = "map";
   odom_trans.child_frame_id = "base";
 
+  //TODO почему результаты естиматора приходится менять местами?
   odom_quat.x = _stateEstimator->getResult().orientation.y();
   odom_quat.y = _stateEstimator->getResult().orientation.z();
   odom_quat.z = _stateEstimator->getResult().orientation.w();
@@ -469,6 +477,51 @@ void Body_Manager::_updateVisualization()
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
+}
+
+void Body_Manager::_updatePlot()
+{
+  nav_msgs::Odometry msg;
+
+  ros::Duration delta_t = ros::Time::now() - _time_start;
+  // msg.header.stamp = ros::Time::now();
+  msg.header.stamp = _zero_time + delta_t;
+
+  static float x_vel_cmd, y_vel_cmd, yaw_turn_rate, x_vel_des, y_vel_des, yaw_des, roll_des, pitch_des;
+  float filter = 0.1;
+  float dt = controlParameters.controller_dt;
+
+  yaw_turn_rate = _desiredStateCommand->rightAnalogStick[0];
+  x_vel_cmd = _desiredStateCommand->leftAnalogStick[1];
+  y_vel_cmd = _desiredStateCommand->leftAnalogStick[0];
+
+  Eigen::Vector3f v_act;
+  Eigen::Vector3f w_act;
+  v_act = _stateEstimator->getResult().vBody;
+  w_act = _stateEstimator->getResult().omegaBody;
+
+  // float* p = seResult.position.data();
+  // float* v = seResult.vWorld.data();
+  // float* w = seResult.omegaWorld.data();
+  // float* q = seResult.orientation.data();
+
+  yaw_des = _stateEstimator->getResult().rpy[2] + dt * yaw_turn_rate;
+  roll_des = 0.;
+  pitch_des = 0.;
+  x_vel_des = x_vel_des * (1 - filter) + x_vel_cmd * filter;
+  y_vel_des = y_vel_des * (1 - filter) + y_vel_cmd * filter;
+
+  msg.pose.pose.orientation.x = 0 - _stateEstimator->getResult().rpy[0];
+  msg.pose.pose.orientation.y = 0 - _stateEstimator->getResult().rpy[1];
+  msg.pose.pose.orientation.z = yaw_des - _stateEstimator->getResult().rpy[2];
+
+  msg.twist.twist.linear.x = x_vel_des - v_act(0);
+  msg.twist.twist.linear.y = y_vel_des - v_act(1);
+  msg.twist.twist.angular.x = roll_des - w_act(0);
+  msg.twist.twist.angular.y = pitch_des - w_act(1);
+  msg.twist.twist.angular.z = yaw_turn_rate - w_act(2);
+
+  _pub_state_error.publish(msg);
 }
 
 void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)

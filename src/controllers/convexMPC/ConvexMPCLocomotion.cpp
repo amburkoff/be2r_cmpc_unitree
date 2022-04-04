@@ -21,6 +21,7 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
                                                                                                                    horizonLength(14),
                                                                                                                    //  horizonLength(10),
                                                                                                                    dt(_dt),
+                                                                                                                  //  trotting(horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0), Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0), "Trotting"),
                                                                                                                    trotting(horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0), Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0), "Trotting"),
                                                                                                                    bounding(horizonLength, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding"),
                                                                                                                    //bounding(horizonLength, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
@@ -356,25 +357,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   // ROS_INFO_STREAM("is contact: " << se_contactState(0));
 
-  // #ifdef DRAW_DEBUG_PATH
-  //   auto* trajectoryDebug = data.visualizationData->addPath();
-  //   if (trajectoryDebug)
-  //   {
-  //     trajectoryDebug->num_points = 10;
-  //     trajectoryDebug->color = {0.2, 0.2, 0.7, 0.5};
-  //     for (int i = 0; i < 10; i++)
-  //     {
-  //       trajectoryDebug->position[i][0] = trajAll[12 * i + 3];
-  //       trajectoryDebug->position[i][1] = trajAll[12 * i + 4];
-  //       trajectoryDebug->position[i][2] = trajAll[12 * i + 5];
-  //       auto* ball = data.visualizationData->addSphere();
-  //       ball->radius = 0.01;
-  //       ball->position = trajectoryDebug->position[i];
-  //       ball->color = {1.0, 0.2, 0.2, 0.5};
-  //     }
-  //   }
-  // #endif
-
   // static bool is_stance[4] = {0, 0, 0, 0};
 
   static nav_msgs::Path path[4];
@@ -414,37 +396,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         geometry_msgs::PoseStamped Emptypose;
         pose[foot] = Emptypose;
       }
-
-      // #ifdef DRAW_DEBUG_SWINGS
-      //       auto* debugPath = data.visualizationData->addPath();
-      //       if (debugPath)
-      //       {
-      //         debugPath->num_points = 100;
-      //         debugPath->color = {0.2, 1, 0.2, 0.5};
-      //         float step = (1.f - swingState) / 100.f;
-      //         for (int i = 0; i < 100; i++)
-      //         {
-      //           footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + i * step, swingTimes[foot]);
-      //           debugPath->position[i] = footSwingTrajectories[foot].getPosition();
-      //         }
-      //       }
-      //       auto* finalSphere = data.visualizationData->addSphere();
-      //       if (finalSphere)
-      //       {
-      //         finalSphere->position = footSwingTrajectories[foot].getPosition();
-      //         finalSphere->radius = 0.02;
-      //         finalSphere->color = {0.6, 0.6, 0.2, 0.7};
-      //       }
-      //       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
-      //       auto* actualSphere = data.visualizationData->addSphere();
-      //       auto* goalSphere = data.visualizationData->addSphere();
-      //       goalSphere->position = footSwingTrajectories[foot].getPosition();
-      //       actualSphere->position = pFoot[foot];
-      //       goalSphere->radius = 0.02;
-      //       actualSphere->radius = 0.02;
-      //       goalSphere->color = {0.2, 1, 0.2, 0.7};
-      //       actualSphere->color = {0.8, 0.2, 0.2, 0.7};
-      // #endif
 
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
@@ -528,13 +479,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     else // foot is in stance
     {
       firstSwing[foot] = true;
-
-#ifdef DRAW_DEBUG_SWINGS
-      auto* actualSphere = data.visualizationData->addSphere();
-      actualSphere->position = pFoot[foot];
-      actualSphere->radius = 0.02;
-      actualSphere->color = {0.2, 0.2, 0.8, 0.7};
-#endif
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
