@@ -5,7 +5,7 @@
 #include <controllers/VisionMPC/VisionMPCLocomotion.h>
 #include "FSM_State.h"
 #include <thread>
-#include <lcm-cpp.hpp>
+#include <lcm/lcm-cpp.hpp>
 #include <lcm_msgs/heightmap333_t.hpp>
 #include <lcm_msgs/heightmap_t.hpp>
 #include <lcm_msgs/heightnew_t.hpp>

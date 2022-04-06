@@ -4,6 +4,8 @@ cmake_minimum_required (VERSION 3.2)
 # Project name
 project (osqp)
 
+set(CMAKE_BUILD_TYPE "Release")
+
 # Export compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

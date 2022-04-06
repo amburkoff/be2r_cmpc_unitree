@@ -17,4 +17,4 @@ add_subdirectory(WBC_Ctrl)
 
 
 add_library(controllers_lib ${sources})
-target_link_libraries(controllers_lib WBC_Ctrl common_lib qpOASES)
+target_link_libraries(controllers_lib WBC_Ctrl common_lib qpOASES lcm)

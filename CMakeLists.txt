@@ -57,6 +57,7 @@ set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
 -Wsign-promo")
 
 set(CMAKE_C_FLAGS "-O3  -ggdb  -march=native -std=gnu99 -I.")
+#set(CMAKE_BUILD_TYPE "Debug")
 
 SET (THIS_COM "${PROJECT_SOURCE_DIR}/" )
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/Configuration.h)
