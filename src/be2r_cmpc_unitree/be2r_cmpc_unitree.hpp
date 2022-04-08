@@ -1,22 +1,22 @@
 #pragma once
 
-//C++
+// C++
 #include <iostream>
 
-//ROS
+// ROS
 #include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
-#include <nav_msgs/Odometry.h>
 
-//MIT
+// MIT
 #include "Configuration.h"
 #include "ControlFSM.h"
 #include "Controllers/StateEstimatorContainer.h"
@@ -39,12 +39,12 @@
 #define MAIN_LOOP_RATE 500
 
 #define FSM 3
-// #define FSM_AUTO 
+// #define FSM_AUTO
 
-const float max_torque[3] = {17.f, 17.f, 26.f};        // TODO CHECK WITH BEN
-const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
-const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
-const float disabled_torque[3] = {0.f, 0.f, 0.f};
+const float max_torque[3] = { 17.f, 17.f, 26.f };        // TODO CHECK WITH BEN
+const float max_max_torque[3] = { 170.f, 170.f, 260.f }; // TODO CHECK WITH BEN
+const float wimp_torque[3] = { 6.f, 6.f, 6.f };          // TODO CHECK WITH BEN
+const float disabled_torque[3] = { 0.f, 0.f, 0.f };
 
 class Body_Manager
 {
@@ -87,11 +87,13 @@ private:
   void _initParameters();
   void _updateVisualization();
   void _updatePlot();
+  void _tfPublish();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
-  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
+  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
+                                uint32_t level);
 
   Quadruped<float> _quadruped;
   FloatingBaseModel<float> _model;
@@ -113,7 +115,7 @@ private:
   ControlParameters* _userControlParameters = nullptr;
   MIT_UserParameters userParameters;
 
-  template <typename T>
+  template<typename T>
   bool readRosParam(std::string param_name, T& param_var)
   {
     if (!_nh.getParam(param_name, param_var))

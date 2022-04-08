@@ -12,8 +12,6 @@ int main(int argc, char* argv[])
 
   Body_Manager unitree;
 
-  unitree.init();
-
   unsigned long tick = 0;
 
   while (tick < MAIN_LOOP_RATE / 3)
@@ -23,6 +21,7 @@ int main(int argc, char* argv[])
     rate.sleep();
     ros::spinOnce();
   }
+  unitree.init();
 
   ROS_INFO("Initialization Done!");
 

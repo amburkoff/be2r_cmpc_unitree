@@ -11,9 +11,11 @@ find_package(catkin REQUIRED COMPONENTS
   unitree_legged_msgs
   geometry_msgs
   tf
+  tf2_ros
   nav_msgs
   visualization_msgs
   dynamic_reconfigure
+  grid_map_msgs
 )
 
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)

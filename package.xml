@@ -16,6 +16,8 @@
   <build_depend>roscpp</build_depend>
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>roscpp</exec_depend>
+  <depend>grid_map_msgs</depend>
+  <depend>tf2_ros</depend>
 
   <build_depend>unitree_legged_msgs</build_depend>
 

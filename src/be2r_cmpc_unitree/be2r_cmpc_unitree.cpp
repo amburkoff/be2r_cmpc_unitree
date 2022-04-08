@@ -2,7 +2,8 @@
 
 using namespace std;
 
-Body_Manager::Body_Manager() : _zero_time(0)
+Body_Manager::Body_Manager()
+  : _zero_time(0)
 {
   footContactState = Vec4<uint8_t>::Zero();
 }
@@ -21,7 +22,8 @@ void Body_Manager::init()
 
   _time_start = ros::Time::now();
 
-  printf("[Hardware Bridge] Loading parameters from file...\n");
+  printf("[Hardware Bridge] Loading parameters "
+         "from file...\n");
 
   try
   {
@@ -29,13 +31,16 @@ void Body_Manager::init()
   }
   catch (std::exception& e)
   {
-    printf("Failed to initialize robot parameters from yaml file: %s\n", e.what());
+    printf("Failed to initialize robot "
+           "parameters from yaml file: %s\n",
+           e.what());
     exit(1);
   }
 
   if (!controlParameters.isFullyInitialized())
   {
-    printf("Failed to initialize all robot parameters\n");
+    printf("Failed to initialize all robot "
+           "parameters\n");
     exit(1);
   }
 
@@ -45,17 +50,21 @@ void Body_Manager::init()
   {
     try
     {
-      userParameters.initializeFromYamlFile(THIS_COM "config/mc-mit-ctrl-user-parameters.yaml");
+      userParameters.initializeFromYamlFile(THIS_COM "config/"
+                                                     "mc-mit-ctrl-user-parameters.yaml");
     }
     catch (std::exception& e)
     {
-      printf("Failed to initialize user parameters from yaml file: %s\n", e.what());
+      printf("Failed to initialize user "
+             "parameters from yaml file: %s\n",
+             e.what());
       exit(1);
     }
 
     if (!userParameters.isFullyInitialized())
     {
-      printf("Failed to initialize all user parameters\n");
+      printf("Failed to initialize all user "
+             "parameters\n");
       exit(1);
     }
 
@@ -63,7 +72,8 @@ void Body_Manager::init()
   }
   else
   {
-    printf("Did not load user parameters because there aren't any\n");
+    printf("Did not load user parameters because "
+           "there aren't any\n");
   }
 
   _quadruped = buildMiniCheetah<float>();
@@ -71,25 +81,24 @@ void Body_Manager::init()
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
 
-  // Always initialize the leg controller and state entimator
+  // Always initialize the leg controller and
+  // state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
-                                                       &_stateEstimate, &controlParameters);
+  _stateEstimator = new StateEstimatorContainer<float>(
+    &vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &controlParameters);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters,
-                                                        &_stateEstimate, controlParameters.controller_dt);
+  _desiredStateCommand = new DesiredStateCommand<float>(
+    &driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&userParameters, controlParameters.controller_dt);
 
-  // Initializes the Control FSM with all the required data
-  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator,
-                                      _legController, _gaitScheduler,
-                                      _desiredStateCommand,
-                                      &controlParameters,
-                                      &userParameters);
+  // Initializes the Control FSM with all the
+  // required data
+  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
+                                      _desiredStateCommand, &controlParameters, &userParameters);
 
   _leg_contoller_params[0].zero();
   _leg_contoller_params[1].zero();
@@ -105,7 +114,8 @@ void Body_Manager::init()
 
 void Body_Manager::run()
 {
-  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
+  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1],
+                             _low_state.footForce[2], _low_state.footForce[3]);
 
   // Run the state estimator step
   _stateEstimator->run();
@@ -135,11 +145,13 @@ void Body_Manager::run()
     _controlFSM->runFSM();
   }
 
-  // Sets the leg controller commands for the robot appropriate commands
+  // Sets the leg controller commands for the
+  // robot appropriate commands
   finalizeStep();
 
 #ifdef FSM_AUTO
-  //оставляю эту часть для автоматического перехода между режимами, если понадобится
+  //оставляю эту часть для автоматического
+  //перехода между режимами, если понадобится
   if (count_ini > 100 && count_ini < 1500)
   {
     ROS_INFO_STREAM_ONCE("Stand up " << count_ini);
@@ -156,6 +168,7 @@ void Body_Manager::run()
 
   _updateVisualization();
   _updatePlot();
+  _tfPublish();
 }
 
 void Body_Manager::setupStep()
@@ -173,8 +186,10 @@ void Body_Manager::finalizeStep()
 {
   // for (uint8_t i = 0; i < 4; i++)
   // {
-  //   _legController->commands[i].kpCartesian = _leg_contoller_params[i].kpCartesian;
-  //   _legController->commands[i].kdCartesian = _leg_contoller_params[i].kdCartesian;
+  //   _legController->commands[i].kpCartesian =
+  //   _leg_contoller_params[i].kpCartesian;
+  //   _legController->commands[i].kdCartesian =
+  //   _leg_contoller_params[i].kdCartesian;
   // }
 
   _legController->updateCommand(&spiCommand);
@@ -201,8 +216,8 @@ void Body_Manager::finalizeStep()
   // DEBUG
   for (size_t i = 0; i < 4; i++)
   {
-      _low_cmd.ff[i].x = _stateEstimator->getResult().swingProgress[i];
-      _low_cmd.ff[i].y = _stateEstimator->getResult().contactEstimate[i];
+    _low_cmd.ff[i].x = _stateEstimator->getResult().swingProgress[i];
+    _low_cmd.ff[i].y = _stateEstimator->getResult().contactEstimate[i];
   }
 
   _pub_low_cmd.publish(_low_cmd);
@@ -228,8 +243,10 @@ void Body_Manager::initializeStateEstimator()
 
 void Body_Manager::_initSubscribers()
 {
-  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
-  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this,
+                                 ros::TransportHints().tcpNoDelay(true));
+  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this,
+                               ros::TransportHints().tcpNoDelay(true));
 }
 
 void Body_Manager::_initPublishers()
@@ -264,27 +281,30 @@ void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
   vectorNavData.accelerometer[1] = msg.imu.accelerometer[1];
   vectorNavData.accelerometer[2] = msg.imu.accelerometer[2];
 
-  vectorNavData.quat[0] = msg.imu.quaternion[0]; //w
-  vectorNavData.quat[1] = msg.imu.quaternion[1]; //x
-  vectorNavData.quat[2] = msg.imu.quaternion[2]; //y
-  vectorNavData.quat[3] = msg.imu.quaternion[3]; //z
+  vectorNavData.quat[0] = msg.imu.quaternion[0]; // w
+  vectorNavData.quat[1] = msg.imu.quaternion[1]; // x
+  vectorNavData.quat[2] = msg.imu.quaternion[2]; // y
+  vectorNavData.quat[3] = msg.imu.quaternion[3]; // z
 
   // Датчики контакта на лапах
-  for (size_t leg=0; leg < 4; leg++)
+  for (size_t leg = 0; leg < 4; leg++)
   {
     footContactState(leg) = msg.footForce[leg];
-//    if ((_stateEstimator->getResult().contactEstimate[leg] <= 0.001) &&
-//      (footContactState(leg) == 1) )
-//    {
-////      std::cout << "EARLY CONTACT" << std::endl;
+    //    if
+    //    ((_stateEstimator->getResult().contactEstimate[leg]
+    //    <= 0.001) &&
+    //      (footContactState(leg) == 1) )
+    //    {
+    ////      std::cout << "EARLY CONTACT" <<
+    /// std::endl;
 
-//    }
+    //    }
   }
 
   _stateEstimator->setContactSensorData(footContactState);
 
   // Фильтрация данных
-//  _filterInput();
+  //  _filterInput();
 }
 
 void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
@@ -299,19 +319,23 @@ void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
 /*!
  * Emulate the spi board to estimate the torque.
  */
-void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num)
+void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out,
+                                     int board_num)
 {
-  torque_out->tau_abad[board_num] = cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
-                                    cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
-                                    cmd->tau_abad_ff[board_num];
+  torque_out->tau_abad[board_num] =
+    cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
+    cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
+    cmd->tau_abad_ff[board_num];
 
-  torque_out->tau_hip[board_num] = cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
-                                   cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
-                                   cmd->tau_hip_ff[board_num];
+  torque_out->tau_hip[board_num] =
+    cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
+    cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
+    cmd->tau_hip_ff[board_num];
 
-  torque_out->tau_knee[board_num] = cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
-                                    cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
-                                    cmd->tau_knee_ff[board_num];
+  torque_out->tau_knee[board_num] =
+    cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
+    cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
+    cmd->tau_knee_ff[board_num];
 
   // const float* torque_limits = disabled_torque;
   const float* torque_limits = max_torque;
@@ -350,115 +374,199 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
     torque_out->tau_knee[board_num] = -torque_limits[2];
   }
 
-  // float q0_e = cmd->q_des_abad[board_num] - data->q_abad[board_num];
-  // float q1_e = cmd->q_des_hip[board_num] - data->q_hip[board_num];
-  // float q2_e = cmd->q_des_knee[board_num] - data->q_knee[board_num];
+  // float q0_e = cmd->q_des_abad[board_num] -
+  // data->q_abad[board_num]; float q1_e =
+  // cmd->q_des_hip[board_num] -
+  // data->q_hip[board_num]; float q2_e =
+  // cmd->q_des_knee[board_num] -
+  // data->q_knee[board_num];
 
-  // cout << "Leg: " << board_num << " q0_e: " << q0_e << " q1_e: " << q1_e << " q2_e: " << q2_e << endl;
-  // cout << "Leg: " << board_num << " t0: " << torque_out->tau_abad[board_num] << " t1: " << torque_out->tau_hip[board_num] << " t2: " << torque_out->tau_knee[board_num] << endl;
+  // cout << "Leg: " << board_num << " q0_e: " <<
+  // q0_e << " q1_e: " << q1_e << " q2_e: " <<
+  // q2_e << endl; cout << "Leg: " << board_num <<
+  // " t0: " << torque_out->tau_abad[board_num] <<
+  // " t1: " << torque_out->tau_hip[board_num] <<
+  // " t2: " << torque_out->tau_knee[board_num] <<
+  // endl;
 }
 
 void Body_Manager::_initParameters()
 {
   vector<double> test;
 
-  // readRosParam("/control_mode", controlParameters.control_mode);
-  // readRosParam("/controller_dt", controlParameters.controller_dt);
-  // readRosParam("/stand_kp_cartesian", controlParameters.stand_kp_cartesian);
+  // readRosParam("/control_mode",
+  // controlParameters.control_mode);
+  // readRosParam("/controller_dt",
+  // controlParameters.controller_dt);
+  // readRosParam("/stand_kp_cartesian",
+  // controlParameters.stand_kp_cartesian);
   readRosParam("/stand_kp_cartesian", test);
   cout << test.at(0) << endl;
   cout << test.at(1) << endl;
   cout << test.at(2) << endl;
 
-  // readRosParam("/stand_kd_cartesian", controlParameters.stand_kd_cartesian);
-  // readRosParam("/kpCOM", controlParameters.kpCOM);
-  // readRosParam("/kdCOM", controlParameters.kdCOM);
-  // readRosParam("/kpBase", controlParameters.kpBase);
-  // readRosParam("/kdBase", controlParameters.kdBase);
-  // readRosParam("/cheater_mode", controlParameters.cheater_mode);
-  // readRosParam("/imu_process_noise_position", controlParameters.imu_process_noise_position);
-  // readRosParam("/imu_process_noise_velocity", controlParameters.imu_process_noise_velocity);
-  // readRosParam("/foot_process_noise_position", controlParameters.foot_process_noise_position);
-  // readRosParam("/foot_sensor_noise_position", controlParameters.foot_sensor_noise_position);
-  // readRosParam("/foot_sensor_noise_velocity", controlParameters.foot_sensor_noise_velocity);
-  // readRosParam("/foot_height_sensor_noise", controlParameters.foot_height_sensor_noise);
-  // readRosParam("/use_rc", controlParameters.use_rc);
-  // readRosParam("/cmpc_gait", userParameters.cmpc_gait);
-  // readRosParam("/cmpc_x_drag", userParameters.cmpc_x_drag);
-  // readRosParam("/cmpc_use_sparse", userParameters.cmpc_use_sparse);
-  // readRosParam("/use_wbc", userParameters.use_wbc);
-  // readRosParam("/cmpc_bonus_swing", userParameters.cmpc_bonus_swing);
-  // readRosParam("/Kp_body", userParameters.Kp_body);
-  // readRosParam("/Kd_body", userParameters.Kd_body);
-  // readRosParam("/Kp_ori", userParameters.Kp_ori);
-  // readRosParam("/Kd_ori", userParameters.Kd_ori);
-  // readRosParam("/Kp_foot", userParameters.Kp_foot);
-  // readRosParam("/Kd_foot", userParameters.Kd_foot);
-  // readRosParam("/Kp_joint", userParameters.Kp_joint);
-  // readRosParam("/Kd_joint", userParameters.Kd_joint);
+  // readRosParam("/stand_kd_cartesian",
+  // controlParameters.stand_kd_cartesian);
+  // readRosParam("/kpCOM",
+  // controlParameters.kpCOM);
+  // readRosParam("/kdCOM",
+  // controlParameters.kdCOM);
+  // readRosParam("/kpBase",
+  // controlParameters.kpBase);
+  // readRosParam("/kdBase",
+  // controlParameters.kdBase);
+  // readRosParam("/cheater_mode",
+  // controlParameters.cheater_mode);
+  // readRosParam("/imu_process_noise_position",
+  // controlParameters.imu_process_noise_position);
+  // readRosParam("/imu_process_noise_velocity",
+  // controlParameters.imu_process_noise_velocity);
+  // readRosParam("/foot_process_noise_position",
+  // controlParameters.foot_process_noise_position);
+  // readRosParam("/foot_sensor_noise_position",
+  // controlParameters.foot_sensor_noise_position);
+  // readRosParam("/foot_sensor_noise_velocity",
+  // controlParameters.foot_sensor_noise_velocity);
+  // readRosParam("/foot_height_sensor_noise",
+  // controlParameters.foot_height_sensor_noise);
+  // readRosParam("/use_rc",
+  // controlParameters.use_rc);
+  // readRosParam("/cmpc_gait",
+  // userParameters.cmpc_gait);
+  // readRosParam("/cmpc_x_drag",
+  // userParameters.cmpc_x_drag);
+  // readRosParam("/cmpc_use_sparse",
+  // userParameters.cmpc_use_sparse);
+  // readRosParam("/use_wbc",
+  // userParameters.use_wbc);
+  // readRosParam("/cmpc_bonus_swing",
+  // userParameters.cmpc_bonus_swing);
+  // readRosParam("/Kp_body",
+  // userParameters.Kp_body);
+  // readRosParam("/Kd_body",
+  // userParameters.Kd_body);
+  // readRosParam("/Kp_ori",
+  // userParameters.Kp_ori);
+  // readRosParam("/Kd_ori",
+  // userParameters.Kd_ori);
+  // readRosParam("/Kp_foot",
+  // userParameters.Kp_foot);
+  // readRosParam("/Kd_foot",
+  // userParameters.Kd_foot);
+  // readRosParam("/Kp_joint",
+  // userParameters.Kp_joint);
+  // readRosParam("/Kd_joint",
+  // userParameters.Kd_joint);
   // //readRosParam(Kp_joint_swing);
   // //readRosParam(Kd_joint_swing);
   // readRosParam("/Q_pos", userParameters.Q_pos);
   // readRosParam("/Q_vel", userParameters.Q_vel);
   // readRosParam("/Q_ori", userParameters.Q_ori);
   // readRosParam("/Q_ang", userParameters.Q_ang);
-  // readRosParam("/R_control", userParameters.R_control);
-  // readRosParam("/R_prev", userParameters.R_prev);
-  // readRosParam("/two_leg_orient", userParameters.two_leg_orient);
-  // readRosParam("/stance_legs", userParameters.stance_legs);
-  // readRosParam("/use_jcqp", userParameters.use_jcqp);
-  // readRosParam("/jcqp_max_iter", userParameters.jcqp_max_iter);
-  // readRosParam("/jcqp_rho", userParameters.jcqp_rho);
-  // readRosParam("/jcqp_sigma", userParameters.jcqp_sigma);
-  // readRosParam("/jcqp_alpha", userParameters.jcqp_alpha);
-  // readRosParam("/jcqp_terminate", userParameters.jcqp_terminate);
-  // readRosParam("/Swing_Kp_cartesian", userParameters.Swing_Kp_cartesian);
-  // readRosParam("/Swing_Kd_cartesian", userParameters.Swing_Kd_cartesian);
-  // readRosParam("/Swing_Kp_joint", userParameters.Swing_Kp_joint);
-  // readRosParam("/Swing_Kd_joint", userParameters.Swing_Kd_joint);
-  // readRosParam("/Swing_step_offset", userParameters.Swing_step_offset);
-  // readRosParam("/Swing_traj_height", userParameters.Swing_traj_height);
-  // readRosParam("/Swing_use_tau_ff", userParameters.Swing_use_tau_ff);
-  // readRosParam("/RPC_Q_p", userParameters.RPC_Q_p);
-  // readRosParam("/RPC_Q_theta", userParameters.RPC_Q_theta);
-  // readRosParam("/RPC_Q_dp", userParameters.RPC_Q_dp);
-  // readRosParam("/RPC_Q_dtheta", userParameters.RPC_Q_dtheta);
-  // readRosParam("/RPC_R_r", userParameters.RPC_R_r);
-  // readRosParam("/RPC_R_f", userParameters.RPC_R_f);
-  // readRosParam("/RPC_H_r_trans", userParameters.RPC_H_r_trans);
-  // readRosParam("/RPC_H_r_rot", userParameters.RPC_H_r_rot);
-  // readRosParam("/RPC_H_theta0", userParameters.RPC_H_theta0);
-  // readRosParam("/RPC_H_phi0", userParameters.RPC_H_phi0);
-  // readRosParam("/RPC_mass", userParameters.RPC_mass);
-  // readRosParam("/RPC_inertia", userParameters.RPC_inertia);
-  // readRosParam("/RPC_gravity", userParameters.RPC_gravity);
-  // readRosParam("/RPC_mu", userParameters.RPC_mu);
-  // readRosParam("/RPC_filter", userParameters.RPC_filter);
-  // readRosParam("/RPC_use_pred_comp", userParameters.RPC_use_pred_comp);
-  // readRosParam("/RPC_use_async_filt", userParameters.RPC_use_async_filt);
-  // readRosParam("/RPC_visualize_pred", userParameters.RPC_visualize_pred);
-  // readRosParam("/RPC_use_separate", userParameters.RPC_use_separate);
+  // readRosParam("/R_control",
+  // userParameters.R_control);
+  // readRosParam("/R_prev",
+  // userParameters.R_prev);
+  // readRosParam("/two_leg_orient",
+  // userParameters.two_leg_orient);
+  // readRosParam("/stance_legs",
+  // userParameters.stance_legs);
+  // readRosParam("/use_jcqp",
+  // userParameters.use_jcqp);
+  // readRosParam("/jcqp_max_iter",
+  // userParameters.jcqp_max_iter);
+  // readRosParam("/jcqp_rho",
+  // userParameters.jcqp_rho);
+  // readRosParam("/jcqp_sigma",
+  // userParameters.jcqp_sigma);
+  // readRosParam("/jcqp_alpha",
+  // userParameters.jcqp_alpha);
+  // readRosParam("/jcqp_terminate",
+  // userParameters.jcqp_terminate);
+  // readRosParam("/Swing_Kp_cartesian",
+  // userParameters.Swing_Kp_cartesian);
+  // readRosParam("/Swing_Kd_cartesian",
+  // userParameters.Swing_Kd_cartesian);
+  // readRosParam("/Swing_Kp_joint",
+  // userParameters.Swing_Kp_joint);
+  // readRosParam("/Swing_Kd_joint",
+  // userParameters.Swing_Kd_joint);
+  // readRosParam("/Swing_step_offset",
+  // userParameters.Swing_step_offset);
+  // readRosParam("/Swing_traj_height",
+  // userParameters.Swing_traj_height);
+  // readRosParam("/Swing_use_tau_ff",
+  // userParameters.Swing_use_tau_ff);
+  // readRosParam("/RPC_Q_p",
+  // userParameters.RPC_Q_p);
+  // readRosParam("/RPC_Q_theta",
+  // userParameters.RPC_Q_theta);
+  // readRosParam("/RPC_Q_dp",
+  // userParameters.RPC_Q_dp);
+  // readRosParam("/RPC_Q_dtheta",
+  // userParameters.RPC_Q_dtheta);
+  // readRosParam("/RPC_R_r",
+  // userParameters.RPC_R_r);
+  // readRosParam("/RPC_R_f",
+  // userParameters.RPC_R_f);
+  // readRosParam("/RPC_H_r_trans",
+  // userParameters.RPC_H_r_trans);
+  // readRosParam("/RPC_H_r_rot",
+  // userParameters.RPC_H_r_rot);
+  // readRosParam("/RPC_H_theta0",
+  // userParameters.RPC_H_theta0);
+  // readRosParam("/RPC_H_phi0",
+  // userParameters.RPC_H_phi0);
+  // readRosParam("/RPC_mass",
+  // userParameters.RPC_mass);
+  // readRosParam("/RPC_inertia",
+  // userParameters.RPC_inertia);
+  // readRosParam("/RPC_gravity",
+  // userParameters.RPC_gravity);
+  // readRosParam("/RPC_mu",
+  // userParameters.RPC_mu);
+  // readRosParam("/RPC_filter",
+  // userParameters.RPC_filter);
+  // readRosParam("/RPC_use_pred_comp",
+  // userParameters.RPC_use_pred_comp);
+  // readRosParam("/RPC_use_async_filt",
+  // userParameters.RPC_use_async_filt);
+  // readRosParam("/RPC_visualize_pred",
+  // userParameters.RPC_visualize_pred);
+  // readRosParam("/RPC_use_separate",
+  // userParameters.RPC_use_separate);
   // readRosParam("/des_p", userParameters.des_p);
-  // readRosParam("/des_theta", userParameters.des_theta);
-  // readRosParam("/des_dp", userParameters.des_dp);
-  // readRosParam("/des_dtheta", userParameters.des_dtheta);
-  // readRosParam("/des_theta_max", userParameters.des_theta_max);
-  // readRosParam("/des_dp_max", userParameters.des_dp_max);
-  // readRosParam("/des_dtheta_max", userParameters.des_dtheta_max);
-  // readRosParam("/gait_type", userParameters.gait_type);
-  // readRosParam("/gait_period_time", userParameters.gait_period_time);
-  // readRosParam("/gait_switching_phase", userParameters.gait_switching_phase);
-  // readRosParam("/gait_override", userParameters.gait_override);
-  // readRosParam("/gait_max_leg_angle", userParameters.gait_max_leg_angle);
-  // readRosParam("/gait_max_stance_time", userParameters.gait_max_stance_time);
-  // readRosParam("/gait_min_stance_time", userParameters.gait_min_stance_time);
+  // readRosParam("/des_theta",
+  // userParameters.des_theta);
+  // readRosParam("/des_dp",
+  // userParameters.des_dp);
+  // readRosParam("/des_dtheta",
+  // userParameters.des_dtheta);
+  // readRosParam("/des_theta_max",
+  // userParameters.des_theta_max);
+  // readRosParam("/des_dp_max",
+  // userParameters.des_dp_max);
+  // readRosParam("/des_dtheta_max",
+  // userParameters.des_dtheta_max);
+  // readRosParam("/gait_type",
+  // userParameters.gait_type);
+  // readRosParam("/gait_period_time",
+  // userParameters.gait_period_time);
+  // readRosParam("/gait_switching_phase",
+  // userParameters.gait_switching_phase);
+  // readRosParam("/gait_override",
+  // userParameters.gait_override);
+  // readRosParam("/gait_max_leg_angle",
+  // userParameters.gait_max_leg_angle);
+  // readRosParam("/gait_max_stance_time",
+  // userParameters.gait_max_stance_time);
+  // readRosParam("/gait_min_stance_time",
+  // userParameters.gait_min_stance_time);
 }
 
 void Body_Manager::_updateVisualization()
 {
   sensor_msgs::JointState msg;
-  geometry_msgs::Quaternion odom_quat;
-  geometry_msgs::TransformStamped odom_trans;
 
   msg.header.stamp = ros::Time::now();
 
@@ -485,20 +593,26 @@ void Body_Manager::_updateVisualization()
   }
 
   _pub_joint_states.publish(msg);
+}
+
+void Body_Manager::_tfPublish()
+{
+  geometry_msgs::TransformStamped odom_trans;
 
   odom_trans.header.stamp = ros::Time::now();
-  odom_trans.header.frame_id = "map";
+  odom_trans.header.frame_id = "odom";
   odom_trans.child_frame_id = "base";
-
-  //TODO почему результаты естиматора приходится менять местами?
-  odom_quat.x = _stateEstimator->getResult().orientation.y();
-  odom_quat.y = _stateEstimator->getResult().orientation.z();
-  odom_quat.z = _stateEstimator->getResult().orientation.w();
-  odom_quat.w = _stateEstimator->getResult().orientation.x();
 
   odom_trans.transform.translation.x = _stateEstimator->getResult().position.x();
   odom_trans.transform.translation.y = _stateEstimator->getResult().position.y();
   odom_trans.transform.translation.z = _stateEstimator->getResult().position.z();
+
+  geometry_msgs::Quaternion odom_quat;
+  // TODO почему результаты естиматора приходится менять местами?
+  odom_quat.x = _stateEstimator->getResult().orientation.y();
+  odom_quat.y = _stateEstimator->getResult().orientation.z();
+  odom_quat.z = _stateEstimator->getResult().orientation.w();
+  odom_quat.w = _stateEstimator->getResult().orientation.x();
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
@@ -512,7 +626,8 @@ void Body_Manager::_updatePlot()
   // msg.header.stamp = ros::Time::now();
   msg.header.stamp = _zero_time + delta_t;
 
-  static float x_vel_cmd, y_vel_cmd, yaw_turn_rate, x_vel_des, y_vel_des, yaw_des, roll_des, pitch_des;
+  static float x_vel_cmd, y_vel_cmd, yaw_turn_rate, x_vel_des, y_vel_des, yaw_des, roll_des,
+    pitch_des;
   float filter = 0.1;
   float dt = controlParameters.controller_dt;
 
@@ -549,34 +664,43 @@ void Body_Manager::_updatePlot()
   _pub_state_error.publish(msg);
 }
 
-void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
+void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
+                                            uint32_t level)
 {
-  // ROS_INFO_STREAM("NEW data Kp: " << config.Kp0 << " " << config.Kp1 << " " << config.Kp2);
-  // ROS_INFO_STREAM("NEW data Kd: " << config.Kd0 << " " << config.Kd1 << " " << config.Kd2);
-  // ROS_INFO_STREAM("NEW data FSM_State: " << config.FSM_State);
+  // ROS_INFO_STREAM("NEW data Kp: " << config.Kp0
+  // << " " << config.Kp1 << " "
+  // << config.Kp2); ROS_INFO_STREAM("NEW data Kd:
+  // " << config.Kd0 << " " << config.Kd1 << " "
+  // << config.Kd2); ROS_INFO_STREAM("NEW data
+  // FSM_State: " << config.FSM_State);
 
   controlParameters.control_mode = config.FSM_State;
   userParameters.use_wbc = config.WBC;
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    // _legController->commands[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
-    // _legController->commands[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
+    // _legController->commands[i].kpCartesian =
+    // Vec3<float>(config.Kp0, config.Kp1,
+    // config.Kp2).asDiagonal();
+    // _legController->commands[i].kdCartesian =
+    // Vec3<float>(config.Kd0, config.Kd1,
+    // config.Kd2).asDiagonal();
 
-    // _leg_contoller_params[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
-    // _leg_contoller_params[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
+    // _leg_contoller_params[i].kpCartesian =
+    // Vec3<float>(config.Kp0, config.Kp1,
+    // config.Kp2).asDiagonal();
+    // _leg_contoller_params[i].kdCartesian =
+    // Vec3<float>(config.Kd0, config.Kd1,
+    // config.Kd2).asDiagonal();
   }
 
   ROS_INFO_STREAM("New dynamic data!");
 }
-//int expRunningAverage(int newVal) {
+// int expRunningAverage(int newVal) {
 //  static float k = 0.1;
 //  static float filVal = 0;
 //  filVal += (newVal - filVal) * k;
 //  return filVal;
 //}
 
-void Body_Manager::_filterInput()
-{
-
-}
+void Body_Manager::_filterInput() {}

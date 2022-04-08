@@ -2,20 +2,20 @@
 #define WBC_CONTROLLER_H
 
 #include "cppTypes.h"
+#include <ControlFSMData.h>
 #include <Dynamics/FloatingBaseModel.h>
 #include <Dynamics/Quadruped.h>
 #include <WBC/WBIC/KinWBC.hpp>
 #include <WBC/WBIC/WBIC.hpp>
-#include <ControlFSMData.h>
 
 #include "lcm_msgs/wbc_test_data_t.hpp"
-#include <lcm-cpp.hpp>
+#include <lcm/lcm-cpp.hpp>
 
 #define WBCtrl WBC_Ctrl<T>
 
 class MIT_UserParameters;
 
-template <typename T>
+template<typename T>
 class WBC_Ctrl
 {
 public:
@@ -61,7 +61,7 @@ protected:
   DVec<T> _des_jvel;
 
   std::vector<T> _Kp_joint, _Kd_joint;
-  //std::vector<T> _Kp_joint_swing, _Kd_joint_swing;
+  // std::vector<T> _Kp_joint_swing, _Kd_joint_swing;
 
   unsigned long long _iter;
 

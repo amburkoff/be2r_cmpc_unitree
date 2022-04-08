@@ -1,0 +1,15 @@
+<launch>
+
+<rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/ros_config.yaml"/>
+
+<param name="robot_description" command="$(find xacro)/xacro --inorder $(find a1_description)/xacro/robot.xacro DEBUG:=false"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+<!--     <arg name="rvizconfig" default="$(find unitree_ros_driver)/rviz/unitree.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+ -->
+
+<node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen"/>
+
+</launch> 
