@@ -59,8 +59,8 @@ FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
   ros::readParam("~localization_topic", robot_pose_topic, std::string("/base_pose"));
   _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic, 1,
                                                    &FSM_State_Vision<T>::_elevMapCallback, this);
-  _robot_pose_sub = _nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>(
-    robot_pose_topic, 1, &FSM_State_Vision<T>::_robotPoseCallback, this);
+  //  _robot_pose_sub = _nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>(
+  //    robot_pose_topic, 1, &FSM_State_Vision<T>::_robotPoseCallback, this);
 }
 
 template<typename T>
@@ -80,9 +80,11 @@ void FSM_State_Vision<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr&
   for (size_t i(0); i < dim1; ++i)
     for (size_t j(0); j < dim2; ++j)
     {
-      _height_map(i, j) = elev_map.data[offset + i * dim_stride + j];
+      _height_map(j, i) = elev_map.data[offset + i * dim_stride + j];
+      idx_map(i, j) = 3;
       heightmap_lcm.map[j][i] = elev_map.data[offset + i * dim_stride + j];
     }
+
   _visionLCM.publish("local_heightmap", &heightmap_lcm);
 }
 
@@ -789,8 +791,8 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
   // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
 
   // Contact state logic
-  //    vision_MPC.run<T>(*this->_data, des_vel, _height_map, _idx_map);
-  vision_MPC.run<T>(*this->_data, des_vel, _height_mapnew, idx_map);
+  //  vision_MPC.run<T>(*this->_data, des_vel, _height_map, _idx_map);
+  vision_MPC.run<T>(*this->_data, des_vel, _height_map, idx_map);
 
   if (this->_data->userParameters->use_wbc > 0.9)
   {
