@@ -16,12 +16,8 @@
 template<typename T>
 FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
   : FSM_State<T>(_controlFSMData, FSM_StateName::VISION, "VISION")
-  , vision_MPC(_controlFSMData->controlParameters->controller_dt,
-               30 / (1000. * _controlFSMData->controlParameters->controller_dt),
-               _controlFSMData->userParameters)
-  , cMPCOld(_controlFSMData->controlParameters->controller_dt,
-            30 / (1000. * _controlFSMData->controlParameters->controller_dt),
-            _controlFSMData->userParameters)
+  , vision_MPC(0.002, 13, _controlFSMData->userParameters)
+  , cMPCOld(0.002, 13, _controlFSMData->userParameters)
   , _visionLCM(getLcmUrl(255))
 {
   // Set the safety checks
@@ -246,7 +242,7 @@ void FSM_State_Vision<T>::run()
   // Call the locomotion control logic for this iteration
   Vec3<T> des_vel; // x,y, yaw
 
-  //    _UpdateObstacle();
+  _UpdateObstacle();
   //    _UpdateObstacle_new();
   //    _UpdateObstacle_trav();
   // Vision Walking
@@ -258,7 +254,7 @@ void FSM_State_Vision<T>::run()
 
   // Stand still
   //_JPosStand();
-  _Visualization(des_vel);
+  //  _Visualization(des_vel);
 }
 
 template<typename T>
@@ -791,8 +787,8 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
   // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
 
   // Contact state logic
-  //  vision_MPC.run<T>(*this->_data, des_vel, _height_map, _idx_map);
-  vision_MPC.run<T>(*this->_data, des_vel, _height_map, idx_map);
+  vision_MPC.run<T>(*this->_data, des_vel, _height_map, _idx_map);
+  //  vision_MPC.run<T>(*this->_data, des_vel, _height_map, idx_map);
 
   if (this->_data->userParameters->use_wbc > 0.9)
   {
