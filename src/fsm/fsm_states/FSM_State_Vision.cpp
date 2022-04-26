@@ -77,6 +77,7 @@ void FSM_State_Vision<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr&
     for (size_t j(0); j < dim2; ++j)
     {
       _height_map(j, i) = elev_map.data[offset + i * dim_stride + j];
+      //      std::cout << " " << elev_map.data[offset + i * dim_stride + j] << " ";
       idx_map(i, j) = 3;
       heightmap_lcm.map[j][i] = elev_map.data[offset + i * dim_stride + j];
     }
@@ -242,7 +243,7 @@ void FSM_State_Vision<T>::run()
   // Call the locomotion control logic for this iteration
   Vec3<T> des_vel; // x,y, yaw
 
-  _UpdateObstacle();
+  //  _UpdateObstacle();
   //    _UpdateObstacle_new();
   //    _UpdateObstacle_trav();
   // Vision Walking
@@ -250,7 +251,7 @@ void FSM_State_Vision<T>::run()
   _LocomotionControlStep(des_vel);
 
   // Convex Locomotion
-  //_RCLocomotionControl();
+  //  _RCLocomotionControl();
 
   // Stand still
   //_JPosStand();

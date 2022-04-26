@@ -33,6 +33,13 @@ VisionGait::~VisionGait() { delete[] _mpc_table; }
 
 Vec4<float> VisionGait::getContactState()
 {
+  //  Array4f offset = _offsetsFloat;
+  //  for (int i = 0; i < 4; i++)
+  //  {
+  //    if (offset[i] < 0)
+  //      offset[i] += 1.f;
+  //  }
+
   Array4f progress = _phase - _offsetsFloat;
 
   for (int i = 0; i < 4; i++)
@@ -113,9 +120,12 @@ void VisionGait::setIterations(int iterationsPerMPC, int currentIteration)
 VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
                                          MIT_UserParameters* parameters)
   : iterationsBetweenMPC(_iterations_between_mpc)
-  , horizonLength(10)
+  , horizonLength(16)
   , dt(_dt)
-  , trotting(horizonLength, Vec4<int>(0, 5, 5, 0), Vec4<int>(5, 5, 5, 5), "Trotting")
+  , trotting(
+      horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0),
+      Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0),
+      "Trotting")
   , bounding(horizonLength, Vec4<int>(5, 5, 0, 0), Vec4<int>(3, 3, 3, 3), "Bounding")
   , pronking(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking")
   , galloping(horizonLength, Vec4<int>(0, 2, 7, 9), Vec4<int>(3, 3, 3, 3), "Galloping")
@@ -148,23 +158,28 @@ void VisionMPCLocomotion::initialize()
 void VisionMPCLocomotion::_UpdateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
                                           const DMat<float>& height_map, const DMat<int>& idx_map)
 {
-
+  // Положение лапы в СК тела
   Vec3<float> local_pf = foot - body_pos;
+  //  std::cout << "Pf in base frame: " << std::endl << local_pf << std::endl;
 
+  // Координаты центра карты
   int row_idx_half = height_map.rows() / 2;
-  int col_idx_half = height_map.rows() / 2;
+  int col_idx_half = height_map.cols() / 2;
+  //  std::cout << "Heightmap center (x y) : " << row_idx_half << " " << col_idx_half << std::endl;
 
   int x_idx = floor(local_pf[0] / grid_size) + row_idx_half;
   int y_idx = floor(local_pf[1] / grid_size) + col_idx_half;
+  std::cout << "Heightmap index (x y) : " << x_idx << " " << y_idx << std::endl;
 
   int x_idx_selected = x_idx;
   int y_idx_selected = y_idx;
 
-  _IdxMapChecking(x_idx, y_idx, x_idx_selected, y_idx_selected, idx_map);
+  //  _IdxMapChecking(x_idx, y_idx, x_idx_selected, y_idx_selected, idx_map);
 
   foot[0] = (x_idx_selected - row_idx_half) * grid_size + body_pos[0];
   foot[1] = (y_idx_selected - col_idx_half) * grid_size + body_pos[1];
-  foot[2] = height_map(x_idx_selected, y_idx_selected);
+  auto h = height_map(x_idx_selected, y_idx_selected);
+  foot[2] = isnan(h) ? 0. : h;
 }
 
 void VisionMPCLocomotion::_IdxMapChecking(int x_idx, int y_idx, int& x_idx_selected,
@@ -250,6 +265,14 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
 {
   (void)idx_map;
 
+  //  std::cout << std::endl << "Print heightmap";
+  //  for (size_t i = 0; i < 100; i++)
+  //  {
+  //    std::cout << std::endl;
+  //    for (size_t j = 0; j < 100; j++)
+  //      std::cout << height_map(i, j);
+  //  }
+
   gaitNumber = data.userParameters->cmpc_gait;
   auto& seResult = data._stateEstimator->getResult();
 
@@ -268,17 +291,18 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
 
   // pick gait
   VisionGait* gait = &trotting;
-  if (gaitNumber == 1)
-    gait = &bounding;
-  else if (gaitNumber == 2)
-    gait = &pronking;
-  else if (gaitNumber == 3)
-    gait = &galloping;
-  else if (gaitNumber == 4)
-    gait = &standing;
-  else if (gaitNumber == 5)
-    gait = &trotRunning;
+  //  if (gaitNumber == 1)
+  //    gait = &bounding;
+  //  else if (gaitNumber == 2)
+  //    gait = &pronking;
+  //  else if (gaitNumber == 3)
+  //    gait = &galloping;
+  //  else if (gaitNumber == 4)
+  //    gait = &standing;
+  //  else if (gaitNumber == 5)
+  //    gait = &trotRunning;
   current_gait = gaitNumber;
+  //  std::cout << " Current gait" << current_gait << std::endl;
 
   // integrate position setpoint
   v_des_world[0] = vel_cmd[0];
@@ -381,10 +405,10 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
 
-    //    _UpdateFoothold(Pf, seResult.position, height_map, idx_map);
+    _UpdateFoothold(Pf, seResult.position, height_map, idx_map);
     _fin_foot_loc[i] = Pf;
-    // Pf[2] -= 0.003;
-    // printf("%d, %d) foot: %f, %f, %f \n", x_idx, y_idx, local_pf[0], local_pf[1], Pf[2]);
+    std::cout << "Foot [" << i << "] height from hm is " << Pf[2] << std::endl;
+    //    Pf[2] = 0.0;
     footSwingTrajectories[i].setFinalPosition(Pf);
   }
   // calc gait
@@ -410,14 +434,18 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
   {
     float contactState = contactStates[foot];
     float swingState = swingStates[foot];
-    if (swingState > 0) // foot is in swing
+    // foot is in SWING
+    if (swingState > 0)
     {
       if (firstSwing[foot])
       {
         firstSwing[foot] = false;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
       }
-      footSwingTrajectories[foot].setHeight(_fin_foot_loc[foot][2] + 0.04);
+      //      footSwingTrajectories[foot].setHeight(_fin_foot_loc[foot][2] + 0.04); // change to
+      //      hardcode
+      footSwingTrajectories[foot].setHeight(0.09); // Здесь надо изменять высоту шага в соответствии
+                                                   // с картой высот
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
@@ -579,7 +607,8 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 {
   auto seResult = data._stateEstimator->getResult();
 
-  float Q[12] = { 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2 };
+  //  float Q[12] = { 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2 }; // prev
+  float Q[12] = { 2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1 };
   // float Q[12] = {0.25, 0.25, 10, 2, 2, 40, 0, 0, 0.3, 0.2, 0.2, 0.2};
   float yaw = seResult.rpy[2];
   float* weights = Q;

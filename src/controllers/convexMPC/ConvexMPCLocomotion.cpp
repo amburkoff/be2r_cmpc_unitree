@@ -632,6 +632,7 @@ void ConvexMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>
     // printf("Position error: %.3f, integral %.3f\n", pxy_err[0],
     // x_comp_integral);
 
+    // Stand gait
     if (current_gait == 4)
     {
       float trajInitial[12] = {
