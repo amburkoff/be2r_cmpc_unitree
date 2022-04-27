@@ -62,27 +62,9 @@ FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
 template<typename T>
 void FSM_State_Vision<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg)
 {
-  _grid_map = *msg;
-  heightmap_t heightmap_lcm;
-  auto elev_idx =
-    std::distance(_grid_map.layers.begin(),
-                  std::find(_grid_map.layers.begin(), _grid_map.layers.end(), "elevation"));
-  auto elev_map = _grid_map.data.at(elev_idx);
-  size_t dim1 = elev_map.layout.dim[1].size;
-  size_t dim2 = elev_map.layout.dim[1].size;
-  auto offset = elev_map.layout.data_offset;
-  uint32_t dim_stride = elev_map.layout.dim[1].stride;
-
-  for (size_t i(0); i < dim1; ++i)
-    for (size_t j(0); j < dim2; ++j)
-    {
-      _height_map(j, i) = elev_map.data[offset + i * dim_stride + j];
-      //      std::cout << " " << elev_map.data[offset + i * dim_stride + j] << " ";
-      idx_map(i, j) = 3;
-      heightmap_lcm.map[j][i] = elev_map.data[offset + i * dim_stride + j];
-    }
-
-  _visionLCM.publish("local_heightmap", &heightmap_lcm);
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map);
+  if (!_grid_map.isDefaultStartIndex())
+    _grid_map.convertToDefaultStartIndex();
 }
 
 template<typename T>
@@ -788,7 +770,7 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
   // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
 
   // Contact state logic
-  vision_MPC.run<T>(*this->_data, des_vel, _height_map, _idx_map);
+  vision_MPC.run(*this->_data, des_vel, _grid_map);
   //  vision_MPC.run<T>(*this->_data, des_vel, _height_map, idx_map);
 
   if (this->_data->userParameters->use_wbc > 0.9)

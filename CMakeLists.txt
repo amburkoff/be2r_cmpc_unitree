@@ -6,6 +6,8 @@ execute_process(
   COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_types_no_java.sh
 )
 
+
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   unitree_legged_msgs
@@ -16,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   dynamic_reconfigure
   grid_map_msgs
+  grid_map_ros
+  cv_bridge
 )
 
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)

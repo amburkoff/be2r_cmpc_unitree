@@ -1,6 +1,6 @@
 include_directories(".")
 include_directories("/usr/local/include/lcm/")         # lcm includes
-include_directories("/usr/local/include/eigen3")       # eigen includes
+#include_directories("/usr/local/include/eigen3")       # eigen includes MIT
 include_directories("../../third-party/inih")          # inih includes
 include_directories("../../third-party/osqp/include")  # osqp includes
 include_directories("../../third-party/ParamHandler")

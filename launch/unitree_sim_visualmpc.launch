@@ -11,7 +11,7 @@
  -->
 
 <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen">
-  <param name="map_topic" value="/elevation_mapping/elevation_map_raw"/>
+  <param name="map_topic" value="/elevation_mapping/elevation_map"/>
 </node>
 
 </launch> 

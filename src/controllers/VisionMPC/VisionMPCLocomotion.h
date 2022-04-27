@@ -4,9 +4,13 @@
 #include "cppTypes.h"
 #include <ControlFSMData.h>
 #include <Controllers/FootSwingTrajectory.h>
+#include <grid_map_ros/grid_map_ros.hpp>
 
 using Eigen::Array4f;
 using Eigen::Array4i;
+
+// Step height maximum [m]
+#define MAX_STEP_HEIGHT 0.15
 
 class VisionGait
 {
@@ -39,9 +43,8 @@ public:
   VisionMPCLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters);
   void initialize();
 
-  template<typename T>
-  void run(ControlFSMData<T>& data, const Vec3<T>& vel_cmd, const DMat<T>& height_map,
-           const DMat<int>& idx_map);
+  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
+           const grid_map::GridMap& height_map);
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -59,8 +62,8 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _UpdateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
-                       const DMat<float>& height_map, const DMat<int>& idx_map);
+  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
+                       const grid_map::GridMap& height_map);
   void _IdxMapChecking(int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
                        const DMat<int>& idx_map);
 
@@ -71,7 +74,7 @@ private:
   Vec3<float> rpy_des;
   Vec3<float> v_rpy_des;
 
-  float _body_height = 0.31;
+  float _body_height = 0.29;
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
   int iterationsBetweenMPC;

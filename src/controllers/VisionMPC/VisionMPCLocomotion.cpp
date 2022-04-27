@@ -120,7 +120,7 @@ void VisionGait::setIterations(int iterationsPerMPC, int currentIteration)
 VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
                                          MIT_UserParameters* parameters)
   : iterationsBetweenMPC(_iterations_between_mpc)
-  , horizonLength(16)
+  , horizonLength(18)
   , dt(_dt)
   , trotting(
       horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0),
@@ -155,31 +155,35 @@ void VisionMPCLocomotion::initialize()
   rpy_des.setZero();
   v_rpy_des.setZero();
 }
-void VisionMPCLocomotion::_UpdateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
-                                          const DMat<float>& height_map, const DMat<int>& idx_map)
+void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
+                                          const grid_map::GridMap& height_map)
 {
   // Положение лапы в СК тела
+  //  Vec3<float> scale(1.2, 1, 1);
   Vec3<float> local_pf = foot - body_pos;
+  //  Vec3<float> local_pf_scaled = foot.cwiseProduct(scale) - body_pos;
   //  std::cout << "Pf in base frame: " << std::endl << local_pf << std::endl;
 
   // Координаты центра карты
-  int row_idx_half = height_map.rows() / 2;
-  int col_idx_half = height_map.cols() / 2;
+  int row_idx_half = height_map.getSize()(0) / 2;
+  int col_idx_half = height_map.getSize()(1) / 2;
   //  std::cout << "Heightmap center (x y) : " << row_idx_half << " " << col_idx_half << std::endl;
 
-  int x_idx = floor(local_pf[0] / grid_size) + row_idx_half;
-  int y_idx = floor(local_pf[1] / grid_size) + col_idx_half;
-  std::cout << "Heightmap index (x y) : " << x_idx << " " << y_idx << std::endl;
+  // Минус для преобразования координат
+  int x_idx = col_idx_half - floor(local_pf[0] / grid_size);
+  int y_idx = row_idx_half - floor(local_pf[1] / grid_size);
+  //  std::cout << "Heightmap index (x y) : " << x_idx << " " << y_idx << std::endl;
 
   int x_idx_selected = x_idx;
   int y_idx_selected = y_idx;
 
   //  _IdxMapChecking(x_idx, y_idx, x_idx_selected, y_idx_selected, idx_map);
 
-  foot[0] = (x_idx_selected - row_idx_half) * grid_size + body_pos[0];
-  foot[1] = (y_idx_selected - col_idx_half) * grid_size + body_pos[1];
-  auto h = height_map(x_idx_selected, y_idx_selected);
-  foot[2] = isnan(h) ? 0. : h;
+  // Минус для преобразования координат
+  foot[0] = -(x_idx_selected - row_idx_half) * grid_size + body_pos[0];
+  foot[1] = -(y_idx_selected - col_idx_half) * grid_size + body_pos[1];
+  auto h = height_map.at("elevation", Eigen::Array2i(x_idx_selected, y_idx_selected));
+  foot[2] = std::isnan(h) ? 0. : h;
 }
 
 void VisionMPCLocomotion::_IdxMapChecking(int x_idx, int y_idx, int& x_idx_selected,
@@ -259,12 +263,9 @@ void VisionMPCLocomotion::_IdxMapChecking(int x_idx, int y_idx, int& x_idx_selec
   }
 }
 
-template<>
 void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
-                              const DMat<float>& height_map, const DMat<int>& idx_map)
+                              const grid_map::GridMap& height_map)
 {
-  (void)idx_map;
-
   //  std::cout << std::endl << "Print heightmap";
   //  for (size_t i = 0; i < 100; i++)
   //  {
@@ -405,8 +406,9 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
 
-    _UpdateFoothold(Pf, seResult.position, height_map, idx_map);
+    _updateFoothold(Pf, seResult.position, height_map);
     _fin_foot_loc[i] = Pf;
+    _fin_foot_loc[i][2] = Pf[2] >= 1e-3 ? Pf[2] : 0.; // Только положительные
     std::cout << "Foot [" << i << "] height from hm is " << Pf[2] << std::endl;
     //    Pf[2] = 0.0;
     footSwingTrajectories[i].setFinalPosition(Pf);
@@ -444,8 +446,13 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
       }
       //      footSwingTrajectories[foot].setHeight(_fin_foot_loc[foot][2] + 0.04); // change to
       //      hardcode
-      footSwingTrajectories[foot].setHeight(0.09); // Здесь надо изменять высоту шага в соответствии
-                                                   // с картой высот
+      float step_height = _fin_foot_loc[foot][2] + 0.04 <= MAX_STEP_HEIGHT
+                            ? _fin_foot_loc[foot][2] + 0.04
+                            : MAX_STEP_HEIGHT;
+      footSwingTrajectories[foot].setHeight(step_height); // Здесь надо изменять
+                                                          // высоту шага в
+                                                          // соответствии с картой
+                                                          // высот
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();

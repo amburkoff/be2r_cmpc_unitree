@@ -17,13 +17,15 @@
 #include <lcm_msgs/heightmap333_t.hpp>
 #include <lcm_msgs/heightmap_t.hpp>
 #include <lcm_msgs/heightnew_t.hpp>
-#include <thread>
-
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <grid_map_msgs/GridMap.h>
 #include <ros/ros.h>
 #include <tf2/convert.h>
 #include <tf2/utils.h>
+#include <thread>
+
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+//#include <grid_map_core/GridMap.hpp>
+#include <grid_map_msgs/GridMap.h>
+#include <grid_map_ros/grid_map_ros.hpp>
 
 template<typename T>
 class WBC_Ctrl;
@@ -63,7 +65,7 @@ private:
   ros::Subscriber _map_sub;
   ros::Subscriber _robot_pose_sub;
 
-  grid_map_msgs::GridMap _grid_map;
+  grid_map::GridMap _grid_map;
   geometry_msgs::PoseWithCovarianceStamped _robot_pose;
   // Keep track of the control iterations
   int iter = 0;
