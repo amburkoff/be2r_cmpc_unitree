@@ -108,7 +108,7 @@ void Body_Manager::run()
   // Run the state estimator step
   _stateEstimator->run();
 
-  // Update the data from the robot
+  // Update the data from the robot (put data from LowState to LegController->Datas)
   setupStep();
 
   static int count_ini(0);
@@ -185,6 +185,15 @@ void Body_Manager::finalizeStep()
   }
 
   static unitree_legged_msgs::LowCmd _low_cmd;
+  uint8_t mode = MOTOR_BREAK;
+
+  if (_legController->_legsEnabled)
+  {
+    mode = MOTOR_ON;
+  }
+  {
+    mode = MOTOR_BREAK;
+  }
 
   ros::Duration delta_t = ros::Time::now() - _time_start;
   // _low_cmd.header.stamp = ros::Time::now();
@@ -192,6 +201,10 @@ void Body_Manager::finalizeStep()
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
+    // _low_cmd.motorCmd[leg_num * 3 + 0].mode = 0x0A;
+    _low_cmd.motorCmd[leg_num * 3 + 0].mode = mode;
+    _low_cmd.motorCmd[leg_num * 3 + 1].q = PosStopF;
+    _low_cmd.motorCmd[leg_num * 3 + 2].dq = VelStopF;
     _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
