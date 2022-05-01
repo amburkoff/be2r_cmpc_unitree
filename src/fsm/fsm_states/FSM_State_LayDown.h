@@ -1,5 +1,5 @@
-#ifndef FSM_STATE_PASSIVE_H
-#define FSM_STATE_PASSIVE_H
+#ifndef FSM_STATE_LAYDOWN_H
+#define FSM_STATE_LAYDOWN_H
 
 #include "FSM_State.h"
 
@@ -7,10 +7,10 @@
  *
  */
 template <typename T>
-class FSM_State_Passive : public FSM_State<T>
+class FSM_State_LayDown : public FSM_State<T>
 {
 public:
-  FSM_State_Passive(ControlFSMData<T>* _controlFSMData);
+  FSM_State_LayDown(ControlFSMData<T>* _controlFSMData);
 
   // Behavior to be carried out when entering a state
   void onEnter();
@@ -29,14 +29,11 @@ public:
 
   TransitionData<T> testTransition();
 
+
 private:
   // Keep track of the control iterations
   int iter = 0;
-
-  bool is_falling = true;
-  unsigned long counter = 0;
-
-  ControlFSMData<T>* _control_fsm_data;
+  std::vector<Vec3<T>> _ini_foot_pos;
 };
 
-#endif // FSM_STATE_PASSIVE_H
+#endif // FSM_STATE_LAYDOWN_H

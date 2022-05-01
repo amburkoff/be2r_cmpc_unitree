@@ -123,6 +123,14 @@ public:
     return *_data.result;
   }
 
+  /*!
+   * Get the result
+   */
+  const VectorNavData& getVectorNavData()
+  {
+    return *_data.vectorNavData;
+  }
+
   StateEstimate<T>* getResultHandle()
   {
     return _data.result;

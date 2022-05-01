@@ -16,6 +16,7 @@
 // Normal robot states
 #define K_PASSIVE 0
 #define K_STAND_UP 1
+#define K_LAY_DOWN 7
 #define K_BALANCE_STAND 3
 #define K_LOCOMOTION 4
 #define K_LOCOMOTION_TEST 5
@@ -40,6 +41,7 @@ enum class FSM_StateName
   JOINT_PD,
   IMPEDANCE_CONTROL,
   STAND_UP,
+  LAYDOWN,
   BALANCE_STAND,
   LOCOMOTION,
   RECOVERY_STAND,
