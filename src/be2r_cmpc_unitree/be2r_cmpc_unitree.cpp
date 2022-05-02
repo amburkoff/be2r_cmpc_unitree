@@ -191,6 +191,7 @@ void Body_Manager::finalizeStep()
   {
     mode = MOTOR_ON;
   }
+  else
   {
     mode = MOTOR_BREAK;
   }
@@ -199,12 +200,15 @@ void Body_Manager::finalizeStep()
   // _low_cmd.header.stamp = ros::Time::now();
   _low_cmd.header.stamp = _zero_time + delta_t;
 
+  for (uint8_t servo_num = 0; servo_num < 12; servo_num++)
+  {
+    _low_cmd.motorCmd[servo_num].mode = mode;
+    _low_cmd.motorCmd[servo_num].q = PosStopF;
+    _low_cmd.motorCmd[servo_num].dq = VelStopF;
+  }
+
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    // _low_cmd.motorCmd[leg_num * 3 + 0].mode = 0x0A;
-    _low_cmd.motorCmd[leg_num * 3 + 0].mode = mode;
-    _low_cmd.motorCmd[leg_num * 3 + 1].q = PosStopF;
-    _low_cmd.motorCmd[leg_num * 3 + 2].dq = VelStopF;
     _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
@@ -241,7 +245,7 @@ void Body_Manager::_initPublishers()
 {
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
-  _pub_state_error = _nh.advertise<nav_msgs::Odometry>("/state_error", 1);
+  _pub_state_error = _nh.advertise<unitree_legged_msgs::StateError>("/state_error", 1);
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
@@ -494,7 +498,7 @@ void Body_Manager::_updateVisualization()
 
 void Body_Manager::_updatePlot()
 {
-  nav_msgs::Odometry msg;
+  unitree_legged_msgs::StateError msg;
 
   ros::Duration delta_t = ros::Time::now() - _time_start;
   // msg.header.stamp = ros::Time::now();
@@ -524,15 +528,17 @@ void Body_Manager::_updatePlot()
   x_vel_des = x_vel_des * (1 - filter) + x_vel_cmd * filter;
   y_vel_des = y_vel_des * (1 - filter) + y_vel_cmd * filter;
 
-  msg.pose.pose.orientation.x = 0 - _stateEstimator->getResult().rpy[0];
-  msg.pose.pose.orientation.y = 0 - _stateEstimator->getResult().rpy[1];
-  msg.pose.pose.orientation.z = yaw_des - _stateEstimator->getResult().rpy[2];
+  msg.pose.orientation.x = 0 - _stateEstimator->getResult().rpy[0];
+  msg.pose.orientation.y = 0 - _stateEstimator->getResult().rpy[1];
+  msg.pose.orientation.z = yaw_des - _stateEstimator->getResult().rpy[2];
 
-  msg.twist.twist.linear.x = x_vel_des - v_act(0);
-  msg.twist.twist.linear.y = y_vel_des - v_act(1);
-  msg.twist.twist.angular.x = roll_des - w_act(0);
-  msg.twist.twist.angular.y = pitch_des - w_act(1);
-  msg.twist.twist.angular.z = yaw_turn_rate - w_act(2);
+  msg.twist.linear.x = x_vel_des - v_act(0);
+  msg.twist.linear.y = y_vel_des - v_act(1);
+  msg.twist.linear.y = 0 - v_act(2);
+  
+  msg.twist.angular.x = roll_des - w_act(0);
+  msg.twist.angular.y = pitch_des - w_act(1);
+  msg.twist.angular.z = yaw_turn_rate - w_act(2);
 
   _pub_state_error.publish(msg);
 }
