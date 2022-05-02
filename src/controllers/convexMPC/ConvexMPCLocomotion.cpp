@@ -468,6 +468,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       }
       se_contactState[foot] = contactState;
 
+      // cout << "p0 des: " << data._legController->commands[0].pDes << endl;
+
       // Update for WBC
       std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
       marker[foot].header.frame_id = names[foot];

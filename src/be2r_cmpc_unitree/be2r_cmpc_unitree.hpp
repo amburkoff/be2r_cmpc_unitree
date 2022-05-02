@@ -17,6 +17,7 @@
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
 #include <unitree_legged_msgs/StateError.h>
+#include <unitree_legged_msgs/LegError.h>
 
 //MIT
 #include "Configuration.h"
@@ -82,6 +83,7 @@ private:
   ros::Subscriber _sub_cmd_vel;
   ros::Publisher _pub_joint_states;
   ros::Publisher _pub_state_error;
+  ros::Publisher _pub_leg_error;
   ros::Time _time_start;
   const ros::Time _zero_time;
 

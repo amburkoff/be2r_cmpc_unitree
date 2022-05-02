@@ -246,6 +246,7 @@ void Body_Manager::_initPublishers()
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
   _pub_state_error = _nh.advertise<unitree_legged_msgs::StateError>("/state_error", 1);
+  _pub_leg_error = _nh.advertise<unitree_legged_msgs::LegError>("/leg_error", 1);
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
@@ -535,12 +536,52 @@ void Body_Manager::_updatePlot()
   msg.twist.linear.x = x_vel_des - v_act(0);
   msg.twist.linear.y = y_vel_des - v_act(1);
   msg.twist.linear.y = 0 - v_act(2);
-  
+
   msg.twist.angular.x = roll_des - w_act(0);
   msg.twist.angular.y = pitch_des - w_act(1);
   msg.twist.angular.z = yaw_turn_rate - w_act(2);
 
   _pub_state_error.publish(msg);
+
+  unitree_legged_msgs::LegError leg_error;
+
+  leg_error.header = msg.header;
+
+  //for all legs
+  for (size_t i = 0; i < 4; i++)
+  {
+    //p actual
+    leg_error.p_act[i].x = _legController->datas[i].p(0);
+    leg_error.p_act[i].y = _legController->datas[i].p(1);
+    leg_error.p_act[i].z = _legController->datas[i].p(2);
+
+    //v actual
+    leg_error.v_act[i].x = _legController->datas[i].v(0);
+    leg_error.v_act[i].y = _legController->datas[i].v(1);
+    leg_error.v_act[i].z = _legController->datas[i].v(2);
+
+    //p desired
+    leg_error.p_des[i].x = _legController->commands[i].pDes(0);
+    leg_error.p_des[i].y = _legController->commands[i].pDes(1);
+    leg_error.p_des[i].z = _legController->commands[i].pDes(2);
+
+    //v desired
+    leg_error.v_des[i].x = _legController->commands[i].vDes(0);
+    leg_error.v_des[i].y = _legController->commands[i].vDes(1);
+    leg_error.v_des[i].z = _legController->commands[i].vDes(2);
+
+    //p error
+    leg_error.p_error[i].x = _legController->commands[i].pDes(0) - _legController->datas[i].p(0);
+    leg_error.p_error[i].y = _legController->commands[i].pDes(1) - _legController->datas[i].p(1);
+    leg_error.p_error[i].z = _legController->commands[i].pDes(2) - _legController->datas[i].p(2);
+
+    //v error
+    leg_error.v_error[i].x = _legController->commands[i].vDes(0) - _legController->datas[i].v(0);
+    leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
+    leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
+  }
+
+  _pub_leg_error.publish(leg_error);
 }
 
 void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)

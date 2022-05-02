@@ -6,6 +6,8 @@ class Debug
 public:
   Debug();
 
+  void updatePlot();
+
 private:
 };
 
