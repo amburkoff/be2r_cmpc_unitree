@@ -56,7 +56,7 @@ void LegController<T>::zeroCommand()
   {
     cmd.zero();
   }
-  
+
   _legsEnabled = false;
 }
 
@@ -112,6 +112,7 @@ void LegController<T>::updateData(const SpiData* spiData)
 template <typename T>
 void LegController<T>::updateCommand(SpiCommand* spiCommand)
 {
+
   for (int leg = 0; leg < 4; leg++)
   {
     // tauFF
@@ -148,7 +149,6 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->kd_abad[leg] = commands[leg].kdJoint(0, 0);
     spiCommand->kd_hip[leg] = commands[leg].kdJoint(1, 1);
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
-
 
     // cout << spiCommand->kp_abad[leg] << endl;
     // cout << spiCommand->kp_hip[leg] << endl;

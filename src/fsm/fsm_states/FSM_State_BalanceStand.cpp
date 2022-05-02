@@ -17,9 +17,7 @@ using namespace std;
  * @param _controlFSMData holds all of the relevant control data
  */
 template <typename T>
-FSM_State_BalanceStand<T>::FSM_State_BalanceStand(
-    ControlFSMData<T>* _controlFSMData)
-    : FSM_State<T>(_controlFSMData, FSM_StateName::BALANCE_STAND, "BALANCE_STAND")
+FSM_State_BalanceStand<T>::FSM_State_BalanceStand(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::BALANCE_STAND, "BALANCE_STAND")
 {
   // Set the pre controls safety checks
   this->turnOnAllSafetyChecks();
@@ -238,6 +236,19 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   // _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; //original
 
   // cout << "init rpy: " << _ini_body_ori_rpy << endl;
+
+  Vec3<T> pDes_backup[4];
+  Vec3<T> vDes_backup[4];
+  Mat3<T> Kp_backup[4];
+  Mat3<T> Kd_backup[4];
+
+  for (int leg(0); leg < 4; ++leg)
+  {
+    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+  }
 
   // Orientation
   _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];

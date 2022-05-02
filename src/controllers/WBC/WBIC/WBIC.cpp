@@ -4,9 +4,7 @@
 #include <eigen3/Eigen/SVD>
 
 template <typename T>
-WBIC<T>::WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list,
-              const std::vector<Task<T>*>* task_list)
-    : WBC<T>(num_qdot), _dim_floating(6)
+WBIC<T>::WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list, const std::vector<Task<T>*>* task_list) : WBC<T>(num_qdot), _dim_floating(6)
 {
   _contact_list = contact_list;
   _task_list = task_list;
@@ -96,7 +94,10 @@ void WBIC<T>::MakeTorque(DVec<T>& cmd, void* extra_input)
 
   // pretty_print(qddot_pre, std::cout, "qddot_cmd");
   for (size_t i(0); i < _dim_floating; ++i)
+  {
     qddot_pre[i] += z[i];
+  }
+
   _GetSolution(qddot_pre, cmd);
 
   _data->_opt_result = DVec<T>(_dim_opt);
@@ -138,17 +139,13 @@ void WBIC<T>::_SetEqualityConstraint(const DVec<T>& qddot)
 {
   if (_dim_rf > 0)
   {
-    _dyn_CE.block(0, 0, _dim_eq_cstr, _dim_floating) =
-        WB::A_.block(0, 0, _dim_floating, _dim_floating);
-    _dyn_CE.block(0, _dim_floating, _dim_eq_cstr, _dim_rf) =
-        -WB::Sv_ * _Jc.transpose();
-    _dyn_ce0 = -WB::Sv_ * (WB::A_ * qddot + WB::cori_ + WB::grav_ -
-                           _Jc.transpose() * _Fr_des);
+    _dyn_CE.block(0, 0, _dim_eq_cstr, _dim_floating) = WB::A_.block(0, 0, _dim_floating, _dim_floating);
+    _dyn_CE.block(0, _dim_floating, _dim_eq_cstr, _dim_rf) = -WB::Sv_ * _Jc.transpose();
+    _dyn_ce0 = -WB::Sv_ * (WB::A_ * qddot + WB::cori_ + WB::grav_ - _Jc.transpose() * _Fr_des);
   }
   else
   {
-    _dyn_CE.block(0, 0, _dim_eq_cstr, _dim_floating) =
-        WB::A_.block(0, 0, _dim_floating, _dim_floating);
+    _dyn_CE.block(0, 0, _dim_eq_cstr, _dim_floating) = WB::A_.block(0, 0, _dim_floating, _dim_floating);
     _dyn_ce0 = -WB::Sv_ * (WB::A_ * qddot + WB::cori_ + WB::grav_);
   }
 
@@ -158,8 +155,10 @@ void WBIC<T>::_SetEqualityConstraint(const DVec<T>& qddot)
     {
       CE[j][i] = _dyn_CE(i, j);
     }
+
     ce0[i] = -_dyn_ce0[i];
   }
+
   // pretty_print(_dyn_CE, std::cout, "WBIC: CE");
   // pretty_print(_dyn_ce0, std::cout, "WBIC: ce0");
 }
@@ -176,8 +175,10 @@ void WBIC<T>::_SetInEqualityConstraint()
     {
       CI[j][i] = _dyn_CI(i, j);
     }
+
     ci0[i] = -_dyn_ci0[i];
   }
+
   // pretty_print(_dyn_CI, std::cout, "WBIC: CI");
   // pretty_print(_dyn_ci0, std::cout, "WBIC: ci0");
 }
@@ -235,6 +236,7 @@ void WBIC<T>::_ContactBuilding()
     dim_accumul_rf += dim_new_rf;
     dim_accumul_uf += dim_new_uf;
   }
+
   //pretty_print(_Fr_des, std::cout, "[WBIC] Fr des");
   // pretty_print(_Jc, std::cout, "[WBIC] Jc");
   // pretty_print(_JcDotQdot, std::cout, "[WBIC] JcDot Qdot");
@@ -245,19 +247,24 @@ template <typename T>
 void WBIC<T>::_GetSolution(const DVec<T>& qddot, DVec<T>& cmd)
 {
   DVec<T> tot_tau;
+
   if (_dim_rf > 0)
   {
     _data->_Fr = DVec<T>(_dim_rf);
+
     // get Reaction forces
     for (size_t i(0); i < _dim_rf; ++i)
+    {
       _data->_Fr[i] = z[i + _dim_floating] + _Fr_des[i];
-    tot_tau =
-        WB::A_ * qddot + WB::cori_ + WB::grav_ - _Jc.transpose() * _data->_Fr;
+    }
+
+    tot_tau = WB::A_ * qddot + WB::cori_ + WB::grav_ - _Jc.transpose() * _data->_Fr;
   }
   else
   {
     tot_tau = WB::A_ * qddot + WB::cori_ + WB::grav_;
   }
+
   _data->_qddot = qddot;
   cmd = tot_tau.tail(WB::num_act_joint_);
 
@@ -281,11 +288,14 @@ void WBIC<T>::_SetCost()
   {
     G[i + idx_offset][i + idx_offset] = _data->_W_floating[i];
   }
+
   idx_offset += _dim_floating;
+
   for (size_t i(0); i < _dim_rf; ++i)
   {
     G[i + idx_offset][i + idx_offset] = _data->_W_rf[i];
   }
+
   // pretty_print(_data->_W_floating, std::cout, "W floating");
   // pretty_print(_data->_W_rf, std::cout, "W rf");
 }

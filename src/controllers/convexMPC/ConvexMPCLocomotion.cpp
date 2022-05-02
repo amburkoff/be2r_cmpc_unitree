@@ -227,7 +227,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     rpy_int[0] += dt * (_roll_des - seResult.rpy[0]) / v_robot[1];
   }
 
-  rpy_int[0] = fminf(fmaxf(rpy_int[0], -.25), .25); 
+  rpy_int[0] = fminf(fmaxf(rpy_int[0], -.25), .25);
   rpy_int[1] = fminf(fmaxf(rpy_int[1], -.25), .25);
   rpy_comp[1] = v_robot[0] * rpy_int[1];
   rpy_comp[0] = v_robot[1] * rpy_int[0] * (gaitNumber != 8); //turn off for pronking
@@ -334,7 +334,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       0, 0, 10;
   Kd_stance = Kd;
 
-//for real
+  //for real
   // Kp << 100, 0, 0,
   //     0, 100, 0,
   //     0, 0, 10;
@@ -344,7 +344,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   //     0, 0.1, 0,
   //     0, 0, 0.1;
   // Kd_stance = Kd;
-
 
   // gait
   Vec4<float> contactStates = gait->getContactState();
@@ -410,6 +409,13 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].vDes = vDesLeg;
         data._legController->commands[foot].kpCartesian = Kp;
         data._legController->commands[foot].kdCartesian = Kd;
+      }
+      else
+      { //foot damping
+        data._legController->commands[foot].pDes = pDesLeg;
+        data._legController->commands[foot].vDes = vDesLeg;
+        // data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
+        // data._legController->commands[foot].kdCartesian = Kd_stance;
       }
 
       std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
@@ -479,8 +485,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       }
       se_contactState[foot] = contactState;
 
-      // cout << "p0 des: " << data._legController->commands[0].pDes << endl;
-
       // Update for WBC
       std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
       marker[foot].header.frame_id = names[foot];
@@ -522,6 +526,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   }
 
   data._stateEstimator->setContactPhase(se_contactState);
+
+  cout << "p0 des: " << data._legController->commands[0].pDes << endl;
 
   // Update For WBC
   pBody_des[0] = world_position_desired[0];

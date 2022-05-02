@@ -63,12 +63,12 @@ void FSM_State_LayDown<T>::run()
   }
 
   //for real
-  float p = 2000;
-  float d = 4;
+  // float p = 2000;
+  // float d = 4;
 
   //for sim
-  // float p = 300;
-  // float d = 100;
+  float p = 300;
+  float d = 100;
 
   for (int i = 0; i < 4; i++)
   {

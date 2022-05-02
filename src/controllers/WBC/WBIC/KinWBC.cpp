@@ -13,12 +13,8 @@ KinWBC<T>::KinWBC(size_t num_qdot)
 }
 
 template <typename T>
-bool KinWBC<T>::FindConfiguration(
-    const DVec<T>& curr_config, const std::vector<Task<T>*>& task_list,
-    const std::vector<ContactSpec<T>*>& contact_list, DVec<T>& jpos_cmd,
-    DVec<T>& jvel_cmd)
+bool KinWBC<T>::FindConfiguration(const DVec<T>& curr_config, const std::vector<Task<T>*>& task_list, const std::vector<ContactSpec<T>*>& contact_list, DVec<T>& jpos_cmd, DVec<T>& jvel_cmd)
 {
-
   // Contact Jacobian Setup
   DMat<T> Nc(num_qdot_, num_qdot_);
   Nc.setIdentity();

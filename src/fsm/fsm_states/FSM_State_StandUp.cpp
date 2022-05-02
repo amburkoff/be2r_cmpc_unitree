@@ -64,6 +64,42 @@ void FSM_State_StandUp<T>::run()
     progress = 1.;
   }
 
+  FloatingBaseModel<float> _model = this->_data->_legController->_quadruped.buildModel();
+
+  const StateEstimate<float>& state_est = this->_data->_stateEstimator->getResult();
+  const LegControllerData<float>* leg_data = this->_data->_legController->datas;
+
+  FBModelState<float> _state;
+  DVec<float> _full_config(cheetah::num_act_joint + 7);
+
+  _state.q = DVec<float>::Zero(cheetah::num_act_joint);
+  _state.qd = DVec<float>::Zero(cheetah::num_act_joint);
+  _full_config.setZero();
+
+  _state.bodyOrientation = state_est.orientation;
+  _state.bodyPosition = state_est.position;
+
+  for (size_t i(0); i < 3; ++i)
+  {
+    _state.bodyVelocity[i] = state_est.omegaBody[i];
+    _state.bodyVelocity[i + 3] = state_est.vBody[i];
+
+    for (size_t leg(0); leg < 4; ++leg)
+    {
+      _state.q[3 * leg + i] = leg_data[leg].q[i];
+      _state.qd[3 * leg + i] = leg_data[leg].qd[i];
+
+      _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
+    }
+  }
+  _model.setState(_state);
+
+  _model.generalizedGravityForce();
+
+  Vec12<float> gravity = _model.getGravityForce().tail(12);
+
+  // cout << "gravity: " << gravity << endl;
+
   for (int i = 0; i < 4; i++)
   {
     // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(600, 600, 600).asDiagonal();
@@ -73,7 +109,12 @@ void FSM_State_StandUp<T>::run()
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
 
+    this->_data->_legController->commands[i].tauFeedForward = gravity.block<3,1>(i * 3, 0);
+
+    // cout << "tau ff " << i << ": " << this->_data->_legController->commands[i].tauFeedForward << endl;
+
     // cout << this->_data->_legController->commands[i].pDes << endl;
+    // cmd = tot_tau.tail(WB::num_act_joint_);
 
     // this->_data->_legController->commands[i].qDes(0) = _ini_foot_pos[i];
     // this->_data->_legController->commands[i].qDes(0) = _ini_foot_pos[i];
