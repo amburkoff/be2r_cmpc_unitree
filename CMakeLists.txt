@@ -34,6 +34,7 @@ include_directories(
   src/common/SimUtilities
   src/common/SparseCMPC
   src/common/Utilities
+  src/common/debug
   src/controllers
   src/controllers/convexMPC
   src/fsm

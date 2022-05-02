@@ -11,10 +11,13 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include <ros/transport_hints.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
+#include <unitree_legged_msgs/StateError.h>
+#include <unitree_legged_msgs/LegError.h>
 
 //MIT
 #include "Configuration.h"
@@ -27,18 +30,18 @@
 #include "spi_data_t.hpp"
 #include "spi_torque_t.hpp"
 // #include "Controllers/ContactEstimator.h"
-#include "Controllers/GaitScheduler.h"
-
-#include <ros/transport_hints.h>
-
 #include "Controllers/ContactEstimator.h"
 #include "Controllers/DesiredStateCommand.h"
+#include "Controllers/GaitScheduler.h"
 #include "Controllers/OrientationEstimator.h"
 #include "Controllers/PositionVelocityEstimator.h"
 
+//BE2R
+#include "debug.hpp"
+
 #define MAIN_LOOP_RATE 500
 
-#define FSM 3
+// #define FSM 3
 // #define FSM_AUTO
 
 #define MOTOR_BREAK 0x00
@@ -80,6 +83,7 @@ private:
   ros::Subscriber _sub_cmd_vel;
   ros::Publisher _pub_joint_states;
   ros::Publisher _pub_state_error;
+  ros::Publisher _pub_leg_error;
   ros::Time _time_start;
   const ros::Time _zero_time;
 
