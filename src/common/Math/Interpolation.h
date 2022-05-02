@@ -9,13 +9,15 @@
 #include <assert.h>
 #include <type_traits>
 
-namespace Interpolate {
+namespace Interpolate
+{
 
 /*!
  * Linear interpolation between y0 and yf.  x is between 0 and 1
  */
 template <typename y_t, typename x_t>
-y_t lerp(y_t y0, y_t yf, x_t x) {
+y_t lerp(y_t y0, y_t yf, x_t x)
+{
   static_assert(std::is_floating_point<x_t>::value,
                 "must use floating point value");
   assert(x >= 0 && x <= 1);
@@ -26,7 +28,8 @@ y_t lerp(y_t y0, y_t yf, x_t x) {
  * Cubic bezier interpolation between y0 and yf.  x is between 0 and 1
  */
 template <typename y_t, typename x_t>
-y_t cubicBezier(y_t y0, y_t yf, x_t x) {
+y_t cubicBezier(y_t y0, y_t yf, x_t x)
+{
   static_assert(std::is_floating_point<x_t>::value,
                 "must use floating point value");
   assert(x >= 0 && x <= 1);
@@ -40,7 +43,8 @@ y_t cubicBezier(y_t y0, y_t yf, x_t x) {
  * 1
  */
 template <typename y_t, typename x_t>
-y_t cubicBezierFirstDerivative(y_t y0, y_t yf, x_t x) {
+y_t cubicBezierFirstDerivative(y_t y0, y_t yf, x_t x)
+{
   static_assert(std::is_floating_point<x_t>::value,
                 "must use floating point value");
   assert(x >= 0 && x <= 1);
@@ -54,7 +58,8 @@ y_t cubicBezierFirstDerivative(y_t y0, y_t yf, x_t x) {
  * 1
  */
 template <typename y_t, typename x_t>
-y_t cubicBezierSecondDerivative(y_t y0, y_t yf, x_t x) {
+y_t cubicBezierSecondDerivative(y_t y0, y_t yf, x_t x)
+{
   static_assert(std::is_floating_point<x_t>::value,
                 "must use floating point value");
   assert(x >= 0 && x <= 1);
@@ -63,6 +68,6 @@ y_t cubicBezierSecondDerivative(y_t y0, y_t yf, x_t x) {
   return bezier * yDiff;
 }
 
-}  // namespace Interpolate
+} // namespace Interpolate
 
-#endif  // PROJECT_INTERPOLATION_H
+#endif // PROJECT_INTERPOLATION_H

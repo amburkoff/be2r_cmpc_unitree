@@ -9,12 +9,12 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
-#include <nav_msgs/Odometry.h>
 
 //MIT
 #include "Configuration.h"
@@ -38,8 +38,8 @@
 
 #define MAIN_LOOP_RATE 500
 
-#define FSM 3
-// #define FSM_AUTO 
+#define FSM 4
+// #define FSM_AUTO
 
 const float max_torque[3] = {17.f, 17.f, 26.f};        // TODO CHECK WITH BEN
 const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
