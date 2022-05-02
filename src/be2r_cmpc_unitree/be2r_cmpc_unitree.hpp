@@ -38,13 +38,19 @@
 
 #define MAIN_LOOP_RATE 500
 
-#define FSM 4
+#define FSM 3
 // #define FSM_AUTO
+
+#define MOTOR_BREAK 0x00
+#define MOTOR_ON 0x0A
 
 const float max_torque[3] = {17.f, 17.f, 26.f};        // TODO CHECK WITH BEN
 const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
 const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
 const float disabled_torque[3] = {0.f, 0.f, 0.f};
+
+constexpr double PosStopF = (2.146E+9f);
+constexpr double VelStopF = (16000.0f);
 
 class Body_Manager
 {
