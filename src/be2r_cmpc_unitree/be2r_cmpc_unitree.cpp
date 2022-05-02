@@ -186,25 +186,35 @@ void Body_Manager::finalizeStep()
 
   static unitree_legged_msgs::LowCmd _low_cmd;
   uint8_t mode = MOTOR_BREAK;
+  // uint8_t mode = MOTOR_ON;
 
   if (_legController->_legsEnabled)
   {
-    mode = MOTOR_ON;
+    // ROS_INFO("Motor ON");
+    // mode = MOTOR_ON;
+    mode = 0x0A;
   }
+  else
   {
-    mode = MOTOR_BREAK;
+    // ROS_INFO("Motor OFF");
+    // mode = MOTOR_BREAK;
+    mode = 0x00;
   }
 
   ros::Duration delta_t = ros::Time::now() - _time_start;
   // _low_cmd.header.stamp = ros::Time::now();
   _low_cmd.header.stamp = _zero_time + delta_t;
 
+  for (uint8_t servo_num = 0; servo_num < 12; servo_num++)
+  {
+    // _low_cmd.motorCmd[servo_num].mode = 0x0A;
+    _low_cmd.motorCmd[servo_num].mode = mode;
+    _low_cmd.motorCmd[servo_num].q = PosStopF;
+    _low_cmd.motorCmd[servo_num].dq = VelStopF;
+  }
+
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    // _low_cmd.motorCmd[leg_num * 3 + 0].mode = 0x0A;
-    _low_cmd.motorCmd[leg_num * 3 + 0].mode = mode;
-    _low_cmd.motorCmd[leg_num * 3 + 1].q = PosStopF;
-    _low_cmd.motorCmd[leg_num * 3 + 2].dq = VelStopF;
     _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];

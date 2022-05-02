@@ -63,37 +63,33 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
   Mat3<float> Kd;
 
   //for sim
-  Kd << 1, 0, 0,
-      0, 4, 0,
-      0, 0, 4;
+  // Kd << 1, 0, 0,
+  //     0, 4, 0,
+  //     0, 0, 4;
 
   //for real
   // Kd << 0.65, 0, 0,
   //     0, 0.65, 0,
   //     0, 0, 0.65;
 
-  // torque_out->tau_abad[board_num] = cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
-  //                                   cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
-  //                                   cmd->tau_abad_ff[board_num];
-
-  float threshold = 5;
-  // Vec3<float> v_thresh = Vec3<float>::Constant(threshold);
+  // float threshold = 5;
 
   for (size_t i = 0; i < 4; i++)
   {
-    if (counter < 1500)
-    {
-      this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 2;
-      ROS_INFO("THRESHOLD");
+    // if (counter < 1500)
+    // {
+    //   this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 2;
+    //   ROS_INFO("THRESHOLD");
 
-      counter++;
-    }
-    else
-    {
-      this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 0;
-    }
+    //   counter++;
+    // }
+    // else
+    // {
+    // this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 0;
+    // }
 
     this->_control_fsm_data->_legController->commands[i].kpJoint = Mat3<T>::Zero();
+    this->_control_fsm_data->_legController->commands[i].kdJoint = Mat3<T>::Zero();
 
     this->_control_fsm_data->_legController->commands[i].kpCartesian = Mat3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].kdCartesian = Mat3<T>::Zero();
@@ -101,6 +97,8 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
     this->_control_fsm_data->_legController->commands[i].qdDes = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].forceFeedForward = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();
+
+    this->_control_fsm_data->_legController->_legsEnabled = false;
   }
 
   return this->transitionData;

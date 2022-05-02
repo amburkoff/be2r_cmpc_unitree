@@ -341,8 +341,19 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   Kd << 10, 0, 0,
       0, 10, 0,
       0, 0, 10;
-
   Kd_stance = Kd;
+
+//for real
+  // Kp << 100, 0, 0,
+  //     0, 100, 0,
+  //     0, 0, 10;
+  // Kp_stance = 0 * Kp;
+
+  // Kd << 0.1, 0, 0,
+  //     0, 0.1, 0,
+  //     0, 0, 0.1;
+  // Kd_stance = Kd;
+
 
   // gait
   Vec4<float> contactStates = gait->getContactState();

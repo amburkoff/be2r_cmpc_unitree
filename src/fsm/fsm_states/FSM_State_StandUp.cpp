@@ -57,7 +57,7 @@ template <typename T>
 void FSM_State_StandUp<T>::run()
 {
   T hMax = 0.25;
-  T progress = 1 * iter * this->_data->controlParameters->controller_dt;
+  T progress = 0.5 * iter * this->_data->controlParameters->controller_dt;
 
   if (progress > 1.)
   {
@@ -66,7 +66,8 @@ void FSM_State_StandUp<T>::run()
 
   for (int i = 0; i < 4; i++)
   {
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(600, 600, 600).asDiagonal();
+    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(600, 600, 600).asDiagonal();
+    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1000, 1000, 1000).asDiagonal();
     this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];

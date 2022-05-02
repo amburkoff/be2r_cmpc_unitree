@@ -54,22 +54,21 @@ void FSM_State_LayDown<T>::onEnter()
 template <typename T>
 void FSM_State_LayDown<T>::run()
 {
-  // ROS_INFO("LAYDOWN");
-  T hMax = 0.25;
   T progress = 0.25 * iter * this->_data->controlParameters->controller_dt;
 
   if (progress > 1.)
   {
     progress = 1.;
+    this->_data->_legController->setEnabled(false);
   }
 
   //for real
-  // float p = 300;
-  // float d = 100;
+  float p = 2000;
+  float d = 4;
 
   //for sim
-  float p = 300;
-  float d = 100;
+  // float p = 300;
+  // float d = 100;
 
   for (int i = 0; i < 4; i++)
   {
@@ -80,8 +79,10 @@ void FSM_State_LayDown<T>::run()
     this->_data->_legController->commands[i].kdCartesian = Vec3<T>(d, d, d).asDiagonal();
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
-    this->_data->_legController->commands[i].pDes[2] = progress * (0) + (1. - progress) * _ini_foot_pos[i][2];
+    this->_data->_legController->commands[i].pDes[2] = progress * (-0.07) + (1. - progress) * _ini_foot_pos[i][2];
   }
+
+  cout << "z ini: " << _ini_foot_pos[0][2] << " z des: " << this->_data->_legController->commands[0].pDes[2] << endl;
 }
 
 /**
