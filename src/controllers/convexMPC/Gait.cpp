@@ -159,14 +159,21 @@ int* OffsetDurationGait::getMpcTable()
   {
     int iter = (i + _iteration + 1) % _nIterations;
     Array4i progress = iter - _offsets;
+
     for (int j = 0; j < 4; j++)
     {
       if (progress[j] < 0)
+      {
         progress[j] += _nIterations;
+      }
       if (progress[j] < _durations[j])
+      {
         _mpc_table[i * 4 + j] = 1;
+      }
       else
+      {
         _mpc_table[i * 4 + j] = 0;
+      }
 
       // printf("%d ", _mpc_table[i*4 + j]);
     }

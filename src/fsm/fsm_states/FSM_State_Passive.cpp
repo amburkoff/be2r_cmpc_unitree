@@ -22,6 +22,8 @@ FSM_State_Passive<T>::FSM_State_Passive(ControlFSMData<T>* _controlFSMData) : FS
   // Post control safety checks
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
+
+  this->_control_fsm_data = _controlFSMData;
 }
 
 template <typename T>
@@ -29,6 +31,9 @@ void FSM_State_Passive<T>::onEnter()
 {
   // Default is to not transition
   this->nextStateName = this->stateName;
+
+  is_falling = false;
+  counter = 0;
 
   // Reset the transition data
   this->transitionData.zero();
@@ -54,6 +59,48 @@ template <typename T>
 TransitionData<T> FSM_State_Passive<T>::testTransition()
 {
   this->transitionData.done = true;
+
+  Mat3<float> Kd;
+
+  //for sim
+  // Kd << 1, 0, 0,
+  //     0, 4, 0,
+  //     0, 0, 4;
+
+  //for real
+  // Kd << 0.65, 0, 0,
+  //     0, 0.65, 0,
+  //     0, 0, 0.65;
+
+  // float threshold = 5;
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    // if (counter < 1500)
+    // {
+    //   this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 2;
+    //   ROS_INFO("THRESHOLD");
+
+    //   counter++;
+    // }
+    // else
+    // {
+    // this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 0;
+    // }
+
+    this->_control_fsm_data->_legController->commands[i].kpJoint = Mat3<T>::Zero();
+    this->_control_fsm_data->_legController->commands[i].kdJoint = Mat3<T>::Zero();
+
+    this->_control_fsm_data->_legController->commands[i].kpCartesian = Mat3<T>::Zero();
+    this->_control_fsm_data->_legController->commands[i].kdCartesian = Mat3<T>::Zero();
+
+    this->_control_fsm_data->_legController->commands[i].qdDes = Vec3<T>::Zero();
+    this->_control_fsm_data->_legController->commands[i].forceFeedForward = Vec3<T>::Zero();
+    this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();
+
+    this->_control_fsm_data->_legController->_legsEnabled = false;
+  }
+
   return this->transitionData;
 }
 

@@ -45,6 +45,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped,
   statesList.standUp = new FSM_State_StandUp<T>(&data);
   statesList.locomotion = new FSM_State_Locomotion<T>(&data);
   statesList.balanceStand = new FSM_State_BalanceStand<T>(&data);
+  statesList.laydown = new FSM_State_LayDown<T>(&data);
   statesList.vision = new FSM_State_Vision<T>(&data);
 
   // statesList.jointPD = new FSM_State_JointPD<T>(&data);
@@ -87,14 +88,6 @@ void ControlFSM<T>::initialize()
 template <typename T>
 void ControlFSM<T>::runFSM()
 {
-  // Publish state estimator data to other computer
-  //for(size_t i(0); i<3; ++i){
-  //_state_estimator.p[i] = data._stateEstimator->getResult().position[i];
-  //_state_estimator.quat[i] = data._stateEstimator->getResult().orientation[i];
-  //}
-  //_state_estimator.quat[3] = data._stateEstimator->getResult().orientation[3];
-  //state_estimator_lcm.publish("state_estimator_ctrl_pc", &_state_estimator);
-
   // Check the robot state for safe operation
   operatingMode = safetyPreCheck();
 
@@ -258,6 +251,9 @@ FSM_State<T>* ControlFSM<T>::getNextState(FSM_StateName stateName)
 
   case FSM_StateName::BALANCE_STAND:
     return statesList.balanceStand;
+
+  case FSM_StateName::LAYDOWN:
+    return statesList.laydown;
 
   case FSM_StateName::LOCOMOTION:
     return statesList.locomotion;

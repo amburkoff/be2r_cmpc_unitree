@@ -132,7 +132,6 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
 template <typename T>
 void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est, const LegControllerData<T>* leg_data)
 {
-
   _state.bodyOrientation = state_est.orientation;
   _state.bodyPosition = state_est.position;
 
@@ -160,6 +159,8 @@ void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est, const LegContr
   _grav = _model.getGravityForce();
   _coriolis = _model.getCoriolisForce();
   _Ainv = _A.inverse();
+
+  // cout << "Gravity: " << _grav << endl;
 }
 
 template class WBC_Ctrl<float>;

@@ -56,6 +56,7 @@ void LegController<T>::zeroCommand()
   {
     cmd.zero();
   }
+
   _legsEnabled = false;
 }
 
@@ -111,6 +112,7 @@ void LegController<T>::updateData(const SpiData* spiData)
 template <typename T>
 void LegController<T>::updateCommand(SpiCommand* spiCommand)
 {
+
   for (int leg = 0; leg < 4; leg++)
   {
     // tauFF
@@ -138,15 +140,23 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->tau_hip_ff[leg] = legTorque(1);
     spiCommand->tau_knee_ff[leg] = legTorque(2);
 
-    // joint space pd
-    // joint space PD
+    // joint space P
+    spiCommand->kp_abad[leg] = commands[leg].kpJoint(0, 0);
+    spiCommand->kp_hip[leg] = commands[leg].kpJoint(1, 1);
+    spiCommand->kp_knee[leg] = commands[leg].kpJoint(2, 2);
+
+    // joint space D
     spiCommand->kd_abad[leg] = commands[leg].kdJoint(0, 0);
     spiCommand->kd_hip[leg] = commands[leg].kdJoint(1, 1);
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
 
-    spiCommand->kp_abad[leg] = commands[leg].kpJoint(0, 0);
-    spiCommand->kp_hip[leg] = commands[leg].kpJoint(1, 1);
-    spiCommand->kp_knee[leg] = commands[leg].kpJoint(2, 2);
+    // cout << spiCommand->kp_abad[leg] << endl;
+    // cout << spiCommand->kp_hip[leg] << endl;
+    // cout << spiCommand->kp_knee[leg] << endl;
+
+    // cout << spiCommand->kd_abad[leg] << endl;
+    // cout << spiCommand->kd_hip[leg] << endl;
+    // cout << spiCommand->kd_knee[leg] << endl;
 
     spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
     spiCommand->q_des_hip[leg] = commands[leg].qDes(1);
@@ -159,7 +169,8 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     // estimate torque
     datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
 
-    spiCommand->flags[leg] = _legsEnabled ? 1 : 0;
+    // spiCommand->flags[leg] = _legsEnabled ? 1 : 0;
+    spiCommand->flags[leg] = _legsEnabled;
   }
 }
 

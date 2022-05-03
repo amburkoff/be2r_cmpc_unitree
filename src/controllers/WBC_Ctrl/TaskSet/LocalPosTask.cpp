@@ -6,12 +6,11 @@
 #include <Utilities/Utilities_print.h>
 
 template <typename T>
-LocalPosTask<T>::LocalPosTask(const FloatingBaseModel<T>* robot, int link_idx,
-                              int local_frame_idx)
-    : Task<T>(3),
-      _robot_sys(robot),
-      _link_idx(link_idx),
-      _local_frame_idx(local_frame_idx) {
+LocalPosTask<T>::LocalPosTask(const FloatingBaseModel<T>* robot, int link_idx, int local_frame_idx) : Task<T>(3),
+                                                                                                      _robot_sys(robot),
+                                                                                                      _link_idx(link_idx),
+                                                                                                      _local_frame_idx(local_frame_idx)
+{
   TK::Jt_ = DMat<T>::Zero(TK::dim_task_, cheetah::dim_config);
   TK::JtDotQdot_ = DVec<T>::Zero(TK::dim_task_);
 
@@ -24,8 +23,8 @@ template <typename T>
 LocalPosTask<T>::~LocalPosTask() {}
 
 template <typename T>
-bool LocalPosTask<T>::_UpdateCommand(const void* pos_des, const DVec<T>& vel_des,
-                                     const DVec<T>& acc_des) {
+bool LocalPosTask<T>::_UpdateCommand(const void* pos_des, const DVec<T>& vel_des, const DVec<T>& acc_des)
+{
   Vec3<T>* pos_cmd = (Vec3<T>*)pos_des;
   Vec3<T> link_pos, local_pos, local_vel;
 
@@ -34,16 +33,13 @@ bool LocalPosTask<T>::_UpdateCommand(const void* pos_des, const DVec<T>& vel_des
   local_vel = _robot_sys->_vGC[_local_frame_idx];
 
   // X, Y, Z
-  for (size_t i(0); i < TK::dim_task_; ++i) {
+  for (size_t i(0); i < TK::dim_task_; ++i)
+  {
     TK::pos_err_[i] = (*pos_cmd)[i] - (link_pos[i] - local_pos[i]);
     TK::vel_des_[i] = vel_des[i];
     TK::acc_des_[i] = acc_des[i];
 
-    TK::op_cmd_[i] =
-        _Kp[i] * TK::pos_err_[i] +
-        _Kd[i] * (TK::vel_des_[i] -
-                  (_robot_sys->_vGC[_link_idx][i] - local_vel[i])) +
-        TK::acc_des_[i];
+    TK::op_cmd_[i] = _Kp[i] * TK::pos_err_[i] + _Kd[i] * (TK::vel_des_[i] - (_robot_sys->_vGC[_link_idx][i] - local_vel[i])) + TK::acc_des_[i];
   }
 
   // printf("[Link Pos Task]\n");
@@ -61,17 +57,20 @@ bool LocalPosTask<T>::_UpdateCommand(const void* pos_des, const DVec<T>& vel_des
 }
 
 template <typename T>
-bool LocalPosTask<T>::_UpdateTaskJacobian() {
+bool LocalPosTask<T>::_UpdateTaskJacobian()
+{
   TK::Jt_ = _robot_sys->_Jc[_link_idx] - _robot_sys->_Jc[_local_frame_idx];
   // TEST
   // TK::Jt_.block(0,0, 3,3) = DMat<T>::Zero(3,3);
+
   return true;
 }
 
 template <typename T>
-bool LocalPosTask<T>::_UpdateTaskJDotQdot() {
-  TK::JtDotQdot_ =
-      _robot_sys->_Jcdqd[_link_idx] - _robot_sys->_Jcdqd[_local_frame_idx];
+bool LocalPosTask<T>::_UpdateTaskJDotQdot()
+{
+  TK::JtDotQdot_ = _robot_sys->_Jcdqd[_link_idx] - _robot_sys->_Jcdqd[_local_frame_idx];
+
   return true;
 }
 

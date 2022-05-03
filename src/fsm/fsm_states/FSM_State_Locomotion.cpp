@@ -10,6 +10,12 @@
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
 // #include <rt/rt_interface_lcm.h>
 
+//оригинальный параметр для MPC+WBC
+#define ITERATIONS_BETWEEN_MPC 13
+
+//лучший для только MPC
+// #define ITERATIONS_BETWEEN_MPC 10
+
 using namespace std;
 
 /**
@@ -21,7 +27,7 @@ using namespace std;
 template <typename T>
 FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::LOCOMOTION, "LOCOMOTION")
 {
-  cMPCOld = new ConvexMPCLocomotion(0.002, 13, _controlFSMData->userParameters);
+  cMPCOld = new ConvexMPCLocomotion(0.002, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
   // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
   //                                   //30 / (1000. * _controlFSMData->controlParameters->controller_dt),
   //                                   //22 / (1000. * _controlFSMData->controlParameters->controller_dt),
@@ -125,6 +131,10 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
       this->transitionDuration = 0.;
       break;
 
+    case K_LAY_DOWN:
+      this->nextStateName = FSM_StateName::LAYDOWN;
+      break;
+
     default:
       std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
                 << K_LOCOMOTION << " to "
@@ -185,6 +195,10 @@ TransitionData<T> FSM_State_Locomotion<T>::transition()
     break;
 
   case FSM_StateName::VISION:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::LAYDOWN:
     this->transitionData.done = true;
     break;
 
@@ -308,9 +322,9 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    //this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
+    this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
     this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
-    //this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
+    this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
     this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
   }
 }
@@ -323,8 +337,7 @@ template <typename T>
 void FSM_State_Locomotion<T>::StanceLegImpedanceControl(int leg)
 {
   // Impedance control for the stance leg
-  this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(), this->_data->controlParameters->stand_kp_cartesian,
-                                  this->_data->controlParameters->stand_kd_cartesian);
+  this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(), this->_data->controlParameters->stand_kp_cartesian, this->_data->controlParameters->stand_kd_cartesian);
 }
 
 // template class FSM_State_Locomotion<double>;

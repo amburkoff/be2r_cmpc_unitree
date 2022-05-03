@@ -37,9 +37,7 @@ using namespace std;
  * @return the 1x1 inverse contact inertia J H^{-1} J^T
  */
 template <typename T>
-T FloatingBaseModel<T>::applyTestForce(const int gc_index,
-                                       const Vec3<T>& force_ics_at_contact,
-                                       DVec<T>& dstate_out)
+T FloatingBaseModel<T>::applyTestForce(const int gc_index, const Vec3<T>& force_ics_at_contact, DVec<T>& dstate_out)
 {
   forwardKinematics();
   updateArticulatedBodies();
@@ -161,8 +159,7 @@ void FloatingBaseModel<T>::updateArticulatedBodies()
   for (size_t i = 6; i < _nDof; i++)
   {
     _IA[i] = _Ibody[i].getMatrix(); // initialize
-    Mat6<T> XJrot = jointXform(_jointTypes[i], _jointAxes[i],
-                               _state.q[i - 6] * _gearRatios[i]);
+    Mat6<T> XJrot = jointXform(_jointTypes[i], _jointAxes[i], _state.q[i - 6] * _gearRatios[i]);
     _Xuprot[i] = XJrot * _Xrot[i];
     _Srot[i] = _S[i] * _gearRatios[i];
   }
@@ -515,9 +512,9 @@ void FloatingBaseModel<T>::forwardKinematics()
     return;
 
   // calculate joint transformations
-  _Xup[5] = createSXform(quaternionToRotationMatrix(_state.bodyOrientation),
-                         _state.bodyPosition);
+  _Xup[5] = createSXform(quaternionToRotationMatrix(_state.bodyOrientation), _state.bodyPosition);
   _v[5] = _state.bodyVelocity;
+
   for (size_t i = 6; i < _nDof; i++)
   {
     // joint xform
@@ -529,8 +526,7 @@ void FloatingBaseModel<T>::forwardKinematics()
     _v[i] = _Xup[i] * _v[_parents[i]] + vJ;
 
     // Same for rotors
-    Mat6<T> XJrot = jointXform(_jointTypes[i], _jointAxes[i],
-                               _state.q[i - 6] * _gearRatios[i]);
+    Mat6<T> XJrot = jointXform(_jointTypes[i], _jointAxes[i], _state.q[i - 6] * _gearRatios[i]);
     _Srot[i] = _S[i] * _gearRatios[i];
     SVec<T> vJrot = _Srot[i] * _state.qd[i - 6];
     _Xuprot[i] = XJrot * _Xrot[i];
@@ -673,8 +669,7 @@ DVec<T> FloatingBaseModel<T>::generalizedGravityForce()
     _agrot[i] = _Xuprot[i] * _ag[_parents[i]];
 
     // body and rotor
-    _G[i] = -_S[i].dot(_IC[i].getMatrix() * _ag[i]) -
-            _Srot[i].dot(_Irot[i].getMatrix() * _agrot[i]);
+    _G[i] = -_S[i].dot(_IC[i].getMatrix() * _ag[i]) - _Srot[i].dot(_Irot[i].getMatrix() * _agrot[i]);
   }
   return _G;
 }
@@ -909,8 +904,7 @@ void FloatingBaseModel<T>::forwardAccelerationKinematics()
  * joint torques
  */
 template <typename T>
-DVec<T> FloatingBaseModel<T>::inverseDynamics(
-    const FBModelStateDerivative<T>& dState)
+DVec<T> FloatingBaseModel<T>::inverseDynamics(const FBModelStateDerivative<T>& dState)
 {
   setDState(dState);
   forwardAccelerationKinematics();
