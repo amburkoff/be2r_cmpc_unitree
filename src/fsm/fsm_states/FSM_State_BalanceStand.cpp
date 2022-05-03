@@ -148,6 +148,10 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
     this->transitionDuration = 0.;
     break;
 
+  case K_LAY_DOWN:
+    this->nextStateName = FSM_StateName::LAYDOWN;
+    break;
+
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
               << K_BALANCE_STAND << " to "
@@ -199,6 +203,10 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
     break;
 
   case FSM_StateName::VISION:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::LAYDOWN:
     this->transitionData.done = true;
     break;
 

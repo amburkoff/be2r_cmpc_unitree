@@ -64,69 +64,12 @@ void FSM_State_StandUp<T>::run()
     progress = 1.;
   }
 
-  FloatingBaseModel<float> _model = this->_data->_legController->_quadruped.buildModel();
-
-  const StateEstimate<float>& state_est = this->_data->_stateEstimator->getResult();
-  const LegControllerData<float>* leg_data = this->_data->_legController->datas;
-
-  FBModelState<float> _state;
-  DVec<float> _full_config(cheetah::num_act_joint + 7);
-
-  _state.q = DVec<float>::Zero(cheetah::num_act_joint);
-  _state.qd = DVec<float>::Zero(cheetah::num_act_joint);
-  _full_config.setZero();
-
-  _state.bodyOrientation = state_est.orientation;
-  _state.bodyPosition = state_est.position;
-
-  for (size_t i(0); i < 3; ++i)
-  {
-    _state.bodyVelocity[i] = state_est.omegaBody[i];
-    _state.bodyVelocity[i + 3] = state_est.vBody[i];
-
-    for (size_t leg(0); leg < 4; ++leg)
-    {
-      _state.q[3 * leg + i] = leg_data[leg].q[i];
-      _state.qd[3 * leg + i] = leg_data[leg].qd[i];
-
-      _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
-    }
-  }
-  _model.setState(_state);
-
-  _model.generalizedGravityForce();
-
-  Vec12<float> gravity = _model.getGravityForce().tail(12);
-
-  // cout << "gravity: " << gravity << endl;
-
   auto& seResult = this->_data->_stateEstimator->getResult();
-
-  //hip 0.595 thigh 0.888 calf 0.151
-  // float mass = 13;
   float mass = 8;
-  Vec3<float> leg_torque[4];
   Vec3<float> leg_force;
-  leg_torque[0] << 0, 0, 0;
-  leg_torque[1] << 0, 0, 0;
-  leg_torque[2] << 0, 0, 0;
-  leg_torque[3] << 0, 0, 0;
   leg_force << 0, 0, 0;
   float force = -mass * 9.81 / 4;
   leg_force = seResult.rBody * Vec3<float>(0, 0, force);
-  leg_torque[0] = this->_data->_legController->datas[0].J.transpose() * leg_force;
-  leg_torque[1] = this->_data->_legController->datas[1].J.transpose() * leg_force;
-  leg_torque[2] = this->_data->_legController->datas[2].J.transpose() * leg_force;
-  leg_torque[3] = this->_data->_legController->datas[3].J.transpose() * leg_force;
-
-  // cout << "grav force per leg: " << this->_data->_legController->datas[0].J.transpose() * this->_data->_quadruped->_bodyMass * 9.81 / 4 << endl;
-  // cout << "grav torq 0: " << leg_torque[0] << endl;
-  // cout << "grav torq 1: " << leg_torque[1] << endl;
-  // cout << "grav torq 2: " << leg_torque[2] << endl;
-  // cout << "grav torq 3: " << leg_torque[3] << endl;
-
-  // Vec3<T> Kp(600, 600, 600).asDiagonal();
-  // Vec3<T> Kd(10, 10, 10).asDiagonal();
 
   float Kp = 100;
   float Kd = 5;
@@ -140,40 +83,17 @@ void FSM_State_StandUp<T>::run()
     // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(Kd, Kd, Kd).asDiagonal();
 
     //for real
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1200, 1200, 1200).asDiagonal();
-    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
+    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1200, 1200, 1200).asDiagonal();
+    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
 
-    //for sim with grav compensate
-    // if ((i == 0) || (i == 1))
-    // {
-    //   // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(0, 0, 0).asDiagonal();
-    //   // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(35, 35, 35).asDiagonal();
-    //   this->_data->_legController->commands[i].kpCartesian = Vec3<T>(500, 500, 500).asDiagonal();
-    //   this->_data->_legController->commands[i].kdCartesian = Vec3<T>(5, 5, 5).asDiagonal();
-    // }
-    // if ((i == 2) || (i == 3))
-    // {
-    //   this->_data->_legController->commands[i].kpCartesian = Vec3<T>(800, 800, 800).asDiagonal();
-    //   this->_data->_legController->commands[i].kdCartesian = Vec3<T>(5, 5, 5).asDiagonal();
-    // }
-
-    // cout << "kp " << i << ": " << this->_data->_legController->commands[i].kpCartesian << endl;
-    // cout << "kd " << i << ": " << this->_data->_legController->commands[i].kdCartesian << endl;
+    //for real with gravity compensation
+    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1000, 1000, 1000).asDiagonal();
+    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(15, 15, 15).asDiagonal();
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
 
-    // this->_data->_legController->commands[i].tauFeedForward = gravity.block<3,1>(i * 3, 0);
-    this->_data->_legController->commands[i].tauFeedForward = leg_torque[i];
-
-    // cout << "tau ff " << i << ": " << this->_data->_legController->commands[i].tauFeedForward << endl;
-
-    // cout << this->_data->_legController->commands[i].pDes << endl;
-    // cmd = tot_tau.tail(WB::num_act_joint_);
-
-    // this->_data->_legController->commands[i].qDes(0) = _ini_foot_pos[i];
-    // this->_data->_legController->commands[i].qDes(0) = _ini_foot_pos[i];
-    // this->_data->_legController->commands[i].qDes(0) = _ini_foot_pos[i];
+    this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
 }
 
@@ -211,8 +131,7 @@ FSM_StateName FSM_State_StandUp<T>::checkTransition()
     this->nextStateName = FSM_StateName::PASSIVE;
     break;
 
-  case K_LAY_DOWN: // normal c
-    ROS_INFO("CHeck to lay down");
+  case K_LAY_DOWN:
     this->nextStateName = FSM_StateName::LAYDOWN;
     break;
 
