@@ -527,7 +527,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   data._stateEstimator->setContactPhase(se_contactState);
 
-  cout << "p0 des: " << data._legController->commands[0].pDes << endl;
+  // cout << "p0 des: " << data._legController->commands[0].pDes << endl;
 
   // Update For WBC
   pBody_des[0] = world_position_desired[0];

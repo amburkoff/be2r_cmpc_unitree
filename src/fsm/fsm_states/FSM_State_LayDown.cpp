@@ -62,27 +62,42 @@ void FSM_State_LayDown<T>::run()
     this->_data->_legController->setEnabled(false);
   }
 
+  auto& seResult = this->_data->_stateEstimator->getResult();
+  float mass = 8;
+  Vec3<float> leg_torque[4];
+  Vec3<float> leg_force;
+  leg_torque[0] << 0, 0, 0;
+  leg_torque[1] << 0, 0, 0;
+  leg_torque[2] << 0, 0, 0;
+  leg_torque[3] << 0, 0, 0;
+  leg_force << 0, 0, 0;
+  float force = -mass * 9.81 / 4;
+  leg_force = seResult.rBody * Vec3<float>(0, 0, force);
+  leg_torque[0] = this->_data->_legController->datas[0].J.transpose() * leg_force;
+  leg_torque[1] = this->_data->_legController->datas[1].J.transpose() * leg_force;
+  leg_torque[2] = this->_data->_legController->datas[2].J.transpose() * leg_force;
+  leg_torque[3] = this->_data->_legController->datas[3].J.transpose() * leg_force;
+
   //for real
-  // float p = 2000;
-  // float d = 4;
+  float p = 1000;
+  float d = 2;
 
   //for sim
-  float p = 300;
-  float d = 100;
+  // float p = 800;
+  // float d = 15;
 
   for (int i = 0; i < 4; i++)
   {
-    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(600, 600, 600).asDiagonal();
-    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
-
     this->_data->_legController->commands[i].kpCartesian = Vec3<T>(p, p, p).asDiagonal();
     this->_data->_legController->commands[i].kdCartesian = Vec3<T>(d, d, d).asDiagonal();
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-0.07) + (1. - progress) * _ini_foot_pos[i][2];
+
+    this->_data->_legController->commands[i].tauFeedForward = leg_torque[i];
   }
 
-  cout << "z ini: " << _ini_foot_pos[0][2] << " z des: " << this->_data->_legController->commands[0].pDes[2] << endl;
+  // cout << "z ini: " << _ini_foot_pos[0][2] << " z des: " << this->_data->_legController->commands[0].pDes[2] << endl;
 }
 
 /**

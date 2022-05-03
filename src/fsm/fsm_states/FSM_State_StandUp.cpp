@@ -100,16 +100,71 @@ void FSM_State_StandUp<T>::run()
 
   // cout << "gravity: " << gravity << endl;
 
+  auto& seResult = this->_data->_stateEstimator->getResult();
+
+  //hip 0.595 thigh 0.888 calf 0.151
+  // float mass = 13;
+  float mass = 8;
+  Vec3<float> leg_torque[4];
+  Vec3<float> leg_force;
+  leg_torque[0] << 0, 0, 0;
+  leg_torque[1] << 0, 0, 0;
+  leg_torque[2] << 0, 0, 0;
+  leg_torque[3] << 0, 0, 0;
+  leg_force << 0, 0, 0;
+  float force = -mass * 9.81 / 4;
+  leg_force = seResult.rBody * Vec3<float>(0, 0, force);
+  leg_torque[0] = this->_data->_legController->datas[0].J.transpose() * leg_force;
+  leg_torque[1] = this->_data->_legController->datas[1].J.transpose() * leg_force;
+  leg_torque[2] = this->_data->_legController->datas[2].J.transpose() * leg_force;
+  leg_torque[3] = this->_data->_legController->datas[3].J.transpose() * leg_force;
+
+  // cout << "grav force per leg: " << this->_data->_legController->datas[0].J.transpose() * this->_data->_quadruped->_bodyMass * 9.81 / 4 << endl;
+  // cout << "grav torq 0: " << leg_torque[0] << endl;
+  // cout << "grav torq 1: " << leg_torque[1] << endl;
+  // cout << "grav torq 2: " << leg_torque[2] << endl;
+  // cout << "grav torq 3: " << leg_torque[3] << endl;
+
+  // Vec3<T> Kp(600, 600, 600).asDiagonal();
+  // Vec3<T> Kd(10, 10, 10).asDiagonal();
+
+  float Kp = 100;
+  float Kd = 5;
+
   for (int i = 0; i < 4; i++)
   {
+    //for sim
     // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(600, 600, 600).asDiagonal();
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1000, 1000, 1000).asDiagonal();
+    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
+    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(Kp, Kp, Kp).asDiagonal();
+    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(Kd, Kd, Kd).asDiagonal();
+
+    //for real
+    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1200, 1200, 1200).asDiagonal();
     this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
+
+    //for sim with grav compensate
+    // if ((i == 0) || (i == 1))
+    // {
+    //   // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(0, 0, 0).asDiagonal();
+    //   // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(35, 35, 35).asDiagonal();
+    //   this->_data->_legController->commands[i].kpCartesian = Vec3<T>(500, 500, 500).asDiagonal();
+    //   this->_data->_legController->commands[i].kdCartesian = Vec3<T>(5, 5, 5).asDiagonal();
+    // }
+    // if ((i == 2) || (i == 3))
+    // {
+    //   this->_data->_legController->commands[i].kpCartesian = Vec3<T>(800, 800, 800).asDiagonal();
+    //   this->_data->_legController->commands[i].kdCartesian = Vec3<T>(5, 5, 5).asDiagonal();
+    // }
+
+    // cout << "kp " << i << ": " << this->_data->_legController->commands[i].kpCartesian << endl;
+    // cout << "kd " << i << ": " << this->_data->_legController->commands[i].kdCartesian << endl;
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
 
-    this->_data->_legController->commands[i].tauFeedForward = gravity.block<3,1>(i * 3, 0);
+    // this->_data->_legController->commands[i].tauFeedForward = gravity.block<3,1>(i * 3, 0);
+    this->_data->_legController->commands[i].tauFeedForward = leg_torque[i];
 
     // cout << "tau ff " << i << ": " << this->_data->_legController->commands[i].tauFeedForward << endl;
 

@@ -83,17 +83,10 @@ public:
 
   void addBase(const SpatialInertia<T>& inertia);
   void addBase(T mass, const Vec3<T>& com, const Mat3<T>& I);
-  int addGroundContactPoint(int bodyID, const Vec3<T>& location,
-                            bool isFoot = false);
+  int addGroundContactPoint(int bodyID, const Vec3<T>& location, bool isFoot = false);
   void addGroundContactBoxPoints(int bodyId, const Vec3<T>& dims);
-  int addBody(const SpatialInertia<T>& inertia,
-              const SpatialInertia<T>& rotorInertia, T gearRatio, int parent,
-              JointType jointType, CoordinateAxis jointAxis,
-              const Mat6<T>& Xtree, const Mat6<T>& Xrot);
-  int addBody(const MassProperties<T>& inertia,
-              const MassProperties<T>& rotorInertia, T gearRatio, int parent,
-              JointType jointType, CoordinateAxis jointAxis,
-              const Mat6<T>& Xtree, const Mat6<T>& Xrot);
+  int addBody(const SpatialInertia<T>& inertia, const SpatialInertia<T>& rotorInertia, T gearRatio, int parent, JointType jointType, CoordinateAxis jointAxis, const Mat6<T>& Xtree, const Mat6<T>& Xrot);
+  int addBody(const MassProperties<T>& inertia, const MassProperties<T>& rotorInertia, T gearRatio, int parent, JointType jointType, CoordinateAxis jointAxis, const Mat6<T>& Xtree, const Mat6<T>& Xrot);
   void check();
   T totalRotorMass();
   T totalNonRotorMass();

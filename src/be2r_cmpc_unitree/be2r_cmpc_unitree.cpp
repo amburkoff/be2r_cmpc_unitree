@@ -69,6 +69,7 @@ void Body_Manager::init()
 
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
+  // _quadruped._bodyMass
 
   // _model.getGravityForce
 
