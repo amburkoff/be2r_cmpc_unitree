@@ -69,9 +69,6 @@ void Body_Manager::init()
 
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
-  // _quadruped._bodyMass
-
-  // _model.getGravityForce
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);

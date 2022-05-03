@@ -16,6 +16,7 @@
 #include "FSM_State_StandUp.h"
 #include "FSM_State_BalanceStand.h"
 #include "FSM_State_LayDown.h"
+#include "FSM_State_Testing.h"
 
 // #include "FSM_State_BackFlip.h"
 // #include "FSM_State_FrontJump.h"
@@ -47,6 +48,7 @@ struct FSM_StatesList
   FSM_State_Locomotion<T>* locomotion;
   FSM_State_BalanceStand<T>* balanceStand;
   FSM_State_LayDown<T>* laydown;
+  FSM_State_Testing<T>* testing;
 
   // FSM_State_JointPD<T>* jointPD;
   // FSM_State_ImpedanceControl<T>* impedanceControl;

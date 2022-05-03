@@ -133,6 +133,7 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
 
     case K_LAY_DOWN:
       this->nextStateName = FSM_StateName::LAYDOWN;
+      this->transitionDuration = 0.;
       break;
 
     default:

@@ -251,7 +251,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-
       footSwingTrajectories[i].setHeight(STEP_HEIGHT);
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       footSwingTrajectories[i].setFinalPosition(pFoot[i]);
