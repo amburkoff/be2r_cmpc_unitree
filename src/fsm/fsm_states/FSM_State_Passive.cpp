@@ -98,7 +98,7 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
     this->_control_fsm_data->_legController->commands[i].forceFeedForward = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();
 
-    this->_control_fsm_data->_legController->_legsEnabled = false;
+    this->_control_fsm_data->_legController->setEnabled(false);
   }
 
   return this->transitionData;

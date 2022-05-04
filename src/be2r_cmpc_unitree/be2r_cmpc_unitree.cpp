@@ -185,17 +185,17 @@ void Body_Manager::finalizeStep()
   }
 
   static unitree_legged_msgs::LowCmd _low_cmd;
-  uint8_t mode = MOTOR_BREAK;
+  uint8_t mode[4] = {MOTOR_BREAK};
 
   for (size_t i = 0; i < 4; i++)
   {
     if (_legController->_legEnabled[i])
     {
-      mode = MOTOR_ON;
+      mode[i] = MOTOR_ON;
     }
     else
     {
-      mode = MOTOR_BREAK;
+      mode[i] = MOTOR_BREAK;
     }
   }
 
@@ -205,7 +205,7 @@ void Body_Manager::finalizeStep()
 
   for (uint8_t servo_num = 0; servo_num < 12; servo_num++)
   {
-    _low_cmd.motorCmd[servo_num].mode = mode;
+    _low_cmd.motorCmd[servo_num].mode = mode[servo_num / 3];
     _low_cmd.motorCmd[servo_num].q = PosStopF;
     _low_cmd.motorCmd[servo_num].dq = VelStopF;
   }

@@ -69,15 +69,20 @@ void FSM_State_Testing<T>::run()
   // float p = 800;
   // float d = 15;
 
+  this->_data->_legController->setLegEnabled(0, true);
+  this->_data->_legController->setLegEnabled(1, false);
+  this->_data->_legController->setLegEnabled(2, false);
+  this->_data->_legController->setLegEnabled(3, false);
+
   for (int i = 0; i < 4; i++)
   {
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(p, p, p).asDiagonal();
-    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(d, d, d).asDiagonal();
+    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(p, p, p).asDiagonal();
+    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(d, d, d).asDiagonal();
 
-    this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
-    this->_data->_legController->commands[i].pDes[2] = progress * (-0.07) + (1. - progress) * _ini_foot_pos[i][2];
+    // this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
+    // this->_data->_legController->commands[i].pDes[2] = progress * (-0.07) + (1. - progress) * _ini_foot_pos[i][2];
 
-    this->_data->_legController->commands[i].forceFeedForward = leg_force;
+    // this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
 }
 

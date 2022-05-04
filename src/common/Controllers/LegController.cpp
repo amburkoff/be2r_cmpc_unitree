@@ -57,7 +57,10 @@ void LegController<T>::zeroCommand()
     cmd.zero();
   }
 
-  _legsEnabled = false;
+  _legEnabled[0] = false;
+  _legEnabled[1] = false;
+  _legEnabled[2] = false;
+  _legEnabled[3] = false;
 }
 
 /*!
@@ -169,8 +172,7 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     // estimate torque
     datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
 
-    // spiCommand->flags[leg] = _legsEnabled ? 1 : 0;
-    spiCommand->flags[leg] = _legsEnabled;
+    spiCommand->flags[leg] = _legEnabled[leg];
   }
 }
 
