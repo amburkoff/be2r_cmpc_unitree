@@ -187,13 +187,16 @@ void Body_Manager::finalizeStep()
   static unitree_legged_msgs::LowCmd _low_cmd;
   uint8_t mode = MOTOR_BREAK;
 
-  if (_legController->_legsEnabled)
+  for (size_t i = 0; i < 4; i++)
   {
-    mode = MOTOR_ON;
-  }
-  else
-  {
-    mode = MOTOR_BREAK;
+    if (_legController->_legEnabled[i])
+    {
+      mode = MOTOR_ON;
+    }
+    else
+    {
+      mode = MOTOR_BREAK;
+    }
   }
 
   ros::Duration delta_t = ros::Time::now() - _time_start;

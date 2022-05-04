@@ -49,20 +49,17 @@ void FSM_State_Testing<T>::onEnter()
 template <typename T>
 void FSM_State_Testing<T>::run()
 {
-  T progress = 0.5 * iter * this->_data->controlParameters->controller_dt;
+  float duration = 2;
+  float rate = 1;
 
-  if (progress > 1.)
+  T progress = rate * iter * this->_data->controlParameters->controller_dt;
+
+  this->_data->_legController->setEnabled(true);
+
+  if (progress > duration)
   {
-    progress = 1.;
-    this->_data->_legController->setEnabled(false);
+    progress = duration;
   }
-
-  auto& seResult = this->_data->_stateEstimator->getResult();
-  float mass = 8;
-  Vec3<float> leg_force;
-  leg_force << 0, 0, 0;
-  float force = -mass * 9.81 / 4;
-  leg_force = seResult.rBody * Vec3<float>(0, 0, force);
 
   //for real
   float p = 1200;
