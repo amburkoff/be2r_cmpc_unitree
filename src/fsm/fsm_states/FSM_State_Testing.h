@@ -2,6 +2,7 @@
 #define FSM_STATE_TESTING_H
 
 #include "FSM_State.h"
+#include <FootSwingTrajectory.h>
 
 /**
  *
@@ -29,11 +30,13 @@ public:
 
   TransitionData<T> testTransition();
 
-
 private:
   // Keep track of the control iterations
   int iter = 0;
   std::vector<Vec3<T>> _ini_foot_pos;
+  FootSwingTrajectory<float> footSwingTrajectories[4];
+  bool firstSwing[4];
+  Vec3<float> pFoot[4];
 };
 
 #endif // FSM_STATE_TESTING_H

@@ -9,7 +9,7 @@
 #include "Gait.h"
 
 //оригинальные параметры MPC+WBC
-#define GAIT_PERIOD 14
+#define GAIT_PERIOD 17
 #define HORIZON 14
 
 //лучшие параметры для только MPC
@@ -323,6 +323,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   // calc gait
   iterationCounter++;
 
+  //for sim
   Kp << 700, 0, 0,
       0, 700, 0,
       0, 0, 200;
@@ -363,6 +364,11 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
     if (swingState > 0) // foot is in swing
     {
+      // if (foot == 0)
+      // {
+      //   cout << "swing" << endl;
+      // }
+
       if (firstSwing[foot])
       {
         firstSwing[foot] = false;
@@ -380,6 +386,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
 
+      //for RViz
       pose[foot].pose.position.x = pDesFootWorld.x();
       pose[foot].pose.position.y = pDesFootWorld.y();
       pose[foot].pose.position.z = pDesFootWorld.z();
@@ -409,13 +416,12 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kpCartesian = Kp;
         data._legController->commands[foot].kdCartesian = Kd;
       }
-      else
-      { //foot damping
-        data._legController->commands[foot].pDes = pDesLeg;
-        data._legController->commands[foot].vDes = vDesLeg;
-        // data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
-        // data._legController->commands[foot].kdCartesian = Kd_stance;
-      }
+
+      //for plots (originally it is empty)
+      data._legController->commands[foot].pDes = pDesLeg;
+      data._legController->commands[foot].vDes = vDesLeg;
+      // data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
+      // data._legController->commands[foot].kdCartesian = Kd_stance;
 
       std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
 
@@ -457,6 +463,11 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     }
     else // foot is in stance
     {
+      // if (foot == 0)
+      // {
+      //   cout << "stance" << endl;
+      // }
+
       firstSwing[foot] = true;
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
@@ -482,6 +493,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
         data._legController->commands[foot].kdCartesian = Kd_stance;
       }
+
       se_contactState[foot] = contactState;
 
       // Update for WBC

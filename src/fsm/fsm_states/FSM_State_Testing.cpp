@@ -34,12 +34,17 @@ void FSM_State_Testing<T>::onEnter()
   // Reset the transition data
   this->transitionData.zero();
 
+  auto& seResult = this->_data->_stateEstimator->getResult();
+
   // Reset iteration counter
   iter = 0;
 
   for (size_t leg(0); leg < 4; ++leg)
   {
     _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
+
+    pFoot[leg] = seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(leg) + this->_data->_legController->datas[leg].p);
+    firstSwing[leg] = true;
   }
 }
 
@@ -49,8 +54,16 @@ void FSM_State_Testing<T>::onEnter()
 template <typename T>
 void FSM_State_Testing<T>::run()
 {
-  float duration = 2;
-  float rate = 1;
+  float duration = 1;
+  float rate = 0.25;
+  auto& seResult = this->_data->_stateEstimator->getResult();
+  Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
+
+  //x 0.047
+  //y -0.15
+  //z -0.073
+
+  Vec3<float> pDes(0.047, -0.15, -0.073);
 
   T progress = rate * iter * this->_data->controlParameters->controller_dt;
 
@@ -62,8 +75,17 @@ void FSM_State_Testing<T>::run()
   }
 
   //for real
-  float p = 1200;
-  float d = 15;
+  // float p = 1200;
+  // float d = 15;
+  Kp << 500, 0, 0,
+      0, 500, 0,
+      0, 0, 400;
+  Kp_stance = 0 * Kp;
+
+  Kd << 2, 0, 0,
+      0, 2, 0,
+      0, 0, 2;
+  Kd_stance = Kd;
 
   //for sim
   // float p = 800;
@@ -74,13 +96,36 @@ void FSM_State_Testing<T>::run()
   this->_data->_legController->setLegEnabled(2, false);
   this->_data->_legController->setLegEnabled(3, false);
 
-  for (int i = 0; i < 4; i++)
+  for (int foot = 0; foot < 4; foot++)
   {
+    if (firstSwing[foot])
+    {
+      firstSwing[foot] = false;
+      footSwingTrajectories[foot].setHeight(0.1);
+      footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+      footSwingTrajectories[foot].setFinalPosition(pFoot[foot] + Vec3<float>(1, 1, 0));
+    }
+
+    pFoot[foot] = seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(foot) + this->_data->_legController->datas[foot].p);
+    footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 5);
+
+    Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
+    Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+    Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - this->_data->_quadruped->getHipLocation(foot);
+    Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
+
+    // this->_data->_legController->commands[foot].pDes = pDesLeg;
+    // this->_data->_legController->commands[foot].vDes = vDesLeg;
+    this->_data->_legController->commands[foot].kpCartesian = Kp;
+    this->_data->_legController->commands[foot].kdCartesian = Kd;
+
+    this->_data->_legController->commands[foot].pDes = _ini_foot_pos[foot];
+    this->_data->_legController->commands[foot].pDes[0] = progress * (pDes(0)) + (1. - progress) * _ini_foot_pos[foot][0];
+    this->_data->_legController->commands[foot].pDes[1] = progress * (pDes(1)) + (1. - progress) * _ini_foot_pos[foot][1];
+    this->_data->_legController->commands[foot].pDes[2] = progress * (pDes(2)) + (1. - progress) * _ini_foot_pos[foot][2];
+
     // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(p, p, p).asDiagonal();
     // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(d, d, d).asDiagonal();
-
-    // this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
-    // this->_data->_legController->commands[i].pDes[2] = progress * (-0.07) + (1. - progress) * _ini_foot_pos[i][2];
 
     // this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }

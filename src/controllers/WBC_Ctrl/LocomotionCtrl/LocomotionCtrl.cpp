@@ -103,10 +103,7 @@ void LocomotionCtrl<T>::_ContactTaskUpdateTEST(void* input, ControlFSMData<T>& d
   Vec3<T> zero_vec3;
   zero_vec3.setZero();
   _body_ori_task->UpdateTask(&_quat_des, _input_data->vBody_Ori_des, zero_vec3);
-  _body_pos_task->UpdateTask(
-      &(_input_data->pBody_des),
-      _input_data->vBody_des,
-      _input_data->aBody_des);
+  _body_pos_task->UpdateTask(&(_input_data->pBody_des), _input_data->vBody_des, _input_data->aBody_des);
 
   WBCtrl::_task_list.push_back(_body_ori_task);
   WBCtrl::_task_list.push_back(_body_pos_task);
@@ -120,12 +117,8 @@ void LocomotionCtrl<T>::_ContactTaskUpdateTEST(void* input, ControlFSMData<T>& d
       WBCtrl::_contact_list.push_back(_foot_contact[leg]);
     }
     else
-    { // No Contact (swing)
-      _foot_task[leg]->UpdateTask(
-          &(_input_data->pFoot_des[leg]),
-          _input_data->vFoot_des[leg],
-          _input_data->aFoot_des[leg]);
-      //zero_vec3);
+    {                                                                                                                        // No Contact (swing)
+      _foot_task[leg]->UpdateTask(&(_input_data->pFoot_des[leg]), _input_data->vFoot_des[leg], _input_data->aFoot_des[leg]); //zero_vec3);
       WBCtrl::_task_list.push_back(_foot_task[leg]);
     }
   }
