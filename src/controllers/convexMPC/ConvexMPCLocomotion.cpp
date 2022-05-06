@@ -447,7 +447,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       path[foot].poses.push_back(pose[foot]);
 
       path[foot].header.stamp = ros::Time::now();
-      path[foot].header.frame_id = "map";
+      path[foot].header.frame_id = "odom";
 
       _pub_des_traj[foot].publish(path[foot]);
 
