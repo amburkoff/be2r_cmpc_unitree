@@ -200,7 +200,7 @@ void Body_Manager::finalizeStep()
   }
 
   static unitree_legged_msgs::LowCmd _low_cmd;
-  uint8_t mode[4] = {MOTOR_BREAK};
+  uint8_t mode[4] = { MOTOR_BREAK };
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -743,6 +743,14 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
     Vec3<double>(config.Kp_cartesian_0, config.Kp_cartesian_1, config.Kp_cartesian_2);
   userParameters.Swing_Kd_cartesian =
     Vec3<double>(config.Kd_cartesian_0, config.Kd_cartesian_1, config.Kd_cartesian_2);
+  userParameters.Kp_joint = Vec3<double>(config.Kp_joint_0, config.Kp_joint_1, config.Kp_joint_2);
+  userParameters.Kd_joint = Vec3<double>(config.Kd_joint_0, config.Kd_joint_1, config.Kd_joint_2);
+  userParameters.Kp_ori = Vec3<double>(config.Kp_ori_0, config.Kp_ori_1, config.Kp_ori_2);
+  userParameters.Kd_ori = Vec3<double>(config.Kd_ori_0, config.Kd_ori_1, config.Kd_ori_2);
+  userParameters.Kp_body = Vec3<double>(config.Kp_body_0, config.Kp_body_1, config.Kp_body_2);
+  userParameters.Kd_body = Vec3<double>(config.Kd_body_0, config.Kd_body_1, config.Kd_body_2);
+  userParameters.Kp_foot = Vec3<double>(config.Kp_foot_0, config.Kp_foot_1, config.Kp_foot_2);
+  userParameters.Kd_foot = Vec3<double>(config.Kd_foot_0, config.Kd_foot_1, config.Kd_foot_2);
 
   //  for (uint8_t i = 0; i < 4; i++)
   //  {

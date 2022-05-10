@@ -45,7 +45,7 @@ Kd_body           : [10, 10, 10]
 Kp_foot           : [500, 500, 500]
 Kd_foot           : [10, 10, 10]
 
-cmpc_gait         : 4
+cmpc_gait         : 9
 cmpc_x_drag       : 3
 cmpc_use_sparse   : 0
 cmpc_bonus_swing  : 0
