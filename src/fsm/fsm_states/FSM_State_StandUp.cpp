@@ -135,9 +135,13 @@ FSM_StateName FSM_State_StandUp<T>::checkTransition()
     this->nextStateName = FSM_StateName::LAYDOWN;
     break;
 
+  case K_TESTING:
+    this->nextStateName = FSM_StateName::TESTING;
+    break;
+
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
-              << K_PASSIVE << " to "
+              << K_STAND_UP << " to "
               << this->_data->controlParameters->control_mode << std::endl;
   }
 
@@ -177,9 +181,12 @@ TransitionData<T> FSM_State_StandUp<T>::transition()
     this->transitionData.done = true;
     break;
 
+  case FSM_StateName::TESTING:
+    this->transitionData.done = true;
+    break;
+
   default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition"
-              << std::endl;
+    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM

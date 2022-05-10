@@ -57,7 +57,10 @@ void LegController<T>::zeroCommand()
     cmd.zero();
   }
 
-  _legsEnabled = false;
+  _legEnabled[0] = false;
+  _legEnabled[1] = false;
+  _legEnabled[2] = false;
+  _legEnabled[3] = false;
 }
 
 /*!
@@ -125,13 +128,6 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     footForce += commands[leg].kpCartesian * (commands[leg].pDes - datas[leg].p);
     footForce += commands[leg].kdCartesian * (commands[leg].vDes - datas[leg].v);
 
-    // if (leg == 0)
-    // {
-    //   cout << "tau ff: " << commands[0].tauFeedForward << endl;
-    //   cout << "f ff: " << commands[0].forceFeedForward << endl;
-    //   cout << "f ff f: " << footForce<< endl;
-    // }
-
     // Torque
     legTorque += datas[leg].J.transpose() * footForce;
 
@@ -150,14 +146,6 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->kd_hip[leg] = commands[leg].kdJoint(1, 1);
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
 
-    // cout << spiCommand->kp_abad[leg] << endl;
-    // cout << spiCommand->kp_hip[leg] << endl;
-    // cout << spiCommand->kp_knee[leg] << endl;
-
-    // cout << spiCommand->kd_abad[leg] << endl;
-    // cout << spiCommand->kd_hip[leg] << endl;
-    // cout << spiCommand->kd_knee[leg] << endl;
-
     spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
     spiCommand->q_des_hip[leg] = commands[leg].qDes(1);
     spiCommand->q_des_knee[leg] = commands[leg].qDes(2);
@@ -169,8 +157,22 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     // estimate torque
     datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
 
-    // spiCommand->flags[leg] = _legsEnabled ? 1 : 0;
-    spiCommand->flags[leg] = _legsEnabled;
+    spiCommand->flags[leg] = _legEnabled[leg];
+
+    // if (leg == 0)
+    // {
+    //   cout << "tau ff: " << commands[0].tauFeedForward << endl;
+    //   cout << "f ff: " << commands[0].forceFeedForward << endl;
+    //   cout << "f imp: " << footForce << endl;
+    //   cout << "Kp: " << commands[0].kpCartesian << endl;
+    //   cout << "Kd: " << commands[0].kdCartesian << endl;
+    //   cout << "Kp abad: " << spiCommand->kp_abad[0] << endl;
+    //   cout << "Kp hip: " << spiCommand->kp_hip[0] << endl;
+    //   cout << "Kp knee: " << spiCommand->kp_knee[0] << endl;
+    //   cout << "Kd abad: " << spiCommand->kd_abad[0] << endl;
+    //   cout << "Kd hip: " << spiCommand->kd_hip[0] << endl;
+    //   cout << "Kd knee: " << spiCommand->kd_knee[0] << endl;
+    // }
   }
 }
 

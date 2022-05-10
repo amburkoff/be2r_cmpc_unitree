@@ -133,6 +133,7 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
 
     case K_LAY_DOWN:
       this->nextStateName = FSM_StateName::LAYDOWN;
+      this->transitionDuration = 0.;
       break;
 
     default:
@@ -322,8 +323,10 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
 
   for (int leg(0); leg < 4; ++leg)
   {
+    //originally commented
     this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
     this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
+
     this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
     this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
   }

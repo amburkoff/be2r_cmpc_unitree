@@ -68,12 +68,23 @@ public:
   void edampCommand(RobotType robot, T gain);
   void updateData(const SpiData* spiData);
   void updateCommand(SpiCommand* spiCommand);
-  void setEnabled(bool enabled) { _legsEnabled = enabled; };
+  void setEnabled(bool enabled)
+  {
+    _legEnabled[0] = enabled;
+    _legEnabled[1] = enabled;
+    _legEnabled[2] = enabled;
+    _legEnabled[3] = enabled;
+  };
+
+  void setLegEnabled(uint8_t leg_num, bool state)
+  {
+    _legEnabled[leg_num] = state;
+  }
 
   LegControllerCommand<T> commands[4];
   LegControllerData<T> datas[4];
   Quadruped<T>& _quadruped;
-  bool _legsEnabled = false;
+  bool _legEnabled[4] = {false};
   T _maxTorque = 0;
   bool _zeroEncoders = false;
   u32 _calibrateEncoders = 0;

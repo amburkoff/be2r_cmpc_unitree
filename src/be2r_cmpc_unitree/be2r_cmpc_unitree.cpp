@@ -80,9 +80,6 @@ void Body_Manager::init()
 
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
-  // _quadruped._bodyMass
-
-  // _model.getGravityForce
 
   // Always initialize the leg controller and
   // state entimator
@@ -203,15 +200,18 @@ void Body_Manager::finalizeStep()
   }
 
   static unitree_legged_msgs::LowCmd _low_cmd;
-  uint8_t mode = MOTOR_BREAK;
+  uint8_t mode[4] = {MOTOR_BREAK};
 
-  if (_legController->_legsEnabled)
+  for (size_t i = 0; i < 4; i++)
   {
-    mode = MOTOR_ON;
-  }
-  else
-  {
-    mode = MOTOR_BREAK;
+    if (_legController->_legEnabled[i])
+    {
+      mode[i] = MOTOR_ON;
+    }
+    else
+    {
+      mode[i] = MOTOR_BREAK;
+    }
   }
 
   ros::Duration delta_t = ros::Time::now() - _time_start;
@@ -220,9 +220,11 @@ void Body_Manager::finalizeStep()
 
   for (uint8_t servo_num = 0; servo_num < 12; servo_num++)
   {
-    _low_cmd.motorCmd[servo_num].mode = mode;
+    _low_cmd.motorCmd[servo_num].mode = mode[servo_num / 3];
     _low_cmd.motorCmd[servo_num].q = PosStopF;
     _low_cmd.motorCmd[servo_num].dq = VelStopF;
+
+    cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
   }
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)

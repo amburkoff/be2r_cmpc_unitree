@@ -98,7 +98,7 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
     this->_control_fsm_data->_legController->commands[i].forceFeedForward = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();
 
-    this->_control_fsm_data->_legController->_legsEnabled = false;
+    this->_control_fsm_data->_legController->setEnabled(false);
   }
 
   return this->transitionData;
@@ -131,6 +131,11 @@ FSM_StateName FSM_State_Passive<T>::checkTransition()
   case K_STAND_UP:
     // Requested switch to joint PD control
     this->nextStateName = FSM_StateName::STAND_UP;
+    break;
+
+  case K_TESTING:
+    // Requested switch to joint PD control
+    this->nextStateName = FSM_StateName::TESTING;
     break;
 
   case K_RECOVERY_STAND:

@@ -47,6 +47,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped,
   statesList.balanceStand = new FSM_State_BalanceStand<T>(&data);
   statesList.laydown = new FSM_State_LayDown<T>(&data);
   statesList.vision = new FSM_State_Vision<T>(&data);
+  statesList.testing = new FSM_State_Testing<T>(&data);
 
   // statesList.jointPD = new FSM_State_JointPD<T>(&data);
   // statesList.impedanceControl = new FSM_State_ImpedanceControl<T>(&data);
@@ -254,6 +255,9 @@ FSM_State<T>* ControlFSM<T>::getNextState(FSM_StateName stateName)
 
   case FSM_StateName::LAYDOWN:
     return statesList.laydown;
+
+  case FSM_StateName::TESTING:
+    return statesList.testing;
 
   case FSM_StateName::LOCOMOTION:
     return statesList.locomotion;
