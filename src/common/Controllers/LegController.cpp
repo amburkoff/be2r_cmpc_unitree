@@ -25,9 +25,11 @@ void LegControllerCommand<T>::zero()
   pDes = Vec3<T>::Zero();
   vDes = Vec3<T>::Zero();
   kpCartesian = Mat3<T>::Zero();
+  kiCartesian = Mat3<T>::Zero();
   kdCartesian = Mat3<T>::Zero();
   kpJoint = Mat3<T>::Zero();
   kdJoint = Mat3<T>::Zero();
+  i_saturation = 0;
 }
 
 /*!
@@ -115,7 +117,6 @@ void LegController<T>::updateData(const SpiData* spiData)
 template <typename T>
 void LegController<T>::updateCommand(SpiCommand* spiCommand)
 {
-
   for (int leg = 0; leg < 4; leg++)
   {
     // tauFF
@@ -124,8 +125,23 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     // forceFF
     Vec3<T> footForce = commands[leg].forceFeedForward;
 
-    // cartesian PD
+    commands[leg].integral += (commands[leg].pDes - datas[leg].p);
+
+    for (size_t i = 0; i < 3; i++)
+    {
+      if (commands[leg].integral(i) > commands[leg].i_saturation)
+      {
+        commands[leg].integral(i) = commands[leg].i_saturation;
+      }
+      else if (commands[leg].integral(i) < -commands[leg].i_saturation)
+      {
+        commands[leg].integral(i) = -commands[leg].i_saturation;
+      }
+    }
+
+    // cartesian PID
     footForce += commands[leg].kpCartesian * (commands[leg].pDes - datas[leg].p);
+    footForce += commands[leg].kiCartesian * commands[leg].integral;
     footForce += commands[leg].kdCartesian * (commands[leg].vDes - datas[leg].v);
 
     // Torque

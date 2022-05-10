@@ -169,11 +169,17 @@ void Body_Manager::setupStep()
 
 void Body_Manager::finalizeStep()
 {
-  // for (uint8_t i = 0; i < 4; i++)
-  // {
-  //   _legController->commands[i].kpCartesian = _leg_contoller_params[i].kpCartesian;
-  //   _legController->commands[i].kdCartesian = _leg_contoller_params[i].kdCartesian;
-  // }
+
+  if (controlParameters.control_mode == K_TESTING)
+  {
+    for (uint8_t i = 0; i < 4; i++)
+    {
+      _legController->commands[i].kpCartesian = _leg_contoller_params[i].kpCartesian;
+      _legController->commands[i].kiCartesian = _leg_contoller_params[i].kiCartesian;
+      _legController->commands[i].kdCartesian = _leg_contoller_params[i].kdCartesian;
+      _legController->commands[i].i_saturation = _leg_contoller_params[i].i_saturation;
+    }
+  }
 
   _legController->updateCommand(&spiCommand);
 
@@ -209,7 +215,7 @@ void Body_Manager::finalizeStep()
     _low_cmd.motorCmd[servo_num].q = PosStopF;
     _low_cmd.motorCmd[servo_num].dq = VelStopF;
 
-    cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
+    // cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
   }
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
@@ -252,6 +258,7 @@ void Body_Manager::_initPublishers()
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
   _pub_state_error = _nh.advertise<unitree_legged_msgs::StateError>("/state_error", 1);
   _pub_leg_error = _nh.advertise<unitree_legged_msgs::LegError>("/leg_error", 1);
+  _pub_parameters = _nh.advertise<unitree_legged_msgs::Parameters>("/parameters", 1);
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
@@ -587,13 +594,30 @@ void Body_Manager::_updatePlot()
   }
 
   _pub_leg_error.publish(leg_error);
+
+  unitree_legged_msgs::Parameters param_msg;
+
+  param_msg.header = msg.header;
+
+  param_msg.Kp_cartesian.x = _legController->commands[0].kpCartesian(0);
+  param_msg.Kp_cartesian.y = _legController->commands[0].kpCartesian(4);
+  param_msg.Kp_cartesian.z = _legController->commands[0].kpCartesian(8);
+
+  param_msg.Kd_cartesian.x = _legController->commands[0].kdCartesian(0);
+  param_msg.Kd_cartesian.y = _legController->commands[0].kdCartesian(4);
+  param_msg.Kd_cartesian.z = _legController->commands[0].kdCartesian(8);
+
+  param_msg.saturation = _legController->commands[0].i_saturation;
+
+  _pub_parameters.publish(param_msg);
 }
 
 void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
 {
-  // ROS_INFO_STREAM("NEW data Kp: " << config.Kp0 << " " << config.Kp1 << " " << config.Kp2);
-  // ROS_INFO_STREAM("NEW data Kd: " << config.Kd0 << " " << config.Kd1 << " " << config.Kd2);
-  // ROS_INFO_STREAM("NEW data FSM_State: " << config.FSM_State);
+  // ROS_INFO_STREAM("NEW data Kp: " << config.Kp_x << " " << config.Kp_y << " " << config.Kp_z);
+  // ROS_INFO_STREAM("NEW data Ki: " << config.Ki_x << " " << config.Ki_y << " " << config.Ki_z);
+  // ROS_INFO_STREAM("NEW data Kd: " << config.Kd_x << " " << config.Kd_y << " " << config.Kd_z);
+  ROS_INFO_STREAM("NEW data FSM_State: " << config.FSM_State);
 
   controlParameters.control_mode = config.FSM_State;
   userParameters.use_wbc = config.WBC;
@@ -603,8 +627,10 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
     // _legController->commands[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
     // _legController->commands[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
 
-    // _leg_contoller_params[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
-    // _leg_contoller_params[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
+    _leg_contoller_params[i].kpCartesian = Vec3<float>(config.Kp_x, config.Kp_y, config.Kp_z).asDiagonal();
+    _leg_contoller_params[i].kiCartesian = Vec3<float>(config.Ki_x, config.Ki_y, config.Ki_z).asDiagonal();
+    _leg_contoller_params[i].kdCartesian = Vec3<float>(config.Kd_x, config.Kd_y, config.Kd_z).asDiagonal();
+    _leg_contoller_params[i].i_saturation = config.i_sat;
   }
 
   ROS_INFO_STREAM("New dynamic data!");
