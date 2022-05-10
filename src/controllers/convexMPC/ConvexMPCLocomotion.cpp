@@ -43,7 +43,8 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   // galloping(horizonLength,
   // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
   galloping(horizonLength, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping")
-  , standing(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(10, 10, 10, 10), "Standing")
+  , standing(horizonLength, Vec4<int>(0, 0, 0, 0),
+             Vec4<int>(horizonLength, horizonLength, horizonLength, horizonLength), "Standing")
   ,
   // trotRunning(horizonLength, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot
   // Running"),
@@ -128,6 +129,21 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   _roll_des = 0.;
   _pitch_des = 0.;
+
+  // Update PD coefs
+  // for sim
+  Kp = _parameters->Swing_Kp_cartesian.cast<float>().asDiagonal();
+  Kp_stance = Kp;
+
+  Kd = _parameters->Swing_Kd_cartesian.cast<float>().asDiagonal();
+  Kd_stance = Kd;
+
+  // for real
+  //  Kp << 150, 0, 0, 0, 150, 0, 0, 0, 150;
+  //  Kp_stance = 0 * Kp;
+
+  //  Kd << 3, 0, 0, 0, 3, 0, 0, 0, 3;
+  //  Kd_stance = Kd;
 }
 
 template<>
@@ -198,9 +214,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   current_gait = gaitNumber;
   *gait = trotting_copy;
 
-  gait->restoreDefaults();
+  //  gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
-  gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
+  //  gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
   //  std::cout << "iterationCounter " << iterationCounter << std::endl;
 
   jumping.setIterations(iterationsBetweenMPC, iterationCounter);
@@ -358,13 +374,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   // calc gait
   iterationCounter++;
-
-  Kp << 700, 0, 0, 0, 700, 0, 0, 0, 200;
-  Kp_stance = 0 * Kp;
-
-  Kd << 10, 0, 0, 0, 10, 0, 0, 0, 10;
-
-  Kd_stance = Kd;
 
   // gait
   Vec4<float> contactStates = gait->getContactState();

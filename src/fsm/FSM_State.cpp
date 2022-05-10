@@ -12,14 +12,15 @@
  * @param stateNameIn the enumerated state name
  * @param stateStringIn the string name of the current FSM state
  */
-template <typename T>
-FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn, std::string stateStringIn) : _data(_controlFSMData),
-                                                                                                                    stateName(stateNameIn),
-                                                                                                                    stateString(stateStringIn)
+template<typename T>
+FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn,
+                        std::string stateStringIn)
+  : _data(_controlFSMData)
+  , stateName(stateNameIn)
+  , stateString(stateStringIn)
 {
   transitionData.zero();
-  std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn
-            << std::endl;
+  std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn << std::endl;
 }
 
 /**
@@ -29,15 +30,17 @@ FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateN
  * @param qDes desired joint position
  * @param dqDes desired joint velocity
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
+  // MIT old params
+  //  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
+  //  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
-  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
-  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-
-  _data->_legController->commands[leg].kpJoint = kpMat;
-  _data->_legController->commands[leg].kdJoint = kdMat;
+  _data->_legController->commands[leg].kpJoint =
+    _data->userParameters->Kp_joint.template cast<float>().asDiagonal();
+  _data->_legController->commands[leg].kdJoint =
+    _data->userParameters->Kd_joint.template cast<float>().asDiagonal();
 
   _data->_legController->commands[leg].qDes = qDes;
   _data->_legController->commands[leg].qdDes = qdDes;
@@ -52,10 +55,9 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
  * @param kp_cartesian P gains
  * @param kd_cartesian D gains
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes,
-                                             Vec3<double> kp_cartesian,
-                                             Vec3<double> kd_cartesian)
+                                             Vec3<double> kp_cartesian, Vec3<double> kd_cartesian)
 {
   _data->_legController->commands[leg].pDes = pDes;
   // Create the cartesian P gain matrix
@@ -113,11 +115,14 @@ void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes
 //         float timeStance = _data->_gaitScheduler->gaitData.timeStance(leg);
 
 //         // Footstep heuristic composed of several parts in the world frame
-//         footstepLocations.col(leg) << projectionMatrix.transpose() * projectionMatrix * // Ground projection
-//                                           (_stateEstimate.position +                    // rBody * posHip
-//                                            +                                            // Foot under hips timeStance / 2 *
-//                                            velDes +                                     // Raibert Heuristic timeStance / 2 *
-//                                            (angVelDes.cross(rBody * posHip)) +          // Turning Raibert Heuristic
+//         footstepLocations.col(leg) << projectionMatrix.transpose() * projectionMatrix * // Ground
+//         projection
+//                                           (_stateEstimate.position +                    // rBody
+//                                           * posHip
+//                                            +                                            // Foot
+//                                            under hips timeStance / 2 * velDes + // Raibert
+//                                            Heuristic timeStance / 2 * (angVelDes.cross(rBody *
+//                                            posHip)) +          // Turning Raibert Heuristic
 //                                            (_stateEstimate.vBody - velDes));
 //       }
 //     }
@@ -128,7 +133,7 @@ void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes
  * Gait independent formulation for choosing appropriate GRF and step locations
  * as well as converting them to leg controller understandable values.
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::runControls()
 {
   // This option should be set from the user interface or autonomously
@@ -193,7 +198,8 @@ void FSM_State<T>::runControls()
     footVelocities = Mat34<float>::Zero();
 
     // Print an error message
-    std::cout << "[FSM_State] ERROR: No known controller was selected: " << CONTROLLER_OPTION << std::endl;
+    std::cout << "[FSM_State] ERROR: No known controller was selected: " << CONTROLLER_OPTION
+              << std::endl;
   }
 }
 
@@ -255,11 +261,13 @@ void FSM_State<T>::runControls()
 //   // Get the foot locations relative to COM
 //   for (int leg = 0; leg < 4; leg++)
 //   {
-//     computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, 1);
+//     computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q,
+//     (Mat3<T>*)nullptr, &pFeetVec, 1);
 //     //pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
 //     //(_data->_quadruped->getHipLocation(leg) + pFeetVec);
 
-//     pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() * (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
+//     pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
+//     (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
 
 //     pFeet[leg * 3] = (double)pFeetVecCOM[0];
 //     pFeet[leg * 3 + 1] = (double)pFeetVecCOM[1];
@@ -284,7 +292,8 @@ void FSM_State<T>::runControls()
 //   // Copy the results to the feed forward forces
 //   for (int leg = 0; leg < 4; leg++)
 //   {
-//     footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
+//     footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 +
+//     2];
 //   }
 // }
 
@@ -292,7 +301,7 @@ void FSM_State<T>::runControls()
  * Gait independent formulation for choosing appropriate GRF and step locations
  * as well as converting them to leg controller understandable values.
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::turnOnAllSafetyChecks()
 {
   // Pre controls safety checks
@@ -307,7 +316,7 @@ void FSM_State<T>::turnOnAllSafetyChecks()
 /**
  *
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::turnOffAllSafetyChecks()
 {
   // Pre controls safety checks

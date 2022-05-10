@@ -187,13 +187,11 @@ void Body_Manager::setupStep()
 
 void Body_Manager::finalizeStep()
 {
-  // for (uint8_t i = 0; i < 4; i++)
-  // {
-  //   _legController->commands[i].kpCartesian =
-  //   _leg_contoller_params[i].kpCartesian;
-  //   _legController->commands[i].kdCartesian =
-  //   _leg_contoller_params[i].kdCartesian;
-  // }
+  //  for (uint8_t i = 0; i < 4; i++)
+  //  {
+  //    _legController->commands[i].kpCartesian = _leg_contoller_params[i].kpCartesian;
+  //    _legController->commands[i].kdCartesian = _leg_contoller_params[i].kdCartesian;
+  //  }
 
   _legController->updateCommand(&spiCommand);
 
@@ -690,35 +688,35 @@ void Body_Manager::_updatePlot()
 
   leg_error.header = msg.header;
 
-  //for all legs
+  // for all legs
   for (size_t i = 0; i < 4; i++)
   {
-    //p actual
+    // p actual
     leg_error.p_act[i].x = _legController->datas[i].p(0);
     leg_error.p_act[i].y = _legController->datas[i].p(1);
     leg_error.p_act[i].z = _legController->datas[i].p(2);
 
-    //v actual
+    // v actual
     leg_error.v_act[i].x = _legController->datas[i].v(0);
     leg_error.v_act[i].y = _legController->datas[i].v(1);
     leg_error.v_act[i].z = _legController->datas[i].v(2);
 
-    //p desired
+    // p desired
     leg_error.p_des[i].x = _legController->commands[i].pDes(0);
     leg_error.p_des[i].y = _legController->commands[i].pDes(1);
     leg_error.p_des[i].z = _legController->commands[i].pDes(2);
 
-    //v desired
+    // v desired
     leg_error.v_des[i].x = _legController->commands[i].vDes(0);
     leg_error.v_des[i].y = _legController->commands[i].vDes(1);
     leg_error.v_des[i].z = _legController->commands[i].vDes(2);
 
-    //p error
+    // p error
     leg_error.p_error[i].x = _legController->commands[i].pDes(0) - _legController->datas[i].p(0);
     leg_error.p_error[i].y = _legController->commands[i].pDes(1) - _legController->datas[i].p(1);
     leg_error.p_error[i].z = _legController->commands[i].pDes(2) - _legController->datas[i].p(2);
 
-    //v error
+    // v error
     leg_error.v_error[i].x = _legController->commands[i].vDes(0) - _legController->datas[i].v(0);
     leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
     leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
@@ -739,23 +737,23 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
 
   controlParameters.control_mode = config.FSM_State;
   userParameters.use_wbc = config.WBC;
+  userParameters.Swing_Kp_cartesian =
+    Vec3<double>(config.Kp_cartesian_0, config.Kp_cartesian_1, config.Kp_cartesian_2);
+  userParameters.Swing_Kd_cartesian =
+    Vec3<double>(config.Kd_cartesian_0, config.Kd_cartesian_1, config.Kd_cartesian_2);
 
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    // _legController->commands[i].kpCartesian =
-    // Vec3<float>(config.Kp0, config.Kp1,
-    // config.Kp2).asDiagonal();
-    // _legController->commands[i].kdCartesian =
-    // Vec3<float>(config.Kd0, config.Kd1,
-    // config.Kd2).asDiagonal();
+  //  for (uint8_t i = 0; i < 4; i++)
+  //  {
+  //    _legController->commands[i].kpCartesian =
+  //      Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
+  //    _legController->commands[i].kdCartesian =
+  //      Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
 
-    // _leg_contoller_params[i].kpCartesian =
-    // Vec3<float>(config.Kp0, config.Kp1,
-    // config.Kp2).asDiagonal();
-    // _leg_contoller_params[i].kdCartesian =
-    // Vec3<float>(config.Kd0, config.Kd1,
-    // config.Kd2).asDiagonal();
-  }
+  //    _leg_contoller_params[i].kpCartesian =
+  //      Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
+  //    _leg_contoller_params[i].kdCartesian =
+  //      Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
+  //  }
 
   ROS_INFO_STREAM("New dynamic data!");
 }
