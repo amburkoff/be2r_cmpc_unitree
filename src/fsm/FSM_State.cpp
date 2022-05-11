@@ -18,8 +18,7 @@ FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateN
                                                                                                                     stateString(stateStringIn)
 {
   transitionData.zero();
-  std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn
-            << std::endl;
+  std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn << std::endl;
 }
 
 /**
@@ -53,9 +52,7 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
  * @param kd_cartesian D gains
  */
 template <typename T>
-void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes,
-                                             Vec3<double> kp_cartesian,
-                                             Vec3<double> kd_cartesian)
+void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes, Vec3<double> kp_cartesian, Vec3<double> kd_cartesian)
 {
   _data->_legController->commands[leg].pDes = pDes;
   // Create the cartesian P gain matrix

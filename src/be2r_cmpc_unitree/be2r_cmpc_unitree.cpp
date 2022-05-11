@@ -136,6 +136,43 @@ void Body_Manager::run()
   // Sets the leg controller commands for the robot appropriate commands
   finalizeStep();
 
+  // FBModelState<float> _state;
+  // _state.q = DVec<float>::Zero(cheetah::num_act_joint);
+  // _state.qd = DVec<float>::Zero(cheetah::num_act_joint);
+
+  // _state.bodyOrientation = _stateEstimator->getResult().orientation;
+  // _state.bodyPosition = _stateEstimator->getResult().position;
+  // DVec<float> _full_config(cheetah::num_act_joint + 7);
+
+  // _full_config.setZero();
+
+  // for (size_t i(0); i < 3; ++i)
+  // {
+  //   _state.bodyVelocity[i] = _stateEstimator->getResult().omegaBody[i];
+  //   _state.bodyVelocity[i + 3] = _stateEstimator->getResult().vBody[i];
+
+  //   for (size_t leg(0); leg < 4; ++leg)
+  //   {
+  //     _state.q[3 * leg + i] = _legController->datas[leg].q[i];
+  //     _state.qd[3 * leg + i] = _legController->datas[leg].qd[i];
+
+  //     _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
+  //   }
+  // }
+
+  // _model.setState(_state);
+
+  // _model.contactJacobians();
+  // _model.massMatrix();
+  // _model.generalizedGravityForce();
+  // _model.generalizedCoriolisForce();
+
+  // auto _A = _model.getMassMatrix();
+  // auto _grav = _model.getGravityForce();
+  // auto _coriolis = _model.getCoriolisForce();
+
+  // cout << "bm brav: " << _grav << endl;
+
 #ifdef FSM_AUTO
   //оставляю эту часть для автоматического перехода между режимами, если понадобится
   if (count_ini > 100 && count_ini < 1500)
@@ -171,6 +208,7 @@ void Body_Manager::finalizeStep()
 {
 
   if (controlParameters.control_mode == K_TESTING)
+  // if (controlParameters.control_mode == K_TESTING || controlParameters.control_mode == K_STAND_UP)
   {
     for (uint8_t i = 0; i < 4; i++)
     {

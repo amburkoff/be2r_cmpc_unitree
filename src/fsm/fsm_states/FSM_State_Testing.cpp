@@ -63,10 +63,56 @@ void FSM_State_Testing<T>::run()
   //z -0.073
   Vec3<float> pDes(0.047, -0.15, -0.073);
   static Vec3<float> pDes1(0.047, -0.15, -0.073);
+  // static Vec3<float> pDes1(0.047, -0.15, -0.1);
   static Vec3<float> pDes0(_ini_foot_pos[0]);
   static bool flag = false;
 
   T progress = rate * iter * this->_data->controlParameters->controller_dt;
+
+  auto _model = this->_data->_quadruped->buildModel();
+
+  FBModelState<float> _state;
+  _state.q = DVec<T>::Zero(cheetah::num_act_joint);
+  _state.qd = DVec<T>::Zero(cheetah::num_act_joint);
+
+  _state.bodyOrientation = seResult.orientation;
+  _state.bodyPosition = seResult.position;
+  DVec<T> _full_config(cheetah::num_act_joint + 7);
+
+  _full_config.setZero();
+
+  for (size_t i(0); i < 3; ++i)
+  {
+    _state.bodyVelocity[i] = seResult.omegaBody[i];
+    _state.bodyVelocity[i + 3] = seResult.vBody[i];
+
+    for (size_t leg(0); leg < 4; ++leg)
+    {
+      _state.q[3 * leg + i] = this->_data->_legController->datas[leg].q[i];
+      _state.qd[3 * leg + i] = this->_data->_legController->datas[leg].qd[i];
+
+      _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
+    }
+  }
+
+  _model.setState(_state);
+
+  _model.contactJacobians();
+  _model.massMatrix();
+  _model.generalizedGravityForce();
+  _model.generalizedCoriolisForce();
+
+  auto _A = _model.getMassMatrix();
+  auto _grav = _model.getGravityForce();
+  auto _coriolis = _model.getCoriolisForce();
+
+  // cout << "grav: " << _grav << endl;
+  Vec3<float> tau = _grav.segment(6, 3);
+  // tau(0) = tau(0);
+  // tau(1) = 0;
+  // tau(2) = 0;
+  cout << "grav leg0: " << tau << endl;
+  // cout << "c+g: " << _grav+_coriolis << endl;
 
   if (progress > duration)
   {
@@ -117,12 +163,14 @@ void FSM_State_Testing<T>::run()
       this->_data->_legController->commands[foot].pDes[0] = progress * (pDes1(0)) + (1. - progress) * pDes0(0);
       this->_data->_legController->commands[foot].pDes[1] = progress * (pDes1(1)) + (1. - progress) * pDes0(1);
       this->_data->_legController->commands[foot].pDes[2] = progress * (pDes1(2)) + (1. - progress) * pDes0(2);
+      this->_data->_legController->commands[foot].tauFeedForward = tau;
     }
     else if (flag == 1)
     {
       this->_data->_legController->commands[foot].pDes[0] = progress * (pDes0(0)) + (1. - progress) * pDes1(0);
       this->_data->_legController->commands[foot].pDes[1] = progress * (pDes0(1)) + (1. - progress) * pDes1(1);
       this->_data->_legController->commands[foot].pDes[2] = progress * (pDes0(2)) + (1. - progress) * pDes1(2);
+      this->_data->_legController->commands[foot].tauFeedForward = tau;
     }
   }
 }
