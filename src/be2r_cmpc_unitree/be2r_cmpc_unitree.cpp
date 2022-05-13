@@ -67,6 +67,9 @@ void Body_Manager::init()
 
   _quadruped = buildMiniCheetah<float>();
 
+  controlParameters.controller_dt = (double)MAIN_LOOP_RATE / 1000000.0;
+  cout << controlParameters.controller_dt << " dt" << endl;
+
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
 
@@ -207,17 +210,17 @@ void Body_Manager::setupStep()
 void Body_Manager::finalizeStep()
 {
 
-  if (controlParameters.control_mode == K_TESTING)
-  // if (controlParameters.control_mode == K_TESTING || controlParameters.control_mode == K_STAND_UP)
-  {
-    for (uint8_t i = 0; i < 4; i++)
-    {
-      _legController->commands[i].kpCartesian = _leg_contoller_params[i].kpCartesian;
-      _legController->commands[i].kiCartesian = _leg_contoller_params[i].kiCartesian;
-      _legController->commands[i].kdCartesian = _leg_contoller_params[i].kdCartesian;
-      _legController->commands[i].i_saturation = _leg_contoller_params[i].i_saturation;
-    }
-  }
+  // if (controlParameters.control_mode == K_TESTING)
+  // // if (controlParameters.control_mode == K_TESTING || controlParameters.control_mode == K_STAND_UP)
+  // {
+  //   for (uint8_t i = 0; i < 4; i++)
+  //   {
+  //     _legController->commands[i].kpCartesian = _leg_contoller_params[i].kpCartesian;
+  //     _legController->commands[i].kiCartesian = _leg_contoller_params[i].kiCartesian;
+  //     _legController->commands[i].kdCartesian = _leg_contoller_params[i].kdCartesian;
+  //     _legController->commands[i].i_saturation = _leg_contoller_params[i].i_saturation;
+  //   }
+  // }
 
   _legController->updateCommand(&spiCommand);
 
@@ -255,6 +258,8 @@ void Body_Manager::finalizeStep()
 
     // cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
   }
+
+  cout << "servo " << (int)0 << ": " << _legController->commands[0].kpJoint << endl;
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
@@ -357,6 +362,7 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
                                     cmd->tau_knee_ff[board_num];
 
   // const float* torque_limits = disabled_torque;
+  // const float* torque_limits = safe_torque;
   const float* torque_limits = max_torque;
   // const float* torque_limits = max_max_torque;
 
@@ -629,6 +635,16 @@ void Body_Manager::_updatePlot()
     leg_error.v_error[i].x = _legController->commands[i].vDes(0) - _legController->datas[i].v(0);
     leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
     leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
+
+    //q des
+    leg_error.q_des[i].x = _legController->commands[i].qDes(0);
+    leg_error.q_des[i].y = -_legController->commands[i].qDes(1);
+    leg_error.q_des[i].z = -_legController->commands[i].qDes(2);
+
+    //dq des
+    leg_error.dq_des[i].x = _legController->commands[i].qdDes(0);
+    leg_error.dq_des[i].y = -_legController->commands[i].qdDes(1);
+    leg_error.dq_des[i].z = -_legController->commands[i].qdDes(2);
   }
 
   _pub_leg_error.publish(leg_error);

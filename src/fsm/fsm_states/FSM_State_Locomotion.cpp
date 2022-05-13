@@ -12,6 +12,7 @@
 
 //оригинальный параметр для MPC+WBC
 #define ITERATIONS_BETWEEN_MPC 13
+// #define ITERATIONS_BETWEEN_MPC 26 //1000 Hz
 
 //лучший для только MPC
 // #define ITERATIONS_BETWEEN_MPC 10
@@ -27,7 +28,7 @@ using namespace std;
 template <typename T>
 FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::LOCOMOTION, "LOCOMOTION")
 {
-  cMPCOld = new ConvexMPCLocomotion(0.002, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
   // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
   //                                   //30 / (1000. * _controlFSMData->controlParameters->controller_dt),
   //                                   //22 / (1000. * _controlFSMData->controlParameters->controller_dt),
