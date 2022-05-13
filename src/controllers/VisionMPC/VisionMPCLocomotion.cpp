@@ -351,7 +351,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(0.09);
+      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       footSwingTrajectories[i].setFinalPosition(pFoot[i]);
     }
@@ -379,7 +379,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     }
 
     // Swing Height
-    footSwingTrajectories[i].setHeight(.09);
+    footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
 
     Vec3<float> pRobotFrame = (data._quadruped->getHipLocation(i) + offset);

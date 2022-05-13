@@ -296,8 +296,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-
-      footSwingTrajectories[i].setHeight(0.09);
+      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       footSwingTrajectories[i].setFinalPosition(pFoot[i]);
     }
@@ -327,9 +326,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     {
       swingTimeRemaining[i] -= dt;
     }
-    // if(firstSwing[i]) {
-    // footSwingTrajectories[i].setHeight(.05);
-    footSwingTrajectories[i].setHeight(.09);
+    footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
 
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
 
@@ -524,7 +521,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       // cout << "Foot " << foot << " relative velocity desired: " <<
       // vDesLeg.transpose() << "\n";
 
-      if (!data.userParameters->use_wbc)
+      if (!data.userParameters->use_wbc) // wbc off
       {
         data._legController->commands[foot].pDes = pDesLeg;
         data._legController->commands[foot].vDes = vDesLeg;
@@ -532,7 +529,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kdCartesian = Kd_stance;
 
         data._legController->commands[foot].forceFeedForward = f_ff[foot];
-        data._legController->commands[foot].kdJoint = Mat3<float>::Identity() * 0.2;
+        data._legController->commands[foot].kdJoint =
+          _parameters->Kd_joint.cast<float>().asDiagonal();
 
         //      footSwingTrajectories[foot]->updateFF(hw_i->leg_controller->leg_datas[foot].q,
         //                                          hw_i->leg_controller->leg_datas[foot].qd,
