@@ -67,7 +67,7 @@ void Body_Manager::init()
 
   _quadruped = buildMiniCheetah<float>();
 
-  controlParameters.controller_dt = 1.0 / (double)MAIN_LOOP_RATE ;
+  controlParameters.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
   cout << controlParameters.controller_dt << " dt" << endl;
 
   // Initialize the model and robot data
@@ -139,43 +139,6 @@ void Body_Manager::run()
   // Sets the leg controller commands for the robot appropriate commands
   finalizeStep();
 
-  // FBModelState<float> _state;
-  // _state.q = DVec<float>::Zero(cheetah::num_act_joint);
-  // _state.qd = DVec<float>::Zero(cheetah::num_act_joint);
-
-  // _state.bodyOrientation = _stateEstimator->getResult().orientation;
-  // _state.bodyPosition = _stateEstimator->getResult().position;
-  // DVec<float> _full_config(cheetah::num_act_joint + 7);
-
-  // _full_config.setZero();
-
-  // for (size_t i(0); i < 3; ++i)
-  // {
-  //   _state.bodyVelocity[i] = _stateEstimator->getResult().omegaBody[i];
-  //   _state.bodyVelocity[i + 3] = _stateEstimator->getResult().vBody[i];
-
-  //   for (size_t leg(0); leg < 4; ++leg)
-  //   {
-  //     _state.q[3 * leg + i] = _legController->datas[leg].q[i];
-  //     _state.qd[3 * leg + i] = _legController->datas[leg].qd[i];
-
-  //     _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
-  //   }
-  // }
-
-  // _model.setState(_state);
-
-  // _model.contactJacobians();
-  // _model.massMatrix();
-  // _model.generalizedGravityForce();
-  // _model.generalizedCoriolisForce();
-
-  // auto _A = _model.getMassMatrix();
-  // auto _grav = _model.getGravityForce();
-  // auto _coriolis = _model.getCoriolisForce();
-
-  // cout << "bm brav: " << _grav << endl;
-
 #ifdef FSM_AUTO
   //оставляю эту часть для автоматического перехода между режимами, если понадобится
   if (count_ini > 100 && count_ini < 1500)
@@ -209,7 +172,6 @@ void Body_Manager::setupStep()
 
 void Body_Manager::finalizeStep()
 {
-
   // if (controlParameters.control_mode == K_TESTING)
   // // if (controlParameters.control_mode == K_TESTING || controlParameters.control_mode == K_STAND_UP)
   // {
@@ -260,8 +222,6 @@ void Body_Manager::finalizeStep()
         _low_cmd.motorCmd[leg * 3 + servo_num].mode = mode[leg];
         _low_cmd.motorCmd[leg * 3 + servo_num].q = PosStopF;
         _low_cmd.motorCmd[leg * 3 + servo_num].dq = VelStopF;
-
-        // cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
       }
     }
     else
@@ -283,12 +243,12 @@ void Body_Manager::finalizeStep()
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    if (_legController->commands[leg_num].is_low_level == false)
-    {
+    // if (_legController->commands[leg_num].is_low_level == false)
+    // {
       _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
       _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
       _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
-    }
+    // }
   }
 
   _pub_low_cmd.publish(_low_cmd);
@@ -372,17 +332,28 @@ void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
  */
 void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num)
 {
-  torque_out->tau_abad[board_num] = cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
-                                    cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
-                                    cmd->tau_abad_ff[board_num];
+  if (_legController->commands[board_num].is_low_level == false)
+  {
+    torque_out->tau_abad[board_num] = cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
+                                      cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
+                                      cmd->tau_abad_ff[board_num];
 
-  torque_out->tau_hip[board_num] = cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
-                                   cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
-                                   cmd->tau_hip_ff[board_num];
+    torque_out->tau_hip[board_num] = cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
+                                     cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
+                                     cmd->tau_hip_ff[board_num];
 
-  torque_out->tau_knee[board_num] = cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
-                                    cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
-                                    cmd->tau_knee_ff[board_num];
+    torque_out->tau_knee[board_num] = cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
+                                      cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
+                                      cmd->tau_knee_ff[board_num];
+  }
+  else
+  {
+    torque_out->tau_abad[board_num] = cmd->tau_abad_ff[board_num];
+
+    torque_out->tau_hip[board_num] = cmd->tau_hip_ff[board_num];
+
+    torque_out->tau_knee[board_num] = cmd->tau_knee_ff[board_num];
+  }
 
   const float safe_torque[3] = {4.f, 4.f, 4.f};
   const float max_torque[3] = {17.f, 17.f, 26.f};
@@ -661,25 +632,25 @@ void Body_Manager::_updatePlot()
     {
       //q des
       leg_error.q_des[i].x = _legController->commands[i].qDes(0);
-      leg_error.q_des[i].y = -_legController->commands[i].qDes(1);
-      leg_error.q_des[i].z = -_legController->commands[i].qDes(2);
+      leg_error.q_des[i].y = _legController->commands[i].qDes(1);
+      leg_error.q_des[i].z = _legController->commands[i].qDes(2);
 
       //dq des
       leg_error.dq_des[i].x = _legController->commands[i].qdDes(0);
-      leg_error.dq_des[i].y = -_legController->commands[i].qdDes(1);
-      leg_error.dq_des[i].z = -_legController->commands[i].qdDes(2);
+      leg_error.dq_des[i].y = _legController->commands[i].qdDes(1);
+      leg_error.dq_des[i].z = _legController->commands[i].qdDes(2);
     }
     else
     {
       //q des low level
       leg_error.q_des[i].x = _legController->commands[i].l_q_des(0);
-      leg_error.q_des[i].y = -_legController->commands[i].l_q_des(1);
-      leg_error.q_des[i].z = -_legController->commands[i].l_q_des(2);
+      leg_error.q_des[i].y = _legController->commands[i].l_q_des(1);
+      leg_error.q_des[i].z = _legController->commands[i].l_q_des(2);
 
       //dq des low level
       leg_error.dq_des[i].x = _legController->commands[i].l_dq_des(0);
-      leg_error.dq_des[i].y = -_legController->commands[i].l_dq_des(1);
-      leg_error.dq_des[i].z = -_legController->commands[i].l_dq_des(2);
+      leg_error.dq_des[i].y = _legController->commands[i].l_dq_des(1);
+      leg_error.dq_des[i].z = _legController->commands[i].l_dq_des(2);
     }
   }
 

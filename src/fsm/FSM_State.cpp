@@ -61,18 +61,19 @@ void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
   // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
   //for real
-  kpMat << 20, 0, 0, 0, 20, 0, 0, 0, 20;
-  kdMat << 5, 0, 0, 0, 5, 0, 0, 0, 5;
+  Vec3<T> kp(40, 40, 40);
+  Vec3<T> kd(10, 10, 10);
 
-  _data->_legController->commands[leg].l_kp_joint = kpMat.diagonal();
-  _data->_legController->commands[leg].l_kd_joint = kdMat.diagonal();
+  _data->_legController->commands[leg].l_kp_joint = kp;
+  _data->_legController->commands[leg].l_kd_joint = kd;
 
   _data->_legController->commands[leg].l_q_des(0) = qDes(0);
-  _data->_legController->commands[leg].l_q_des(1) = -qDes(1);
-  _data->_legController->commands[leg].l_q_des(2) = -qDes(2);
+  _data->_legController->commands[leg].l_q_des(1) = qDes(1);
+  _data->_legController->commands[leg].l_q_des(2) = qDes(2);
+
   _data->_legController->commands[leg].l_dq_des(0) = qdDes(0);
-  _data->_legController->commands[leg].l_dq_des(1) = -qdDes(1);
-  _data->_legController->commands[leg].l_dq_des(2) = -qdDes(2);
+  _data->_legController->commands[leg].l_dq_des(1) = qdDes(1);
+  _data->_legController->commands[leg].l_dq_des(2) = qdDes(2);
 }
 
 /**
@@ -398,9 +399,6 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
     q_eval(0) = -(Qrad - Q0rad);
     q_eval(1) = Arad - a1_rad;
     q_eval(2) = -(PI - a_rad);
-
-    // q_eval(1) = -q_eval(1);
-    // q_eval(2) = -q_eval(2);
     break;
 
   //Front Left
