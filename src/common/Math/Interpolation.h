@@ -151,12 +151,12 @@ y_t Cosine(y_t y0, y_t yf, y_t h, x_t t) {
   y_t b = y0 - a;
   if ((yf-b)/a < 1) {
   x_t w = 2*pi - asin((yf-b)/a) - phi;
-  x_t cosine = cos(w*g+phi);//y=f(g(t))
+  x_t sine = sin(w*g+phi);//y=f(g(t))
   }
   else {
-    x_t cosine = 0;
+    x_t sine = 0;
   };
-  return b + cosine* a;
+  return b + sine* a;
 }
 
 } // namespace Interpolate
