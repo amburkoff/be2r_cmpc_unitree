@@ -67,7 +67,7 @@ void Body_Manager::init()
 
   _quadruped = buildMiniCheetah<float>();
 
-  controlParameters.controller_dt = (double)MAIN_LOOP_RATE / 1000000.0;
+  controlParameters.controller_dt = 1.0 / (double)MAIN_LOOP_RATE ;
   cout << controlParameters.controller_dt << " dt" << endl;
 
   // Initialize the model and robot data
