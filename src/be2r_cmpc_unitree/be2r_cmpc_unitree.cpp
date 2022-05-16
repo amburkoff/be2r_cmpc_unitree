@@ -223,8 +223,6 @@ void Body_Manager::finalizeStep()
     _low_cmd.motorCmd[servo_num].mode = mode[servo_num / 3];
     _low_cmd.motorCmd[servo_num].q = PosStopF;
     _low_cmd.motorCmd[servo_num].dq = VelStopF;
-
-    cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
   }
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
