@@ -30,6 +30,11 @@ void LegControllerCommand<T>::zero()
   kpJoint = Mat3<T>::Zero();
   kdJoint = Mat3<T>::Zero();
   i_saturation = 0;
+  l_q_des = Vec3<T>::Zero();
+  l_dq_des = Vec3<T>::Zero();
+  l_kp_joint = Vec3<T>::Zero();
+  l_kd_joint = Vec3<T>::Zero();
+  is_low_level = false;
 }
 
 /*!

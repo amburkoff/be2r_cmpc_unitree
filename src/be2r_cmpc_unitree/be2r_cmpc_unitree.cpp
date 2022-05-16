@@ -250,22 +250,45 @@ void Body_Manager::finalizeStep()
   // _low_cmd.header.stamp = ros::Time::now();
   _low_cmd.header.stamp = _zero_time + delta_t;
 
-  for (uint8_t servo_num = 0; servo_num < 12; servo_num++)
+  for (uint8_t leg = 0; leg < 4; leg++)
   {
-    _low_cmd.motorCmd[servo_num].mode = mode[servo_num / 3];
-    _low_cmd.motorCmd[servo_num].q = PosStopF;
-    _low_cmd.motorCmd[servo_num].dq = VelStopF;
+    //if is low level == false -> tau control
+    if (_legController->commands[leg].is_low_level == false)
+    {
+      for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
+      {
+        _low_cmd.motorCmd[leg * 3 + servo_num].mode = mode[leg];
+        _low_cmd.motorCmd[leg * 3 + servo_num].q = PosStopF;
+        _low_cmd.motorCmd[leg * 3 + servo_num].dq = VelStopF;
 
-    // cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
+        // cout << "servo " << (int)servo_num << ": " << (int)_low_cmd.motorCmd[servo_num].mode << endl;
+      }
+    }
+    else
+    {
+      //if is low level == true -> joint control
+      for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
+      {
+        _low_cmd.motorCmd[leg * 3 + servo_num].mode = mode[leg];
+        _low_cmd.motorCmd[leg * 3 + servo_num].q = _legController->commands[leg].l_q_des(servo_num);
+        _low_cmd.motorCmd[leg * 3 + servo_num].dq = _legController->commands[leg].l_dq_des(servo_num);
+        _low_cmd.motorCmd[leg * 3 + servo_num].Kp = _legController->commands[leg].l_kp_joint(servo_num);
+        _low_cmd.motorCmd[leg * 3 + servo_num].Kd = _legController->commands[leg].l_kd_joint(servo_num);
+        _low_cmd.motorCmd[leg * 3 + servo_num].tau = 0;
+      }
+    }
   }
 
-  cout << "servo " << (int)0 << ": " << _legController->commands[0].kpJoint << endl;
+  // cout << "servo " << (int)0 << ": " << _legController->commands[0].kpJoint << endl;
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
-    _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
-    _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
+    if (_legController->commands[leg_num].is_low_level == false)
+    {
+      _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
+      _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
+      _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
+    }
   }
 
   _pub_low_cmd.publish(_low_cmd);
@@ -361,18 +384,16 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
                                     cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
                                     cmd->tau_knee_ff[board_num];
 
-  // const float* torque_limits = disabled_torque;
-  // const float* torque_limits = safe_torque;
-  const float* torque_limits = max_torque;
-  // const float* torque_limits = max_max_torque;
+  const float safe_torque[3] = {4.f, 4.f, 4.f};
+  const float max_torque[3] = {17.f, 17.f, 26.f};
 
-  // if (cmd->flags[board_num] & 0b1)
-  // {
-  //   if (cmd->flags[board_num] & 0b10)
-  //     torque_limits = wimp_torque;
-  //   else
-  //     torque_limits = max_torque;
-  // }
+#ifdef TORQUE_LIMIT_SAFE
+  const float* torque_limits = safe_torque;
+#endif
+
+#ifdef TORQUE_LIMIT_MAX
+  const float* torque_limits = max_torque;
+#endif
 
   if (torque_out->tau_abad[board_num] > torque_limits[0])
   {
@@ -636,15 +657,30 @@ void Body_Manager::_updatePlot()
     leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
     leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
 
-    //q des
-    leg_error.q_des[i].x = _legController->commands[i].qDes(0);
-    leg_error.q_des[i].y = -_legController->commands[i].qDes(1);
-    leg_error.q_des[i].z = -_legController->commands[i].qDes(2);
+    if (_legController->commands[i].is_low_level == false)
+    {
+      //q des
+      leg_error.q_des[i].x = _legController->commands[i].qDes(0);
+      leg_error.q_des[i].y = -_legController->commands[i].qDes(1);
+      leg_error.q_des[i].z = -_legController->commands[i].qDes(2);
 
-    //dq des
-    leg_error.dq_des[i].x = _legController->commands[i].qdDes(0);
-    leg_error.dq_des[i].y = -_legController->commands[i].qdDes(1);
-    leg_error.dq_des[i].z = -_legController->commands[i].qdDes(2);
+      //dq des
+      leg_error.dq_des[i].x = _legController->commands[i].qdDes(0);
+      leg_error.dq_des[i].y = -_legController->commands[i].qdDes(1);
+      leg_error.dq_des[i].z = -_legController->commands[i].qdDes(2);
+    }
+    else
+    {
+      //q des low level
+      leg_error.q_des[i].x = _legController->commands[i].l_q_des(0);
+      leg_error.q_des[i].y = -_legController->commands[i].l_q_des(1);
+      leg_error.q_des[i].z = -_legController->commands[i].l_q_des(2);
+
+      //dq des low level
+      leg_error.dq_des[i].x = _legController->commands[i].l_dq_des(0);
+      leg_error.dq_des[i].y = -_legController->commands[i].l_dq_des(1);
+      leg_error.dq_des[i].z = -_legController->commands[i].l_dq_des(2);
+    }
   }
 
   _pub_leg_error.publish(leg_error);

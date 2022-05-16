@@ -138,7 +138,7 @@ void FSM_State_Testing<T>::run()
   {
     // progress = duration;
     progress = 0;
-    // iter = 0;
+    iter = 0;
     flag = !flag;
   }
 
@@ -209,13 +209,25 @@ void FSM_State_Testing<T>::run()
     // this->_data->_legController->commands[foot].vDes = vDesFootWorld;
   }
 
-  static Vec3<float> q_des(0, 0, 0);
-  static Vec3<float> dq_des(0, 0, 0);
+  Vec3<float> p_des = footSwingTrajectories[0].getPosition();
+  Vec3<float> v_des = footSwingTrajectories[0].getVelocity();
 
-  q_des(1) = -0.5 * sin((float)iter / 1000.0) - 0.5 - 0.5;
-  q_des(2) = 0.5 * sin((float)iter / 1000.0) + 0.5 + 1.5;
+  // static Vec3<float> q_des(0, 0, 0);
+  // static Vec3<float> dq_des(0, 0, 0);
+  // q_des(1) = -0.5 * sin((float)iter / 1000.0) - 0.5 - 0.5;
+  // q_des(2) = 0.5 * sin((float)iter / 1000.0) + 0.5 + 1.5;
 
-  this->jointPDControl(0, q_des, dq_des);
+  Vec3<float> q_des(0, 0, 0);
+  Vec3<float> dq_des(0, 0, 0);
+
+  q_des = this->findAngles(0, p_des);
+  
+  // this->jointPDControl(0, q_des, dq_des);
+  this->lowLeveljointPDControl(0, q_des, dq_des);
+  this->_data->_legController->commands[0].is_low_level = true;
+  // Vec3<float> p_act = this->_data->_legController->datas[0].p;
+  // Vec3<float> q_eval = this->findAngles(0, p_act);
+  // cout << "q_eval: " << q_eval << endl;
 }
 
 /**

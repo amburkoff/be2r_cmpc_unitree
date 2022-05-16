@@ -32,6 +32,10 @@
 
 #define K_INVALID 100
 
+#define PI 3.1415
+#define DEG_TO_RAD PI / 180.0
+#define RAD_TO_DEG 180.0 / PI
+
 /**
  * Enumerate all of the FSM states so we can keep track of them.
  */
@@ -81,10 +85,13 @@ public:
 
   //
   void jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes);
+  void lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes);
   void cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes,
                                  Vec3<double> kp_cartesian,
                                  Vec3<double> kd_cartesian);
   void footstepHeuristicPlacement(int leg);
+
+  Vec3<T> findAngles(uint8_t leg_num, Vec3<T> p_act);
 
   //
   void runControls();

@@ -161,8 +161,8 @@ void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est, const LegContr
   _Ainv = _A.inverse();
 
   // cout << "Mass Matrix: " << _A << endl;
-  cout << "C+G: " << _grav+_coriolis << endl;
-  cout << "Gravity: " << _grav << endl;
+  // cout << "C+G: " << _grav+_coriolis << endl;
+  // cout << "Gravity: " << _grav << endl;
 }
 
 template class WBC_Ctrl<float>;
