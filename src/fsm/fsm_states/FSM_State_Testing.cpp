@@ -138,7 +138,7 @@ void FSM_State_Testing<T>::run()
   {
     // progress = duration;
     progress = 0;
-    // iter = 0;
+    iter = 0;
     flag = !flag;
   }
 
@@ -179,7 +179,7 @@ void FSM_State_Testing<T>::run()
       //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes1(0)) + (1. - progress) * pDes0(0);
       //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes1(1)) + (1. - progress) * pDes0(1);
       //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes1(2)) + (1. - progress) * pDes0(2);
-      //   this->_data->_legController->commands[foot].tauFeedForward = tau;
+        this->_data->_legController->commands[foot].tauFeedForward = tau;
       //   Vec3<float> L = pDes1 - pDes0;
       //   this->_data->_legController->commands[foot].vDes = L / duration;
     }
@@ -191,7 +191,7 @@ void FSM_State_Testing<T>::run()
       //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes0(0)) + (1. - progress) * pDes1(0);
       //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes0(1)) + (1. - progress) * pDes1(1);
       //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes0(2)) + (1. - progress) * pDes1(2);
-      //   this->_data->_legController->commands[foot].tauFeedForward = tau;
+        this->_data->_legController->commands[foot].tauFeedForward = tau;
       //   Vec3<float> L = pDes0 - pDes1;
       //   this->_data->_legController->commands[foot].vDes = L / duration;
     }
@@ -209,13 +209,26 @@ void FSM_State_Testing<T>::run()
     // this->_data->_legController->commands[foot].vDes = vDesFootWorld;
   }
 
-  static Vec3<float> q_des(0, 0, 0);
-  static Vec3<float> dq_des(0, 0, 0);
+  Vec3<float> p_des = footSwingTrajectories[0].getPosition();
+  Vec3<float> v_des = footSwingTrajectories[0].getVelocity();
 
-  q_des(1) = -0.5 * sin((float)iter / 1000.0) - 0.5 - 0.5;
-  q_des(2) = 0.5 * sin((float)iter / 1000.0) + 0.5 + 1.5;
+  // static Vec3<float> q_des(0, 0, 0);
+  // static Vec3<float> dq_des(0, 0, 0);
+  // q_des(1) = -0.5 * sin((float)iter / 1000.0) - 0.5 - 0.5;
+  // q_des(2) = 0.5 * sin((float)iter / 1000.0) + 0.5 + 1.5;
 
-  this->jointPDControl(0, q_des, dq_des);
+  Vec3<float> q_des(0, 0, 0);
+  Vec3<float> dq_des(0, 0, 0);
+
+  q_des = this->findAngles(0, p_des);
+
+  // this->jointPDControl(0, q_des, dq_des);
+  this->lowLeveljointPDControl(0, q_des, dq_des);
+  this->_data->_legController->commands[0].is_low_level = true;
+
+  // Vec3<float> p_act = this->_data->_legController->datas[0].p;
+  // Vec3<float> q_eval = this->findAngles(0, p_act);
+  // cout << "q_eval: " << q_eval << endl;
 }
 
 /**
@@ -290,6 +303,13 @@ template <typename T>
 void FSM_State_Testing<T>::onExit()
 {
   // Nothing to clean up when exiting
+  // this->_data->_legController->zeroCommand();
+
+  this->_data->_legController->setEnabled(false);
+  this->_data->_legController->commands[0].is_low_level = true;
+  this->_data->_legController->commands[1].is_low_level = true;
+  this->_data->_legController->commands[2].is_low_level = true;
+  this->_data->_legController->commands[3].is_low_level = true;
 }
 
 // template class FSM_State_Testing<double>;

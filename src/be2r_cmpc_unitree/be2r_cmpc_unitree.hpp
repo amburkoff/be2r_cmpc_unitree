@@ -43,7 +43,7 @@
 //BE2R
 #include "debug.hpp"
 
-#define MAIN_LOOP_RATE 1000
+#define MAIN_LOOP_RATE 500
 
 // #define FSM 3
 // #define FSM_AUTO
@@ -51,8 +51,9 @@
 #define MOTOR_BREAK 0x00
 #define MOTOR_ON 0x0A
 
-const float safe_torque[3] = {4.f, 4.f, 4.f};
-const float max_torque[3] = {17.f, 17.f, 26.f};        // TODO CHECK WITH BEN
+#define TORQUE_LIMIT_SAFE
+// #define TORQUE_LIMIT_MAX
+
 const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
 const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
 const float disabled_torque[3] = {0.f, 0.f, 0.f};

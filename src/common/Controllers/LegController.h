@@ -29,8 +29,10 @@ struct LegControllerCommand
   void zero();
 
   Vec3<T> tauFeedForward, forceFeedForward, qDes, qdDes, pDes, vDes, integral;
+  Vec3<T> l_q_des, l_dq_des, l_kp_joint, l_kd_joint;
   Mat3<T> kpCartesian, kdCartesian, kiCartesian, kpJoint, kdJoint;
   float i_saturation;
+  bool is_low_level = false;
 };
 
 /*!

@@ -35,6 +35,8 @@ void FSM_State_Passive<T>::onEnter()
   is_falling = false;
   counter = 0;
 
+  this->_control_fsm_data->_legController->setEnabled(false);
+
   // Reset the transition data
   this->transitionData.zero();
 }
