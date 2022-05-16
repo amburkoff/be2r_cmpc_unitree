@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include <type_traits>
+#include <cmath>
 
 namespace Interpolate
 {
@@ -130,19 +131,32 @@ y_t cubicBezierSecondDerivativeSQRT(y_t y0, y_t yf, x_t t) {
 /*!
  * Cosine interpolation between y0 and yf.  t,x is between 0 and 1
  * Previous MIT version was the same as cosine function for the Y-axis when we have a symmetry. 
- * However, when we want to use a new basis function it stops working. In the maximum hieght with t =0.5
- * from the left right we have not equal velocities.
- * So we need a new 
+ * However, when we want to use a new basis function it stops working. 
+ * In the maximum hieght with t =0.5(phase) velocities from the left and right region of t are not equal.
+ * So we need a new interpolate function:
+ *          y = a*cos(w*t + phi) + b
  */
 template <typename y_t, typename x_t>
-y_t Cosine(y_t y0, y_t yf, x_t t) {
+y_t Cosine(y_t y0, y_t yf, y_t h, x_t t) {
   static_assert(std::is_floating_point<x_t>::value,
                 "must use floating point value");
   assert(t >= 0 && t <= 1);
-  x_t g = sqrt(x_t(1.2)*t+x_t(0.01))-x_t(0.1); //g(t)
-  y_t yDiff = yf - y0;
-  x_t cosine = g * g * g + x_t(3) * (g * g * (x_t(1) - g));//y=f(g(t))
-  return y0 + bezier * yDiff;
+  static_assert(std::is_floating_point<y_t>::value,
+                "must specify input h>0 and yf-y0>=0");
+  assert(h > 0 && yf-y0 >= 0);
+  x_t g = t;
+  x_t pi = x_t(acos(-1));
+  x_t phi = pi/x_t(2);
+  y_t a = -h/x_t(2);
+  y_t b = y0 - a;
+  if ((yf-b)/a < 1) {
+  x_t w = 2*pi - asin((yf-b)/a) - phi;
+  x_t cosine = cos(w*g+phi);//y=f(g(t))
+  }
+  else {
+    x_t cosine = 0;
+  };
+  return b + cosine* a;
 }
 
 } // namespace Interpolate
