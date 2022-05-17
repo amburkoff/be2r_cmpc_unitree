@@ -56,7 +56,7 @@ void FSM_State_Testing<T>::onEnter()
 template <typename T>
 void FSM_State_Testing<T>::run()
 {
-  float rate = 0.5;
+  float rate = 1;
   float duration = 1 / rate;
   auto& seResult = this->_data->_stateEstimator->getResult();
 

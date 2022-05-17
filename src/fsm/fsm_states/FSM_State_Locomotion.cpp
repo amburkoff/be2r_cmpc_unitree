@@ -202,6 +202,10 @@ TransitionData<T> FSM_State_Locomotion<T>::transition()
 
   case FSM_StateName::LAYDOWN:
     this->transitionData.done = true;
+    this->_data->_legController->commands[0].is_low_level = true;
+    this->_data->_legController->commands[1].is_low_level = true;
+    this->_data->_legController->commands[2].is_low_level = true;
+    this->_data->_legController->commands[3].is_low_level = true;
     break;
 
   default:
@@ -283,8 +287,6 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
   // estimateContact();
 
   // cout << "[FSM_State_Locomotion] LocomotionControlStep start" << endl;
-  // this->_data->userParameters->use_wbc = 0;
-
   cMPCOld->run<T>(*this->_data);
 
   // cout << "[FSM_State_Locomotion] cMPCOld done" << endl;

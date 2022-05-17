@@ -61,19 +61,14 @@ void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
   // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
   //for real
-  Vec3<T> kp(40, 40, 40);
-  Vec3<T> kd(10, 10, 10);
+  kpMat << 120, 0, 0, 0, 120, 0, 0, 0, 120;
+  kdMat << 10, 0, 0, 0, 10, 0, 0, 0, 10;
 
-  _data->_legController->commands[leg].l_kp_joint = kp;
-  _data->_legController->commands[leg].l_kd_joint = kd;
+  _data->_legController->commands[leg].kpJoint = kpMat;
+  _data->_legController->commands[leg].kdJoint = kdMat;
 
-  _data->_legController->commands[leg].l_q_des(0) = qDes(0);
-  _data->_legController->commands[leg].l_q_des(1) = qDes(1);
-  _data->_legController->commands[leg].l_q_des(2) = qDes(2);
-
-  _data->_legController->commands[leg].l_dq_des(0) = qdDes(0);
-  _data->_legController->commands[leg].l_dq_des(1) = qdDes(1);
-  _data->_legController->commands[leg].l_dq_des(2) = qdDes(2);
+  _data->_legController->commands[leg].qDes = qDes;
+  _data->_legController->commands[leg].qdDes = qdDes;
 }
 
 /**

@@ -85,10 +85,7 @@ void Body_Manager::init()
   _gaitScheduler = new GaitScheduler<float>(&userParameters, controlParameters.controller_dt);
 
   // Initializes the Control FSM with all the required data
-  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator,
-                                      _legController, _gaitScheduler,
-                                      _desiredStateCommand,
-                                      &controlParameters,
+  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler, _desiredStateCommand, &controlParameters,
                                       &userParameters);
 
   _leg_contoller_params[0].zero();
@@ -227,15 +224,36 @@ void Body_Manager::finalizeStep()
     else
     {
       //if is low level == true -> joint control
-      for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
-      {
-        _low_cmd.motorCmd[leg * 3 + servo_num].mode = mode[leg];
-        _low_cmd.motorCmd[leg * 3 + servo_num].q = _legController->commands[leg].l_q_des(servo_num);
-        _low_cmd.motorCmd[leg * 3 + servo_num].dq = _legController->commands[leg].l_dq_des(servo_num);
-        _low_cmd.motorCmd[leg * 3 + servo_num].Kp = _legController->commands[leg].l_kp_joint(servo_num);
-        _low_cmd.motorCmd[leg * 3 + servo_num].Kd = _legController->commands[leg].l_kd_joint(servo_num);
-        _low_cmd.motorCmd[leg * 3 + servo_num].tau = 0;
-      }
+      // for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
+      // {
+      //   _low_cmd.motorCmd[leg * 3 + servo_num].mode = mode[leg];
+      //   _low_cmd.motorCmd[leg * 3 + servo_num].q = _legController->commands[leg].qDes(servo_num);
+      //   _low_cmd.motorCmd[leg * 3 + servo_num].dq = _legController->commands[leg].qdDes(servo_num);
+      //   _low_cmd.motorCmd[leg * 3 + servo_num].Kp = _legController->commands[leg].kpJoint(servo_num, servo_num);
+      //   _low_cmd.motorCmd[leg * 3 + servo_num].Kd = _legController->commands[leg].kdJoint(servo_num, servo_num);
+      //   _low_cmd.motorCmd[leg * 3 + servo_num].tau = 0;
+      // }
+      _low_cmd.motorCmd[leg * 3 + 0].mode = mode[leg];
+      _low_cmd.motorCmd[leg * 3 + 0].q = spiCommand.q_des_abad[leg];
+      _low_cmd.motorCmd[leg * 3 + 0].dq = spiCommand.qd_des_abad[leg];
+      _low_cmd.motorCmd[leg * 3 + 0].Kp = spiCommand.kp_abad[leg];
+      _low_cmd.motorCmd[leg * 3 + 0].Kd = spiCommand.kd_abad[leg];
+      _low_cmd.motorCmd[leg * 3 + 0].tau = 0;
+      
+      _low_cmd.motorCmd[leg * 3 + 1].mode = mode[leg];
+      _low_cmd.motorCmd[leg * 3 + 1].q = spiCommand.q_des_hip[leg];
+      _low_cmd.motorCmd[leg * 3 + 1].dq = spiCommand.qd_des_hip[leg];
+      _low_cmd.motorCmd[leg * 3 + 1].Kp = spiCommand.kp_hip[leg];
+      _low_cmd.motorCmd[leg * 3 + 1].Kd = spiCommand.kd_hip[leg];
+      _low_cmd.motorCmd[leg * 3 + 1].tau = 0;
+
+      _low_cmd.motorCmd[leg * 3 + 2].mode = mode[leg];
+      _low_cmd.motorCmd[leg * 3 + 2].q = spiCommand.q_des_knee[leg];
+      _low_cmd.motorCmd[leg * 3 + 2].dq = spiCommand.qd_des_knee[leg];
+      _low_cmd.motorCmd[leg * 3 + 2].Kp = spiCommand.kp_knee[leg];
+      _low_cmd.motorCmd[leg * 3 + 2].Kd = spiCommand.kd_knee[leg];
+      _low_cmd.motorCmd[leg * 3 + 2].tau = 0;
+    // spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
     }
   }
 
@@ -245,9 +263,9 @@ void Body_Manager::finalizeStep()
   {
     // if (_legController->commands[leg_num].is_low_level == false)
     // {
-      _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
-      _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
-      _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
+    _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
+    _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
+    _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
     // }
   }
 
@@ -571,6 +589,8 @@ void Body_Manager::_updatePlot()
   // float* w = seResult.omegaWorld.data();
   // float* q = seResult.orientation.data();
 
+  // msg.pose.position.x = _stateEstimator->getResult().position
+
   yaw_des = _stateEstimator->getResult().rpy[2] + dt * yaw_turn_rate;
   roll_des = 0.;
   pitch_des = 0.;
@@ -583,7 +603,7 @@ void Body_Manager::_updatePlot()
 
   msg.twist.linear.x = x_vel_des - v_act(0);
   msg.twist.linear.y = y_vel_des - v_act(1);
-  msg.twist.linear.y = 0 - v_act(2);
+  msg.twist.linear.z = 0 - v_act(2);
 
   msg.twist.angular.x = roll_des - w_act(0);
   msg.twist.angular.y = pitch_des - w_act(1);
@@ -628,30 +648,18 @@ void Body_Manager::_updatePlot()
     leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
     leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
 
-    if (_legController->commands[i].is_low_level == false)
-    {
-      //q des
-      leg_error.q_des[i].x = _legController->commands[i].qDes(0);
-      leg_error.q_des[i].y = _legController->commands[i].qDes(1);
-      leg_error.q_des[i].z = _legController->commands[i].qDes(2);
+    //q des
+    leg_error.q_des[i].x = spiCommand.q_des_abad[i];
+    leg_error.q_des[i].y = spiCommand.q_des_hip[i];
+    leg_error.q_des[i].z = spiCommand.q_des_knee[i];
+    // leg_error.q_des[i].x = _legController->commands[i].qDes(0);
+    // leg_error.q_des[i].y = _legController->commands[i].qDes(1);
+    // leg_error.q_des[i].z = _legController->commands[i].qDes(2);
 
-      //dq des
-      leg_error.dq_des[i].x = _legController->commands[i].qdDes(0);
-      leg_error.dq_des[i].y = _legController->commands[i].qdDes(1);
-      leg_error.dq_des[i].z = _legController->commands[i].qdDes(2);
-    }
-    else
-    {
-      //q des low level
-      leg_error.q_des[i].x = _legController->commands[i].l_q_des(0);
-      leg_error.q_des[i].y = _legController->commands[i].l_q_des(1);
-      leg_error.q_des[i].z = _legController->commands[i].l_q_des(2);
-
-      //dq des low level
-      leg_error.dq_des[i].x = _legController->commands[i].l_dq_des(0);
-      leg_error.dq_des[i].y = _legController->commands[i].l_dq_des(1);
-      leg_error.dq_des[i].z = _legController->commands[i].l_dq_des(2);
-    }
+    //dq des
+    leg_error.dq_des[i].x = spiCommand.qd_des_abad[i];
+    leg_error.dq_des[i].y = spiCommand.qd_des_hip[i];
+    leg_error.dq_des[i].z = spiCommand.qd_des_knee[i];
   }
 
   _pub_leg_error.publish(leg_error);

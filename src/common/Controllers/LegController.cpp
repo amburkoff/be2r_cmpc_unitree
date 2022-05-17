@@ -30,10 +30,6 @@ void LegControllerCommand<T>::zero()
   kpJoint = Mat3<T>::Zero();
   kdJoint = Mat3<T>::Zero();
   i_saturation = 0;
-  l_q_des = Vec3<T>::Zero();
-  l_dq_des = Vec3<T>::Zero();
-  l_kp_joint = Vec3<T>::Zero();
-  l_kd_joint = Vec3<T>::Zero();
   is_low_level = false;
 }
 
@@ -168,12 +164,12 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
 
     spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
-    spiCommand->q_des_hip[leg] = commands[leg].qDes(1);
-    spiCommand->q_des_knee[leg] = commands[leg].qDes(2);
+    spiCommand->q_des_hip[leg] = -commands[leg].qDes(1);
+    spiCommand->q_des_knee[leg] = -commands[leg].qDes(2);
 
     spiCommand->qd_des_abad[leg] = commands[leg].qdDes(0);
-    spiCommand->qd_des_hip[leg] = commands[leg].qdDes(1);
-    spiCommand->qd_des_knee[leg] = commands[leg].qdDes(2);
+    spiCommand->qd_des_hip[leg] = -commands[leg].qdDes(1);
+    spiCommand->qd_des_knee[leg] = -commands[leg].qdDes(2);
 
     // estimate torque
     datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
