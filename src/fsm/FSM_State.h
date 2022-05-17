@@ -25,6 +25,7 @@
 #define K_BACKFLIP 9
 #define K_FRONTJUMP 11
 #define K_TESTING 12
+#define K_STAIRS 13
 
 // Specific control states
 #define K_JOINT_PD 51
@@ -53,7 +54,8 @@ enum class FSM_StateName
   VISION,
   BACKFLIP,
   FRONTJUMP,
-  TESTING
+  TESTING,
+  STAIRS
 };
 
 /**

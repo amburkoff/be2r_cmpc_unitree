@@ -149,12 +149,13 @@ y_t Cosine(y_t y0, y_t yf, y_t h, x_t t) {
   x_t phi = pi/x_t(2);
   y_t a = -h/x_t(2);
   y_t b = y0 - a;
+  x_t sine = 0;
   if ((yf-b)/a < 1) {
-  x_t w = 2*pi - asin((yf-b)/a) - phi;
-  x_t sine = sin(w*g+phi);//y=f(g(t))
+    x_t w = 2*pi - asin((yf-b)/a) - phi;
+    sine = sin(w*g+phi);//y=f(g(t))
   }
   else {
-    x_t sine = 0;
+    sine = 0;
   };
   return b + sine* a;
 }

@@ -9,15 +9,14 @@
 #include "Gait.h"
 
 //оригинальные параметры MPC+WBC
-#define GAIT_PERIOD 14
-// #define GAIT_PERIOD 34 //1000 Hz
+#define GAIT_PERIOD 17
 #define HORIZON 14
 
 //лучшие параметры для только MPC
 // #define GAIT_PERIOD 18
 // #define HORIZON 5
 
-#define STEP_HEIGHT 0.06
+#define STEP_HEIGHT 0.15
 #define BODY_HEIGHT 0.24
 
 // #define SHOW_MPC_SOLVE_TIME
@@ -49,9 +48,15 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
                                                                                                                    random2(horizonLength, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
 {
   _parameters = parameters;
+  // discretization of the MPC model or the MPC frequency
   dtMPC = dt * iterationsBetweenMPC;
+  //dt and iterationsBetweenMPC is a controller working period and connection with MPC period, could be found at FCM_State_Locomotion
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d horizon: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, HORIZON, dtMPC);
+  
+   // void setup_problem(double dt, int horizon, double mu, double f_max)
+  // mu -- friction coefficient, f_max -- force limit for the MPC QP solution
+  
   // setup_problem(dtMPC, horizonLength, 0.4, 1200);
   setup_problem(dtMPC, horizonLength, 0.4, 120); //original
   //setup_problem(dtMPC, horizonLength, 0.4, 650); // DH
@@ -317,7 +322,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-    Pf[2] = 0.0;
+    Pf[2] = 0.1;
+    cout << "Foot " << i << " final position desired: " << Pf.transpose() << "\n";
     footSwingTrajectories[i].setFinalPosition(Pf);
   }
 
@@ -386,7 +392,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-
+      cout << "Foot " << foot << " relative position desired: " << pDesLeg.transpose() << "\n";
+      cout << "Foot " << foot << " relative velocity desired: " << vDesLeg.transpose() << "\n";
       //for RViz
       pose[foot].pose.position.x = pDesFootWorld.x();
       pose[foot].pose.position.y = pDesFootWorld.y();
@@ -475,6 +482,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
+      //cout << "Foot " << foot << " relative position desired: " << pDesLeg.transpose() << "\n";
       //cout << "Foot " << foot << " relative velocity desired: " << vDesLeg.transpose() << "\n";
 
       if (!data.userParameters->use_wbc)
@@ -671,8 +679,8 @@ void ConvexMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 
   //float Q[12] = {0.25, 0.25, 10, 2, 2, 40, 0, 0, 0.3, 0.2, 0.2, 0.2};
   float yaw = seResult.rpy[2];
-  float* weights = Q;
-  float alpha = 4e-5; // make setting eventually
+  float* weights = Q; //Matrix 12*12 of MPC Q weights, this is her diagonal values
+  float alpha = 4e-5; // MPC R weights
   //float alpha = 4e-7; // make setting eventually: DH
   float* p = seResult.position.data();
   float* v = seResult.vWorld.data();
@@ -806,13 +814,14 @@ void ConvexMPCLocomotion::initSparseMPC()
   }
 
   Vec12<double> weights;
+  //Matrix 12*12 of MPC Q weights, this is her diagonal values
   weights << 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2;
   //weights << 0,0,0,1,1,10,0,0,0,0.2,0.2,0;
 
   _sparseCMPC.setRobotParameters(baseInertia, mass, maxForce);
   _sparseCMPC.setFriction(1.0);
   // _sparseCMPC.setFriction(0.4);
-  _sparseCMPC.setWeights(weights, 4e-5);
+  _sparseCMPC.setWeights(weights, 4e-5); //send Q and R to MPC
   _sparseCMPC.setDtTrajectory(dtTraj);
 
   _sparseTrajectory.resize(horizonLength);

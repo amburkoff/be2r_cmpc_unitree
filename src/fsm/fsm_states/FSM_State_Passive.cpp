@@ -130,6 +130,11 @@ FSM_StateName FSM_State_Passive<T>::checkTransition()
     // Requested switch to joint PD control
     this->nextStateName = FSM_StateName::JOINT_PD;
     break;
+  
+  case K_STAIRS:
+    // Requested switch to joint PD control
+    this->nextStateName = FSM_StateName::STAIRS;
+    break;
 
   case K_STAND_UP:
     // Requested switch to joint PD control
