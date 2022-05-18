@@ -4,7 +4,7 @@
 
   <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find raisim_unitree_ros_driver)/description/urdf/a1_edited.urdf' " />
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
   <!--     <arg name="rvizconfig" default="$(find unitree_ros_driver)/rviz/unitree.rviz" />
       <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />

@@ -35,6 +35,8 @@ void FSM_State_Passive<T>::onEnter()
   is_falling = false;
   counter = 0;
 
+  this->_control_fsm_data->_legController->setEnabled(false);
+
   // Reset the transition data
   this->transitionData.zero();
 }
@@ -91,9 +93,10 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
     this->_control_fsm_data->_legController->commands[i].kpJoint = Mat3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].kdJoint = Mat3<T>::Zero();
 
-    this->_control_fsm_data->_legController->commands[i].kpCartesian = Mat3<T>::Zero();
-    this->_control_fsm_data->_legController->commands[i].kdCartesian = Mat3<T>::Zero();
+    // this->_control_fsm_data->_legController->commands[i].kpCartesian = Mat3<T>::Zero();
+    // this->_control_fsm_data->_legController->commands[i].kdCartesian = Mat3<T>::Zero();
 
+    this->_control_fsm_data->_legController->commands[i].qDes = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].qdDes = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].forceFeedForward = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();

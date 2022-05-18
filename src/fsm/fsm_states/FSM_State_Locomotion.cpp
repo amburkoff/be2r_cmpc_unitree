@@ -12,6 +12,7 @@
 
 //оригинальный параметр для MPC+WBC
 #define ITERATIONS_BETWEEN_MPC 13
+// #define ITERATIONS_BETWEEN_MPC 26 //1000 Hz
 
 //лучший для только MPC
 // #define ITERATIONS_BETWEEN_MPC 10
@@ -27,7 +28,7 @@ using namespace std;
 template <typename T>
 FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::LOCOMOTION, "LOCOMOTION")
 {
-  cMPCOld = new ConvexMPCLocomotion(0.002, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
   // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
   //                                   //30 / (1000. * _controlFSMData->controlParameters->controller_dt),
   //                                   //22 / (1000. * _controlFSMData->controlParameters->controller_dt),
@@ -201,6 +202,10 @@ TransitionData<T> FSM_State_Locomotion<T>::transition()
 
   case FSM_StateName::LAYDOWN:
     this->transitionData.done = true;
+    this->_data->_legController->commands[0].is_low_level = true;
+    this->_data->_legController->commands[1].is_low_level = true;
+    this->_data->_legController->commands[2].is_low_level = true;
+    this->_data->_legController->commands[3].is_low_level = true;
     break;
 
   default:
@@ -282,8 +287,6 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
   // estimateContact();
 
   // cout << "[FSM_State_Locomotion] LocomotionControlStep start" << endl;
-  // this->_data->userParameters->use_wbc = 0;
-
   cMPCOld->run<T>(*this->_data);
 
   // cout << "[FSM_State_Locomotion] cMPCOld done" << endl;

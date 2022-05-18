@@ -127,6 +127,11 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
       cmd[leg].tauFeedForward[2] = 1. / (knee_pos * knee_pos + 0.02);
     }
   }
+
+  data._legController->commands[0].is_low_level = true;
+  data._legController->commands[1].is_low_level = true;
+  data._legController->commands[2].is_low_level = true;
+  data._legController->commands[3].is_low_level = true;
 }
 
 template <typename T>
@@ -160,6 +165,8 @@ void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est, const LegContr
   _coriolis = _model.getCoriolisForce();
   _Ainv = _A.inverse();
 
+  // cout << "Mass Matrix: " << _A << endl;
+  // cout << "C+G: " << _grav+_coriolis << endl;
   // cout << "Gravity: " << _grav << endl;
 }
 

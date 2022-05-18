@@ -47,6 +47,31 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 }
 
 /**
+ * Low level joint control for given leg.
+ *
+ * @param leg the leg number to control
+ * @param qDes desired joint position
+ * @param dqDes desired joint velocity
+ */
+template <typename T>
+void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
+{
+  //for sim
+  // kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
+  // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+
+  //for real
+  kpMat << 120, 0, 0, 0, 120, 0, 0, 0, 120;
+  kdMat << 10, 0, 0, 0, 10, 0, 0, 0, 10;
+
+  _data->_legController->commands[leg].kpJoint = kpMat;
+  _data->_legController->commands[leg].kdJoint = kdMat;
+
+  _data->_legController->commands[leg].qDes = qDes;
+  _data->_legController->commands[leg].qdDes = qdDes;
+}
+
+/**
  * Cartesian impedance control for a given leg.
  *
  * @param leg the leg number to control
@@ -326,6 +351,82 @@ void FSM_State<T>::turnOffAllSafetyChecks()
   checkPDesFoot = false;         // do not command footsetps too far
   checkForceFeedForward = false; // do not command huge forces
   checkLegSingularity = false;   // do not let leg
+}
+
+template <typename T>
+Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
+{
+  Vec3<T> q_eval;
+  q_eval.Zero();
+
+  const float AB = 0.0838;
+  const float BC = 0.2;
+  const float CD = 0.2;
+
+  float L = 0;
+  float f = 0;
+  float Qrad = 0;
+  float Q0rad = 0;
+  float L1 = 0;
+  float a_rad = 0;
+  float Arad = 0;
+  float a2_rad = 0;
+  float a1_rad = 0;
+
+  float x = -p_act(1);
+  float y = p_act(0);
+  float z = p_act(2);
+
+  L = sqrt(x * x + z * z);
+  f = sqrt(L * L - AB * AB);
+  Qrad = acos(AB / L);
+  Q0rad = acos(x / L);
+
+  if (leg_num == 1 || leg_num == 3)
+  {
+    Q0rad = acos(-x / L);
+  }
+
+  L1 = sqrt(f * f + y * y);
+  a_rad = acos((L1 * L1 - BC * BC - CD * CD) / (-2 * BC * CD));
+  Arad = acos((CD * CD - BC * BC - L1 * L1) / (-2 * BC * L1));
+  a2_rad = acos(y / L1);
+  a1_rad = PI / 2 - a2_rad;
+
+  // std::cout << "L: " << L << " f: " << f << " Qrad: " << Qrad << " Q0rad: " << Q0rad << " L1: " << L1 << " a_rad: " << a_rad << " Arad: " << Arad << " a2_rad: " << a2_rad << " a1_rad: " << a1_rad << std::endl;
+
+  switch (leg_num)
+  {
+  //Front Right
+  case 0:
+    q_eval(0) = -(Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(PI - a_rad);
+    break;
+
+  //Front Left
+  case 1:
+    q_eval(0) = (Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(PI - a_rad);
+    break;
+
+  //Rear Right
+  case 2:
+    q_eval(0) = -(Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(PI - a_rad);
+    break;
+
+  //Rear Left
+  case 3:
+    q_eval(0) = (Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(PI - a_rad);
+    break;
+  }
+
+  return q_eval;
 }
 
 // template class FSM_State<double>;

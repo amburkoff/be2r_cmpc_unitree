@@ -25,9 +25,12 @@ void LegControllerCommand<T>::zero()
   pDes = Vec3<T>::Zero();
   vDes = Vec3<T>::Zero();
   kpCartesian = Mat3<T>::Zero();
+  kiCartesian = Mat3<T>::Zero();
   kdCartesian = Mat3<T>::Zero();
   kpJoint = Mat3<T>::Zero();
   kdJoint = Mat3<T>::Zero();
+  i_saturation = 0;
+  is_low_level = false;
 }
 
 /*!
@@ -115,7 +118,6 @@ void LegController<T>::updateData(const SpiData* spiData)
 template <typename T>
 void LegController<T>::updateCommand(SpiCommand* spiCommand)
 {
-
   for (int leg = 0; leg < 4; leg++)
   {
     // tauFF
@@ -124,8 +126,23 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     // forceFF
     Vec3<T> footForce = commands[leg].forceFeedForward;
 
-    // cartesian PD
+    commands[leg].integral += (commands[leg].pDes - datas[leg].p);
+
+    for (size_t i = 0; i < 3; i++)
+    {
+      if (commands[leg].integral(i) > commands[leg].i_saturation)
+      {
+        commands[leg].integral(i) = commands[leg].i_saturation;
+      }
+      else if (commands[leg].integral(i) < -commands[leg].i_saturation)
+      {
+        commands[leg].integral(i) = -commands[leg].i_saturation;
+      }
+    }
+
+    // cartesian PID
     footForce += commands[leg].kpCartesian * (commands[leg].pDes - datas[leg].p);
+    footForce += commands[leg].kiCartesian * commands[leg].integral;
     footForce += commands[leg].kdCartesian * (commands[leg].vDes - datas[leg].v);
 
     // Torque
@@ -147,12 +164,12 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
 
     spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
-    spiCommand->q_des_hip[leg] = commands[leg].qDes(1);
-    spiCommand->q_des_knee[leg] = commands[leg].qDes(2);
+    spiCommand->q_des_hip[leg] = -commands[leg].qDes(1);
+    spiCommand->q_des_knee[leg] = -commands[leg].qDes(2);
 
     spiCommand->qd_des_abad[leg] = commands[leg].qdDes(0);
-    spiCommand->qd_des_hip[leg] = commands[leg].qdDes(1);
-    spiCommand->qd_des_knee[leg] = commands[leg].qdDes(2);
+    spiCommand->qd_des_hip[leg] = -commands[leg].qdDes(1);
+    spiCommand->qd_des_knee[leg] = -commands[leg].qdDes(2);
 
     // estimate torque
     datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);

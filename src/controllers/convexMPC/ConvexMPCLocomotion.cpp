@@ -8,8 +8,20 @@
 
 #include "Gait.h"
 
-// #define DRAW_DEBUG_SWINGS
-// #define DRAW_DEBUG_PATH
+//оригинальные параметры MPC+WBC
+// #define GAIT_PERIOD 14
+#define GAIT_PERIOD 16
+// #define GAIT_PERIOD 34 //1000 Hz
+#define HORIZON 14
+
+//лучшие параметры для только MPC
+// #define GAIT_PERIOD 18
+// #define HORIZON 5
+
+#define STEP_HEIGHT 0.06
+#define BODY_HEIGHT 0.24
+
+// #define SHOW_MPC_SOLVE_TIME
 
 using namespace std;
 

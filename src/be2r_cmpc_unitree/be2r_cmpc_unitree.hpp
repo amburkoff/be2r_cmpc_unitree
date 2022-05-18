@@ -13,11 +13,15 @@
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
+#include <rosbag/bag.h>
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 #include <tf/transform_broadcaster.h>
 #include <unitree_legged_msgs/LegError.h>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
+#include <unitree_legged_msgs/Parameters.h>
 #include <unitree_legged_msgs/StateError.h>
 
 // MIT
@@ -48,10 +52,12 @@
 #define MOTOR_BREAK 0x00
 #define MOTOR_ON 0x0A
 
-const float max_torque[3] = { 17.f, 17.f, 26.f };        // TODO CHECK WITH BEN
-const float max_max_torque[3] = { 170.f, 170.f, 260.f }; // TODO CHECK WITH BEN
-const float wimp_torque[3] = { 6.f, 6.f, 6.f };          // TODO CHECK WITH BEN
-const float disabled_torque[3] = { 0.f, 0.f, 0.f };
+// #define TORQUE_LIMIT_SAFE
+#define TORQUE_LIMIT_MAX
+
+const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
+const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
+const float disabled_torque[3] = {0.f, 0.f, 0.f};
 
 constexpr double PosStopF = (2.146E+9f);
 constexpr double VelStopF = (16000.0f);
@@ -86,6 +92,7 @@ private:
   ros::Publisher _pub_joint_states;
   ros::Publisher _pub_state_error;
   ros::Publisher _pub_leg_error;
+  ros::Publisher _pub_parameters;
   ros::Time _time_start;
   const ros::Time _zero_time;
 
