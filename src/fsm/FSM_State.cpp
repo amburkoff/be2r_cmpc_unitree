@@ -53,14 +53,14 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
  * @param qDes desired joint position
  * @param dqDes desired joint velocity
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
-  //for sim
+  // for sim
   // kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
   // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
-  //for real
+  // for real
   kpMat << 120, 0, 0, 0, 120, 0, 0, 0, 120;
   kdMat << 10, 0, 0, 0, 10, 0, 0, 0, 10;
 
@@ -353,7 +353,7 @@ void FSM_State<T>::turnOffAllSafetyChecks()
   checkLegSingularity = false;   // do not let leg
 }
 
-template <typename T>
+template<typename T>
 Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
 {
   Vec3<T> q_eval;
@@ -391,39 +391,41 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
   a_rad = acos((L1 * L1 - BC * BC - CD * CD) / (-2 * BC * CD));
   Arad = acos((CD * CD - BC * BC - L1 * L1) / (-2 * BC * L1));
   a2_rad = acos(y / L1);
-  a1_rad = PI / 2 - a2_rad;
+  a1_rad = M_PI / 2 - a2_rad;
 
-  // std::cout << "L: " << L << " f: " << f << " Qrad: " << Qrad << " Q0rad: " << Q0rad << " L1: " << L1 << " a_rad: " << a_rad << " Arad: " << Arad << " a2_rad: " << a2_rad << " a1_rad: " << a1_rad << std::endl;
+  // std::cout << "L: " << L << " f: " << f << " Qrad: " << Qrad << " Q0rad: " << Q0rad << " L1: "
+  // << L1 << " a_rad: " << a_rad << " Arad: " << Arad << " a2_rad: " << a2_rad << " a1_rad: " <<
+  // a1_rad << std::endl;
 
   switch (leg_num)
   {
-  //Front Right
-  case 0:
-    q_eval(0) = -(Qrad - Q0rad);
-    q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
-    break;
+    // Front Right
+    case 0:
+      q_eval(0) = -(Qrad - Q0rad);
+      q_eval(1) = Arad - a1_rad;
+      q_eval(2) = -(M_PI - a_rad);
+      break;
 
-  //Front Left
-  case 1:
-    q_eval(0) = (Qrad - Q0rad);
-    q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
-    break;
+    // Front Left
+    case 1:
+      q_eval(0) = (Qrad - Q0rad);
+      q_eval(1) = Arad - a1_rad;
+      q_eval(2) = -(M_PI - a_rad);
+      break;
 
-  //Rear Right
-  case 2:
-    q_eval(0) = -(Qrad - Q0rad);
-    q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
-    break;
+    // Rear Right
+    case 2:
+      q_eval(0) = -(Qrad - Q0rad);
+      q_eval(1) = Arad - a1_rad;
+      q_eval(2) = -(M_PI - a_rad);
+      break;
 
-  //Rear Left
-  case 3:
-    q_eval(0) = (Qrad - Q0rad);
-    q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
-    break;
+    // Rear Left
+    case 3:
+      q_eval(0) = (Qrad - Q0rad);
+      q_eval(1) = Arad - a1_rad;
+      q_eval(2) = -(M_PI - a_rad);
+      break;
   }
 
   return q_eval;

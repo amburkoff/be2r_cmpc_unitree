@@ -22,6 +22,9 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
 )
 
+# Eigen find
+find_package (Eigen3 EXACT REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
+
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)
 
 catkin_package(
@@ -76,7 +79,7 @@ add_subdirectory(src/fsm)
 
 #основная либа ноды
 add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
-target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} controllers_lib fsm_lib)
+target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} controllers_lib fsm_lib Eigen3::Eigen)
 
 #бинарник ноды
 add_executable(unitree_ctrl src/be2r_cmpc_unitree_node.cpp)
@@ -86,5 +89,5 @@ add_dependencies(unitree_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 add_dependencies(unitree_ctrl unitree_legged_msgs_generate_messages_cpp)
 
 #линкуем либы к бинарнику
-target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib)
+target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib Eigen3::Eigen)
 add_dependencies(unitree_ctrl ${PROJECT_NAME}_gencfg)
