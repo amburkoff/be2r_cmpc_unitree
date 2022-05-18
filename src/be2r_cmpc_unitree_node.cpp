@@ -25,13 +25,8 @@ int main(int argc, char* argv[])
 
   ROS_INFO("Initialization Done!");
 
-  // cout << "CONTROLER READY!" << endl;
-  // cout << "Press ENTER to start!... " << endl;
-  // std::cin.ignore();
-
   while (ros::ok())
   {
-    // ROS_INFO("LOOP");
     ros::spinOnce();
 
     unitree.run();

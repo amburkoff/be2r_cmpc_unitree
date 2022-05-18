@@ -30,7 +30,6 @@ void LegControllerCommand<T>::zero()
   kpJoint = Mat3<T>::Zero();
   kdJoint = Mat3<T>::Zero();
   i_saturation = 0;
-  is_low_level = false;
 }
 
 /*!
@@ -247,12 +246,6 @@ void computeLegJacobianAndPosition(Quadruped<T>& quad, Vec3<T>& q, Mat3<T>* J, V
   }
 }
 
-template void computeLegJacobianAndPosition<double>(Quadruped<double>& quad,
-                                                    Vec3<double>& q,
-                                                    Mat3<double>* J,
-                                                    Vec3<double>* p, int leg);
+template void computeLegJacobianAndPosition<double>(Quadruped<double>& quad, Vec3<double>& q, Mat3<double>* J, Vec3<double>* p, int leg);
 
-template void computeLegJacobianAndPosition<float>(Quadruped<float>& quad,
-                                                   Vec3<float>& q,
-                                                   Mat3<float>* J,
-                                                   Vec3<float>* p, int leg);
+template void computeLegJacobianAndPosition<float>(Quadruped<float>& quad, Vec3<float>& q, Mat3<float>* J, Vec3<float>* p, int leg);
