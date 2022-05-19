@@ -1,18 +1,22 @@
 #ifndef CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
 #define CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
 
-#include <Controllers/FootSwingTrajectory.h>
-#include <fsm_states/ControlFSMData.h>
 #include "cppTypes.h"
+#include <ControlFSMData.h>
+#include <Controllers/FootSwingTrajectory.h>
+#include <grid_map_ros/grid_map_ros.hpp>
 
 using Eigen::Array4f;
 using Eigen::Array4i;
 
+// Step height maximum [m]
+#define MAX_STEP_HEIGHT 0.15
 
 class VisionGait
 {
 public:
-  VisionGait(int nMPC_segments, Vec4<int> offsets, Vec4<int>  durations, const std::string& name="");
+  VisionGait(int nMPC_segments, Vec4<int> offsets, Vec4<int> durations,
+             const std::string& name = "");
   ~VisionGait();
   Vec4<float> getContactState();
   Vec4<float> getSwingState();
@@ -21,30 +25,26 @@ public:
   int _stance;
   int _swing;
 
-
 private:
   int _nMPC_segments;
   int* _mpc_table;
-  Array4i _offsets; // offset in mpc segments
-  Array4i _durations; // duration of step in mpc segments
-  Array4f _offsetsFloat; // offsets in phase (0 to 1)
+  Array4i _offsets;        // offset in mpc segments
+  Array4i _durations;      // duration of step in mpc segments
+  Array4f _offsetsFloat;   // offsets in phase (0 to 1)
   Array4f _durationsFloat; // durations in phase (0 to 1)
   int _iteration;
   int _nIterations;
   float _phase;
-
-
 };
 
-
-class VisionMPCLocomotion {
+class VisionMPCLocomotion
+{
 public:
   VisionMPCLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters);
   void initialize();
 
-  template<typename T>
-  void run(ControlFSMData<T>& data, 
-      const Vec3<T> & vel_cmd, const DMat<T> & height_map, const DMat<int> & idx_map);
+  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
+           const grid_map::GridMap& height_map);
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -62,21 +62,21 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _UpdateFoothold(Vec3<float> & foot, const Vec3<float> & body_pos,
-      const DMat<float> & height_map, const DMat<int> & idx_map);
-  void _IdxMapChecking(int x_idx, int y_idx, int & x_idx_selected, int & y_idx_selected, 
-      const DMat<int> & idx_map);
+  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
+                       const grid_map::GridMap& height_map);
+  void _IdxMapChecking(int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
+                       const DMat<int>& idx_map);
 
   Vec3<float> _fin_foot_loc[4];
-  float grid_size = 0.015;
+  float grid_size = 0.02;
 
   Vec3<float> v_des_world;
   Vec3<float> rpy_des;
   Vec3<float> v_rpy_des;
 
-  float _body_height = 0.31;
+  float _body_height = 0.29;
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data);
-  void solveDenseMPC(int *mpcTable, ControlFSMData<float> &data);
+  void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
   int iterationsBetweenMPC;
   int horizonLength;
   float dt;
@@ -98,10 +98,9 @@ private:
   Vec3<float> rpy_int;
   Vec3<float> rpy_comp;
   Vec3<float> pFoot[4];
-  float trajAll[12*36];
+  float trajAll[12 * 36];
 
   MIT_UserParameters* _parameters = nullptr;
 };
 
-
-#endif //CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
+#endif // CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H

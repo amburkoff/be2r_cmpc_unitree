@@ -29,10 +29,8 @@ struct LegControllerCommand
   void zero();
 
   Vec3<T> tauFeedForward, forceFeedForward, qDes, qdDes, pDes, vDes, integral;
-  Vec3<T> l_q_des, l_dq_des, l_kp_joint, l_kd_joint;
   Mat3<T> kpCartesian, kdCartesian, kiCartesian, kpJoint, kdJoint;
   float i_saturation;
-  bool is_low_level = false;
 };
 
 /*!
@@ -91,10 +89,10 @@ public:
   T _maxTorque = 0;
   bool _zeroEncoders = false;
   u32 _calibrateEncoders = 0;
+  bool is_low_level = false;
 };
 
 template <typename T>
-void computeLegJacobianAndPosition(Quadruped<T>& quad, Vec3<T>& q, Mat3<T>* J,
-                                   Vec3<T>* p, int leg);
+void computeLegJacobianAndPosition(Quadruped<T>& quad, Vec3<T>& q, Mat3<T>* J, Vec3<T>* p, int leg);
 
 #endif // PROJECT_LEGCONTROLLER_H

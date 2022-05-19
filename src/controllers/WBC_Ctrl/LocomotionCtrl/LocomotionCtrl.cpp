@@ -5,8 +5,9 @@
 //#include <WBC_Ctrl/TaskSet/BodyPostureTask.hpp>
 #include <WBC_Ctrl/TaskSet/LinkPosTask.hpp>
 
-template <typename T>
-LocomotionCtrl<T>::LocomotionCtrl(FloatingBaseModel<T> model) : WBC_Ctrl<T>(model)
+template<typename T>
+LocomotionCtrl<T>::LocomotionCtrl(FloatingBaseModel<T> model)
+  : WBC_Ctrl<T>(model)
 {
   _body_pos_task = new BodyPosTask<T>(&(WBCtrl::_model));
   _body_ori_task = new BodyOriTask<T>(&(WBCtrl::_model));
@@ -22,7 +23,7 @@ LocomotionCtrl<T>::LocomotionCtrl(FloatingBaseModel<T> model) : WBC_Ctrl<T>(mode
   _foot_task[3] = new LinkPosTask<T>(&(WBCtrl::_model), linkID::HL);
 }
 
-template <typename T>
+template<typename T>
 LocomotionCtrl<T>::~LocomotionCtrl()
 {
   delete _body_pos_task;
@@ -35,7 +36,7 @@ LocomotionCtrl<T>::~LocomotionCtrl()
   }
 }
 
-template <typename T>
+template<typename T>
 void LocomotionCtrl<T>::_ContactTaskUpdate(void* input, ControlFSMData<T>& data)
 {
   _input_data = static_cast<LocomotionCtrlData<T>*>(input);
@@ -50,7 +51,8 @@ void LocomotionCtrl<T>::_ContactTaskUpdate(void* input, ControlFSMData<T>& data)
   Vec3<T> zero_vec3;
   zero_vec3.setZero();
   _body_ori_task->UpdateTask(&_quat_des, _input_data->vBody_Ori_des, zero_vec3);
-  _body_pos_task->UpdateTask(&(_input_data->pBody_des), _input_data->vBody_des, _input_data->aBody_des);
+  _body_pos_task->UpdateTask(&(_input_data->pBody_des), _input_data->vBody_des,
+                             _input_data->aBody_des);
 
   WBCtrl::_task_list.push_back(_body_ori_task);
   WBCtrl::_task_list.push_back(_body_pos_task);
@@ -67,15 +69,16 @@ void LocomotionCtrl<T>::_ContactTaskUpdate(void* input, ControlFSMData<T>& data)
     else
     {
       // No Contact (swing)
-      _foot_task[leg]->UpdateTask(&(_input_data->pFoot_des[leg]), _input_data->vFoot_des[leg], _input_data->aFoot_des[leg]);
+      _foot_task[leg]->UpdateTask(&(_input_data->pFoot_des[leg]), _input_data->vFoot_des[leg],
+                                  _input_data->aFoot_des[leg]);
 
-      //zero_vec3);
+      // zero_vec3);
       WBCtrl::_task_list.push_back(_foot_task[leg]);
     }
   }
 }
 
-template <typename T>
+template<typename T>
 void LocomotionCtrl<T>::_ContactTaskUpdateTEST(void* input, ControlFSMData<T>& data)
 {
   (void)data;
@@ -103,7 +106,8 @@ void LocomotionCtrl<T>::_ContactTaskUpdateTEST(void* input, ControlFSMData<T>& d
   Vec3<T> zero_vec3;
   zero_vec3.setZero();
   _body_ori_task->UpdateTask(&_quat_des, _input_data->vBody_Ori_des, zero_vec3);
-  _body_pos_task->UpdateTask(&(_input_data->pBody_des), _input_data->vBody_des, _input_data->aBody_des);
+  _body_pos_task->UpdateTask(&(_input_data->pBody_des), _input_data->vBody_des,
+                             _input_data->aBody_des);
 
   WBCtrl::_task_list.push_back(_body_ori_task);
   WBCtrl::_task_list.push_back(_body_pos_task);
@@ -117,13 +121,15 @@ void LocomotionCtrl<T>::_ContactTaskUpdateTEST(void* input, ControlFSMData<T>& d
       WBCtrl::_contact_list.push_back(_foot_contact[leg]);
     }
     else
-    {                                                                                                                        // No Contact (swing)
-      _foot_task[leg]->UpdateTask(&(_input_data->pFoot_des[leg]), _input_data->vFoot_des[leg], _input_data->aFoot_des[leg]); //zero_vec3);
+    { // No Contact (swing)
+      _foot_task[leg]->UpdateTask(&(_input_data->pFoot_des[leg]), _input_data->vFoot_des[leg],
+                                  _input_data->aFoot_des[leg]);
+      // zero_vec3);
       WBCtrl::_task_list.push_back(_foot_task[leg]);
     }
   }
 }
-template <typename T>
+template<typename T>
 void LocomotionCtrl<T>::_ParameterSetup(const MIT_UserParameters* param)
 {
 
@@ -145,19 +151,19 @@ void LocomotionCtrl<T>::_ParameterSetup(const MIT_UserParameters* param)
     WBCtrl::_Kp_joint[i] = param->Kp_joint[i];
     WBCtrl::_Kd_joint[i] = param->Kd_joint[i];
 
-    //WBCtrl::_Kp_joint_swing[i] = param->Kp_joint_swing[i];
-    //WBCtrl::_Kd_joint_swing[i] = param->Kd_joint_swing[i];
+    // WBCtrl::_Kp_joint_swing[i] = param->Kp_joint_swing[i];
+    // WBCtrl::_Kd_joint_swing[i] = param->Kd_joint_swing[i];
   }
 }
 
-template <typename T>
+template<typename T>
 void LocomotionCtrl<T>::_CleanUp()
 {
   WBCtrl::_contact_list.clear();
   WBCtrl::_task_list.clear();
 }
 
-template <typename T>
+template<typename T>
 void LocomotionCtrl<T>::_LCM_PublishData()
 {
   int iter(0);
@@ -208,9 +214,9 @@ void LocomotionCtrl<T>::_LCM_PublishData()
       WBCtrl::_wbc_data_lcm.foot_acc_cmd[3 * leg + i] = _input_data->aFoot_des[leg][i];
 
       // TEST
-      //WBCtrl::_wbc_data_lcm.foot_acc_numeric[3*leg + i] =
+      // WBCtrl::_wbc_data_lcm.foot_acc_numeric[3*leg + i] =
       //(_input_data->vFoot_des[leg][i] - pre_foot_vel[leg][i])/0.002;
-      //pre_foot_vel[leg][i] = _input_data->vFoot_des[leg][i];
+      // pre_foot_vel[leg][i] = _input_data->vFoot_des[leg][i];
 
       WBCtrl::_wbc_data_lcm.jpos_cmd[3 * leg + i] = WBCtrl::_des_jpos[3 * leg + i];
       WBCtrl::_wbc_data_lcm.jvel_cmd[3 * leg + i] = WBCtrl::_des_jvel[3 * leg + i];

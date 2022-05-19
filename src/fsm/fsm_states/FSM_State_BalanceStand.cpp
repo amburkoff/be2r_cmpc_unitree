@@ -67,6 +67,7 @@ void FSM_State_BalanceStand<T>::run()
   Vec4<T> contactState;
   contactState << 0.5, 0.5, 0.5, 0.5;
   this->_data->_stateEstimator->setContactPhase(contactState);
+
   BalanceStandStep();
 }
 
@@ -171,6 +172,8 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
 template <typename T>
 TransitionData<T> FSM_State_BalanceStand<T>::transition()
 {
+  // this->_data->_legController->is_low_level = true;
+
   // Switch FSM control mode
   switch (this->nextStateName)
   {
@@ -211,8 +214,7 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
     break;
 
   default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition"
-              << std::endl;
+    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM

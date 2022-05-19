@@ -1,9 +1,10 @@
 #pragma once
 
-//C++
+// C++
 #include <iostream>
 
-//ROS
+// ROS
+#include <Utilities/ros_read_param.h>
 #include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/Quaternion.h>
@@ -23,16 +24,16 @@
 #include <unitree_legged_msgs/Parameters.h>
 #include <unitree_legged_msgs/StateError.h>
 
-//MIT
+// MIT
 #include "Configuration.h"
 #include "ControlFSM.h"
 #include "Controllers/StateEstimatorContainer.h"
 #include "LegController.h"
 #include "MiniCheetah.h"
 #include "RobotParameters.h"
-#include "spi_command_t.hpp"
-#include "spi_data_t.hpp"
-#include "spi_torque_t.hpp"
+#include "lcm_msgs/spi_command_t.hpp"
+#include "lcm_msgs/spi_data_t.hpp"
+#include "lcm_msgs/spi_torque_t.hpp"
 // #include "Controllers/ContactEstimator.h"
 #include "Controllers/ContactEstimator.h"
 #include "Controllers/DesiredStateCommand.h"
@@ -40,7 +41,7 @@
 #include "Controllers/OrientationEstimator.h"
 #include "Controllers/PositionVelocityEstimator.h"
 
-//BE2R
+// BE2R
 #include "debug.hpp"
 
 #define MAIN_LOOP_RATE 500
@@ -78,6 +79,7 @@ public:
   SpiData spiData;
   SpiCommand spiCommand;
   u64 _iterations = 0;
+  Vec4<uint8_t> footContactState;
 
   bool is_stand = false;
 
@@ -99,14 +101,17 @@ private:
 
   void _initSubscribers();
   void _initPublishers();
+  void _filterInput();
   void _initParameters();
   void _updateVisualization();
   void _updatePlot();
+  void _tfPublish();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
-  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
+  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
+                                uint32_t level);
 
   Quadruped<float> _quadruped;
   FloatingBaseModel<float> _model;
@@ -128,7 +133,7 @@ private:
   ControlParameters* _userControlParameters = nullptr;
   MIT_UserParameters userParameters;
 
-  template <typename T>
+  template<typename T>
   bool readRosParam(std::string param_name, T& param_var)
   {
     if (!_nh.getParam(param_name, param_var))

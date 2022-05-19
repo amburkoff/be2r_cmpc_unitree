@@ -3,7 +3,7 @@
 
 #include <WBC_Ctrl/WBC_Ctrl.hpp>
 
-template <typename T>
+template<typename T>
 class LocomotionCtrlData
 {
 public:
@@ -21,7 +21,7 @@ public:
   Vec4<T> contact_state;
 };
 
-template <typename T>
+template<typename T>
 class LocomotionCtrl : public WBC_Ctrl<T>
 {
 public:

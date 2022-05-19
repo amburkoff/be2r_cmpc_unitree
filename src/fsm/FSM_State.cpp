@@ -13,9 +13,7 @@
  * @param stateStringIn the string name of the current FSM state
  */
 template <typename T>
-FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn, std::string stateStringIn) : _data(_controlFSMData),
-                                                                                                                    stateName(stateNameIn),
-                                                                                                                    stateString(stateStringIn)
+FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn, std::string stateStringIn) : _data(_controlFSMData), stateName(stateNameIn), stateString(stateStringIn)
 {
   transitionData.zero();
   std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn << std::endl;
@@ -31,16 +29,12 @@ FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateN
 template <typename T>
 void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
-  //for sim
-  // kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
-  // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  // MIT old params
+  //  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
+  //  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
-  //for real
-  kpMat << 5, 0, 0, 0, 5, 0, 0, 0, 5;
-  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-
-  _data->_legController->commands[leg].kpJoint = kpMat;
-  _data->_legController->commands[leg].kdJoint = kdMat;
+  _data->_legController->commands[leg].kpJoint = _data->userParameters->Kp_joint.template cast<float>().asDiagonal();
+  _data->_legController->commands[leg].kdJoint = _data->userParameters->Kd_joint.template cast<float>().asDiagonal();
 
   _data->_legController->commands[leg].qDes = qDes;
   _data->_legController->commands[leg].qdDes = qdDes;
@@ -56,24 +50,19 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 template <typename T>
 void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
-  //for sim
+  // for sim
   // kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
   // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
-  //for real
-  Vec3<T> kp(40, 40, 40);
-  Vec3<T> kd(10, 10, 10);
+  // for real
+  kpMat << 120, 0, 0, 0, 120, 0, 0, 0, 120;
+  kdMat << 10, 0, 0, 0, 10, 0, 0, 0, 10;
 
-  _data->_legController->commands[leg].l_kp_joint = kp;
-  _data->_legController->commands[leg].l_kd_joint = kd;
+  _data->_legController->commands[leg].kpJoint = kpMat;
+  _data->_legController->commands[leg].kdJoint = kdMat;
 
-  _data->_legController->commands[leg].l_q_des(0) = qDes(0);
-  _data->_legController->commands[leg].l_q_des(1) = qDes(1);
-  _data->_legController->commands[leg].l_q_des(2) = qDes(2);
-
-  _data->_legController->commands[leg].l_dq_des(0) = qdDes(0);
-  _data->_legController->commands[leg].l_dq_des(1) = qdDes(1);
-  _data->_legController->commands[leg].l_dq_des(2) = qdDes(2);
+  _data->_legController->commands[leg].qDes = qDes;
+  _data->_legController->commands[leg].qdDes = qdDes;
 }
 
 /**
@@ -86,7 +75,8 @@ void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
  * @param kd_cartesian D gains
  */
 template <typename T>
-void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes, Vec3<double> kp_cartesian, Vec3<double> kd_cartesian)
+void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes,
+                                             Vec3<double> kp_cartesian, Vec3<double> kd_cartesian)
 {
   _data->_legController->commands[leg].pDes = pDes;
   // Create the cartesian P gain matrix
@@ -144,11 +134,14 @@ void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes
 //         float timeStance = _data->_gaitScheduler->gaitData.timeStance(leg);
 
 //         // Footstep heuristic composed of several parts in the world frame
-//         footstepLocations.col(leg) << projectionMatrix.transpose() * projectionMatrix * // Ground projection
-//                                           (_stateEstimate.position +                    // rBody * posHip
-//                                            +                                            // Foot under hips timeStance / 2 *
-//                                            velDes +                                     // Raibert Heuristic timeStance / 2 *
-//                                            (angVelDes.cross(rBody * posHip)) +          // Turning Raibert Heuristic
+//         footstepLocations.col(leg) << projectionMatrix.transpose() * projectionMatrix * // Ground
+//         projection
+//                                           (_stateEstimate.position +                    // rBody
+//                                           * posHip
+//                                            +                                            // Foot
+//                                            under hips timeStance / 2 * velDes + // Raibert
+//                                            Heuristic timeStance / 2 * (angVelDes.cross(rBody *
+//                                            posHip)) +          // Turning Raibert Heuristic
 //                                            (_stateEstimate.vBody - velDes));
 //       }
 //     }
@@ -224,7 +217,8 @@ void FSM_State<T>::runControls()
     footVelocities = Mat34<float>::Zero();
 
     // Print an error message
-    std::cout << "[FSM_State] ERROR: No known controller was selected: " << CONTROLLER_OPTION << std::endl;
+    std::cout << "[FSM_State] ERROR: No known controller was selected: " << CONTROLLER_OPTION
+              << std::endl;
   }
 }
 
@@ -286,11 +280,13 @@ void FSM_State<T>::runControls()
 //   // Get the foot locations relative to COM
 //   for (int leg = 0; leg < 4; leg++)
 //   {
-//     computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, 1);
+//     computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q,
+//     (Mat3<T>*)nullptr, &pFeetVec, 1);
 //     //pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
 //     //(_data->_quadruped->getHipLocation(leg) + pFeetVec);
 
-//     pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() * (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
+//     pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
+//     (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
 
 //     pFeet[leg * 3] = (double)pFeetVecCOM[0];
 //     pFeet[leg * 3 + 1] = (double)pFeetVecCOM[1];
@@ -315,7 +311,8 @@ void FSM_State<T>::runControls()
 //   // Copy the results to the feed forward forces
 //   for (int leg = 0; leg < 4; leg++)
 //   {
-//     footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
+//     footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 +
+//     2];
 //   }
 // }
 
@@ -388,38 +385,40 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
   a_rad = acos((L1 * L1 - BC * BC - CD * CD) / (-2 * BC * CD));
   Arad = acos((CD * CD - BC * BC - L1 * L1) / (-2 * BC * L1));
   a2_rad = acos(y / L1);
-  a1_rad = PI / 2 - a2_rad;
+  a1_rad = M_PI / 2 - a2_rad;
 
-  // std::cout << "L: " << L << " f: " << f << " Qrad: " << Qrad << " Q0rad: " << Q0rad << " L1: " << L1 << " a_rad: " << a_rad << " Arad: " << Arad << " a2_rad: " << a2_rad << " a1_rad: " << a1_rad << std::endl;
+  // std::cout << "L: " << L << " f: " << f << " Qrad: " << Qrad << " Q0rad: " << Q0rad << " L1: "
+  // << L1 << " a_rad: " << a_rad << " Arad: " << Arad << " a2_rad: " << a2_rad << " a1_rad: " <<
+  // a1_rad << std::endl;
 
   switch (leg_num)
   {
-  //Front Right
+  // Front Right
   case 0:
     q_eval(0) = -(Qrad - Q0rad);
     q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
+    q_eval(2) = -(M_PI - a_rad);
     break;
 
-  //Front Left
+  // Front Left
   case 1:
     q_eval(0) = (Qrad - Q0rad);
     q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
+    q_eval(2) = -(M_PI - a_rad);
     break;
 
-  //Rear Right
+  // Rear Right
   case 2:
     q_eval(0) = -(Qrad - Q0rad);
     q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
+    q_eval(2) = -(M_PI - a_rad);
     break;
 
-  //Rear Left
+  // Rear Left
   case 3:
     q_eval(0) = (Qrad - Q0rad);
     q_eval(1) = Arad - a1_rad;
-    q_eval(2) = -(PI - a_rad);
+    q_eval(2) = -(M_PI - a_rad);
     break;
   }
 

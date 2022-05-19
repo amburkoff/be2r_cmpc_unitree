@@ -127,6 +127,8 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
       cmd[leg].tauFeedForward[2] = 1. / (knee_pos * knee_pos + 0.02);
     }
   }
+
+  // data._legController->is_low_level = true;
 }
 
 template <typename T>
