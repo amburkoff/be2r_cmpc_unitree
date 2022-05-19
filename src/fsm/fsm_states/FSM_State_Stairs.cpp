@@ -246,14 +246,8 @@ bool FSM_State_Stairs<T>::locomotionSafe()
 template <typename T>
 void FSM_State_Stairs<T>::onExit()
 {
-  // Nothing to clean up when exiting
-  // this->_data->_legController->zeroCommand();
-
-  this->_data->_legController->setEnabled(false);
-  this->_data->_legController->commands[0].is_low_level = true;
-  this->_data->_legController->commands[1].is_low_level = true;
-  this->_data->_legController->commands[2].is_low_level = true;
-  this->_data->_legController->commands[3].is_low_level = true;
+ // Nothing to clean up when exiting
+  iter = 0;
 }
 
 /**
