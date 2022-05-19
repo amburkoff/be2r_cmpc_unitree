@@ -88,6 +88,7 @@ private:
   ros::Publisher _pub_leg_error;
   ros::Time _time_start;
   const ros::Time _zero_time;
+  bool _is_param_updated = false;
 
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig> server;
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig>::CallbackType f;
@@ -124,7 +125,7 @@ private:
   // Gait Scheduler controls the nominal contact schedule for the feet
   GaitScheduler<float>* _gaitScheduler;
   ControlParameters* _userControlParameters = nullptr;
-  MIT_UserParameters userParameters;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig _rosParameters;
 
   template<typename T>
   bool readRosParam(std::string param_name, T& param_var)
@@ -132,12 +133,9 @@ private:
     if (!_nh.getParam(param_name, param_var))
     {
       ROS_WARN_STREAM("Can't read param " << param_name);
-
       return false;
     }
-
     // std::cout << "[ROS PARAM] " << param_name << ": " << param_var << std::endl;
-
     return true;
   }
 };

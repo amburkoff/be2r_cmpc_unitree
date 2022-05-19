@@ -4,21 +4,22 @@
 // (X, Y, Z)
 #include <WBC/Task.hpp>
 
-template <typename T> class FloatingBaseModel;
+template<typename T>
+class FloatingBaseModel;
 
-template <typename T>
-class BodyPosTask : public Task<T> {
- public:
+template<typename T>
+class BodyPosTask : public Task<T>
+{
+public:
   BodyPosTask(const FloatingBaseModel<T>*);
   virtual ~BodyPosTask();
 
-  DVec<T> _Kp_kin;
-  DVec<T> _Kp, _Kd;
+  Vec3<T> _Kp_kin;
+  Vec3<T> _Kp, _Kd;
 
- protected:
+protected:
   // Update op_cmd_
-  virtual bool _UpdateCommand(const void* pos_des, const DVec<T>& vel_des,
-                              const DVec<T>& acc_des);
+  virtual bool _UpdateCommand(const void* pos_des, const DVec<T>& vel_des, const DVec<T>& acc_des);
   // Update Jt_
   virtual bool _UpdateTaskJacobian();
   // Update JtDotQdot_

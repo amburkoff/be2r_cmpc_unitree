@@ -17,7 +17,7 @@
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-template <typename T>
+template<typename T>
 struct CMPC_Result
 {
   LegControllerCommand<T> commands[4];
@@ -39,7 +39,7 @@ struct CMPC_Jump
   void debug(int seg)
   {
     (void)seg;
-    //printf("[%d] pending %d running %d\n", seg, jump_pending, jump_in_progress);
+    // printf("[%d] pending %d running %d\n", seg, jump_pending, jump_in_progress);
   }
 
   void trigger_pressed(int seg, bool trigger)
@@ -50,7 +50,7 @@ struct CMPC_Jump
       if (!jump_pending && !jump_in_progress)
       {
         jump_pending = true;
-        //printf("jump pending @ %d\n", seg);
+        // printf("jump pending @ %d\n", seg);
       }
     }
     pressed = trigger;
@@ -64,7 +64,7 @@ struct CMPC_Jump
     {
       jump_pending = false;
       jump_in_progress = true;
-      //printf("jump begin @ %d\n", seg);
+      // printf("jump begin @ %d\n", seg);
       seen_end_count = 0;
       last_seg_seen = seg;
       return true;
@@ -79,7 +79,7 @@ struct CMPC_Jump
         {
           seen_end_count = 0;
           jump_in_progress = false;
-          //printf("jump end @ %d\n", seg);
+          // printf("jump end @ %d\n", seg);
           last_seg_seen = seg;
           return false;
         }
@@ -98,10 +98,11 @@ class ConvexMPCLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters);
+  ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
+                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  template <typename T>
+  template<typename T>
   void run(ControlFSMData<T>& data);
   bool currently_jumping = false;
 
@@ -133,7 +134,7 @@ private:
   float _y_vel_des = 0.;
 
   // High speed running
-  //float _body_height = 0.34;
+  // float _body_height = 0.34;
   float _body_height = 0.29;
 
   float _body_height_running = 0.29;
@@ -145,6 +146,8 @@ private:
   void solveSparseMPC(int* mpcTable, ControlFSMData<float>& data);
   void initSparseMPC();
   int iterationsBetweenMPC;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
+  int _gait_period;
   int horizonLength;
   int default_iterations_between_mpc;
   float dt;
@@ -153,7 +156,8 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGait trotting, trotting_copy, bounding, pronking, jumping, galloping, standing, trotRunning, walking, walking2, pacing;
+  OffsetDurationGait trotting, trotting_copy, bounding, pronking, jumping, galloping, standing,
+    trotRunning, walking, walking2, pacing;
   MixedFrequncyGait random, random2;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
@@ -175,7 +179,6 @@ private:
   visualization_msgs::Marker marker[4];
   ros::Publisher _vis_pub[4];
 
-  MIT_UserParameters* _parameters = nullptr;
   CMPC_Jump jump_state;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
@@ -183,4 +186,4 @@ private:
   SparseCMPC _sparseCMPC;
 };
 
-#endif //CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
+#endif // CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H

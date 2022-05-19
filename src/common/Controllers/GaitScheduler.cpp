@@ -14,7 +14,7 @@
 /**
  * Reset gait data to zeros
  */
-template <typename T>
+template<typename T>
 void GaitData<T>::zero()
 {
   // Stop any gait transitions
@@ -59,18 +59,19 @@ template struct GaitData<float>;
 /**
  * Constructor to automatically setup a basic gait
  */
-template <typename T>
-GaitScheduler<T>::GaitScheduler(MIT_UserParameters* _userParameters, float _dt)
+template<typename T>
+GaitScheduler<T>::GaitScheduler(be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
+                                float _dt)
 {
   initialize();
-  userParameters = _userParameters;
+  _userParameters = userParameters;
   dt = _dt;
 }
 
 /**
  * Initialize the gait data
  */
-template <typename T>
+template<typename T>
 void GaitScheduler<T>::initialize()
 {
   std::cout << "[GAIT] Initialize Gait Scheduler" << std::endl;
@@ -91,7 +92,7 @@ void GaitScheduler<T>::initialize()
  * Executes the Gait Schedule step to calculate values for the defining
  * gait parameters.
  */
-template <typename T>
+template<typename T>
 void GaitScheduler<T>::step()
 {
   // Modify the gait with settings
@@ -138,7 +139,9 @@ void GaitScheduler<T>::step()
         gaitData.phaseSwing(foot) = 0.0;
 
         // Calculate the remaining time in stance
-        gaitData.timeStanceRemaining(foot) = gaitData.periodTime(foot) * (gaitData.switchingPhase(foot) - gaitData.phaseVariable(foot));
+        gaitData.timeStanceRemaining(foot) =
+          gaitData.periodTime(foot) *
+          (gaitData.switchingPhase(foot) - gaitData.phaseVariable(foot));
 
         // Foot is in stance, no swing time remaining
         gaitData.timeSwingRemaining(foot) = 0.0;
@@ -164,13 +167,15 @@ void GaitScheduler<T>::step()
         gaitData.phaseStance(foot) = 1.0;
 
         // Swing subphase calculation
-        gaitData.phaseSwing(foot) = (gaitData.phaseVariable(foot) - gaitData.switchingPhase(foot)) / (1.0 - gaitData.switchingPhase(foot));
+        gaitData.phaseSwing(foot) = (gaitData.phaseVariable(foot) - gaitData.switchingPhase(foot)) /
+                                    (1.0 - gaitData.switchingPhase(foot));
 
         // Foot is in swing, no stance time remaining
         gaitData.timeStanceRemaining(foot) = 0.0;
 
         // Calculate the remaining time in swing
-        gaitData.timeSwingRemaining(foot) = gaitData.periodTime(foot) * (1 - gaitData.phaseVariable(foot));
+        gaitData.timeSwingRemaining(foot) =
+          gaitData.periodTime(foot) * (1 - gaitData.phaseVariable(foot));
 
         // First contact signifies scheduled touchdown
         if (gaitData.contactStatePrev(foot) == 1)
@@ -199,75 +204,75 @@ void GaitScheduler<T>::step()
 /**
  *
  */
-template <typename T>
+template<typename T>
 void GaitScheduler<T>::modifyGait()
 {
   // Choose the gaits and parameters as selected
-  switch ((int)userParameters->gait_override)
+  switch ((int)_userParameters->gait_override)
   {
-  case 0:
-    // Use default gait and default settings from Control code
-    if (gaitData._currentGait != gaitData._nextGait)
-    {
-      createGait();
-    }
-    break;
-
-  case 1:
-    // Use chosen gait with default settings
-    if (gaitData._currentGait != GaitType(userParameters->gait_type))
-    {
-      gaitData._nextGait = GaitType(userParameters->gait_type);
-      createGait();
-    }
-    break;
-
-  case 2:
-    // Use chosen gait and chosen settings
-    // Change the gait
-    if (gaitData._currentGait != GaitType(userParameters->gait_type))
-    {
-      gaitData._nextGait = GaitType(userParameters->gait_type);
-      createGait();
-    }
-
-    // Adjust the gait parameters
-    if (fabs(gaitData.periodTimeNominal - (T)userParameters->gait_period_time) > 0.0001 ||
-        fabs(gaitData.switchingPhaseNominal - (T)userParameters->gait_switching_phase) > 0.0001)
-    {
-      // Modify the gait with new parameters if it is overrideable
-      if (gaitData.overrideable == 1)
+    case 0:
+      // Use default gait and default settings from Control code
+      if (gaitData._currentGait != gaitData._nextGait)
       {
-        gaitData.periodTimeNominal = userParameters->gait_period_time;
-        gaitData.switchingPhaseNominal = userParameters->gait_switching_phase;
+        createGait();
+      }
+      break;
+
+    case 1:
+      // Use chosen gait with default settings
+      if (gaitData._currentGait != GaitType(_userParameters->gait_type))
+      {
+        gaitData._nextGait = GaitType(_userParameters->gait_type);
+        createGait();
+      }
+      break;
+
+    case 2:
+      // Use chosen gait and chosen settings
+      // Change the gait
+      if (gaitData._currentGait != GaitType(_userParameters->gait_type))
+      {
+        gaitData._nextGait = GaitType(_userParameters->gait_type);
+        createGait();
+      }
+
+      // Adjust the gait parameters
+      if (fabs(gaitData.periodTimeNominal - (T)_userParameters->gait_period_time) > 0.0001 ||
+          fabs(gaitData.switchingPhaseNominal - (T)_userParameters->gait_switching_phase) > 0.0001)
+      {
+        // Modify the gait with new parameters if it is overrideable
+        if (gaitData.overrideable == 1)
+        {
+          gaitData.periodTimeNominal = _userParameters->gait_period_time;
+          gaitData.switchingPhaseNominal = _userParameters->gait_switching_phase;
+          calcAuxiliaryGaitData();
+        }
+      }
+      break;
+
+    case 3:
+      // Use NaturalGaitModification from FSM_State
+      if (gaitData._currentGait != gaitData._nextGait)
+      {
+        createGait();
+      }
+      break;
+
+    case 4:
+      // Use NaturalGaitModification from FSM_State
+      if (gaitData._currentGait != gaitData._nextGait)
+      {
+        createGait();
+        period_time_natural = gaitData.periodTimeNominal;
+        switching_phase_natural = gaitData.switchingPhaseNominal;
+      }
+      else
+      {
+        gaitData.periodTimeNominal = period_time_natural;
+        gaitData.switchingPhaseNominal = switching_phase_natural;
         calcAuxiliaryGaitData();
       }
-    }
-    break;
-
-  case 3:
-    // Use NaturalGaitModification from FSM_State
-    if (gaitData._currentGait != gaitData._nextGait)
-    {
-      createGait();
-    }
-    break;
-
-  case 4:
-    // Use NaturalGaitModification from FSM_State
-    if (gaitData._currentGait != gaitData._nextGait)
-    {
-      createGait();
-      period_time_natural = gaitData.periodTimeNominal;
-      switching_phase_natural = gaitData.switchingPhaseNominal;
-    }
-    else
-    {
-      gaitData.periodTimeNominal = period_time_natural;
-      gaitData.switchingPhaseNominal = switching_phase_natural;
-      calcAuxiliaryGaitData();
-    }
-    break;
+      break;
   }
 }
 
@@ -289,216 +294,222 @@ void GaitScheduler<T>::modifyGait()
  *
  * These add flexibility to be used for very irregular gaits and transitions.
  */
-template <typename T>
+template<typename T>
 void GaitScheduler<T>::createGait()
 {
 
-  std::cout << "[GAIT] Transitioning gait from " << gaitData.gaitName
-            << " to ";
+  std::cout << "[GAIT] Transitioning gait from " << gaitData.gaitName << " to ";
 
   // Case structure gets the appropriate parameters
   switch (gaitData._nextGait)
   {
-  case GaitType::STAND:
-    gaitData.gaitName = "STAND";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 10.0;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 1.0;
-    gaitData.phaseOffset << 0.5, 0.5, 0.5, 0.5;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 0;
-    break;
+    case GaitType::STAND:
+      gaitData.gaitName = "STAND";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 10.0;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 1.0;
+      gaitData.phaseOffset << 0.5, 0.5, 0.5, 0.5;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 0;
+      break;
 
-  case GaitType::STAND_CYCLE:
-    gaitData.gaitName = "STAND_CYCLE";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 1.0;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 1.0;
-    gaitData.phaseOffset << 0.5, 0.5, 0.5, 0.5;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 0;
-    break;
+    case GaitType::STAND_CYCLE:
+      gaitData.gaitName = "STAND_CYCLE";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 1.0;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 1.0;
+      gaitData.phaseOffset << 0.5, 0.5, 0.5, 0.5;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 0;
+      break;
 
-  case GaitType::STATIC_WALK:
-    gaitData.gaitName = "STATIC_WALK";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 1.25;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.8;
-    gaitData.phaseOffset << 0.25, 0.0, 0.75, 0.5;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::STATIC_WALK:
+      gaitData.gaitName = "STATIC_WALK";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 1.25;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.8;
+      gaitData.phaseOffset << 0.25, 0.0, 0.75, 0.5;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::AMBLE:
-    gaitData.gaitName = "AMBLE";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.5;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.6250;
-    gaitData.phaseOffset << 0.0, 0.5, 0.25, 0.75;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::AMBLE:
+      gaitData.gaitName = "AMBLE";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.5;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.6250;
+      gaitData.phaseOffset << 0.0, 0.5, 0.25, 0.75;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::TROT_WALK:
-    gaitData.gaitName = "TROT_WALK";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.5;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.6;
-    gaitData.phaseOffset << 0.0, 0.5, 0.5, 0.0;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::TROT_WALK:
+      gaitData.gaitName = "TROT_WALK";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.5;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.6;
+      gaitData.phaseOffset << 0.0, 0.5, 0.5, 0.0;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::TROT:
-    gaitData.gaitName = "TROT";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.5;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.5;
-    gaitData.phaseOffset << 0.0, 0.5, 0.5, 0.0;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::TROT:
+      gaitData.gaitName = "TROT";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.5;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.5;
+      gaitData.phaseOffset << 0.0, 0.5, 0.5, 0.0;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::TROT_RUN:
-    gaitData.gaitName = "TROT_RUN";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.4;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.4;
-    gaitData.phaseOffset << 0.0, 0.5, 0.5, 0.0;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::TROT_RUN:
+      gaitData.gaitName = "TROT_RUN";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.4;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.4;
+      gaitData.phaseOffset << 0.0, 0.5, 0.5, 0.0;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::PACE:
-    gaitData.gaitName = "PACE";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.35;
-    gaitData.initialPhase = 0.25;
-    gaitData.switchingPhaseNominal = 0.5;
-    gaitData.phaseOffset << 0.0, 0.5, 0.0, 0.5;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::PACE:
+      gaitData.gaitName = "PACE";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.35;
+      gaitData.initialPhase = 0.25;
+      gaitData.switchingPhaseNominal = 0.5;
+      gaitData.phaseOffset << 0.0, 0.5, 0.0, 0.5;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::BOUND:
-    gaitData.gaitName = "BOUND";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.4;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.4;
-    gaitData.phaseOffset << 0.0, 0.0, 0.5, 0.5;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::BOUND:
+      gaitData.gaitName = "BOUND";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.4;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.4;
+      gaitData.phaseOffset << 0.0, 0.0, 0.5, 0.5;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::ROTARY_GALLOP:
-    gaitData.gaitName = "ROTARY_GALLOP";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.4;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.2;
-    gaitData.phaseOffset << 0.0, 0.8571, 0.3571, 0.5;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::ROTARY_GALLOP:
+      gaitData.gaitName = "ROTARY_GALLOP";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.4;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.2;
+      gaitData.phaseOffset << 0.0, 0.8571, 0.3571, 0.5;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::TRAVERSE_GALLOP:
-    // TODO: find the right sequence, should be easy
-    gaitData.gaitName = "TRAVERSE_GALLOP";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.5;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.2;
-    gaitData.phaseOffset << 0.0, 0.8571, 0.3571, 0.5;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::TRAVERSE_GALLOP:
+      // TODO: find the right sequence, should be easy
+      gaitData.gaitName = "TRAVERSE_GALLOP";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.5;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.2;
+      gaitData.phaseOffset << 0.0, 0.8571, 0.3571, 0.5;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::PRONK:
-    gaitData.gaitName = "PRONK";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.5;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.5;
-    gaitData.phaseOffset << 0.0, 0.0, 0.0, 0.0;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::PRONK:
+      gaitData.gaitName = "PRONK";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.5;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.5;
+      gaitData.phaseOffset << 0.0, 0.0, 0.0, 0.0;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::THREE_FOOT:
-    gaitData.gaitName = "THREE_FOOT";
-    gaitData.gaitEnabled << 0, 1, 1, 1;
-    gaitData.periodTimeNominal = 0.4;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = 0.666;
-    gaitData.phaseOffset << 0.0, 0.666, 0.0, 0.333;
-    gaitData.phaseScale << 0.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 1;
-    break;
+    case GaitType::THREE_FOOT:
+      gaitData.gaitName = "THREE_FOOT";
+      gaitData.gaitEnabled << 0, 1, 1, 1;
+      gaitData.periodTimeNominal = 0.4;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal = 0.666;
+      gaitData.phaseOffset << 0.0, 0.666, 0.0, 0.333;
+      gaitData.phaseScale << 0.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 1;
+      break;
 
-  case GaitType::CUSTOM:
-    gaitData.gaitName = "CUSTOM";
-    // TODO: get custom gait parameters from operator GUI
-    break;
+    case GaitType::CUSTOM:
+      gaitData.gaitName = "CUSTOM";
+      // TODO: get custom gait parameters from operator GUI
+      break;
 
-  case GaitType::TRANSITION_TO_STAND:
-    gaitData.gaitName = "TRANSITION_TO_STAND";
-    gaitData.gaitEnabled << 1, 1, 1, 1;
-    T oldGaitPeriodTimeNominal = gaitData.periodTimeNominal;
-    gaitData.periodTimeNominal = 3 * gaitData.periodTimeNominal;
-    gaitData.initialPhase = 0.0;
-    gaitData.switchingPhaseNominal = (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.switchingPhaseNominal - 1)) / gaitData.periodTimeNominal;
-    gaitData.phaseOffset << (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(0) - 1)) / gaitData.periodTimeNominal,
-        (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(1) - 1)) / gaitData.periodTimeNominal,
-        (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(2) - 1)) / gaitData.periodTimeNominal,
-        (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(3) - 1)) / gaitData.periodTimeNominal;
-    gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
-    gaitData.overrideable = 0;
-    break;
-    /*
-        case GaitType::TRANSITION_FROM_STAND:
-          gaitData.gaitName = "TRANSITION_FROM_STAND";
-          gaitData.gaitEnabled << 1, 1, 1, 1;
+    case GaitType::TRANSITION_TO_STAND:
+      gaitData.gaitName = "TRANSITION_TO_STAND";
+      gaitData.gaitEnabled << 1, 1, 1, 1;
+      T oldGaitPeriodTimeNominal = gaitData.periodTimeNominal;
+      gaitData.periodTimeNominal = 3 * gaitData.periodTimeNominal;
+      gaitData.initialPhase = 0.0;
+      gaitData.switchingPhaseNominal =
+        (gaitData.periodTimeNominal +
+         oldGaitPeriodTimeNominal * (gaitData.switchingPhaseNominal - 1)) /
+        gaitData.periodTimeNominal;
+      gaitData.phaseOffset << (gaitData.periodTimeNominal +
+                               oldGaitPeriodTimeNominal * (gaitData.phaseVariable(0) - 1)) /
+                                gaitData.periodTimeNominal,
+        (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(1) - 1)) /
+          gaitData.periodTimeNominal,
+        (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(2) - 1)) /
+          gaitData.periodTimeNominal,
+        (gaitData.periodTimeNominal + oldGaitPeriodTimeNominal * (gaitData.phaseVariable(3) - 1)) /
+          gaitData.periodTimeNominal;
+      gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+      gaitData.overrideable = 0;
+      break;
+      /*
+          case GaitType::TRANSITION_FROM_STAND:
+            gaitData.gaitName = "TRANSITION_FROM_STAND";
+            gaitData.gaitEnabled << 1, 1, 1, 1;
 
 
-          gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
+            gaitData.phaseScale << 1.0, 1.0, 1.0, 1.0;
 
-          break;
-      */
+            break;
+        */
   }
 
   // Gait has switched
   gaitData._currentGait = gaitData._nextGait;
 
-  std::cout << gaitData.gaitName << "\n"
-            << std::endl;
+  std::cout << gaitData.gaitName << "\n" << std::endl;
 
   // Calculate the auxilliary gait information
   calcAuxiliaryGaitData();
 }
 
-template <typename T>
+template<typename T>
 void GaitScheduler<T>::calcAuxiliaryGaitData()
 {
 
   if (gaitData.overrideable == 1)
   {
-    if (userParameters->gait_override == 2)
+    if (_userParameters->gait_override == 2)
     {
-      // gaitData.periodTimeNominal = userParameters->gait_period_time;
-      // gaitData.switchingPhaseNominal = userParameters->gait_switching_phase;
+      // gaitData.periodTimeNominal = _userParameters->gait_period_time;
+      // gaitData.switchingPhaseNominal = _userParameters->gait_switching_phase;
     }
-    else if (userParameters->gait_override == 4)
+    else if (_userParameters->gait_override == 4)
     {
-      //gaitData.periodTimeNominal = userParameters->gait_period_time;
-      //gaitData.switchingPhaseNominal = userParameters->gait_switching_phase;
+      // gaitData.periodTimeNominal = _userParameters->gait_period_time;
+      // gaitData.switchingPhaseNominal = _userParameters->gait_switching_phase;
     }
   }
 
@@ -545,7 +556,7 @@ void GaitScheduler<T>::calcAuxiliaryGaitData()
 /**
  * Prints relevant information about the gait and current gait state
  */
-template <typename T>
+template<typename T>
 void GaitScheduler<T>::printGaitInfo()
 {
   // Increment printing iteration
@@ -557,28 +568,23 @@ void GaitScheduler<T>::printGaitInfo()
     std::cout << "[GAIT SCHEDULER] Printing Gait Info...\n";
     std::cout << "Gait Type: " << gaitData.gaitName << "\n";
     std::cout << "---------------------------------------------------------\n";
-    std::cout << "Enabled: " << gaitData.gaitEnabled(0) << " | "
-              << gaitData.gaitEnabled(1) << " | " << gaitData.gaitEnabled(2)
-              << " | " << gaitData.gaitEnabled(3) << "\n";
-    std::cout << "Period Time: " << gaitData.periodTime(0) << "s | "
-              << gaitData.periodTime(1) << "s | " << gaitData.periodTime(2)
-              << "s | " << gaitData.periodTime(3) << "s\n";
+    std::cout << "Enabled: " << gaitData.gaitEnabled(0) << " | " << gaitData.gaitEnabled(1) << " | "
+              << gaitData.gaitEnabled(2) << " | " << gaitData.gaitEnabled(3) << "\n";
+    std::cout << "Period Time: " << gaitData.periodTime(0) << "s | " << gaitData.periodTime(1)
+              << "s | " << gaitData.periodTime(2) << "s | " << gaitData.periodTime(3) << "s\n";
     std::cout << "---------------------------------------------------------\n";
     std::cout << "Contact State: " << gaitData.contactStateScheduled(0) << " | "
-              << gaitData.contactStateScheduled(1) << " | "
-              << gaitData.contactStateScheduled(2) << " | "
-              << gaitData.contactStateScheduled(3) << "\n";
+              << gaitData.contactStateScheduled(1) << " | " << gaitData.contactStateScheduled(2)
+              << " | " << gaitData.contactStateScheduled(3) << "\n";
     std::cout << "Phase Variable: " << gaitData.phaseVariable(0) << " | "
-              << gaitData.phaseVariable(1) << " | " << gaitData.phaseVariable(2)
-              << " | " << gaitData.phaseVariable(3) << "\n";
-    std::cout << "Stance Time Remaining: " << gaitData.timeStanceRemaining(0)
-              << "s | " << gaitData.timeStanceRemaining(1) << "s | "
-              << gaitData.timeStanceRemaining(2) << "s | "
-              << gaitData.timeStanceRemaining(3) << "s\n";
-    std::cout << "Swing Time Remaining: " << gaitData.timeSwingRemaining(0)
-              << "s | " << gaitData.timeSwingRemaining(1) << "s | "
-              << gaitData.timeSwingRemaining(2) << "s | "
-              << gaitData.timeSwingRemaining(3) << "s\n";
+              << gaitData.phaseVariable(1) << " | " << gaitData.phaseVariable(2) << " | "
+              << gaitData.phaseVariable(3) << "\n";
+    std::cout << "Stance Time Remaining: " << gaitData.timeStanceRemaining(0) << "s | "
+              << gaitData.timeStanceRemaining(1) << "s | " << gaitData.timeStanceRemaining(2)
+              << "s | " << gaitData.timeStanceRemaining(3) << "s\n";
+    std::cout << "Swing Time Remaining: " << gaitData.timeSwingRemaining(0) << "s | "
+              << gaitData.timeSwingRemaining(1) << "s | " << gaitData.timeSwingRemaining(2)
+              << "s | " << gaitData.timeSwingRemaining(3) << "s\n";
     std::cout << std::endl;
 
     // Reset iteration counter

@@ -13,8 +13,6 @@
 
 #define WBCtrl WBC_Ctrl<T>
 
-class MIT_UserParameters;
-
 template<typename T>
 class WBC_Ctrl
 {
@@ -60,7 +58,8 @@ protected:
   DVec<T> _des_jpos;
   DVec<T> _des_jvel;
 
-  std::vector<T> _Kp_joint, _Kd_joint;
+  Vec3<T> _Kp_joint;
+  Vec3<T> _Kd_joint;
   // std::vector<T> _Kp_joint_swing, _Kd_joint_swing;
 
   unsigned long long _iter;

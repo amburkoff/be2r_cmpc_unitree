@@ -6,10 +6,9 @@
 #ifndef GAIT_SCHEDULER_H
 #define GAIT_SCHEDULER_H
 
-#include <iostream>
-
-#include "MIT_UserParameters.h"
 #include "cppTypes.h"
+#include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
+#include <iostream>
 
 /**
  * Enumerated gait types. Preplanned gaits are defined.
@@ -36,7 +35,7 @@ enum class GaitType
 /**
  * Timing data for a gait
  */
-template <typename T>
+template<typename T>
 struct GaitData
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -88,12 +87,12 @@ struct GaitData
 /**
  * Utility to process GaitData and schedule foot steps and swings.
  */
-template <typename T>
+template<typename T>
 class GaitScheduler
 {
 public:
   // Constructors for the GaitScheduler
-  GaitScheduler(MIT_UserParameters* _userParameters, float _dt);
+  GaitScheduler(be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters, float _dt);
   ~GaitScheduler(){};
 
   // Initialize the Gait Scheduler
@@ -121,7 +120,7 @@ public:
 private:
   // The quadruped model
   // Quadruped<T>& _quadruped;
-  MIT_UserParameters* userParameters;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _userParameters;
 
   // Control loop timestep change
   T dt;

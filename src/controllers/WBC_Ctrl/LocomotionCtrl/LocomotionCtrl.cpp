@@ -130,30 +130,33 @@ void LocomotionCtrl<T>::_ContactTaskUpdateTEST(void* input, ControlFSMData<T>& d
   }
 }
 template<typename T>
-void LocomotionCtrl<T>::_ParameterSetup(const MIT_UserParameters* param)
+void LocomotionCtrl<T>::_ParameterSetup(const be2r_cmpc_unitree::ros_dynamic_paramsConfig* param)
 {
 
-  for (size_t i(0); i < 3; ++i)
+  ((BodyPosTask<T>*)_body_pos_task)->_Kp =
+    Vec3<T>(param->Kp_body_0, param->Kp_body_1, param->Kp_body_2);
+  ((BodyPosTask<T>*)_body_pos_task)->_Kd =
+    Vec3<T>(param->Kd_body_0, param->Kd_body_1, param->Kd_body_2);
+
+  ((BodyOriTask<T>*)_body_ori_task)->_Kp =
+    Vec3<T>(param->Kp_ori_0, param->Kp_ori_1, param->Kp_ori_2);
+  ((BodyOriTask<T>*)_body_ori_task)->_Kd =
+    Vec3<T>(param->Kd_ori_0, param->Kd_ori_1, param->Kd_ori_2);
+
+  for (size_t j(0); j < 4; ++j)
   {
-    ((BodyPosTask<T>*)_body_pos_task)->_Kp[i] = param->Kp_body[i];
-    ((BodyPosTask<T>*)_body_pos_task)->_Kd[i] = param->Kd_body[i];
-
-    ((BodyOriTask<T>*)_body_ori_task)->_Kp[i] = param->Kp_ori[i];
-    ((BodyOriTask<T>*)_body_ori_task)->_Kd[i] = param->Kd_ori[i];
-
-    for (size_t j(0); j < 4; ++j)
-    {
-      ((LinkPosTask<T>*)_foot_task[j])->_Kp[i] = param->Kp_foot[i];
-      ((LinkPosTask<T>*)_foot_task[j])->_Kd[i] = param->Kd_foot[i];
-      //((LinkPosTask<T>*)_foot_task[j])->_Kp_kin[i] = 1.5;
-    }
-
-    WBCtrl::_Kp_joint[i] = param->Kp_joint[i];
-    WBCtrl::_Kd_joint[i] = param->Kd_joint[i];
-
-    // WBCtrl::_Kp_joint_swing[i] = param->Kp_joint_swing[i];
-    // WBCtrl::_Kd_joint_swing[i] = param->Kd_joint_swing[i];
+    ((LinkPosTask<T>*)_foot_task[j])->_Kp =
+      Vec3<T>(param->Kp_foot_0, param->Kp_foot_1, param->Kp_foot_2);
+    ((LinkPosTask<T>*)_foot_task[j])->_Kd =
+      Vec3<T>(param->Kd_foot_0, param->Kd_foot_1, param->Kd_foot_2);
+    //((LinkPosTask<T>*)_foot_task[j])->_Kp_kin[i] = 1.5;
   }
+
+  WBCtrl::_Kp_joint = Vec3<T>(param->Kp_joint_0, param->Kp_joint_1, param->Kp_joint_2);
+  WBCtrl::_Kd_joint = Vec3<T>(param->Kd_joint_0, param->Kd_joint_1, param->Kd_joint_2);
+
+  // WBCtrl::_Kp_joint_swing[i] = param->Kp_joint_swing[i];
+  // WBCtrl::_Kd_joint_swing[i] = param->Kd_joint_swing[i];
 }
 
 template<typename T>

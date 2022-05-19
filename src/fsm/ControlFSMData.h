@@ -7,12 +7,12 @@
 #include "Controllers/StateEstimatorContainer.h"
 #include "Dynamics/Quadruped.h"
 #include <ControlParameters/RobotParameters.h>
-#include <MIT_UserParameters.h>
+#include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
 
 /**
  *
  */
-template <typename T>
+template<typename T>
 struct ControlFSMData
 {
   // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -22,7 +22,7 @@ struct ControlFSMData
   GaitScheduler<T>* _gaitScheduler;
   DesiredStateCommand<T>* _desiredStateCommand;
   RobotControlParameters* controlParameters;
-  MIT_UserParameters* userParameters;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters;
   VisualizationData* visualizationData;
 };
 

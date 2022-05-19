@@ -31,7 +31,7 @@ public:
 protected:
   virtual void _ContactTaskUpdate(void* input, ControlFSMData<T>& data);
   virtual void _ContactTaskUpdateTEST(void* input, ControlFSMData<T>& data);
-  void _ParameterSetup(const MIT_UserParameters* param);
+  void _ParameterSetup(const be2r_cmpc_unitree::ros_dynamic_paramsConfig* param);
   void _CleanUp();
   virtual void _LCM_PublishData();
 
