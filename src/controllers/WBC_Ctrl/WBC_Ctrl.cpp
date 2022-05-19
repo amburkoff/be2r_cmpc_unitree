@@ -128,7 +128,7 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
     }
   }
 
-  data._legController->is_low_level = true;
+  // data._legController->is_low_level = true;
 }
 
 template <typename T>

@@ -162,13 +162,27 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->kd_hip[leg] = commands[leg].kdJoint(1, 1);
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
 
-    spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
-    spiCommand->q_des_hip[leg] = -commands[leg].qDes(1);
-    spiCommand->q_des_knee[leg] = -commands[leg].qDes(2);
+    //is low level control -> change signs
+    if (is_low_level)
+    {
+      spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
+      spiCommand->q_des_hip[leg] = -commands[leg].qDes(1);
+      spiCommand->q_des_knee[leg] = -commands[leg].qDes(2);
 
-    spiCommand->qd_des_abad[leg] = commands[leg].qdDes(0);
-    spiCommand->qd_des_hip[leg] = -commands[leg].qdDes(1);
-    spiCommand->qd_des_knee[leg] = -commands[leg].qdDes(2);
+      spiCommand->qd_des_abad[leg] = commands[leg].qdDes(0);
+      spiCommand->qd_des_hip[leg] = -commands[leg].qdDes(1);
+      spiCommand->qd_des_knee[leg] = -commands[leg].qdDes(2);
+    }
+    else
+    {
+      spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
+      spiCommand->q_des_hip[leg] = commands[leg].qDes(1);
+      spiCommand->q_des_knee[leg] = commands[leg].qDes(2);
+
+      spiCommand->qd_des_abad[leg] = commands[leg].qdDes(0);
+      spiCommand->qd_des_hip[leg] = commands[leg].qdDes(1);
+      spiCommand->qd_des_knee[leg] = commands[leg].qdDes(2);
+    }
 
     // estimate torque
     datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);

@@ -224,7 +224,7 @@ void FSM_State_Testing<T>::run()
 
   // this->jointPDControl(0, q_des, dq_des);
   this->lowLeveljointPDControl(0, q_des, dq_des);
-  this->_data->_legController->is_low_level = true;
+  // this->_data->_legController->is_low_level = true;
 
   // Vec3<float> p_act = this->_data->_legController->datas[0].p;
   // Vec3<float> q_eval = this->findAngles(0, p_act);
@@ -306,7 +306,7 @@ void FSM_State_Testing<T>::onExit()
   // this->_data->_legController->zeroCommand();
 
   this->_data->_legController->setEnabled(false);
-  this->_data->_legController->is_low_level = true;
+  // this->_data->_legController->is_low_level = true;
 }
 
 // template class FSM_State_Testing<double>;

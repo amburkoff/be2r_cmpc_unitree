@@ -172,7 +172,7 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
 template <typename T>
 TransitionData<T> FSM_State_BalanceStand<T>::transition()
 {
-  this->_data->_legController->is_low_level = true;
+  // this->_data->_legController->is_low_level = true;
 
   // Switch FSM control mode
   switch (this->nextStateName)
