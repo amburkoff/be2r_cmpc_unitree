@@ -246,6 +246,8 @@ void Body_Manager::finalizeStep()
   }
 
   _pub_low_cmd.publish(_low_cmd);
+  t1.start();
+  ROS_INFO("pub");
 }
 
 /*!
@@ -283,6 +285,10 @@ void Body_Manager::_initPublishers()
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
 {
+  cout << "timer ns: " << t1.getNs() << endl;
+  cout << "timer ms: " << t1.getMs() << endl;
+  ROS_INFO("calback");
+
   _low_state = msg;
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
