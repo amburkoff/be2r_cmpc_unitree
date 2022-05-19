@@ -2,8 +2,12 @@
 #define FSM_STATE_STAIRS_H
 
 #include "FSM_State.h"
-#include <FootSwingTrajectory.h>
+#include <ConvexMPCLocomotion.h>
 
+template <typename T>
+class WBC_Ctrl;
+template <typename T>
+class LocomotionCtrlData;
 /**
  *
  */
@@ -11,6 +15,7 @@ template <typename T>
 class FSM_State_Stairs : public FSM_State<T>
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   FSM_State_Stairs(ControlFSMData<T>* _controlFSMData);
 
   // Behavior to be carried out when entering a state
@@ -18,8 +23,6 @@ public:
 
   // Run the normal behavior for the state
   void run();
-  
-  void test1();
 
   // Checks for any transition triggers
   FSM_StateName checkTransition();
@@ -30,15 +33,20 @@ public:
   // Behavior to be carried out when exiting a state
   void onExit();
 
-  TransitionData<T> testTransition();
-
 private:
   // Keep track of the control iterations
   int iter = 0;
-  std::vector<Vec3<T>> _ini_foot_pos;
-  FootSwingTrajectory<float> footSwingTrajectories[4];
-  bool firstSwing[4];
-  Vec3<float> pFoot[4];
+  ConvexMPCLocomotion* cMPCOld;
+  WBC_Ctrl<T>* _wbc_ctrl;
+  LocomotionCtrlData<T>* _wbc_data;
+
+  // Parses contact specific controls to the leg controller
+  void LocomotionControlStep();
+
+  bool locomotionSafe();
+
+  // Impedance control for the stance legs during locomotion
+  void StanceLegImpedanceControl(int leg);
 };
 
-#endif // FSM_STATE_TESTING_H
+#endif // FSM_STATE_Stairs_H

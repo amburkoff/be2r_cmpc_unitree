@@ -4,7 +4,16 @@
  */
 
 #include "FSM_State_Stairs.h"
+#include <Utilities/Timer.h>
+#include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
+// #include <rt/rt_interface_lcm.h>
 
+//оригинальный параметр для MPC+WBC
+#define ITERATIONS_BETWEEN_MPC 13
+// #define ITERATIONS_BETWEEN_MPC 26 //1000 Hz
+
+//лучший для только MPC
+// #define ITERATIONS_BETWEEN_MPC 10
 using namespace std;
 
 /**
@@ -14,40 +23,45 @@ using namespace std;
  * @param _controlFSMData holds all of the relevant control data
  */
 template <typename T>
-FSM_State_Stairs<T>::FSM_State_Stairs(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::STAIRS, "STAIRS"), _ini_foot_pos(4)
+FSM_State_Stairs<T>::FSM_State_Stairs(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::STAIRS, "STAIRS")
 {
-  // Do nothing
-  // Set the pre controls safety checks
-  this->checkSafeOrientation = false;
+  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
+  //                                   //30 / (1000. * _controlFSMData->controlParameters->controller_dt),
+  //                                   //22 / (1000. * _controlFSMData->controlParameters->controller_dt),
+  //                                   27 / (1000. * _controlFSMData->controlParameters->controller_dt),
+  //                                   _controlFSMData->userParameters);
 
-  // Post control safety checks
+  this->turnOnAllSafetyChecks();
+  // this->turnOffAllSafetyChecks();
+
+  // Turn off Foot pos command since it is set in WBC as operational task
   this->checkPDesFoot = false;
-  this->checkForceFeedForward = false;
+
+  // Initialize GRF and footstep locations to 0s
+  this->footFeedForwardForces = Mat34<T>::Zero();
+  this->footstepLocations = Mat34<T>::Zero();
+  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->_quadruped->buildModel());
+  _wbc_data = new LocomotionCtrlData<T>();
 }
 
 template <typename T>
 void FSM_State_Stairs<T>::onEnter()
 {
+  cout << "[FSM_State_Stairs] onEnter start" << endl;
+
   // Default is to not transition
   this->nextStateName = this->stateName;
 
   // Reset the transition data
   this->transitionData.zero();
+  cout << "[FSM_State_Stairs] transitionData zero done" << endl;
 
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  cMPCOld->initialize();
+  cout << "[FSM_State_Stairs] cMPCOld initialize done" << endl;
 
-  // Reset iteration counter
-  iter = 0;
-
-  for (size_t leg(0); leg < 4; ++leg)
-  {
-    _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
-
-    // pFoot[leg] = seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(leg) + this->_data->_legController->datas[leg].p);
-    // pFoot[leg] = Vec3<float>(-0, -0.15, -0.2);
-
-    firstSwing[leg] = true;
-  }
+  this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+  printf("[FSM LOCOMOTION] On Enter\n");
 }
 
 /**
@@ -56,179 +70,8 @@ void FSM_State_Stairs<T>::onEnter()
 template <typename T>
 void FSM_State_Stairs<T>::run()
 {
-  float rate = 0.5;
-  float duration = 1 / rate;
-  auto& seResult = this->_data->_stateEstimator->getResult();
-
-  // Vec3<float> p0(0, 0, 0);
-  // Vec3<float> p1(0, 0, 0);
-  Vec3<float> p0(0, -0.15, -0.2);
-  Vec3<float> p1(0, -0.25, -0.2);
-
-  //near sholder
-  //x 0.047
-  //y -0.15
-  //z -0.073
-
-  //far 1
-  //x 0.068
-  //y -0.255
-  //z -0.259
-
-  //far 2
-  //x -0.178
-  //y -0.163
-  //z -0.2
-  Vec3<float> pDes(0.047, -0.15, -0.073);
-  // static Vec3<float> pDes1(0.047, -0.15, -0.073);
-  // static Vec3<float> pDes1(0.047, -0.15, -0.1);
-  // static Vec3<float> pDes1(-0.178, -0.163, -0.2);
-  // static Vec3<float> pDes0(_ini_foot_pos[0]);
-  // static Vec3<float> pDes0(0.068, -0.255, -0.259);
-  static bool flag = false;
-
-  T progress = rate * iter * this->_data->controlParameters->controller_dt;
-
-  auto _model = this->_data->_quadruped->buildModel();
-
-  FBModelState<float> _state;
-  _state.q = DVec<T>::Zero(cheetah::num_act_joint);
-  _state.qd = DVec<T>::Zero(cheetah::num_act_joint);
-
-  _state.bodyOrientation = seResult.orientation;
-  _state.bodyPosition = seResult.position;
-  DVec<T> _full_config(cheetah::num_act_joint + 7);
-
-  _full_config.setZero();
-
-  for (size_t i(0); i < 3; ++i)
-  {
-    _state.bodyVelocity[i] = seResult.omegaBody[i];
-    _state.bodyVelocity[i + 3] = seResult.vBody[i];
-
-    for (size_t leg(0); leg < 4; ++leg)
-    {
-      _state.q[3 * leg + i] = this->_data->_legController->datas[leg].q[i];
-      _state.qd[3 * leg + i] = this->_data->_legController->datas[leg].qd[i];
-
-      _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
-    }
-  }
-
-  _model.setState(_state);
-
-  _model.contactJacobians();
-  _model.massMatrix();
-  _model.generalizedGravityForce();
-  _model.generalizedCoriolisForce();
-
-  auto _A = _model.getMassMatrix();
-  auto _grav = _model.getGravityForce();
-  auto _coriolis = _model.getCoriolisForce();
-
-  // cout << "grav: " << _grav << endl;
-  Vec3<float> tau = _grav.segment(6, 3);
-  // tau(0) = tau(0);
-  // tau(1) = 0;
-  // tau(2) = 0;
-  // cout << "grav leg0: " << tau << endl;
-  // cout << "c+g: " << _grav+_coriolis << endl;
-
-  if (progress > 1)
-  {
-    // progress = duration;
-    progress = 0;
-    iter = 0;
-    flag = !flag;
-  }
-
-  //for real
-  // float p = 1200;
-  // float d = 15;
-
-  //for sim
-  // float p = 800;
-  // float d = 15;
-
-  this->_data->_legController->setLegEnabled(0, true);
-  this->_data->_legController->setLegEnabled(1, false);
-  this->_data->_legController->setLegEnabled(2, false);
-  this->_data->_legController->setLegEnabled(3, false);
-
-  for (int foot = 0; foot < 4; foot++)
-  {
-    if (firstSwing[foot])
-    {
-      firstSwing[foot] = false;
-      footSwingTrajectories[foot].setHeight(0.05);
-      // footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
-      // footSwingTrajectories[foot].setFinalPosition(pFoot[foot] + Vec3<float>(1, 1, 0));
-    }
-
-    // this->_data->_legController->commands[foot].kpCartesian = Vec3<T>(800, 800, 800).asDiagonal();
-    // this->_data->_legController->commands[foot].kdCartesian = Vec3<T>(20, 20, 20).asDiagonal();
-
-    // this->_data->_legController->commands[foot].pDes = pDes;
-    // this->_data->_legController->commands[foot].vDes = Vec3<float>::Constant(0);
-
-    if (flag == 0)
-    {
-      footSwingTrajectories[foot].setInitialPosition(p0);
-      footSwingTrajectories[foot].setFinalPosition(p1);
-
-      //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes1(0)) + (1. - progress) * pDes0(0);
-      //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes1(1)) + (1. - progress) * pDes0(1);
-      //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes1(2)) + (1. - progress) * pDes0(2);
-        this->_data->_legController->commands[foot].tauFeedForward = tau;
-      //   Vec3<float> L = pDes1 - pDes0;
-      //   this->_data->_legController->commands[foot].vDes = L / duration;
-    }
-    else if (flag == 1)
-    {
-      footSwingTrajectories[foot].setInitialPosition(p1);
-      footSwingTrajectories[foot].setFinalPosition(p0);
-
-      //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes0(0)) + (1. - progress) * pDes1(0);
-      //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes0(1)) + (1. - progress) * pDes1(1);
-      //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes0(2)) + (1. - progress) * pDes1(2);
-        this->_data->_legController->commands[foot].tauFeedForward = tau;
-      //   Vec3<float> L = pDes0 - pDes1;
-      //   this->_data->_legController->commands[foot].vDes = L / duration;
-    }
-
-    footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 5);
-
-    Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
-    Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
-    // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - this->_data->_quadruped->getHipLocation(foot);
-    // Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-
-    // this->_data->_legController->commands[foot].pDes = pDesLeg;
-    // this->_data->_legController->commands[foot].vDes = vDesLeg;
-    // this->_data->_legController->commands[foot].pDes = pDesFootWorld;
-    // this->_data->_legController->commands[foot].vDes = vDesFootWorld;
-  }
-
-  Vec3<float> p_des = footSwingTrajectories[0].getPosition();
-  Vec3<float> v_des = footSwingTrajectories[0].getVelocity();
-
-  // static Vec3<float> q_des(0, 0, 0);
-  // static Vec3<float> dq_des(0, 0, 0);
-  // q_des(1) = -0.5 * sin((float)iter / 1000.0) - 0.5 - 0.5;
-  // q_des(2) = 0.5 * sin((float)iter / 1000.0) + 0.5 + 1.5;
-
-  Vec3<float> q_des(0, 0, 0);
-  Vec3<float> dq_des(0, 0, 0);
-
-  q_des = this->findAngles(0, p_des);
-
-  // this->jointPDControl(0, q_des, dq_des);
-  this->lowLeveljointPDControl(0, q_des, dq_des);
-  this->_data->_legController->commands[0].is_low_level = true;
-
-  // Vec3<float> p_act = this->_data->_legController->datas[0].p;
-  // Vec3<float> q_eval = this->findAngles(0, p_act);
-  // cout << "q_eval: " << q_eval << endl;
+  // Call the locomotion control logic for this iteration
+  LocomotionControlStep();
 }
 
 /**
@@ -250,9 +93,43 @@ FSM_StateName FSM_State_Stairs<T>::checkTransition()
     break;
 
 
-  case K_PASSIVE: // normal c
-    this->nextStateName = FSM_StateName::PASSIVE;
-    break;
+  case K_BALANCE_STAND:
+      // Requested change to BALANCE_STAND
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
+
+      // Transition time is immediate
+      this->transitionDuration = 0.0;
+
+      break;
+
+    case K_PASSIVE:
+      // Requested change to BALANCE_STAND
+      this->nextStateName = FSM_StateName::PASSIVE;
+
+      // Transition time is immediate
+      this->transitionDuration = 0.0;
+
+      break;
+
+    case K_STAND_UP:
+      this->nextStateName = FSM_StateName::STAND_UP;
+      this->transitionDuration = 0.;
+      break;
+
+    case K_RECOVERY_STAND:
+      this->nextStateName = FSM_StateName::RECOVERY_STAND;
+      this->transitionDuration = 0.;
+      break;
+
+    case K_VISION:
+      this->nextStateName = FSM_StateName::VISION;
+      this->transitionDuration = 0.;
+      break;
+
+    case K_LAY_DOWN:
+      this->nextStateName = FSM_StateName::LAYDOWN;
+      this->transitionDuration = 0.;
+      break;
 
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
@@ -273,10 +150,40 @@ FSM_StateName FSM_State_Stairs<T>::checkTransition()
 template <typename T>
 TransitionData<T> FSM_State_Stairs<T>::transition()
 {
-  // Finish Transition
+  // Switch FSM control mode
   switch (this->nextStateName)
   {
-  case FSM_StateName::PASSIVE: // normal
+  case FSM_StateName::BALANCE_STAND:
+    LocomotionControlStep();
+
+    iter++;
+    if (iter >= this->transitionDuration * 1000)
+    {
+      this->transitionData.done = true;
+    }
+    else
+    {
+      this->transitionData.done = false;
+    }
+
+    break;
+
+  case FSM_StateName::PASSIVE:
+    this->turnOffAllSafetyChecks();
+
+    this->transitionData.done = true;
+
+    break;
+
+  case FSM_StateName::STAND_UP:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::RECOVERY_STAND:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::LAYDOWN:
     this->transitionData.done = true;
     break;
 
@@ -288,6 +195,51 @@ TransitionData<T> FSM_State_Stairs<T>::transition()
   return this->transitionData;
 }
 
+template <typename T>
+bool FSM_State_Stairs<T>::locomotionSafe()
+{
+  auto& seResult = this->_data->_stateEstimator->getResult();
+
+  const T max_roll = 40;
+  const T max_pitch = 40;
+
+  if (std::fabs(seResult.rpy[0]) > ori::deg2rad(max_roll))
+  {
+    printf("Unsafe locomotion: roll is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[0]), max_roll);
+    return false;
+  }
+
+  if (std::fabs(seResult.rpy[1]) > ori::deg2rad(max_pitch))
+  {
+    printf("Unsafe locomotion: pitch is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[1]), max_pitch);
+    return false;
+  }
+
+  for (int leg = 0; leg < 4; leg++)
+  {
+    auto p_leg = this->_data->_legController->datas[leg].p;
+    if (p_leg[2] > 0)
+    {
+      printf("Unsafe locomotion: leg %d is above hip (%.3f m)\n", leg, p_leg[2]);
+      return false;
+    }
+
+    if (std::fabs(p_leg[1] > 0.18))
+    {
+      printf("Unsafe locomotion: leg %d's y-position is bad (%.3f m)\n", leg, p_leg[1]);
+      return false;
+    }
+
+    auto v_leg = this->_data->_legController->datas[leg].v.norm();
+    if (std::fabs(v_leg) > 9.)
+    {
+      printf("Unsafe locomotion: leg %d is moving too quickly (%.3f m/s)\n", leg, v_leg);
+      return false;
+    }
+  }
+
+  return true;
+}
 /**
  * Cleans up the state information on exiting the state.
  */
@@ -302,6 +254,81 @@ void FSM_State_Stairs<T>::onExit()
   this->_data->_legController->commands[1].is_low_level = true;
   this->_data->_legController->commands[2].is_low_level = true;
   this->_data->_legController->commands[3].is_low_level = true;
+}
+
+/**
+ * Calculate the commands for the leg controllers for each of the feet by
+ * calling the appropriate balance controller and parsing the results for
+ * each stance or swing leg.
+ */
+template <typename T>
+void FSM_State_Stairs<T>::LocomotionControlStep()
+{
+  // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
+
+  // Contact state logic
+  // estimateContact();
+
+  // cout << "[FSM_State_Stairs] LocomotionControlStep start" << endl;
+  // this->_data->userParameters->use_wbc = 0;
+
+  cMPCOld->run<T>(*this->_data);
+
+  // cout << "[FSM_State_Stairs] cMPCOld done" << endl;
+
+  Vec3<T> pDes_backup[4];
+  Vec3<T> vDes_backup[4];
+  Mat3<T> Kp_backup[4];
+  Mat3<T> Kd_backup[4];
+
+  for (int leg(0); leg < 4; ++leg)
+  {
+    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+  }
+
+  if (this->_data->userParameters->use_wbc > 0.9)
+  {
+    _wbc_data->pBody_des = cMPCOld->pBody_des;
+    _wbc_data->vBody_des = cMPCOld->vBody_des;
+    _wbc_data->aBody_des = cMPCOld->aBody_des;
+
+    _wbc_data->pBody_RPY_des = cMPCOld->pBody_RPY_des;
+    _wbc_data->vBody_Ori_des = cMPCOld->vBody_Ori_des;
+
+    for (size_t i(0); i < 4; ++i)
+    {
+      _wbc_data->pFoot_des[i] = cMPCOld->pFoot_des[i];
+      _wbc_data->vFoot_des[i] = cMPCOld->vFoot_des[i];
+      _wbc_data->aFoot_des[i] = cMPCOld->aFoot_des[i];
+      _wbc_data->Fr_des[i] = cMPCOld->Fr_des[i];
+    }
+    _wbc_data->contact_state = cMPCOld->contact_state;
+    _wbc_ctrl->run(_wbc_data, *this->_data);
+  }
+
+  for (int leg(0); leg < 4; ++leg)
+  {
+    //originally commented
+    this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
+    this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
+
+    this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
+    this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
+  }
+}
+
+/**
+ * Stance leg logic for impedance control. Prevent leg slipping and
+ * bouncing, as well as tracking the foot velocity during high speeds.
+ */
+template <typename T>
+void FSM_State_Stairs<T>::StanceLegImpedanceControl(int leg)
+{
+  // Impedance control for the stance leg
+  this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(), this->_data->controlParameters->stand_kp_cartesian, this->_data->controlParameters->stand_kd_cartesian);
 }
 
 // template class FSM_State_Stairs<double>;
