@@ -51,15 +51,17 @@ template <typename T>
 void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
   // for sim
-  // kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
+  // kpMat << 3, 0, 0, 0, 3, 0, 0, 0, 3;
   // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
   // for real
-  kpMat << 120, 0, 0, 0, 120, 0, 0, 0, 120;
-  kdMat << 10, 0, 0, 0, 10, 0, 0, 0, 10;
+  // kpMat << 120, 0, 0, 0, 120, 0, 0, 0, 120;
+  // kdMat << 10, 0, 0, 0, 10, 0, 0, 0, 10;
 
-  _data->_legController->commands[leg].kpJoint = kpMat;
-  _data->_legController->commands[leg].kdJoint = kdMat;
+  // _data->_legController->commands[leg].kpJoint = kpMat;
+  // _data->_legController->commands[leg].kdJoint = kdMat;
+  _data->_legController->commands[leg].kpJoint = _data->userParameters->Kp_joint.template cast<float>().asDiagonal();
+  _data->_legController->commands[leg].kdJoint = _data->userParameters->Kd_joint.template cast<float>().asDiagonal();
 
   _data->_legController->commands[leg].qDes = qDes;
   _data->_legController->commands[leg].qdDes = qdDes;
@@ -398,6 +400,9 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
     q_eval(0) = -(Qrad - Q0rad);
     q_eval(1) = Arad - a1_rad;
     q_eval(2) = -(M_PI - a_rad);
+
+    // q_eval(1) = - q_eval(1);
+    // q_eval(2) = - q_eval(2);
     break;
 
   // Front Left

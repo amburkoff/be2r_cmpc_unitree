@@ -123,6 +123,7 @@ private:
   GamepadCommand driverCommand;
   unitree_legged_msgs::LowState _low_state;
   tf::TransformBroadcaster odom_broadcaster;
+  bool _is_low_level = false;
 
   spi_torque_t _spi_torque;
 
@@ -133,10 +134,11 @@ private:
   ControlParameters* _userControlParameters = nullptr;
   MIT_UserParameters userParameters;
 
-  template<typename T>
+  template <typename T>
   bool readRosParam(std::string param_name, T& param_var)
   {
-    if (!_nh.getParam(param_name, param_var))
+    // if (!_nh.getParam(param_name, param_var))
+    if (!ros::param::get(param_name, param_var))
     {
       ROS_WARN_STREAM("Can't read param " << param_name);
 

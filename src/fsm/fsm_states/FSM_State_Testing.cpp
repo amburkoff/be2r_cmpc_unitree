@@ -179,7 +179,7 @@ void FSM_State_Testing<T>::run()
       //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes1(0)) + (1. - progress) * pDes0(0);
       //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes1(1)) + (1. - progress) * pDes0(1);
       //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes1(2)) + (1. - progress) * pDes0(2);
-        this->_data->_legController->commands[foot].tauFeedForward = tau;
+        // this->_data->_legController->commands[foot].tauFeedForward = tau;
       //   Vec3<float> L = pDes1 - pDes0;
       //   this->_data->_legController->commands[foot].vDes = L / duration;
     }
@@ -191,7 +191,7 @@ void FSM_State_Testing<T>::run()
       //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes0(0)) + (1. - progress) * pDes1(0);
       //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes0(1)) + (1. - progress) * pDes1(1);
       //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes0(2)) + (1. - progress) * pDes1(2);
-        this->_data->_legController->commands[foot].tauFeedForward = tau;
+        // this->_data->_legController->commands[foot].tauFeedForward = tau;
       //   Vec3<float> L = pDes0 - pDes1;
       //   this->_data->_legController->commands[foot].vDes = L / duration;
     }
@@ -212,13 +212,13 @@ void FSM_State_Testing<T>::run()
   Vec3<float> p_des = footSwingTrajectories[0].getPosition();
   Vec3<float> v_des = footSwingTrajectories[0].getVelocity();
 
-  // static Vec3<float> q_des(0, 0, 0);
-  // static Vec3<float> dq_des(0, 0, 0);
+  static Vec3<float> q_des(0, 0, 0);
+  static Vec3<float> dq_des(0, 0, 0);
   // q_des(1) = -0.5 * sin((float)iter / 1000.0) - 0.5 - 0.5;
   // q_des(2) = 0.5 * sin((float)iter / 1000.0) + 0.5 + 1.5;
 
-  Vec3<float> q_des(0, 0, 0);
-  Vec3<float> dq_des(0, 0, 0);
+  // Vec3<float> q_des(0, 0, 0);
+  // Vec3<float> dq_des(0, 0, 0);
 
   q_des = this->findAngles(0, p_des);
 
