@@ -21,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 # Eigen find
-find_package (Eigen3 EXACT REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
+find_package (Eigen3 REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
 
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)
 
