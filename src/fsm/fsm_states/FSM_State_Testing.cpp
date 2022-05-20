@@ -205,8 +205,8 @@ void FSM_State_Testing<T>::run()
 
     // this->_data->_legController->commands[foot].pDes = pDesLeg;
     // this->_data->_legController->commands[foot].vDes = vDesLeg;
-    // this->_data->_legController->commands[foot].pDes = pDesFootWorld;
-    // this->_data->_legController->commands[foot].vDes = vDesFootWorld;
+    this->_data->_legController->commands[foot].pDes = pDesFootWorld;
+    this->_data->_legController->commands[foot].vDes = vDesFootWorld;
   }
 
   Vec3<float> p_des = footSwingTrajectories[0].getPosition();
@@ -221,7 +221,7 @@ void FSM_State_Testing<T>::run()
   Vec3<float> dq_des(0, 0, 0);
 
   q_des = this->findAngles(0, p_des);
-
+  //dq_des = computeLegJacobianAndPosition
   // this->jointPDControl(0, q_des, dq_des);
   this->lowLeveljointPDControl(0, q_des, dq_des);
   // this->_data->_legController->is_low_level = true;

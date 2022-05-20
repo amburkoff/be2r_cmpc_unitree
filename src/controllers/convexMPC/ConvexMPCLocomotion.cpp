@@ -12,14 +12,14 @@
 #define GAIT_PERIOD 17
 #define HORIZON 14
 
-#define GAIT_PERIOD 16
+//#define GAIT_PERIOD 16
 // #define GAIT_PERIOD 34 //1000 Hz
 
 //лучшие параметры для только MPC
 // #define GAIT_PERIOD 18
 // #define HORIZON 5
 
-#define STEP_HEIGHT 0.15
+#define STEP_HEIGHT 0.1
 #define BODY_HEIGHT 0.24
 
 // #define SHOW_MPC_SOLVE_TIME
@@ -359,7 +359,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-    Pf[2] = 0.06;
+    Pf[2] = 0.01;
     cout << "Foot " << i << " final position desired: " << Pf.transpose() << "\n";
     footSwingTrajectories[i].setFinalPosition(Pf);
   }

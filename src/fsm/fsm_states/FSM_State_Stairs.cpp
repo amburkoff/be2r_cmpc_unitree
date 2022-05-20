@@ -25,7 +25,7 @@ using namespace std;
 template <typename T>
 FSM_State_Stairs<T>::FSM_State_Stairs(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::STAIRS, "STAIRS")
 {
-  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  cMPCOld = new ConvexMPCStairsLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
   // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
   //                                   //30 / (1000. * _controlFSMData->controlParameters->controller_dt),
   //                                   //22 / (1000. * _controlFSMData->controlParameters->controller_dt),

@@ -2,7 +2,7 @@
 #include <Utilities/Utilities_print.h>
 #include <iostream>
 
-#include "ConvexMPCLocomotion.h"
+#include "ConvexMPCStairsLocomotion.h"
 #include "GraphSearch.h"
 #include "convexMPC_interface.h"
 
@@ -12,7 +12,7 @@
 #define GAIT_PERIOD 17
 #define HORIZON 14
 
-#define GAIT_PERIOD 16
+//#define GAIT_PERIOD 16
 // #define GAIT_PERIOD 34 //1000 Hz
 
 //лучшие параметры для только MPC
@@ -30,7 +30,7 @@ using namespace std;
 // Controller
 ////////////////////
 
-ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters) : iterationsBetweenMPC(_iterations_between_mpc), horizonLength(HORIZON),
+ConvexMPCStairsLocomotion::ConvexMPCStairsLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters) : iterationsBetweenMPC(_iterations_between_mpc), horizonLength(HORIZON),
                                                                                                                    //  horizonLength(10),
                                                                                                                    dt(_dt),
                                                                                                                    trotting(GAIT_PERIOD, Vec4<int>(0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, 0), Vec4<int>(GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0), "Trotting"),
@@ -89,7 +89,7 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   _vis_pub[3] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_3", 1);
 }
 
-void ConvexMPCLocomotion::initialize()
+void ConvexMPCStairsLocomotion::initialize()
 {
   for (int i = 0; i < 4; i++)
   {
@@ -99,13 +99,13 @@ void ConvexMPCLocomotion::initialize()
   firstRun = true;
 }
 
-void ConvexMPCLocomotion::recompute_timing(int iterations_per_mpc)
+void ConvexMPCStairsLocomotion::recompute_timing(int iterations_per_mpc)
 {
   iterationsBetweenMPC = iterations_per_mpc;
   dtMPC = dt * iterations_per_mpc;
 }
 
-void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
+void ConvexMPCStairsLocomotion::_SetupCommand(ControlFSMData<float>& data)
 {
 
   _body_height = BODY_HEIGHT;
@@ -144,7 +144,7 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 }
 
 template <>
-void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
+void ConvexMPCStairsLocomotion::run(ControlFSMData<float>& data)
 {
   bool omniMode = false;
 
@@ -172,7 +172,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     world_position_desired[1] = stand_traj[1];
   }
 
-  // cout << "[ConvexMPCLocomotion] get res done" << endl;
+  // cout << "[ConvexMPCStairsLocomotion] get res done" << endl;
 
   // pick gait
   Gait* gait = &trotting;
@@ -421,7 +421,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         pose[foot] = Emptypose;
       }
 
-      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
+      footSwingTrajectories[foot].computeSwingTrajectoryModified(swingState, swingTimes[foot],1);
 
       //      footSwingTrajectories[foot]->updateFF(hw_i->leg_controller->leg_datas[foot].q,
       //                                          hw_i->leg_controller->leg_datas[foot].qd,
@@ -613,13 +613,13 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 }
 
 template <>
-void ConvexMPCLocomotion::run(ControlFSMData<double>& data)
+void ConvexMPCStairsLocomotion::run(ControlFSMData<double>& data)
 {
   (void)data;
   printf("call to old CMPC with double!\n");
 }
 
-void ConvexMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode)
+void ConvexMPCStairsLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode)
 {
   // iterationsBetweenMPC = 30;
   if ((iterationCounter % iterationsBetweenMPC) == 0)
@@ -721,7 +721,7 @@ void ConvexMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>
   }
 }
 
-void ConvexMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
+void ConvexMPCStairsLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
   auto seResult = data._stateEstimator->getResult();
 
@@ -802,7 +802,7 @@ void ConvexMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
   }
 }
 
-void ConvexMPCLocomotion::solveSparseMPC(int* mpcTable, ControlFSMData<float>& data)
+void ConvexMPCStairsLocomotion::solveSparseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
   // X0, contact trajectory, state trajectory, feet, get result!
   (void)mpcTable;
@@ -850,7 +850,7 @@ void ConvexMPCLocomotion::solveSparseMPC(int* mpcTable, ControlFSMData<float>& d
   }
 }
 
-void ConvexMPCLocomotion::initSparseMPC()
+void ConvexMPCStairsLocomotion::initSparseMPC()
 {
   Mat3<double> baseInertia;
   baseInertia << 0.07, 0, 0, 0, 0.26, 0, 0, 0, 0.242;

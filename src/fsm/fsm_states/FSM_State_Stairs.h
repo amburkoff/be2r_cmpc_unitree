@@ -2,7 +2,7 @@
 #define FSM_STATE_STAIRS_H
 
 #include "FSM_State.h"
-#include <ConvexMPCLocomotion.h>
+#include <ConvexMPCStairsLocomotion.h>
 
 template <typename T>
 class WBC_Ctrl;
@@ -36,7 +36,7 @@ public:
 private:
   // Keep track of the control iterations
   int iter = 0;
-  ConvexMPCLocomotion* cMPCOld;
+  ConvexMPCStairsLocomotion* cMPCOld;
   WBC_Ctrl<T>* _wbc_ctrl;
   LocomotionCtrlData<T>* _wbc_data;
 

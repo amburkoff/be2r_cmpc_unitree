@@ -29,6 +29,7 @@ public:
     _v.setZero();
     _a.setZero();
     _height = 0;
+    _mode = 0;
   }
 
   /*!
@@ -36,6 +37,15 @@ public:
    * @param p0 : the initial foot position
    */
   void setInitialPosition(Vec3<T> p0) { _p0 = p0; }
+
+
+    /*!
+   * Set the mode for the basis function: 
+   * mode = 0 linear basis function,
+   * mode = 1 square root basis function 
+   * @param mode : the mode of the Modified interpolate function
+   */
+  void setMode(int mode) { _mode = mode; }
 
   /*!
    * Set the desired final position of the foot
@@ -55,7 +65,7 @@ public:
   void setHeight(T h) { _height = h; }
 
   void computeSwingTrajectoryBezier(T phase, T swingTime);
-
+  void computeSwingTrajectoryModified(T phase, T swingTime,int mode);
   /*!
    * Get the foot position at the current point along the swing
    * @return : the foot position
@@ -77,6 +87,7 @@ public:
 private:
   Vec3<T> _p0, _pf, _p, _v, _a;
   T _height;
+  int _mode;
 };
 
 #endif // CHEETAH_SOFTWARE_FOOTSWINGTRAJECTORY_H

@@ -3,6 +3,7 @@
 
 #include "FSM_State.h"
 #include <FootSwingTrajectory.h>
+#include <LegController.h>
 
 /**
  *
