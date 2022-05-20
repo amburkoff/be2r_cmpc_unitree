@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="is_low_level" default="1"/>
+  <arg name="is_low_level" default="0"/>
   <arg name="torque_safe_limit" default="0"/>
   <arg name="udp_connection" default="0"/>
 

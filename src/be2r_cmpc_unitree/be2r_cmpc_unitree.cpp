@@ -31,6 +31,8 @@ UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCm
 {
   UNITREE_LEGGED_SDK::LowCmd udp_low_cmd;
 
+  udp_low_cmd.levelFlag = ros_low_cmd.levelFlag;
+
   for (size_t i = 0; i < 12; i++)
   {
     udp_low_cmd.motorCmd[i].mode = ros_low_cmd.motorCmd[i].mode;
@@ -362,7 +364,9 @@ void Body_Manager::finalizeStep()
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
   }
 
-  //onlu for real robot
+  _low_cmd.levelFlag = UNITREE_LEGGED_SDK::LOWLEVEL;
+
+  //only for real robot
   if (is_udp_connection)
   {
     //convert ros struct ro udp struct
