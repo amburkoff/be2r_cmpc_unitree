@@ -27,7 +27,7 @@ void Body_Manager::UDPSend()
   udp.Send();
 }
 
-UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUpd(unitree_legged_msgs::LowCmd ros_low_cmd)
+UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd)
 {
   UNITREE_LEGGED_SDK::LowCmd udp_low_cmd;
 
@@ -220,7 +220,7 @@ void Body_Manager::run()
 {
   Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
 
-  if (_is_udp_connection)
+  if (is_udp_connection)
   {
     _readRobotData();
   }
@@ -362,16 +362,16 @@ void Body_Manager::finalizeStep()
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
   }
 
-  //convert ros struct ro udp struct
-  _udp_low_cmd = _rosCmdToUpd(_low_cmd);
-  //position limit safety check
-  safe.PositionLimit(_udp_low_cmd);
-  //power protection safety check
-  safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
-
   //onlu for real robot
-  if (_is_udp_connection)
+  if (is_udp_connection)
   {
+    //convert ros struct ro udp struct
+    _udp_low_cmd = _rosCmdToUdp(_low_cmd);
+    //position limit safety check
+    safe.PositionLimit(_udp_low_cmd);
+    //power protection safety check
+    safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
+
     //put udp struct to udp send transfer process
     udp.SetSend(_udp_low_cmd);
   }
@@ -551,7 +551,7 @@ void Body_Manager::_initParameters()
 
   readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
   readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
-  readRosParam(ros::this_node::getName() + "/udp_connection", _is_udp_connection);
+  readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
 
   // readRosParam("/control_mode", controlParameters.control_mode);
   // readRosParam("/controller_dt", controlParameters.controller_dt);

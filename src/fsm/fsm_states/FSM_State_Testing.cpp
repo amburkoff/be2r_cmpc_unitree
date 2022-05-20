@@ -97,7 +97,10 @@ void FSM_State_Testing<T>::test1()
   qDes[0] = sin_mid_q[0];
   qDes[1] = -sin_mid_q[1] - sin_joint1;
   qDes[2] = -sin_mid_q[2] - sin_joint2;
+  // qDes[1] = sin_mid_q[1] + sin_joint1;
+  // qDes[2] = sin_mid_q[2] + sin_joint2;
 
+  tau[0] = Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
   tau[1] = Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
   tau[2] = Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
 

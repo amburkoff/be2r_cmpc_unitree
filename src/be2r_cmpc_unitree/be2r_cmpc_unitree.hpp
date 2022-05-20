@@ -87,6 +87,7 @@ public:
 
   void UDPRecv();
   void UDPSend();
+  bool is_udp_connection = false;
 
 private:
   ros::NodeHandle _nh;
@@ -123,7 +124,7 @@ private:
   void _readRobotData();
   UNITREE_LEGGED_SDK::LowCmd _udp_low_cmd = {0};
   UNITREE_LEGGED_SDK::LowState _udp_low_state = {0};
-  UNITREE_LEGGED_SDK::LowCmd _rosCmdToUpd(unitree_legged_msgs::LowCmd ros_low_cmd);
+  UNITREE_LEGGED_SDK::LowCmd _rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd);
   unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
 
   // void _
@@ -140,7 +141,6 @@ private:
   tf::TransformBroadcaster odom_broadcaster;
   bool _is_low_level = false;
   bool _is_torque_safe = true;
-  bool _is_udp_connection = true;
 
   spi_torque_t _spi_torque;
 
