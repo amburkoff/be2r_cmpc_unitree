@@ -2,19 +2,86 @@
 
 using namespace std;
 
-Body_Manager::Body_Manager()
-    : _zero_time(0)
+Body_Manager::Body_Manager() : _zero_time(0),
+                               safe(UNITREE_LEGGED_SDK::LeggedType::A1),
+                               udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
   server.setCallback(f);
   ROS_INFO("START SERVER");
+
+  udp.InitCmdData(_udp_low_cmd);
 }
 
 Body_Manager::~Body_Manager()
 {
   delete _legController;
   delete _stateEstimator;
+}
+
+void Body_Manager::UDPRecv()
+{
+  udp.Recv();
+}
+
+void Body_Manager::UDPSend()
+{
+  udp.Send();
+}
+
+UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd)
+{
+  UNITREE_LEGGED_SDK::LowCmd udp_low_cmd;
+
+  udp_low_cmd.levelFlag = ros_low_cmd.levelFlag;
+
+  for (size_t i = 0; i < 12; i++)
+  {
+    udp_low_cmd.motorCmd[i].mode = ros_low_cmd.motorCmd[i].mode;
+    udp_low_cmd.motorCmd[i].q = ros_low_cmd.motorCmd[i].q;
+    udp_low_cmd.motorCmd[i].dq = ros_low_cmd.motorCmd[i].dq;
+    udp_low_cmd.motorCmd[i].Kp = ros_low_cmd.motorCmd[i].Kp;
+    udp_low_cmd.motorCmd[i].Kd = ros_low_cmd.motorCmd[i].Kd;
+    udp_low_cmd.motorCmd[i].tau = ros_low_cmd.motorCmd[i].tau;
+  }
+
+  return udp_low_cmd;
+}
+
+unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state)
+{
+  unitree_legged_msgs::LowState ros_low_state;
+
+  for (size_t i = 0; i < 12; i++)
+  {
+    ros_low_state.motorState[i].mode = udp_low_state.motorState[i].mode;
+    ros_low_state.motorState[i].q = udp_low_state.motorState[i].q;
+    ros_low_state.motorState[i].dq = udp_low_state.motorState[i].dq;
+    ros_low_state.motorState[i].ddq = udp_low_state.motorState[i].ddq;
+    ros_low_state.motorState[i].q_raw = udp_low_state.motorState[i].q_raw;
+    ros_low_state.motorState[i].dq_raw = udp_low_state.motorState[i].dq_raw;
+    ros_low_state.motorState[i].ddq_raw = udp_low_state.motorState[i].ddq_raw;
+    ros_low_state.motorState[i].tauEst = udp_low_state.motorState[i].tauEst;
+    ros_low_state.motorState[i].temperature = udp_low_state.motorState[i].temperature;
+  }
+
+  ros_low_state.imu.accelerometer[0] = udp_low_state.imu.accelerometer[0];
+  ros_low_state.imu.accelerometer[1] = udp_low_state.imu.accelerometer[1];
+  ros_low_state.imu.accelerometer[2] = udp_low_state.imu.accelerometer[2];
+
+  ros_low_state.imu.gyroscope[0] = udp_low_state.imu.gyroscope[0];
+  ros_low_state.imu.gyroscope[1] = udp_low_state.imu.gyroscope[1];
+  ros_low_state.imu.gyroscope[2] = udp_low_state.imu.gyroscope[2];
+
+  ros_low_state.imu.quaternion[0] = udp_low_state.imu.quaternion[0];
+  ros_low_state.imu.quaternion[1] = udp_low_state.imu.quaternion[1];
+  ros_low_state.imu.quaternion[2] = udp_low_state.imu.quaternion[2];
+  ros_low_state.imu.quaternion[3] = udp_low_state.imu.quaternion[3];
+
+  ros_low_state.imu.temperature = udp_low_state.imu.temperature;
+
+  return ros_low_state;
 }
 
 void Body_Manager::init()
@@ -78,17 +145,73 @@ void Body_Manager::init()
   _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
                                       _desiredStateCommand, &controlParameters, &_rosParameters);
 
-  _leg_contoller_params[0].zero();
-  _leg_contoller_params[1].zero();
-  _leg_contoller_params[2].zero();
-  _leg_contoller_params[3].zero();
+
 
   controlParameters.control_mode = 0;
+}
+
+void Body_Manager::_readRobotData()
+{
+  //TODO check if we can send only zero struct and recieve falid data and dont crash robot controller
+  udp.SetSend(_udp_low_cmd);
+  //TODO check if TRULY NEW data recieved
+  udp.GetRecv(_udp_low_state);
+
+  _low_state = _udpStateToRos(_udp_low_state);
+  _pub_low_state.publish(_low_state);
+
+  for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
+  {
+    spiData.q_abad[leg_num] = _low_state.motorState[leg_num * 3 + 0].q;
+    spiData.q_hip[leg_num] = -_low_state.motorState[leg_num * 3 + 1].q;
+    spiData.q_knee[leg_num] = -_low_state.motorState[leg_num * 3 + 2].q;
+
+    spiData.qd_abad[leg_num] = _low_state.motorState[leg_num * 3 + 0].dq;
+    spiData.qd_hip[leg_num] = -_low_state.motorState[leg_num * 3 + 1].dq;
+    spiData.qd_knee[leg_num] = -_low_state.motorState[leg_num * 3 + 2].dq;
+  }
+
+  is_stand = _low_state.levelFlag;
+
+  vectorNavData.gyro[0] = _low_state.imu.gyroscope[0];
+  vectorNavData.gyro[1] = _low_state.imu.gyroscope[1];
+  vectorNavData.gyro[2] = _low_state.imu.gyroscope[2];
+
+  vectorNavData.accelerometer[0] = _low_state.imu.accelerometer[0];
+  vectorNavData.accelerometer[1] = _low_state.imu.accelerometer[1];
+  vectorNavData.accelerometer[2] = _low_state.imu.accelerometer[2];
+
+  vectorNavData.quat[0] = _low_state.imu.quaternion[0]; // w
+  vectorNavData.quat[1] = _low_state.imu.quaternion[1]; // x
+  vectorNavData.quat[2] = _low_state.imu.quaternion[2]; // y
+  vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
+
+  // Датчики контакта на лапах
+  // for (size_t leg = 0; leg < 4; leg++)
+  // {
+  //   footContactState(leg) = _low_state.footForce[leg];
+  //   //    if
+  //   //    ((_stateEstimator->getResult().contactEstimate[leg]
+  //   //    <= 0.001) &&
+  //   //      (footContactState(leg) == 1) )
+  //   //    {
+  //   ////      std::cout << "EARLY CONTACT" <<
+  //   /// std::endl;
+
+  //   //    }
+  // }
+
+  // _stateEstimator->setContactSensorData(footContactState);
 }
 
 void Body_Manager::run()
 {
   Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
+
+  if (is_udp_connection)
+  {
+    _readRobotData();
+  }
 
   // Run the state estimator step
   _stateEstimator->run();
@@ -166,8 +289,7 @@ void Body_Manager::finalizeStep()
     _torqueCalculator(&spiCommand, &spiData, &_spi_torque, i);
   }
 
-  static unitree_legged_msgs::LowCmd _low_cmd;
-  uint8_t mode[4] = {MOTOR_BREAK};
+  uint8_t mode[4] = { MOTOR_BREAK };
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -187,7 +309,7 @@ void Body_Manager::finalizeStep()
 
   for (uint8_t leg = 0; leg < 4; leg++)
   {
-    //if is low level == false -> tau control
+    // if is low level == false -> tau control
     if (_legController->is_low_level == false)
     {
       for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
@@ -228,7 +350,25 @@ void Body_Manager::finalizeStep()
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
   }
 
+  _low_cmd.levelFlag = UNITREE_LEGGED_SDK::LOWLEVEL;
+
+  //only for real robot
+  if (is_udp_connection)
+  {
+    // convert ros struct ro udp struct
+    _udp_low_cmd = _rosCmdToUdp(_low_cmd);
+    // position limit safety check
+    safe.PositionLimit(_udp_low_cmd);
+    // power protection safety check
+    safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
+
+    // put udp struct to udp send transfer process
+    udp.SetSend(_udp_low_cmd);
+  }
+
   _pub_low_cmd.publish(_low_cmd);
+  // t1.start();
+  // ROS_INFO("pub");
 }
 
 /*!
@@ -258,6 +398,7 @@ void Body_Manager::_initSubscribers()
 void Body_Manager::_initPublishers()
 {
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
+  _pub_low_state = _nh.advertise<unitree_legged_msgs::LowState>("/low_state", 1);
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
   _pub_state_error = _nh.advertise<unitree_legged_msgs::StateError>("/state_error", 1);
   _pub_leg_error = _nh.advertise<unitree_legged_msgs::LegError>("/leg_error", 1);
@@ -266,6 +407,10 @@ void Body_Manager::_initPublishers()
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
 {
+  // cout << "timer ns: " << t1.getNs() << endl;
+  // cout << "timer ms: " << t1.getMs() << endl;
+  // ROS_INFO("calback");
+
   _low_state = msg;
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
@@ -352,16 +497,18 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
     torque_out->tau_knee[board_num] = cmd->tau_knee_ff[board_num];
   }
 
-  const float safe_torque[3] = {4.f, 4.f, 4.f};
-  const float max_torque[3] = {17.f, 17.f, 26.f};
+  const float safe_torque[3] = { 4.f, 4.f, 4.f };
+  const float max_torque[3] = { 17.f, 17.f, 26.f };
+  const float* torque_limits;
 
-#ifdef TORQUE_LIMIT_SAFE
-  const float* torque_limits = safe_torque;
-#endif
-
-#ifdef TORQUE_LIMIT_MAX
-  const float* torque_limits = max_torque;
-#endif
+  if (_is_torque_safe)
+  {
+    torque_limits = safe_torque;
+  }
+  else
+  {
+    torque_limits = max_torque;
+  }
 
   if (torque_out->tau_abad[board_num] > torque_limits[0])
   {
@@ -391,7 +538,11 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
 
 void Body_Manager::_initParameters()
 {
+
   readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
+  readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
+  readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
+
 }
 
 void Body_Manager::_updateVisualization()
@@ -533,12 +684,12 @@ void Body_Manager::_updatePlot()
     leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
     leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
 
-    //q des
+    // q des
     leg_error.q_des[i].x = spiCommand.q_des_abad[i];
     leg_error.q_des[i].y = spiCommand.q_des_hip[i];
     leg_error.q_des[i].z = spiCommand.q_des_knee[i];
 
-    //dq des
+    // dq des
     leg_error.dq_des[i].x = spiCommand.qd_des_abad[i];
     leg_error.dq_des[i].y = spiCommand.qd_des_hip[i];
     leg_error.dq_des[i].z = spiCommand.qd_des_knee[i];
@@ -568,6 +719,7 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
   _is_param_updated = true;
   _rosParameters = config;
   controlParameters.control_mode = config.FSM_State;
+
 
   ROS_INFO_STREAM("New dynamic data!");
 }

@@ -1,8 +1,8 @@
 <launch>
 
-  <arg name="is_low_level" default="0"/>
+  <arg name="is_low_level" default="1"/>
   <arg name="torque_safe_limit" default="0"/>
-  <arg name="udp_connection" default="0"/>
+  <arg name="udp_connection" default="1"/>
 
   <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/ros_config.yaml"/>
 

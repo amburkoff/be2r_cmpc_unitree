@@ -376,36 +376,36 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
 
   switch (leg_num)
   {
-    // Front Right
-    case 0:
-      q_eval(0) = -(Qrad - Q0rad);
-      q_eval(1) = Arad - a1_rad;
-      q_eval(2) = -(M_PI - a_rad);
+  // Front Right
+  case 0:
+    q_eval(0) = -(Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(M_PI - a_rad);
 
-      // q_eval(1) = - q_eval(1);
-      // q_eval(2) = - q_eval(2);
-      break;
+    q_eval(1) = - q_eval(1);
+    q_eval(2) = - q_eval(2);
+    break;
 
-    // Front Left
-    case 1:
-      q_eval(0) = (Qrad - Q0rad);
-      q_eval(1) = Arad - a1_rad;
-      q_eval(2) = -(M_PI - a_rad);
-      break;
+  // Front Left
+  case 1:
+    q_eval(0) = (Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(M_PI - a_rad);
+    break;
 
-    // Rear Right
-    case 2:
-      q_eval(0) = -(Qrad - Q0rad);
-      q_eval(1) = Arad - a1_rad;
-      q_eval(2) = -(M_PI - a_rad);
-      break;
+  // Rear Right
+  case 2:
+    q_eval(0) = -(Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(M_PI - a_rad);
+    break;
 
-    // Rear Left
-    case 3:
-      q_eval(0) = (Qrad - Q0rad);
-      q_eval(1) = Arad - a1_rad;
-      q_eval(2) = -(M_PI - a_rad);
-      break;
+  // Rear Left
+  case 3:
+    q_eval(0) = (Qrad - Q0rad);
+    q_eval(1) = Arad - a1_rad;
+    q_eval(2) = -(M_PI - a_rad);
+    break;
   }
 
   return q_eval;

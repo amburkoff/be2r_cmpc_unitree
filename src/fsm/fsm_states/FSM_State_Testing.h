@@ -18,7 +18,7 @@ public:
 
   // Run the normal behavior for the state
   void run();
-  
+
   void test1();
 
   // Checks for any transition triggers
