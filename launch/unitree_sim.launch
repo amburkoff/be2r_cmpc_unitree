@@ -1,6 +1,7 @@
 <launch>
 
   <arg name="is_low_level" default="1"/>
+  <arg name="torque_safe_limit" default="0"/>
 
   <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/ros_config.yaml"/>
 
@@ -15,6 +16,7 @@
   <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen">
     <param name="map_topic" value="/elevation_mapping/elevation_map"/>
     <param name="is_low_level" type="bool" value="$(arg is_low_level)" />
+    <param name="torque_safe_limit" type="bool" value="$(arg torque_safe_limit)" />
   </node>
 
   <node pkg="tf" type="static_transform_publisher" name="world_to_odom" args="0 0 0 0 0 0 world odom 100" />

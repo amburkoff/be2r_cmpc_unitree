@@ -377,14 +377,16 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
 
   const float safe_torque[3] = {4.f, 4.f, 4.f};
   const float max_torque[3] = {17.f, 17.f, 26.f};
+  const float* torque_limits;
 
-#ifdef TORQUE_LIMIT_SAFE
-  const float* torque_limits = safe_torque;
-#endif
-
-#ifdef TORQUE_LIMIT_MAX
-  const float* torque_limits = max_torque;
-#endif
+  if (_is_torque_safe)
+  {
+    torque_limits = safe_torque;
+  }
+  else
+  {
+    torque_limits = max_torque;
+  }
 
   if (torque_out->tau_abad[board_num] > torque_limits[0])
   {
@@ -417,6 +419,7 @@ void Body_Manager::_initParameters()
   vector<double> test;
 
   readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
+  readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
 
   // readRosParam("/control_mode", controlParameters.control_mode);
   // readRosParam("/controller_dt", controlParameters.controller_dt);
