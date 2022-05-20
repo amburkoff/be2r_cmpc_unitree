@@ -173,6 +173,7 @@ void Body_Manager::_readRobotData()
   udp.GetRecv(_udp_low_state);
 
   _low_state = _udpStateToRos(_udp_low_state);
+  _pub_low_state.publish(_low_state);
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
@@ -303,7 +304,7 @@ void Body_Manager::finalizeStep()
     _torqueCalculator(&spiCommand, &spiData, &_spi_torque, i);
   }
 
-  uint8_t mode[4] = {MOTOR_BREAK};
+  uint8_t mode[4] = { MOTOR_BREAK };
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -323,7 +324,7 @@ void Body_Manager::finalizeStep()
 
   for (uint8_t leg = 0; leg < 4; leg++)
   {
-    //if is low level == false -> tau control
+    // if is low level == false -> tau control
     if (_legController->is_low_level == false)
     {
       for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
@@ -369,14 +370,14 @@ void Body_Manager::finalizeStep()
   //only for real robot
   if (is_udp_connection)
   {
-    //convert ros struct ro udp struct
+    // convert ros struct ro udp struct
     _udp_low_cmd = _rosCmdToUdp(_low_cmd);
-    //position limit safety check
+    // position limit safety check
     safe.PositionLimit(_udp_low_cmd);
-    //power protection safety check
+    // power protection safety check
     safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
 
-    //put udp struct to udp send transfer process
+    // put udp struct to udp send transfer process
     udp.SetSend(_udp_low_cmd);
   }
 
@@ -412,6 +413,7 @@ void Body_Manager::_initSubscribers()
 void Body_Manager::_initPublishers()
 {
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
+  _pub_low_state = _nh.advertise<unitree_legged_msgs::LowState>("/low_state", 1);
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
   _pub_state_error = _nh.advertise<unitree_legged_msgs::StateError>("/state_error", 1);
   _pub_leg_error = _nh.advertise<unitree_legged_msgs::LegError>("/leg_error", 1);
@@ -510,8 +512,8 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
     torque_out->tau_knee[board_num] = cmd->tau_knee_ff[board_num];
   }
 
-  const float safe_torque[3] = {4.f, 4.f, 4.f};
-  const float max_torque[3] = {17.f, 17.f, 26.f};
+  const float safe_torque[3] = { 4.f, 4.f, 4.f };
+  const float max_torque[3] = { 17.f, 17.f, 26.f };
   const float* torque_limits;
 
   if (_is_torque_safe)
@@ -788,12 +790,12 @@ void Body_Manager::_updatePlot()
     leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
     leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
 
-    //q des
+    // q des
     leg_error.q_des[i].x = spiCommand.q_des_abad[i];
     leg_error.q_des[i].y = spiCommand.q_des_hip[i];
     leg_error.q_des[i].z = spiCommand.q_des_knee[i];
 
-    //dq des
+    // dq des
     leg_error.dq_des[i].x = spiCommand.qd_des_abad[i];
     leg_error.dq_des[i].y = spiCommand.qd_des_hip[i];
     leg_error.dq_des[i].z = spiCommand.qd_des_knee[i];
