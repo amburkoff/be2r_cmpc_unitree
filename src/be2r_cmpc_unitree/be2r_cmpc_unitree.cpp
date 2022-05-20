@@ -6,6 +6,9 @@ Body_Manager::Body_Manager()
   : _zero_time(0)
 {
   footContactState = Vec4<uint8_t>::Zero();
+  f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
+  server.setCallback(f);
+  ROS_INFO("START SERVER");
 }
 
 Body_Manager::~Body_Manager()
@@ -18,7 +21,7 @@ void Body_Manager::init()
 {
   _initSubscribers();
   _initPublishers();
-  // _initParameters();
+  _initParameters();
 
   _time_start = ros::Time::now();
 
@@ -45,37 +48,14 @@ void Body_Manager::init()
   }
 
   printf("Loaded robot parameters\n");
-
-  if (&userParameters)
+  // TODO: check exist
+  if (_is_param_updated)
   {
-    try
-    {
-      std::string user_config_name;
-      ros::readParam("~user_config_name", user_config_name,
-                     std::string("unitree-user-parameters-sim.yaml"));
-      userParameters.initializeFromYamlFile(THIS_COM "config/" + user_config_name);
-    }
-    catch (std::exception& e)
-    {
-      printf("Failed to initialize user "
-             "parameters from yaml file: %s\n",
-             e.what());
-      exit(1);
-    }
-
-    if (!userParameters.isFullyInitialized())
-    {
-      printf("Failed to initialize all user "
-             "parameters\n");
-      exit(1);
-    }
-
-    printf("Loaded user parameters\n");
+    ROS_INFO_STREAM("Get params from dynamic reconfigure");
   }
   else
   {
-    printf("Did not load user parameters because "
-           "there aren't any\n");
+    ROS_WARN_STREAM("No dynamic config data");
   }
 
   _quadruped = buildMiniCheetah<float>();
@@ -98,21 +78,17 @@ void Body_Manager::init()
     &driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
 
   // Initialize a new GaitScheduler object
-  _gaitScheduler = new GaitScheduler<float>(&userParameters, controlParameters.controller_dt);
+  _gaitScheduler = new GaitScheduler<float>(&_rosParameters, controlParameters.controller_dt);
 
   // Initializes the Control FSM with all the
   // required data
   _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
-                                      _desiredStateCommand, &controlParameters, &userParameters);
+                                      _desiredStateCommand, &controlParameters, &_rosParameters);
 
   _leg_contoller_params[0].zero();
   _leg_contoller_params[1].zero();
   _leg_contoller_params[2].zero();
   _leg_contoller_params[3].zero();
-
-  f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
-  server.setCallback(f);
-  ROS_INFO("START SERVER");
 
   controlParameters.control_mode = 0;
 }
@@ -466,176 +442,21 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
 
 void Body_Manager::_initParameters()
 {
-  vector<double> test;
-
-  // readRosParam("/control_mode",
-  // controlParameters.control_mode);
-  // readRosParam("/controller_dt",
-  // controlParameters.controller_dt);
-  // readRosParam("/stand_kp_cartesian",
-  // controlParameters.stand_kp_cartesian);
-  readRosParam("/stand_kp_cartesian", test);
-  cout << test.at(0) << endl;
-  cout << test.at(1) << endl;
-  cout << test.at(2) << endl;
-
-  // readRosParam("/stand_kd_cartesian",
-  // controlParameters.stand_kd_cartesian);
-  // readRosParam("/kpCOM",
-  // controlParameters.kpCOM);
-  // readRosParam("/kdCOM",
-  // controlParameters.kdCOM);
-  // readRosParam("/kpBase",
-  // controlParameters.kpBase);
-  // readRosParam("/kdBase",
-  // controlParameters.kdBase);
-  // readRosParam("/cheater_mode",
-  // controlParameters.cheater_mode);
-  // readRosParam("/imu_process_noise_position",
-  // controlParameters.imu_process_noise_position);
-  // readRosParam("/imu_process_noise_velocity",
-  // controlParameters.imu_process_noise_velocity);
-  // readRosParam("/foot_process_noise_position",
-  // controlParameters.foot_process_noise_position);
-  // readRosParam("/foot_sensor_noise_position",
-  // controlParameters.foot_sensor_noise_position);
-  // readRosParam("/foot_sensor_noise_velocity",
-  // controlParameters.foot_sensor_noise_velocity);
-  // readRosParam("/foot_height_sensor_noise",
-  // controlParameters.foot_height_sensor_noise);
-  // readRosParam("/use_rc",
-  // controlParameters.use_rc);
-  // readRosParam("/cmpc_gait",
-  // userParameters.cmpc_gait);
-  // readRosParam("/cmpc_x_drag",
-  // userParameters.cmpc_x_drag);
-  // readRosParam("/cmpc_use_sparse",
-  // userParameters.cmpc_use_sparse);
-  // readRosParam("/use_wbc",
-  // userParameters.use_wbc);
-  // readRosParam("/cmpc_bonus_swing",
-  // userParameters.cmpc_bonus_swing);
-  // readRosParam("/Kp_body",
-  // userParameters.Kp_body);
-  // readRosParam("/Kd_body",
-  // userParameters.Kd_body);
-  // readRosParam("/Kp_ori",
-  // userParameters.Kp_ori);
-  // readRosParam("/Kd_ori",
-  // userParameters.Kd_ori);
-  // readRosParam("/Kp_foot",
-  // userParameters.Kp_foot);
-  // readRosParam("/Kd_foot",
-  // userParameters.Kd_foot);
-  // readRosParam("/Kp_joint",
-  // userParameters.Kp_joint);
-  // readRosParam("/Kd_joint",
-  // userParameters.Kd_joint);
-  // //readRosParam(Kp_joint_swing);
-  // //readRosParam(Kd_joint_swing);
-  // readRosParam("/Q_pos", userParameters.Q_pos);
-  // readRosParam("/Q_vel", userParameters.Q_vel);
-  // readRosParam("/Q_ori", userParameters.Q_ori);
-  // readRosParam("/Q_ang", userParameters.Q_ang);
-  // readRosParam("/R_control",
-  // userParameters.R_control);
-  // readRosParam("/R_prev",
-  // userParameters.R_prev);
-  // readRosParam("/two_leg_orient",
-  // userParameters.two_leg_orient);
-  // readRosParam("/stance_legs",
-  // userParameters.stance_legs);
-  // readRosParam("/use_jcqp",
-  // userParameters.use_jcqp);
-  // readRosParam("/jcqp_max_iter",
-  // userParameters.jcqp_max_iter);
-  // readRosParam("/jcqp_rho",
-  // userParameters.jcqp_rho);
-  // readRosParam("/jcqp_sigma",
-  // userParameters.jcqp_sigma);
-  // readRosParam("/jcqp_alpha",
-  // userParameters.jcqp_alpha);
-  // readRosParam("/jcqp_terminate",
-  // userParameters.jcqp_terminate);
-  // readRosParam("/Swing_Kp_cartesian",
-  // userParameters.Swing_Kp_cartesian);
-  // readRosParam("/Swing_Kd_cartesian",
-  // userParameters.Swing_Kd_cartesian);
-  // readRosParam("/Swing_Kp_joint",
-  // userParameters.Swing_Kp_joint);
-  // readRosParam("/Swing_Kd_joint",
-  // userParameters.Swing_Kd_joint);
-  // readRosParam("/Swing_step_offset",
-  // userParameters.Swing_step_offset);
-  // readRosParam("/Swing_traj_height",
-  // userParameters.Swing_traj_height);
-  // readRosParam("/Swing_use_tau_ff",
-  // userParameters.Swing_use_tau_ff);
-  // readRosParam("/RPC_Q_p",
-  // userParameters.RPC_Q_p);
-  // readRosParam("/RPC_Q_theta",
-  // userParameters.RPC_Q_theta);
-  // readRosParam("/RPC_Q_dp",
-  // userParameters.RPC_Q_dp);
-  // readRosParam("/RPC_Q_dtheta",
-  // userParameters.RPC_Q_dtheta);
-  // readRosParam("/RPC_R_r",
-  // userParameters.RPC_R_r);
-  // readRosParam("/RPC_R_f",
-  // userParameters.RPC_R_f);
-  // readRosParam("/RPC_H_r_trans",
-  // userParameters.RPC_H_r_trans);
-  // readRosParam("/RPC_H_r_rot",
-  // userParameters.RPC_H_r_rot);
-  // readRosParam("/RPC_H_theta0",
-  // userParameters.RPC_H_theta0);
-  // readRosParam("/RPC_H_phi0",
-  // userParameters.RPC_H_phi0);
-  // readRosParam("/RPC_mass",
-  // userParameters.RPC_mass);
-  // readRosParam("/RPC_inertia",
-  // userParameters.RPC_inertia);
-  // readRosParam("/RPC_gravity",
-  // userParameters.RPC_gravity);
-  // readRosParam("/RPC_mu",
-  // userParameters.RPC_mu);
-  // readRosParam("/RPC_filter",
-  // userParameters.RPC_filter);
-  // readRosParam("/RPC_use_pred_comp",
-  // userParameters.RPC_use_pred_comp);
-  // readRosParam("/RPC_use_async_filt",
-  // userParameters.RPC_use_async_filt);
-  // readRosParam("/RPC_visualize_pred",
-  // userParameters.RPC_visualize_pred);
-  // readRosParam("/RPC_use_separate",
-  // userParameters.RPC_use_separate);
-  // readRosParam("/des_p", userParameters.des_p);
-  // readRosParam("/des_theta",
-  // userParameters.des_theta);
-  // readRosParam("/des_dp",
-  // userParameters.des_dp);
-  // readRosParam("/des_dtheta",
-  // userParameters.des_dtheta);
-  // readRosParam("/des_theta_max",
-  // userParameters.des_theta_max);
-  // readRosParam("/des_dp_max",
-  // userParameters.des_dp_max);
-  // readRosParam("/des_dtheta_max",
-  // userParameters.des_dtheta_max);
-  // readRosParam("/gait_type",
-  // userParameters.gait_type);
-  // readRosParam("/gait_period_time",
-  // userParameters.gait_period_time);
-  // readRosParam("/gait_switching_phase",
-  // userParameters.gait_switching_phase);
-  // readRosParam("/gait_override",
-  // userParameters.gait_override);
-  // readRosParam("/gait_max_leg_angle",
-  // userParameters.gait_max_leg_angle);
-  // readRosParam("/gait_max_stance_time",
-  // userParameters.gait_max_stance_time);
-  // readRosParam("/gait_min_stance_time",
-  // userParameters.gait_min_stance_time);
+  //  readRosParam("/Swing_traj_height", userParameters.Swing_traj_height);
+  //  readRosParam("/cmpc_x_drag", userParameters.cmpc_x_drag);
+  //  readRosParam("/cmpc_use_sparse", userParameters.cmpc_use_sparse);
+  //  readRosParam("/cmpc_bonus_swing", userParameters.cmpc_bonus_swing);
+  //  readRosParam("/use_jcqp", userParameters.use_jcqp);
+  //  readRosParam("/jcqp_max_iter", userParameters.jcqp_max_iter);
+  //  readRosParam("/jcqp_rho", userParameters.jcqp_rho);
+  //  readRosParam("/jcqp_sigma", userParameters.jcqp_sigma);
+  //  readRosParam("/jcqp_alpha", userParameters.jcqp_alpha);
+  //  readRosParam("/jcqp_terminate", userParameters.jcqp_terminate);
+  //  readRosParam("/gait_type", userParameters.gait_type);
+  //  readRosParam("/gait_period_time", userParameters.gait_period_time);
+  //  readRosParam("/gait_switching_phase", userParameters.gait_switching_phase);
+  //  readRosParam("/gait_override", userParameters.gait_override);
+  //  readRosParam("/stance_legs", userParameters.stance_legs);
 }
 
 void Body_Manager::_updateVisualization()
@@ -814,48 +635,25 @@ void Body_Manager::_updatePlot()
 void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
                                             uint32_t level)
 {
-  // ROS_INFO_STREAM("NEW data Kp: " << config.Kp0
-  // << " " << config.Kp1 << " "
-  // << config.Kp2); ROS_INFO_STREAM("NEW data Kd:
-  // " << config.Kd0 << " " << config.Kd1 << " "
-  // << config.Kd2); ROS_INFO_STREAM("NEW data
-  // FSM_State: " << config.FSM_State);
-
+  _is_param_updated = true;
+  _rosParameters = config;
   controlParameters.control_mode = config.FSM_State;
-  userParameters.use_wbc = config.WBC;
-  userParameters.Swing_Kp_cartesian =
-    Vec3<double>(config.Kp_cartesian_0, config.Kp_cartesian_1, config.Kp_cartesian_2);
-  userParameters.Swing_Kd_cartesian =
-    Vec3<double>(config.Kd_cartesian_0, config.Kd_cartesian_1, config.Kd_cartesian_2);
-  userParameters.Kp_joint = Vec3<double>(config.Kp_joint_0, config.Kp_joint_1, config.Kp_joint_2);
-  userParameters.Kd_joint = Vec3<double>(config.Kd_joint_0, config.Kd_joint_1, config.Kd_joint_2);
-  userParameters.Kp_ori = Vec3<double>(config.Kp_ori_0, config.Kp_ori_1, config.Kp_ori_2);
-  userParameters.Kd_ori = Vec3<double>(config.Kd_ori_0, config.Kd_ori_1, config.Kd_ori_2);
-  userParameters.Kp_body = Vec3<double>(config.Kp_body_0, config.Kp_body_1, config.Kp_body_2);
-  userParameters.Kd_body = Vec3<double>(config.Kd_body_0, config.Kd_body_1, config.Kd_body_2);
-  userParameters.Kp_foot = Vec3<double>(config.Kp_foot_0, config.Kp_foot_1, config.Kp_foot_2);
-  userParameters.Kd_foot = Vec3<double>(config.Kd_foot_0, config.Kd_foot_1, config.Kd_foot_2);
-
-  //  for (uint8_t i = 0; i < 4; i++)
-  //  {
-  //    _legController->commands[i].kpCartesian =
-  //      Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
-  //    _legController->commands[i].kdCartesian =
-  //      Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
-
-  //    _leg_contoller_params[i].kpCartesian =
-  //      Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
-  //    _leg_contoller_params[i].kdCartesian =
-  //      Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
-  //  }
+  //  userParameters.use_wbc = config.use_wbc;
+  //  userParameters.Swing_Kp_cartesian =
+  //    Vec3<double>(config.Kp_cartesian_0, config.Kp_cartesian_1, config.Kp_cartesian_2);
+  //  userParameters.Swing_Kd_cartesian =
+  //    Vec3<double>(config.Kd_cartesian_0, config.Kd_cartesian_1, config.Kd_cartesian_2);
+  //  userParameters.Kp_joint = Vec3<double>(config.Kp_joint_0, config.Kp_joint_1,
+  //  config.Kp_joint_2); userParameters.Kd_joint = Vec3<double>(config.Kd_joint_0,
+  //  config.Kd_joint_1, config.Kd_joint_2); userParameters.Kp_ori = Vec3<double>(config.Kp_ori_0,
+  //  config.Kp_ori_1, config.Kp_ori_2); userParameters.Kd_ori = Vec3<double>(config.Kd_ori_0,
+  //  config.Kd_ori_1, config.Kd_ori_2); userParameters.Kp_body = Vec3<double>(config.Kp_body_0,
+  //  config.Kp_body_1, config.Kp_body_2); userParameters.Kd_body = Vec3<double>(config.Kd_body_0,
+  //  config.Kd_body_1, config.Kd_body_2); userParameters.Kp_foot = Vec3<double>(config.Kp_foot_0,
+  //  config.Kp_foot_1, config.Kp_foot_2); userParameters.Kd_foot = Vec3<double>(config.Kd_foot_0,
+  //  config.Kd_foot_1, config.Kd_foot_2);
 
   ROS_INFO_STREAM("New dynamic data!");
 }
-// int expRunningAverage(int newVal) {
-//  static float k = 0.1;
-//  static float filVal = 0;
-//  filVal += (newVal - filVal) * k;
-//  return filVal;
-//}
 
 void Body_Manager::_filterInput() {}

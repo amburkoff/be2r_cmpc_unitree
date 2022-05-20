@@ -2,12 +2,13 @@
 #include <Utilities/Timer.h>
 #include <Utilities/Utilities_print.h>
 
-template <typename T>
-WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model) : _full_config(cheetah::num_act_joint + 7),
-                                                    _tau_ff(cheetah::num_act_joint),
-                                                    _des_jpos(cheetah::num_act_joint),
-                                                    _des_jvel(cheetah::num_act_joint),
-                                                    _wbcLCM(getLcmUrl(255))
+template<typename T>
+WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model)
+  : _full_config(cheetah::num_act_joint + 7)
+  , _tau_ff(cheetah::num_act_joint)
+  , _des_jpos(cheetah::num_act_joint)
+  , _des_jvel(cheetah::num_act_joint)
+  , _wbcLCM(getLcmUrl(255))
 {
   _iter = 0;
   _full_config.setZero();
@@ -23,8 +24,8 @@ WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model) : _full_config(cheetah::num_ac
   //_wbic_data->_W_floating[5] = 0.1;
   _wbic_data->_W_rf = DVec<T>::Constant(12, 1.);
 
-  _Kp_joint.resize(cheetah::num_leg_joint, 5.);
-  _Kd_joint.resize(cheetah::num_leg_joint, 1.5);
+  _Kp_joint = DVec<T>::Constant(cheetah::num_leg_joint, 5.);
+  _Kd_joint = DVec<T>::Constant(cheetah::num_leg_joint, 1.5);
 
   //_Kp_joint_swing.resize(cheetah::num_leg_joint, 10.);
   //_Kd_joint_swing.resize(cheetah::num_leg_joint, 1.5);
@@ -33,7 +34,7 @@ WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model) : _full_config(cheetah::num_ac
   _state.qd = DVec<T>::Zero(cheetah::num_act_joint);
 }
 
-template <typename T>
+template<typename T>
 WBC_Ctrl<T>::~WBC_Ctrl()
 {
   delete _kin_wbc;
@@ -57,7 +58,7 @@ WBC_Ctrl<T>::~WBC_Ctrl()
   _contact_list.clear();
 }
 
-template <typename T>
+template<typename T>
 void WBC_Ctrl<T>::_ComputeWBC()
 {
   // TEST
@@ -68,7 +69,7 @@ void WBC_Ctrl<T>::_ComputeWBC()
   _wbic->MakeTorque(_tau_ff, _wbic_data);
 }
 
-template <typename T>
+template<typename T>
 void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
 {
   ++_iter;
@@ -86,11 +87,11 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   _UpdateLegCMD(data);
 }
 
-template <typename T>
+template<typename T>
 void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
 {
   LegControllerCommand<T>* cmd = data._legController->commands;
-  //Vec4<T> contact = data._stateEstimator->getResult().contactEstimate;
+  // Vec4<T> contact = data._stateEstimator->getResult().contactEstimate;
 
   for (size_t leg(0); leg < cheetah::num_leg; ++leg)
   {
@@ -104,12 +105,12 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
       cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
       cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
 
-      //if(contact[leg] > 0.){ // Contact
-      //cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
-      //cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
+      // if(contact[leg] > 0.){ // Contact
+      // cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
+      // cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
       //}else{
-      //cmd[leg].kpJoint(jidx, jidx) = _Kp_joint_swing[jidx];
-      //cmd[leg].kdJoint(jidx, jidx) = _Kd_joint_swing[jidx];
+      // cmd[leg].kpJoint(jidx, jidx) = _Kp_joint_swing[jidx];
+      // cmd[leg].kdJoint(jidx, jidx) = _Kd_joint_swing[jidx];
       //}
     }
   }
@@ -134,8 +135,9 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
   data._legController->commands[3].is_low_level = true;
 }
 
-template <typename T>
-void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est, const LegControllerData<T>* leg_data)
+template<typename T>
+void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est,
+                               const LegControllerData<T>* leg_data)
 {
   _state.bodyOrientation = state_est.orientation;
   _state.bodyPosition = state_est.position;

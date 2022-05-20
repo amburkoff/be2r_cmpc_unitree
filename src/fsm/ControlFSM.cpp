@@ -26,7 +26,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
                           LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
                           DesiredStateCommand<T>* _desiredStateCommand,
                           RobotControlParameters* controlParameters,
-                          MIT_UserParameters* userParameters)
+                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters)
 {
   // Add the pointers to the ControlFSMData struct
   data._quadruped = _quadruped;

@@ -34,13 +34,13 @@ template<typename T>
 void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
   // MIT old params
-  //  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
-  //  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
+  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
-  _data->_legController->commands[leg].kpJoint =
-    _data->userParameters->Kp_joint.template cast<float>().asDiagonal();
-  _data->_legController->commands[leg].kdJoint =
-    _data->userParameters->Kd_joint.template cast<float>().asDiagonal();
+  _data->_legController->commands[leg].kpJoint = kpMat;
+  //    _data->userParameters->Kp_joint.template cast<float>().asDiagonal();
+  _data->_legController->commands[leg].kdJoint = kdMat;
+  //    _data->userParameters->Kd_joint.template cast<float>().asDiagonal();
 
   _data->_legController->commands[leg].qDes = qDes;
   _data->_legController->commands[leg].qdDes = qdDes;

@@ -30,45 +30,45 @@ using namespace std;
 ////////////////////
 
 ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
-                                         MIT_UserParameters* parameters)
+                                         be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
   : iterationsBetweenMPC(_iterations_between_mpc)
+  , _parameters(parameters)
+  , _gait_period(_parameters->gait_period)
   , horizonLength(16)
-  ,
-  //  horizonLength(10),
-  dt(_dt)
+  , dt(_dt)
   , trotting(
-      horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0),
-      Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0),
+      _gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+      Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
       "Trotting")
   , trotting_copy(
-      horizonLength, Vec4<int>(0, horizonLength / 2.0, horizonLength / 2.0, 0),
-      Vec4<int>(horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0, horizonLength / 2.0),
+      _gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+      Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
       "Trotting_copy")
-  , bounding(horizonLength, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding")
+  , bounding(_gait_period, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding")
+  , pronking(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking")
   ,
-  // bounding(horizonLength, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
-  pronking(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking")
-  , jumping(horizonLength, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping")
+  // bounding(_gait_period, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
+  jumping(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping")
+  , galloping(_gait_period, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping")
   ,
-  // galloping(horizonLength,
+  // galloping(_gait_period,
   // Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
-  // galloping(horizonLength,
+  // galloping(_gait_period,
   // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
-  galloping(horizonLength, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping")
-  , standing(horizonLength, Vec4<int>(0, 0, 0, 0),
-             Vec4<int>(horizonLength, horizonLength, horizonLength, horizonLength), "Standing")
+  standing(_gait_period, Vec4<int>(0, 0, 0, 0),
+           Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing")
+  , trotRunning(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running")
   ,
-  // trotRunning(horizonLength, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot
+  // trotRunning(_gait_period, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot
   // Running"),
-  trotRunning(horizonLength, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running")
-  , walking(horizonLength, Vec4<int>(0, 3, 5, 8), Vec4<int>(5, 5, 5, 5), "Walking")
-  , walking2(horizonLength, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2")
-  , pacing(horizonLength, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing")
-  , random(horizonLength, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot")
-  , random2(horizonLength, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
+  walking(_gait_period, Vec4<int>(0, 3, 5, 8), Vec4<int>(5, 5, 5, 5), "Walking")
+  , walking2(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2")
+  , pacing(_gait_period, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing")
+  , random(_gait_period, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot")
+  , random2(_gait_period, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
 {
-  _parameters = parameters;
   dtMPC = dt * iterationsBetweenMPC;
+  std::cout << "gait period " << _gait_period << std::endl;
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
   // setup_problem(dtMPC, horizonLength, 0.4, 1200);
@@ -121,9 +121,7 @@ void ConvexMPCLocomotion::recompute_timing(int iterations_per_mpc)
 
 void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 {
-
-  // _body_height = 0.29;
-  _body_height = 0.25;
+  _body_height = _parameters->body_height;
 
   float x_vel_cmd, y_vel_cmd;
   float filter(0.1);
@@ -144,10 +142,14 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 
   // Update PD coefs
   // for sim
-  Kp = _parameters->Swing_Kp_cartesian.cast<float>().asDiagonal();
+  Kp = Vec3<float>(_parameters->Kp_cartesian_0, _parameters->Kp_cartesian_1,
+                   _parameters->Kp_cartesian_2)
+         .asDiagonal();
   Kp_stance = Kp;
 
-  Kd = _parameters->Swing_Kd_cartesian.cast<float>().asDiagonal();
+  Kd = Vec3<float>(_parameters->Kd_cartesian_0, _parameters->Kd_cartesian_1,
+                   _parameters->Kd_cartesian_2)
+         .asDiagonal();
   Kd_stance = Kd;
 
   // for real
@@ -259,7 +261,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   if (_body_height < 0.02)
   {
     _body_height = 0.24;
-    // _body_height = 0.29; //original
   }
 
   // integrate position setpoint
@@ -542,7 +543,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
         data._legController->commands[foot].forceFeedForward = f_ff[foot];
         data._legController->commands[foot].kdJoint =
-          _parameters->Kd_joint.cast<float>().asDiagonal();
+          Vec3<float>(_parameters->Kd_joint_0, _parameters->Kd_joint_1, _parameters->Kd_joint_2)
+            .asDiagonal();
 
         //      footSwingTrajectories[foot]->updateFF(hw_i->leg_controller->leg_datas[foot].q,
         //                                          hw_i->leg_controller->leg_datas[foot].qd,
