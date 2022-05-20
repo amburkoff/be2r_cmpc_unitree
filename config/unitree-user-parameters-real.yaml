@@ -3,8 +3,8 @@ __collection-name__: user-parameters
 # WBC
 use_wbc           : 1 # Switch wbc
 
-Kp_joint          : [3, 3, 3]
 Kd_joint          : [1, 0.2, 0.2]
+Kp_joint          : [3, 3, 3]
 
 Kp_ori            : [100, 100, 100]
 Kd_ori            : [10, 10, 10]

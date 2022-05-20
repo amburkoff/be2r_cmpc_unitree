@@ -6,8 +6,6 @@ execute_process(
   COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_types_no_java.sh
 )
 
-
-
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   unitree_legged_msgs

@@ -14,6 +14,7 @@ Install apt dependencies
 rosdep install --from-paths src --ignore-src -r -y --skip-keys "raisim"
 # if not working
 sudo apt install ros-noetic-pcl-ros
+sudo apt install ros-noetic-grid-map
 ```
 
 Build from source

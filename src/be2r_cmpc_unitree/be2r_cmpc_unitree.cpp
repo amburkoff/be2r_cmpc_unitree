@@ -3,7 +3,7 @@
 using namespace std;
 
 Body_Manager::Body_Manager()
-  : _zero_time(0)
+    : _zero_time(0)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
@@ -25,8 +25,7 @@ void Body_Manager::init()
 
   _time_start = ros::Time::now();
 
-  printf("[Hardware Bridge] Loading parameters "
-         "from file...\n");
+  printf("[Hardware Bridge] Loading parameters from file...\n");
 
   try
   {
@@ -34,16 +33,13 @@ void Body_Manager::init()
   }
   catch (std::exception& e)
   {
-    printf("Failed to initialize robot "
-           "parameters from yaml file: %s\n",
-           e.what());
+    printf("Failed to initialize robot parameters from yaml file: %s\n", e.what());
     exit(1);
   }
 
   if (!controlParameters.isFullyInitialized())
   {
-    printf("Failed to initialize all robot "
-           "parameters\n");
+    printf("Failed to initialize all robot parameters\n");
     exit(1);
   }
 
@@ -66,16 +62,13 @@ void Body_Manager::init()
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
 
-  // Always initialize the leg controller and
-  // state entimator
+  // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(
-    &vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &controlParameters);
+  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &controlParameters);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(
-    &driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
+  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, controlParameters.controller_dt);
@@ -95,8 +88,7 @@ void Body_Manager::init()
 
 void Body_Manager::run()
 {
-  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1],
-                             _low_state.footForce[2], _low_state.footForce[3]);
+  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
 
   // Run the state estimator step
   _stateEstimator->run();
@@ -126,8 +118,7 @@ void Body_Manager::run()
     _controlFSM->runFSM();
   }
 
-  // Sets the leg controller commands for the
-  // robot appropriate commands
+  // Sets the leg controller commands for the robot appropriate commands
   finalizeStep();
 
 #ifdef FSM_AUTO
@@ -159,14 +150,13 @@ void Body_Manager::setupStep()
   // Setup the leg controller for a new iteration
   _legController->zeroCommand(); //нельзя убирать
   _legController->setEnabled(true);
+  _legController->is_low_level = _is_low_level;
 
   // todo safety checks, sanity checks, etc...
 }
 
 void Body_Manager::finalizeStep()
 {
-
-
   _legController->updateCommand(&spiCommand);
 
   _iterations++;
@@ -177,7 +167,7 @@ void Body_Manager::finalizeStep()
   }
 
   static unitree_legged_msgs::LowCmd _low_cmd;
-  uint8_t mode[4] = { MOTOR_BREAK };
+  uint8_t mode[4] = {MOTOR_BREAK};
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -198,67 +188,44 @@ void Body_Manager::finalizeStep()
   for (uint8_t leg = 0; leg < 4; leg++)
   {
     //if is low level == false -> tau control
-    if (_legController->commands[leg].is_low_level == false)
+    if (_legController->is_low_level == false)
     {
       for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
       {
         _low_cmd.motorCmd[leg * 3 + servo_num].mode = mode[leg];
         _low_cmd.motorCmd[leg * 3 + servo_num].q = PosStopF;
         _low_cmd.motorCmd[leg * 3 + servo_num].dq = VelStopF;
+        _low_cmd.motorCmd[leg * 3 + servo_num].Kp = 0;
+        _low_cmd.motorCmd[leg * 3 + servo_num].Kd = 0;
       }
     }
     else
     {
-      //if is low level == true -> joint control
-      // for (uint8_t servo_num = 0; servo_num < 3; servo_num++)
-      // {
-      //   _low_cmd.motorCmd[leg * 3 + servo_num].mode = mode[leg];
-      //   _low_cmd.motorCmd[leg * 3 + servo_num].q = _legController->commands[leg].qDes(servo_num);
-      //   _low_cmd.motorCmd[leg * 3 + servo_num].dq = _legController->commands[leg].qdDes(servo_num);
-      //   _low_cmd.motorCmd[leg * 3 + servo_num].Kp = _legController->commands[leg].kpJoint(servo_num, servo_num);
-      //   _low_cmd.motorCmd[leg * 3 + servo_num].Kd = _legController->commands[leg].kdJoint(servo_num, servo_num);
-      //   _low_cmd.motorCmd[leg * 3 + servo_num].tau = 0;
-      // }
       _low_cmd.motorCmd[leg * 3 + 0].mode = mode[leg];
       _low_cmd.motorCmd[leg * 3 + 0].q = spiCommand.q_des_abad[leg];
       _low_cmd.motorCmd[leg * 3 + 0].dq = spiCommand.qd_des_abad[leg];
       _low_cmd.motorCmd[leg * 3 + 0].Kp = spiCommand.kp_abad[leg];
       _low_cmd.motorCmd[leg * 3 + 0].Kd = spiCommand.kd_abad[leg];
-      _low_cmd.motorCmd[leg * 3 + 0].tau = 0;
-      
+
       _low_cmd.motorCmd[leg * 3 + 1].mode = mode[leg];
       _low_cmd.motorCmd[leg * 3 + 1].q = spiCommand.q_des_hip[leg];
       _low_cmd.motorCmd[leg * 3 + 1].dq = spiCommand.qd_des_hip[leg];
       _low_cmd.motorCmd[leg * 3 + 1].Kp = spiCommand.kp_hip[leg];
       _low_cmd.motorCmd[leg * 3 + 1].Kd = spiCommand.kd_hip[leg];
-      _low_cmd.motorCmd[leg * 3 + 1].tau = 0;
 
       _low_cmd.motorCmd[leg * 3 + 2].mode = mode[leg];
       _low_cmd.motorCmd[leg * 3 + 2].q = spiCommand.q_des_knee[leg];
       _low_cmd.motorCmd[leg * 3 + 2].dq = spiCommand.qd_des_knee[leg];
       _low_cmd.motorCmd[leg * 3 + 2].Kp = spiCommand.kp_knee[leg];
       _low_cmd.motorCmd[leg * 3 + 2].Kd = spiCommand.kd_knee[leg];
-      _low_cmd.motorCmd[leg * 3 + 2].tau = 0;
-    // spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
     }
   }
 
-  // cout << "servo " << (int)0 << ": " << _legController->commands[0].kpJoint << endl;
-
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    // if (_legController->commands[leg_num].is_low_level == false)
-    // {
     _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
-    // }
-  }
-  // DEBUG
-  for (size_t i = 0; i < 4; i++)
-  {
-    _low_cmd.ff[i].x = _stateEstimator->getResult().swingProgress[i];
-    _low_cmd.ff[i].y = _stateEstimator->getResult().contactEstimate[i];
   }
 
   _pub_low_cmd.publish(_low_cmd);
@@ -284,10 +251,8 @@ void Body_Manager::initializeStateEstimator()
 
 void Body_Manager::_initSubscribers()
 {
-  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this,
-                                 ros::TransportHints().tcpNoDelay(true));
-  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this,
-                               ros::TransportHints().tcpNoDelay(true));
+  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
 }
 
 void Body_Manager::_initPublishers()
@@ -362,10 +327,9 @@ void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
 /*!
  * Emulate the spi board to estimate the torque.
  */
-void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out,
-                                     int board_num)
+void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num)
 {
-  if (_legController->commands[board_num].is_low_level == false)
+  if (_legController->is_low_level == false)
   {
     torque_out->tau_abad[board_num] = cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
                                       cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
@@ -423,40 +387,11 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
   {
     torque_out->tau_knee[board_num] = -torque_limits[2];
   }
-
-  // float q0_e = cmd->q_des_abad[board_num] -
-  // data->q_abad[board_num]; float q1_e =
-  // cmd->q_des_hip[board_num] -
-  // data->q_hip[board_num]; float q2_e =
-  // cmd->q_des_knee[board_num] -
-  // data->q_knee[board_num];
-
-  // cout << "Leg: " << board_num << " q0_e: " <<
-  // q0_e << " q1_e: " << q1_e << " q2_e: " <<
-  // q2_e << endl; cout << "Leg: " << board_num <<
-  // " t0: " << torque_out->tau_abad[board_num] <<
-  // " t1: " << torque_out->tau_hip[board_num] <<
-  // " t2: " << torque_out->tau_knee[board_num] <<
-  // endl;
 }
 
 void Body_Manager::_initParameters()
 {
-  //  readRosParam("/Swing_traj_height", userParameters.Swing_traj_height);
-  //  readRosParam("/cmpc_x_drag", userParameters.cmpc_x_drag);
-  //  readRosParam("/cmpc_use_sparse", userParameters.cmpc_use_sparse);
-  //  readRosParam("/cmpc_bonus_swing", userParameters.cmpc_bonus_swing);
-  //  readRosParam("/use_jcqp", userParameters.use_jcqp);
-  //  readRosParam("/jcqp_max_iter", userParameters.jcqp_max_iter);
-  //  readRosParam("/jcqp_rho", userParameters.jcqp_rho);
-  //  readRosParam("/jcqp_sigma", userParameters.jcqp_sigma);
-  //  readRosParam("/jcqp_alpha", userParameters.jcqp_alpha);
-  //  readRosParam("/jcqp_terminate", userParameters.jcqp_terminate);
-  //  readRosParam("/gait_type", userParameters.gait_type);
-  //  readRosParam("/gait_period_time", userParameters.gait_period_time);
-  //  readRosParam("/gait_switching_phase", userParameters.gait_switching_phase);
-  //  readRosParam("/gait_override", userParameters.gait_override);
-  //  readRosParam("/stance_legs", userParameters.stance_legs);
+  readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
 }
 
 void Body_Manager::_updateVisualization()
@@ -521,8 +456,7 @@ void Body_Manager::_updatePlot()
   // msg.header.stamp = ros::Time::now();
   msg.header.stamp = _zero_time + delta_t;
 
-  static float x_vel_cmd, y_vel_cmd, yaw_turn_rate, x_vel_des, y_vel_des, yaw_des, roll_des,
-    pitch_des;
+  static float x_vel_cmd, y_vel_cmd, yaw_turn_rate, x_vel_des, y_vel_des, yaw_des, roll_des, pitch_des;
   float filter = 0.1;
   float dt = controlParameters.controller_dt;
 
@@ -603,9 +537,6 @@ void Body_Manager::_updatePlot()
     leg_error.q_des[i].x = spiCommand.q_des_abad[i];
     leg_error.q_des[i].y = spiCommand.q_des_hip[i];
     leg_error.q_des[i].z = spiCommand.q_des_knee[i];
-    // leg_error.q_des[i].x = _legController->commands[i].qDes(0);
-    // leg_error.q_des[i].y = _legController->commands[i].qDes(1);
-    // leg_error.q_des[i].z = _legController->commands[i].qDes(2);
 
     //dq des
     leg_error.dq_des[i].x = spiCommand.qd_des_abad[i];
@@ -632,26 +563,11 @@ void Body_Manager::_updatePlot()
   _pub_parameters.publish(param_msg);
 }
 
-void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
-                                            uint32_t level)
+void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
 {
   _is_param_updated = true;
   _rosParameters = config;
   controlParameters.control_mode = config.FSM_State;
-  //  userParameters.use_wbc = config.use_wbc;
-  //  userParameters.Swing_Kp_cartesian =
-  //    Vec3<double>(config.Kp_cartesian_0, config.Kp_cartesian_1, config.Kp_cartesian_2);
-  //  userParameters.Swing_Kd_cartesian =
-  //    Vec3<double>(config.Kd_cartesian_0, config.Kd_cartesian_1, config.Kd_cartesian_2);
-  //  userParameters.Kp_joint = Vec3<double>(config.Kp_joint_0, config.Kp_joint_1,
-  //  config.Kp_joint_2); userParameters.Kd_joint = Vec3<double>(config.Kd_joint_0,
-  //  config.Kd_joint_1, config.Kd_joint_2); userParameters.Kp_ori = Vec3<double>(config.Kp_ori_0,
-  //  config.Kp_ori_1, config.Kp_ori_2); userParameters.Kd_ori = Vec3<double>(config.Kd_ori_0,
-  //  config.Kd_ori_1, config.Kd_ori_2); userParameters.Kp_body = Vec3<double>(config.Kp_body_0,
-  //  config.Kp_body_1, config.Kp_body_2); userParameters.Kd_body = Vec3<double>(config.Kd_body_0,
-  //  config.Kd_body_1, config.Kd_body_2); userParameters.Kp_foot = Vec3<double>(config.Kp_foot_0,
-  //  config.Kp_foot_1, config.Kp_foot_2); userParameters.Kd_foot = Vec3<double>(config.Kd_foot_0,
-  //  config.Kd_foot_1, config.Kd_foot_2);
 
   ROS_INFO_STREAM("New dynamic data!");
 }
