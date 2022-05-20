@@ -2,16 +2,81 @@
 
 using namespace std;
 
-Body_Manager::Body_Manager()
-    : _zero_time(0)
+Body_Manager::Body_Manager() : _zero_time(0),
+                               safe(UNITREE_LEGGED_SDK::LeggedType::A1),
+                               udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
+
+  udp.InitCmdData(_udp_low_cmd);
 }
 
 Body_Manager::~Body_Manager()
 {
   delete _legController;
   delete _stateEstimator;
+}
+
+void Body_Manager::UDPRecv()
+{
+  udp.Recv();
+}
+
+void Body_Manager::UDPSend()
+{
+  udp.Send();
+}
+
+UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUpd(unitree_legged_msgs::LowCmd ros_low_cmd)
+{
+  UNITREE_LEGGED_SDK::LowCmd udp_low_cmd;
+
+  for (size_t i = 0; i < 12; i++)
+  {
+    udp_low_cmd.motorCmd[i].mode = ros_low_cmd.motorCmd[i].mode;
+    udp_low_cmd.motorCmd[i].q = ros_low_cmd.motorCmd[i].q;
+    udp_low_cmd.motorCmd[i].dq = ros_low_cmd.motorCmd[i].dq;
+    udp_low_cmd.motorCmd[i].Kp = ros_low_cmd.motorCmd[i].Kp;
+    udp_low_cmd.motorCmd[i].Kd = ros_low_cmd.motorCmd[i].Kd;
+    udp_low_cmd.motorCmd[i].tau = ros_low_cmd.motorCmd[i].tau;
+  }
+
+  return udp_low_cmd;
+}
+
+unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state)
+{
+  unitree_legged_msgs::LowState ros_low_state;
+
+  for (size_t i = 0; i < 12; i++)
+  {
+    ros_low_state.motorState[i].mode = udp_low_state.motorState[i].mode;
+    ros_low_state.motorState[i].q = udp_low_state.motorState[i].q;
+    ros_low_state.motorState[i].dq = udp_low_state.motorState[i].dq;
+    ros_low_state.motorState[i].ddq = udp_low_state.motorState[i].ddq;
+    ros_low_state.motorState[i].q_raw = udp_low_state.motorState[i].q_raw;
+    ros_low_state.motorState[i].dq_raw = udp_low_state.motorState[i].dq_raw;
+    ros_low_state.motorState[i].ddq_raw = udp_low_state.motorState[i].ddq_raw;
+    ros_low_state.motorState[i].tauEst = udp_low_state.motorState[i].tauEst;
+    ros_low_state.motorState[i].temperature = udp_low_state.motorState[i].temperature;
+  }
+
+  ros_low_state.imu.accelerometer[0] = udp_low_state.imu.accelerometer[0];
+  ros_low_state.imu.accelerometer[1] = udp_low_state.imu.accelerometer[1];
+  ros_low_state.imu.accelerometer[2] = udp_low_state.imu.accelerometer[2];
+
+  ros_low_state.imu.gyroscope[0] = udp_low_state.imu.gyroscope[0];
+  ros_low_state.imu.gyroscope[1] = udp_low_state.imu.gyroscope[1];
+  ros_low_state.imu.gyroscope[2] = udp_low_state.imu.gyroscope[2];
+
+  ros_low_state.imu.quaternion[0] = udp_low_state.imu.quaternion[0];
+  ros_low_state.imu.quaternion[1] = udp_low_state.imu.quaternion[1];
+  ros_low_state.imu.quaternion[2] = udp_low_state.imu.quaternion[2];
+  ros_low_state.imu.quaternion[3] = udp_low_state.imu.quaternion[3];
+
+  ros_low_state.imu.temperature = udp_low_state.imu.temperature;
+
+  return ros_low_state;
 }
 
 void Body_Manager::init()
@@ -91,11 +156,6 @@ void Body_Manager::init()
   // Initializes the Control FSM with all the required data
   _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler, _desiredStateCommand, &controlParameters, &userParameters);
 
-  _leg_contoller_params[0].zero();
-  _leg_contoller_params[1].zero();
-  _leg_contoller_params[2].zero();
-  _leg_contoller_params[3].zero();
-
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
   server.setCallback(f);
   ROS_INFO("START SERVER");
@@ -103,9 +163,67 @@ void Body_Manager::init()
   controlParameters.control_mode = 0;
 }
 
+void Body_Manager::_readRobotData()
+{
+  //TODO check if we can send only zero struct and recieve falid data and dont crash robot controller
+  udp.SetSend(_udp_low_cmd);
+  //TODO check if TRULY NEW data recieved
+  udp.GetRecv(_udp_low_state);
+
+  _low_state = _udpStateToRos(_udp_low_state);
+
+  for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
+  {
+    spiData.q_abad[leg_num] = _low_state.motorState[leg_num * 3 + 0].q;
+    spiData.q_hip[leg_num] = -_low_state.motorState[leg_num * 3 + 1].q;
+    spiData.q_knee[leg_num] = -_low_state.motorState[leg_num * 3 + 2].q;
+
+    spiData.qd_abad[leg_num] = _low_state.motorState[leg_num * 3 + 0].dq;
+    spiData.qd_hip[leg_num] = -_low_state.motorState[leg_num * 3 + 1].dq;
+    spiData.qd_knee[leg_num] = -_low_state.motorState[leg_num * 3 + 2].dq;
+  }
+
+  is_stand = _low_state.levelFlag;
+
+  vectorNavData.gyro[0] = _low_state.imu.gyroscope[0];
+  vectorNavData.gyro[1] = _low_state.imu.gyroscope[1];
+  vectorNavData.gyro[2] = _low_state.imu.gyroscope[2];
+
+  vectorNavData.accelerometer[0] = _low_state.imu.accelerometer[0];
+  vectorNavData.accelerometer[1] = _low_state.imu.accelerometer[1];
+  vectorNavData.accelerometer[2] = _low_state.imu.accelerometer[2];
+
+  vectorNavData.quat[0] = _low_state.imu.quaternion[0]; // w
+  vectorNavData.quat[1] = _low_state.imu.quaternion[1]; // x
+  vectorNavData.quat[2] = _low_state.imu.quaternion[2]; // y
+  vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
+
+  // Датчики контакта на лапах
+  // for (size_t leg = 0; leg < 4; leg++)
+  // {
+  //   footContactState(leg) = _low_state.footForce[leg];
+  //   //    if
+  //   //    ((_stateEstimator->getResult().contactEstimate[leg]
+  //   //    <= 0.001) &&
+  //   //      (footContactState(leg) == 1) )
+  //   //    {
+  //   ////      std::cout << "EARLY CONTACT" <<
+  //   /// std::endl;
+
+  //   //    }
+  // }
+
+  // _stateEstimator->setContactSensorData(footContactState);
+}
+
 void Body_Manager::run()
 {
   Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
+
+  if (_is_udp_connection)
+  {
+    _readRobotData();
+  }
 
   // Run the state estimator step
   _stateEstimator->run();
@@ -183,7 +301,6 @@ void Body_Manager::finalizeStep()
     _torqueCalculator(&spiCommand, &spiData, &_spi_torque, i);
   }
 
-  static unitree_legged_msgs::LowCmd _low_cmd;
   uint8_t mode[4] = {MOTOR_BREAK};
 
   for (size_t i = 0; i < 4; i++)
@@ -245,9 +362,23 @@ void Body_Manager::finalizeStep()
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
   }
 
+  //convert ros struct ro udp struct
+  _udp_low_cmd = _rosCmdToUpd(_low_cmd);
+  //position limit safety check
+  safe.PositionLimit(_udp_low_cmd);
+  //power protection safety check
+  safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
+
+  //onlu for real robot
+  if (_is_udp_connection)
+  {
+    //put udp struct to udp send transfer process
+    udp.SetSend(_udp_low_cmd);
+  }
+
   _pub_low_cmd.publish(_low_cmd);
-  t1.start();
-  ROS_INFO("pub");
+  // t1.start();
+  // ROS_INFO("pub");
 }
 
 /*!
@@ -285,9 +416,9 @@ void Body_Manager::_initPublishers()
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
 {
-  cout << "timer ns: " << t1.getNs() << endl;
-  cout << "timer ms: " << t1.getMs() << endl;
-  ROS_INFO("calback");
+  // cout << "timer ns: " << t1.getNs() << endl;
+  // cout << "timer ms: " << t1.getMs() << endl;
+  // ROS_INFO("calback");
 
   _low_state = msg;
 
@@ -420,6 +551,7 @@ void Body_Manager::_initParameters()
 
   readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
   readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
+  readRosParam(ros::this_node::getName() + "/udp_connection", _is_udp_connection);
 
   // readRosParam("/control_mode", controlParameters.control_mode);
   // readRosParam("/controller_dt", controlParameters.controller_dt);
@@ -688,8 +820,8 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
   userParameters.use_wbc = config.WBC;
   // userParameters.Swing_Kp_cartesian = Vec3<double>(config.Kp_cartesian_x, config.Kp_cartesian_y, config.Kp_cartesian_z);
   // userParameters.Swing_Kd_cartesian = Vec3<double>(config.Kd_cartesian_x, config.Kd_cartesian_y, config.Kd_cartesian_z);
-  userParameters.Kp_joint = Vec3<double>(config.Kp_joint_0, config.Kp_joint_1, config.Kp_joint_2);
-  userParameters.Kd_joint = Vec3<double>(config.Kd_joint_0, config.Kd_joint_1, config.Kd_joint_2);
+  // userParameters.Kp_joint = Vec3<double>(config.Kp_joint_0, config.Kp_joint_1, config.Kp_joint_2);
+  // userParameters.Kd_joint = Vec3<double>(config.Kd_joint_0, config.Kd_joint_1, config.Kd_joint_2);
   // userParameters.Kp_ori = Vec3<double>(config.Kp_ori_0, config.Kp_ori_1, config.Kp_ori_2);
   // userParameters.Kd_ori = Vec3<double>(config.Kd_ori_0, config.Kd_ori_1, config.Kd_ori_2);
   // userParameters.Kp_body = Vec3<double>(config.Kp_body_0, config.Kp_body_1, config.Kp_body_2);
@@ -702,8 +834,6 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
   //   _legController->commands[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
   //   _legController->commands[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
 
-  //   _leg_contoller_params[i].kpCartesian = Vec3<float>(config.Kp0, config.Kp1, config.Kp2).asDiagonal();
-  //   _leg_contoller_params[i].kdCartesian = Vec3<float>(config.Kd0, config.Kd1, config.Kd2).asDiagonal();
   // }
 
   ROS_INFO_STREAM("New dynamic data!");

@@ -22,6 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 # Eigen find
 find_package (Eigen3 EXACT REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
+set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk")
+set(UNITREE_PLATFORM "amd64")
 
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)
 
@@ -57,7 +59,13 @@ include_directories(
   src/third_party/qpOASES/include
   ${catkin_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}
+  ${UNITREE_LEGGED_SDK_PATH}/include
 )
+
+link_directories(${UNITREE_LEGGED_SDK_PATH}/lib)
+string(CONCAT LEGGED_SDK_NAME libunitree_legged_sdk_${UNITREE_PLATFORM}.so)
+set(EXTRA_LIBS ${LEGGED_SDK_NAME})
+add_definitions(-DSDK3_2)
 
 set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
 -Wextra -Wcast-align -Wdisabled-optimization -Wformat=2 \
@@ -87,5 +95,5 @@ add_dependencies(unitree_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 add_dependencies(unitree_ctrl unitree_legged_msgs_generate_messages_cpp)
 
 #линкуем либы к бинарнику
-target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} be2r_cmpc_unitree_lib Eigen3::Eigen)
+target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} ${EXTRA_LIBS} be2r_cmpc_unitree_lib Eigen3::Eigen)
 add_dependencies(unitree_ctrl ${PROJECT_NAME}_gencfg)

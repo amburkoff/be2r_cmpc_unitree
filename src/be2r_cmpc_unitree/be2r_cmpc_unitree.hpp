@@ -44,6 +44,9 @@
 // BE2R
 #include "debug.hpp"
 
+//Unitree sdk
+#include "unitree_legged_sdk/unitree_legged_sdk.h"
+
 #define MAIN_LOOP_RATE 500
 
 // #define FSM 3
@@ -82,6 +85,9 @@ public:
 
   Timer t1;
 
+  void UDPRecv();
+  void UDPSend();
+
 private:
   ros::NodeHandle _nh;
 
@@ -109,21 +115,32 @@ private:
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
-  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
-                                uint32_t level);
+  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
+
+  //Unitree sdk
+  UNITREE_LEGGED_SDK::Safety safe;
+  UNITREE_LEGGED_SDK::UDP udp;
+  void _readRobotData();
+  UNITREE_LEGGED_SDK::LowCmd _udp_low_cmd = {0};
+  UNITREE_LEGGED_SDK::LowState _udp_low_state = {0};
+  UNITREE_LEGGED_SDK::LowCmd _rosCmdToUpd(unitree_legged_msgs::LowCmd ros_low_cmd);
+  unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
+
+  // void _
 
   Quadruped<float> _quadruped;
   FloatingBaseModel<float> _model;
   LegController<float>* _legController = nullptr;
-  LegControllerCommand<float> _leg_contoller_params[4];
   StateEstimatorContainer<float>* _stateEstimator;
   StateEstimate<float> _stateEstimate;
   DesiredStateCommand<float>* _desiredStateCommand;
   GamepadCommand driverCommand;
   unitree_legged_msgs::LowState _low_state;
+  unitree_legged_msgs::LowCmd _low_cmd;
   tf::TransformBroadcaster odom_broadcaster;
   bool _is_low_level = false;
   bool _is_torque_safe = true;
+  bool _is_udp_connection = true;
 
   spi_torque_t _spi_torque;
 
