@@ -63,7 +63,7 @@ void FSM_State_Testing<T>::run()
   // Vec3<float> p0(0, 0, 0);
   // Vec3<float> p1(0, 0, 0);
   Vec3<float> p0(0, -0.15, -0.2);
-  Vec3<float> p1(0, -0.25, -0.2);
+  Vec3<float> p1(0, -0.25, -0.201);
 
   //near sholder
   //x 0.047
@@ -179,15 +179,16 @@ void FSM_State_Testing<T>::run()
       //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes1(0)) + (1. - progress) * pDes0(0);
       //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes1(1)) + (1. - progress) * pDes0(1);
       //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes1(2)) + (1. - progress) * pDes0(2);
-        this->_data->_legController->commands[foot].tauFeedForward = tau;
+      this->_data->_legController->commands[foot].tauFeedForward = tau;
       //   Vec3<float> L = pDes1 - pDes0;
       //   this->_data->_legController->commands[foot].vDes = L / duration;
+      footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 5);
     }
     else if (flag == 1)
     {
       footSwingTrajectories[foot].setInitialPosition(p1);
       footSwingTrajectories[foot].setFinalPosition(p0);
-
+      footSwingTrajectories[foot].computeSwingTrajectoryModified(progress, 5, 1);
       //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes0(0)) + (1. - progress) * pDes1(0);
       //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes0(1)) + (1. - progress) * pDes1(1);
       //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes0(2)) + (1. - progress) * pDes1(2);
@@ -196,7 +197,7 @@ void FSM_State_Testing<T>::run()
       //   this->_data->_legController->commands[foot].vDes = L / duration;
     }
 
-    footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 5);
+    
 
     Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
     Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
@@ -205,8 +206,15 @@ void FSM_State_Testing<T>::run()
 
     // this->_data->_legController->commands[foot].pDes = pDesLeg;
     // this->_data->_legController->commands[foot].vDes = vDesLeg;
+    // Kp = {150, 0, 0, 0, 150, 0, 0, 0, 150};
+    // Kp_stance = Kp;
+
+    // Kd = {3, 0, 0, 0, 3, 0, 0, 0, 3};
+    // Kd_stance = Kd;
     this->_data->_legController->commands[foot].pDes = pDesFootWorld;
     this->_data->_legController->commands[foot].vDes = vDesFootWorld;
+    // data._legController->commands[foot].kpCartesian = Kp;
+    // data._legController->commands[foot].kdCartesian = Kd;
   }
 
   Vec3<float> p_des = footSwingTrajectories[0].getPosition();

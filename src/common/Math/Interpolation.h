@@ -151,7 +151,7 @@ y_t ShiftedSine(y_t y0, y_t yf, y_t h, x_t t) {
   y_t b = y0 - a;
   x_t sine = x_t(0);
   x_t w = x_t(0);
-  if (abs((yf-b)/a) < 1) {
+  if (abs((yf-b)/a) <= 1) {
     w = 2*pi - asin((yf-b)/a) - phi;
   };
   sine = sin(w*g+phi);//y=f(g(t))
@@ -181,7 +181,7 @@ y_t ShiftedSineFirstDerivative(y_t y0, y_t yf, y_t h, x_t t) {
   y_t b = y0 - a;
   x_t sine = x_t(0);
   x_t w = x_t(0);
-  if (abs((yf-b)/a) < 1) {
+  if (abs((yf-b)/a) <= 1) {
     w = 2*pi - asin((yf-b)/a) - phi;
   };
   sine = w*cos(w*g+phi);//y=f(g(t))
@@ -212,7 +212,7 @@ y_t ShiftedSineSecondDerivative(y_t y0, y_t yf, y_t h, x_t t) {
   y_t b = y0 - a;
   x_t sine = x_t(0);
   x_t w = x_t(0);
-  if (abs((yf-b)/a) < 1) {
+  if (abs((yf-b)/a) <= 1) {
     w = 2*pi - asin((yf-b)/a) - phi;
   };
   sine = -w*w*sin(w*g+phi);//y=f(g(t))
@@ -243,7 +243,7 @@ y_t ShiftedSineSQRT(y_t y0, y_t yf, y_t h, x_t t) {
   y_t b = y0 - a;
   x_t sine = x_t(0);
   x_t w = x_t(0);
-  if (abs((yf-b)/a) < 1) {
+  if (abs((yf-b)/a) <= 1) {
     w = 2*pi - asin((yf-b)/a) - phi;
   };
   sine = sin(w*g+phi);//y=f(g(t))
@@ -274,7 +274,7 @@ y_t ShiftedSineFirstDerivativeSQRT(y_t y0, y_t yf, y_t h, x_t t) {
   y_t b = y0 - a;
   x_t sine = x_t(0);
   x_t w = x_t(0);
-  if (abs((yf-b)/a) < 1) {
+  if (abs((yf-b)/a) <= 1) {
     w = 2*pi - asin((yf-b)/a) - phi;
   };
   x_t df_dg = w*cos(w*g+phi);//y=f(g(t))
@@ -308,7 +308,7 @@ y_t ShiftedSineSecondDerivativeSQRT(y_t y0, y_t yf, y_t h, x_t t) {
   y_t b = y0 - a;
   x_t sine = x_t(0);
   x_t w = x_t(0);
-  if (abs((yf-b)/a) < 1) {
+  if (abs((yf-b)/a) <= 1) {
     w = 2*pi - asin((yf-b)/a) - phi; 
   };
   x_t df_dg = w*cos(w*g+phi);
