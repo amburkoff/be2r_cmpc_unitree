@@ -73,7 +73,4 @@ dynamic_loader:
   gait_switching_phase  : 0.5
   gait_override         : 4
 
-unitree_ctrl:
-  is_low_level: true
-
 
