@@ -44,7 +44,7 @@
 // BE2R
 #include "debug.hpp"
 
-//Unitree sdk
+// Unitree sdk
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
 
 #define MAIN_LOOP_RATE 500
@@ -55,9 +55,9 @@
 #define MOTOR_BREAK 0x00
 #define MOTOR_ON 0x0A
 
-const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
-const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
-const float disabled_torque[3] = {0.f, 0.f, 0.f};
+const float max_max_torque[3] = { 170.f, 170.f, 260.f }; // TODO CHECK WITH BEN
+const float wimp_torque[3] = { 6.f, 6.f, 6.f };          // TODO CHECK WITH BEN
+const float disabled_torque[3] = { 0.f, 0.f, 0.f };
 
 constexpr double PosStopF = (2.146E+9f);
 constexpr double VelStopF = (16000.0f);
@@ -93,6 +93,7 @@ private:
   ros::NodeHandle _nh;
 
   ros::Publisher _pub_low_cmd;
+  ros::Publisher _pub_low_state;
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
   ros::Publisher _pub_joint_states;
@@ -116,14 +117,15 @@ private:
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
-  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
+  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
+                                uint32_t level);
 
-  //Unitree sdk
+  // Unitree sdk
   UNITREE_LEGGED_SDK::Safety safe;
   UNITREE_LEGGED_SDK::UDP udp;
   void _readRobotData();
-  UNITREE_LEGGED_SDK::LowCmd _udp_low_cmd = {0};
-  UNITREE_LEGGED_SDK::LowState _udp_low_state = {0};
+  UNITREE_LEGGED_SDK::LowCmd _udp_low_cmd = { 0 };
+  UNITREE_LEGGED_SDK::LowState _udp_low_state = { 0 };
   UNITREE_LEGGED_SDK::LowCmd _rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd);
   unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
 
@@ -151,7 +153,7 @@ private:
   ControlParameters* _userControlParameters = nullptr;
   MIT_UserParameters userParameters;
 
-  template <typename T>
+  template<typename T>
   bool readRosParam(std::string param_name, T& param_var)
   {
     // if (!_nh.getParam(param_name, param_var))
