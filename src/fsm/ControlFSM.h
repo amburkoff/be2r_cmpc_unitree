@@ -78,7 +78,8 @@ public:
              DesiredStateCommand<T>* _desiredStateCommand,
              RobotControlParameters* controlParameters,
              //  VisualizationData* visualizationData,
-             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters);
+             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
+             Debug* debug);
 
   // Initializes the Control FSM instance
   void initialize();

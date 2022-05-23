@@ -8,6 +8,7 @@
 #include "Dynamics/Quadruped.h"
 #include <ControlParameters/RobotParameters.h>
 #include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
+#include <debug.hpp>
 
 /**
  *
@@ -24,6 +25,7 @@ struct ControlFSMData
   RobotControlParameters* controlParameters;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters;
   VisualizationData* visualizationData;
+  Debug* debug;
 };
 
 template struct ControlFSMData<double>;

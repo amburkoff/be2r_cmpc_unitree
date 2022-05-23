@@ -132,6 +132,12 @@ void FSM_State_Testing<T>::test1()
 template <typename T>
 void FSM_State_Testing<T>::run()
 {
+  test1();
+}
+
+template <typename T>
+void FSM_State_Testing<T>::test2()
+{
   float rate = 1;
   float duration = 1 / rate;
   auto& seResult = this->_data->_stateEstimator->getResult();
@@ -305,8 +311,6 @@ void FSM_State_Testing<T>::run()
   // Vec3<float> p_act = this->_data->_legController->datas[0].p;
   // Vec3<float> q_eval = this->findAngles(0, p_act);
   // cout << "q_eval: " << q_eval << endl;
-
-  test1();
 }
 
 /**
