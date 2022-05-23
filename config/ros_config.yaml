@@ -10,8 +10,8 @@ dynamic_loader:
   Kp_joint_2: 3.0
 
   Kd_joint_0: 1.0
-  Kd_joint_1: 0.2
-  Kd_joint_2: 0.2
+  Kd_joint_1: 1.0
+  Kd_joint_2: 1.0
 
   Kp_ori_0: 100.0
   Kp_ori_1: 100.0
@@ -42,14 +42,14 @@ dynamic_loader:
   Kp_cartesian_0: 150
   Kp_cartesian_1: 150
   Kp_cartesian_2: 150
-  Kd_cartesian_0: 3
-  Kd_cartesian_1: 3
-  Kd_cartesian_2: 3
+  Kd_cartesian_0: 2.5
+  Kd_cartesian_1: 2.5
+  Kd_cartesian_2: 2.5
 
-  body_height: 0.29
+  body_height: 0.24
 
 
-  Swing_traj_height  : 0.09   # Set swing traj top point
+  Swing_traj_height  : 0.06   # Set swing traj top point
 
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC
   cmpc_use_sparse   : 0       # switch between sparce and dense mpc

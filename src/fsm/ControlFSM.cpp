@@ -36,6 +36,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
   data._desiredStateCommand = _desiredStateCommand;
   data.controlParameters = controlParameters;
   data.userParameters = userParameters;
+  data.visualizationData = new VisualizationData();
 
   // Initialize and add all of the FSM States to the state list
   statesList.invalid = nullptr;

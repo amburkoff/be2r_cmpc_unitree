@@ -669,24 +669,30 @@ void Body_Manager::_updatePlot()
     leg_error.v_act[i].z = _legController->datas[i].v(2);
 
     // p desired
-    leg_error.p_des[i].x = _legController->commands[i].pDes(0);
-    leg_error.p_des[i].y = _legController->commands[i].pDes(1);
-    leg_error.p_des[i].z = _legController->commands[i].pDes(2);
+    leg_error.p_des[i].x = _controlFSM->data.visualizationData->pDes[i](0);
+    leg_error.p_des[i].y = _controlFSM->data.visualizationData->pDes[i](1);
+    leg_error.p_des[i].z = _controlFSM->data.visualizationData->pDes[i](2);
 
     // v desired
-    leg_error.v_des[i].x = _legController->commands[i].vDes(0);
-    leg_error.v_des[i].y = _legController->commands[i].vDes(1);
-    leg_error.v_des[i].z = _legController->commands[i].vDes(2);
+    leg_error.v_des[i].x = _controlFSM->data.visualizationData->vDes[i](0);
+    leg_error.v_des[i].y = _controlFSM->data.visualizationData->vDes[i](1);
+    leg_error.v_des[i].z = _controlFSM->data.visualizationData->vDes[i](2);
 
     // p error
-    leg_error.p_error[i].x = _legController->commands[i].pDes(0) - _legController->datas[i].p(0);
-    leg_error.p_error[i].y = _legController->commands[i].pDes(1) - _legController->datas[i].p(1);
-    leg_error.p_error[i].z = _legController->commands[i].pDes(2) - _legController->datas[i].p(2);
+    leg_error.p_error[i].x =
+      _controlFSM->data.visualizationData->pDes[i](0) - _legController->datas[i].p(0);
+    leg_error.p_error[i].y =
+      _controlFSM->data.visualizationData->pDes[i](1) - _legController->datas[i].p(1);
+    leg_error.p_error[i].z =
+      _controlFSM->data.visualizationData->pDes[i](2) - _legController->datas[i].p(2);
 
     // v error
-    leg_error.v_error[i].x = _legController->commands[i].vDes(0) - _legController->datas[i].v(0);
-    leg_error.v_error[i].y = _legController->commands[i].vDes(1) - _legController->datas[i].v(1);
-    leg_error.v_error[i].z = _legController->commands[i].vDes(2) - _legController->datas[i].v(2);
+    leg_error.v_error[i].x =
+      _controlFSM->data.visualizationData->vDes[i](0) - _legController->datas[i].v(0);
+    leg_error.v_error[i].y =
+      _controlFSM->data.visualizationData->vDes[i](1) - _legController->datas[i].v(1);
+    leg_error.v_error[i].z =
+      _controlFSM->data.visualizationData->vDes[i](2) - _legController->datas[i].v(2);
 
     // q des
     leg_error.q_des[i].x = spiCommand.q_des_abad[i];

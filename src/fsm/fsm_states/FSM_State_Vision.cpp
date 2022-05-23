@@ -245,7 +245,7 @@ void FSM_State_Vision<T>::_RCLocomotionControl()
 {
   cMPCOld.run<T>(*this->_data);
 
-  if (this->_data->userParameters->use_wbc > 0.9)
+  if (this->_data->userParameters->use_wbc)
   {
     _wbc_data->pBody_des = cMPCOld.pBody_des;
     _wbc_data->vBody_des = cMPCOld.vBody_des;
@@ -773,7 +773,7 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
   vision_MPC.run(*this->_data, des_vel, _grid_map);
   //  vision_MPC.run<T>(*this->_data, des_vel, _height_map, idx_map);
 
-  if (this->_data->userParameters->use_wbc > 0.9)
+  if (this->_data->userParameters->use_wbc)
   {
     _wbc_data->pBody_des = vision_MPC.pBody_des;
     _wbc_data->vBody_des = vision_MPC.vBody_des;
