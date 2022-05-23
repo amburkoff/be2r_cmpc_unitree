@@ -459,6 +459,14 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       vFoot_des[foot] = vDesFootWorld;
       aFoot_des[foot] = footSwingTrajectories[foot].getAcceleration();
 
+      data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
+      data.debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
+      data.debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
+
+      data.debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
+      data.debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
+      data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
+
       if (!data.userParameters->use_wbc)
       {
         // Update leg control command regardless of the usage of WBIC
@@ -545,6 +553,14 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       //            cout << "Foot " << foot << " force: " <<
       //            f_ff[foot].transpose() << "\n";
       se_contactState[foot] = contactState;
+
+      data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
+      data.debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
+      data.debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
+
+      data.debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
+      data.debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
+      data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
 
       // Update for WBC
       // Fr_des[foot] = -f_ff[foot];
