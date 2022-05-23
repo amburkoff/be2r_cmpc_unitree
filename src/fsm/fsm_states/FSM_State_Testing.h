@@ -20,6 +20,7 @@ public:
   void run();
 
   void test1();
+  void test2();
 
   // Checks for any transition triggers
   FSM_StateName checkTransition();

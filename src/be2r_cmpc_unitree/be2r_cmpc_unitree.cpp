@@ -3,9 +3,7 @@
 using namespace std;
 
 Body_Manager::Body_Manager()
-  : _zero_time(0)
-  , safe(UNITREE_LEGGED_SDK::LeggedType::A1)
-  , udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+    : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
@@ -44,8 +42,7 @@ UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCm
   return udp_low_cmd;
 }
 
-unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(
-  UNITREE_LEGGED_SDK::LowState udp_low_state)
+unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state)
 {
   unitree_legged_msgs::LowState ros_low_state;
 
@@ -107,6 +104,7 @@ void Body_Manager::init()
   }
 
   printf("Loaded robot parameters\n");
+
   // TODO: check exist
   if (_is_param_updated)
   {
@@ -125,15 +123,15 @@ void Body_Manager::init()
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
 
+  _debug = new Debug(_time_start);
+
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(
-    &vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &controlParameters);
+  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &controlParameters);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(
-    &driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
+  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, controlParameters.controller_dt);
@@ -141,7 +139,7 @@ void Body_Manager::init()
   // Initializes the Control FSM with all the
   // required data
   _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
-                                      _desiredStateCommand, &controlParameters, &_rosParameters);
+                                      _desiredStateCommand, &controlParameters, &_rosParameters, _debug);
 
   controlParameters.control_mode = 0;
 }
@@ -259,9 +257,9 @@ void Body_Manager::run()
   }
 #endif
 
-  _updateVisualization();
-  _updatePlot();
-  _tfPublish();
+  _debug->updateVisualization();
+  _debug->updatePlot();
+  _debug->tfPublish();
 }
 
 void Body_Manager::setupStep()
@@ -278,16 +276,77 @@ void Body_Manager::setupStep()
 
 void Body_Manager::finalizeStep()
 {
-  _legController->updateCommand(&spiCommand);
+  ros::Duration delta_t = ros::Time::now() - _time_start;
 
+  _legController->updateCommand(&spiCommand);
   _iterations++;
+
+  _debug->all_legs_info.header.stamp = _zero_time + delta_t;
+
+  //put actual body info
+  _debug->body_info.pos_act.x = _stateEstimator->getResult().position.x();
+  _debug->body_info.pos_act.y = _stateEstimator->getResult().position.y();
+  _debug->body_info.pos_act.z = _stateEstimator->getResult().position.z();
+
+  _debug->body_info.vel_act.linear.x = _stateEstimator->getResult().vBody[0];
+  _debug->body_info.vel_act.linear.y = _stateEstimator->getResult().vBody[1];
+  _debug->body_info.vel_act.linear.z = _stateEstimator->getResult().vBody[2];
+
+  _debug->body_info.quat_act.x = _stateEstimator->getResult().orientation.x();
+  _debug->body_info.quat_act.y = _stateEstimator->getResult().orientation.y();
+  _debug->body_info.quat_act.z = _stateEstimator->getResult().orientation.z();
+  _debug->body_info.quat_act.w = _stateEstimator->getResult().orientation.w();
+
+  _debug->body_info.euler_act.x = _stateEstimator->getResult().rpy[0];
+  _debug->body_info.euler_act.y = _stateEstimator->getResult().rpy[1];
+  _debug->body_info.euler_act.z = _stateEstimator->getResult().rpy[2];
+
+  _debug->body_info.vel_act.angular.x = _stateEstimator->getResult().omegaBody[0];
+  _debug->body_info.vel_act.angular.y = _stateEstimator->getResult().omegaBody[1];
+  _debug->body_info.vel_act.angular.z = _stateEstimator->getResult().omegaBody[2];
+
+  //put actual q and dq in debug class
+  for (size_t leg_num = 0; leg_num < 4; leg_num++)
+  {
+    _debug->all_legs_info.leg.at(leg_num).joint.at(0).q = spiData.q_abad[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(1).q = -spiData.q_hip[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(2).q = -spiData.q_knee[leg_num];
+
+    _debug->all_legs_info.leg.at(leg_num).joint.at(0).dq = spiData.qd_abad[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(1).dq = -spiData.qd_hip[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(2).dq = -spiData.qd_knee[leg_num];
+
+    _debug->all_legs_info.leg.at(leg_num).joint.at(0).Kp_joint = spiCommand.kp_abad[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(1).Kp_joint = spiCommand.kp_hip[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(2).Kp_joint = spiCommand.kp_knee[leg_num];
+
+    _debug->all_legs_info.leg.at(leg_num).joint.at(0).Kd_joint = spiCommand.kd_abad[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(1).Kd_joint = spiCommand.kd_hip[leg_num];
+    _debug->all_legs_info.leg.at(leg_num).joint.at(2).Kd_joint = spiCommand.kd_knee[leg_num];
+
+    _debug->all_legs_info.leg.at(leg_num).p_act.x = _legController->datas[leg_num].p[0];
+    _debug->all_legs_info.leg.at(leg_num).p_act.y = _legController->datas[leg_num].p[1];
+    _debug->all_legs_info.leg.at(leg_num).p_act.z = _legController->datas[leg_num].p[2];
+
+    _debug->all_legs_info.leg.at(leg_num).v_act.x = _legController->datas[leg_num].v[0];
+    _debug->all_legs_info.leg.at(leg_num).v_act.y = _legController->datas[leg_num].v[1];
+    _debug->all_legs_info.leg.at(leg_num).v_act.z = _legController->datas[leg_num].v[2];
+
+    _debug->all_legs_info.leg.at(leg_num).p_des.x = _legController->commands[leg_num].pDes[0];
+    _debug->all_legs_info.leg.at(leg_num).p_des.y = _legController->commands[leg_num].pDes[1];
+    _debug->all_legs_info.leg.at(leg_num).p_des.z = _legController->commands[leg_num].pDes[2];
+
+    _debug->all_legs_info.leg.at(leg_num).v_des.x = _legController->commands[leg_num].vDes[0];
+    _debug->all_legs_info.leg.at(leg_num).v_des.y = _legController->commands[leg_num].vDes[1];
+    _debug->all_legs_info.leg.at(leg_num).v_des.z = _legController->commands[leg_num].vDes[2];
+  }
 
   for (int i = 0; i < 4; i++)
   {
     _torqueCalculator(&spiCommand, &spiData, &_spi_torque, i);
   }
 
-  uint8_t mode[4] = { MOTOR_BREAK };
+  uint8_t mode[4] = {MOTOR_BREAK};
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -301,8 +360,6 @@ void Body_Manager::finalizeStep()
     }
   }
 
-  ros::Duration delta_t = ros::Time::now() - _time_start;
-  // _low_cmd.header.stamp = ros::Time::now();
   _low_cmd.header.stamp = _zero_time + delta_t;
 
   for (uint8_t leg = 0; leg < 4; leg++)
@@ -399,10 +456,6 @@ void Body_Manager::_initPublishers()
 {
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
   _pub_low_state = _nh.advertise<unitree_legged_msgs::LowState>("/low_state", 1);
-  _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
-  _pub_state_error = _nh.advertise<unitree_legged_msgs::StateError>("/state_error", 1);
-  _pub_leg_error = _nh.advertise<unitree_legged_msgs::LegError>("/leg_error", 1);
-  _pub_parameters = _nh.advertise<unitree_legged_msgs::Parameters>("/parameters", 1);
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
@@ -478,19 +531,19 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
   if (_legController->is_low_level == false)
   {
     torque_out->tau_abad[board_num] =
-      cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
-      cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
-      cmd->tau_abad_ff[board_num];
+        cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
+        cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
+        cmd->tau_abad_ff[board_num];
 
     torque_out->tau_hip[board_num] =
-      cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
-      cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
-      cmd->tau_hip_ff[board_num];
+        cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
+        cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
+        cmd->tau_hip_ff[board_num];
 
     torque_out->tau_knee[board_num] =
-      cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
-      cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
-      cmd->tau_knee_ff[board_num];
+        cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
+        cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
+        cmd->tau_knee_ff[board_num];
   }
   else
   {
@@ -501,8 +554,8 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
     torque_out->tau_knee[board_num] = cmd->tau_knee_ff[board_num];
   }
 
-  const float safe_torque[3] = { 4.f, 4.f, 4.f };
-  const float max_torque[3] = { 17.f, 17.f, 26.f };
+  const float safe_torque[3] = {4.f, 4.f, 4.f};
+  const float max_torque[3] = {17.f, 17.f, 26.f};
   const float* torque_limits;
 
   if (_is_torque_safe)
@@ -542,190 +595,12 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
 
 void Body_Manager::_initParameters()
 {
-
   readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
   readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
   readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
 }
 
-void Body_Manager::_updateVisualization()
-{
-  sensor_msgs::JointState msg;
-
-  msg.header.stamp = ros::Time::now();
-
-  msg.name.push_back("FR_hip_joint");
-  msg.name.push_back("FR_thigh_joint");
-  msg.name.push_back("FR_calf_joint");
-
-  msg.name.push_back("FL_hip_joint");
-  msg.name.push_back("FL_thigh_joint");
-  msg.name.push_back("FL_calf_joint");
-
-  msg.name.push_back("RR_hip_joint");
-  msg.name.push_back("RR_thigh_joint");
-  msg.name.push_back("RR_calf_joint");
-
-  msg.name.push_back("RL_hip_joint");
-  msg.name.push_back("RL_thigh_joint");
-  msg.name.push_back("RL_calf_joint");
-
-  for (uint8_t joint_num = 0; joint_num < 12; joint_num++)
-  {
-    msg.position.push_back(_low_state.motorState[joint_num].q);
-    msg.velocity.push_back(_low_state.motorState[joint_num].dq);
-  }
-
-  _pub_joint_states.publish(msg);
-}
-
-void Body_Manager::_tfPublish()
-{
-  geometry_msgs::TransformStamped odom_trans;
-
-  odom_trans.header.stamp = ros::Time::now();
-  odom_trans.header.frame_id = "odom";
-  odom_trans.child_frame_id = "base";
-
-  odom_trans.transform.translation.x = _stateEstimator->getResult().position.x();
-  odom_trans.transform.translation.y = _stateEstimator->getResult().position.y();
-  odom_trans.transform.translation.z = _stateEstimator->getResult().position.z();
-
-  geometry_msgs::Quaternion odom_quat;
-  // TODO почему результаты естиматора приходится менять местами?
-  odom_quat.x = _stateEstimator->getResult().orientation.y();
-  odom_quat.y = _stateEstimator->getResult().orientation.z();
-  odom_quat.z = _stateEstimator->getResult().orientation.w();
-  odom_quat.w = _stateEstimator->getResult().orientation.x();
-  odom_trans.transform.rotation = odom_quat;
-
-  odom_broadcaster.sendTransform(odom_trans);
-}
-
-void Body_Manager::_updatePlot()
-{
-  unitree_legged_msgs::StateError msg;
-
-  ros::Duration delta_t = ros::Time::now() - _time_start;
-  // msg.header.stamp = ros::Time::now();
-  msg.header.stamp = _zero_time + delta_t;
-
-  static float x_vel_cmd, y_vel_cmd, yaw_turn_rate, x_vel_des, y_vel_des, yaw_des, roll_des,
-    pitch_des;
-  float filter = 0.1;
-  float dt = controlParameters.controller_dt;
-
-  yaw_turn_rate = _desiredStateCommand->rightAnalogStick[0];
-  x_vel_cmd = _desiredStateCommand->leftAnalogStick[1];
-  y_vel_cmd = _desiredStateCommand->leftAnalogStick[0];
-
-  Eigen::Vector3f v_act;
-  Eigen::Vector3f w_act;
-  v_act = _stateEstimator->getResult().vBody;
-  w_act = _stateEstimator->getResult().omegaBody;
-
-  // float* p = seResult.position.data();
-  // float* v = seResult.vWorld.data();
-  // float* w = seResult.omegaWorld.data();
-  // float* q = seResult.orientation.data();
-
-  // msg.pose.position.x = _stateEstimator->getResult().position
-
-  yaw_des = _stateEstimator->getResult().rpy[2] + dt * yaw_turn_rate;
-  roll_des = 0.;
-  pitch_des = 0.;
-  x_vel_des = x_vel_des * (1 - filter) + x_vel_cmd * filter;
-  y_vel_des = y_vel_des * (1 - filter) + y_vel_cmd * filter;
-
-  msg.pose.orientation.x = 0 - _stateEstimator->getResult().rpy[0];
-  msg.pose.orientation.y = 0 - _stateEstimator->getResult().rpy[1];
-  msg.pose.orientation.z = yaw_des - _stateEstimator->getResult().rpy[2];
-
-  msg.twist.linear.x = x_vel_des - v_act(0);
-  msg.twist.linear.y = y_vel_des - v_act(1);
-  msg.twist.linear.z = 0 - v_act(2);
-
-  msg.twist.angular.x = roll_des - w_act(0);
-  msg.twist.angular.y = pitch_des - w_act(1);
-  msg.twist.angular.z = yaw_turn_rate - w_act(2);
-
-  _pub_state_error.publish(msg);
-
-  unitree_legged_msgs::LegError leg_error;
-
-  leg_error.header = msg.header;
-
-  // for all legs
-  for (size_t i = 0; i < 4; i++)
-  {
-    // p actual
-    leg_error.p_act[i].x = _legController->datas[i].p(0);
-    leg_error.p_act[i].y = _legController->datas[i].p(1);
-    leg_error.p_act[i].z = _legController->datas[i].p(2);
-
-    // v actual
-    leg_error.v_act[i].x = _legController->datas[i].v(0);
-    leg_error.v_act[i].y = _legController->datas[i].v(1);
-    leg_error.v_act[i].z = _legController->datas[i].v(2);
-
-    // p desired
-    leg_error.p_des[i].x = _controlFSM->data.visualizationData->pDes[i](0);
-    leg_error.p_des[i].y = _controlFSM->data.visualizationData->pDes[i](1);
-    leg_error.p_des[i].z = _controlFSM->data.visualizationData->pDes[i](2);
-
-    // v desired
-    leg_error.v_des[i].x = _controlFSM->data.visualizationData->vDes[i](0);
-    leg_error.v_des[i].y = _controlFSM->data.visualizationData->vDes[i](1);
-    leg_error.v_des[i].z = _controlFSM->data.visualizationData->vDes[i](2);
-
-    // p error
-    leg_error.p_error[i].x =
-      _controlFSM->data.visualizationData->pDes[i](0) - _legController->datas[i].p(0);
-    leg_error.p_error[i].y =
-      _controlFSM->data.visualizationData->pDes[i](1) - _legController->datas[i].p(1);
-    leg_error.p_error[i].z =
-      _controlFSM->data.visualizationData->pDes[i](2) - _legController->datas[i].p(2);
-
-    // v error
-    leg_error.v_error[i].x =
-      _controlFSM->data.visualizationData->vDes[i](0) - _legController->datas[i].v(0);
-    leg_error.v_error[i].y =
-      _controlFSM->data.visualizationData->vDes[i](1) - _legController->datas[i].v(1);
-    leg_error.v_error[i].z =
-      _controlFSM->data.visualizationData->vDes[i](2) - _legController->datas[i].v(2);
-
-    // q des
-    leg_error.q_des[i].x = spiCommand.q_des_abad[i];
-    leg_error.q_des[i].y = spiCommand.q_des_hip[i];
-    leg_error.q_des[i].z = spiCommand.q_des_knee[i];
-
-    // dq des
-    leg_error.dq_des[i].x = spiCommand.qd_des_abad[i];
-    leg_error.dq_des[i].y = spiCommand.qd_des_hip[i];
-    leg_error.dq_des[i].z = spiCommand.qd_des_knee[i];
-  }
-
-  _pub_leg_error.publish(leg_error);
-
-  unitree_legged_msgs::Parameters param_msg;
-
-  param_msg.header = msg.header;
-
-  param_msg.Kp_cartesian.x = _legController->commands[0].kpCartesian(0);
-  param_msg.Kp_cartesian.y = _legController->commands[0].kpCartesian(4);
-  param_msg.Kp_cartesian.z = _legController->commands[0].kpCartesian(8);
-
-  param_msg.Kd_cartesian.x = _legController->commands[0].kdCartesian(0);
-  param_msg.Kd_cartesian.y = _legController->commands[0].kdCartesian(4);
-  param_msg.Kd_cartesian.z = _legController->commands[0].kdCartesian(8);
-
-  param_msg.saturation = _legController->commands[0].i_saturation;
-
-  _pub_parameters.publish(param_msg);
-}
-
-void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
-                                            uint32_t level)
+void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
 {
   (void)level;
   _is_param_updated = true;

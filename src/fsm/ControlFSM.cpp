@@ -26,7 +26,8 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
                           LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
                           DesiredStateCommand<T>* _desiredStateCommand,
                           RobotControlParameters* controlParameters,
-                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters)
+                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
+                          Debug* debug)
 {
   // Add the pointers to the ControlFSMData struct
   data._quadruped = _quadruped;
@@ -36,7 +37,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
   data._desiredStateCommand = _desiredStateCommand;
   data.controlParameters = controlParameters;
   data.userParameters = userParameters;
-  data.visualizationData = new VisualizationData();
+  data.debug = debug;
 
   // Initialize and add all of the FSM States to the state list
   statesList.invalid = nullptr;
