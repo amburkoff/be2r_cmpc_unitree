@@ -144,7 +144,14 @@ y_t ShiftedSine(y_t y0, y_t yf, y_t h, x_t t) {
   static_assert(std::is_floating_point<y_t>::value,
                 "must specify input h>0 and yf-y0>=0");
   assert(h > 0 );//&& yf-y0 >= 0
+  y0 = x_t(0.5)*(yf+y0-abs(yf-y0)); // if yf-y0 < 0 then we mirrored our interpolate function: y0=yf, yf = y0,h = h+abs(yf-y0)
+  yf = x_t(0.5)*(yf+y0+abs(yf-y0));
+  h = h + x_t(0.5)*(abs(yf-y0)-(yf-y0));
+  if (yf-y0 < 0){
+    t = x_t(1) - t;
+  }
   x_t g = t;
+
   x_t pi = x_t(acos(-1));
   x_t phi = pi/x_t(2);
   y_t a = -h/x_t(2);
@@ -174,6 +181,12 @@ y_t ShiftedSineFirstDerivative(y_t y0, y_t yf, y_t h, x_t t) {
   static_assert(std::is_floating_point<y_t>::value,
                 "must specify input h>0 and yf-y0>=0");
   assert(h > 0 );//&& yf-y0 >= 0
+  y0 = x_t(0.5)*(yf+y0-abs(yf-y0)); // if yf-y0 < 0 then we mirrored our interpolate function: y0=yf, yf = y0,h = h+abs(yf-y0)
+  yf = x_t(0.5)*(yf+y0+abs(yf-y0));
+  h = h + x_t(0.5)*(abs(yf-y0)-(yf-y0));
+  if (yf-y0 < 0){
+    t = x_t(1) - t;
+  }
   x_t g = t;
   x_t pi = x_t(acos(-1));
   x_t phi = pi/x_t(2);
@@ -205,6 +218,12 @@ y_t ShiftedSineSecondDerivative(y_t y0, y_t yf, y_t h, x_t t) {
   static_assert(std::is_floating_point<y_t>::value,
                 "must specify input h>0 and yf-y0>=0");
   assert(h > 0);// && yf-y0 >= 0
+  y0 = x_t(0.5)*(yf+y0-abs(yf-y0)); // if yf-y0 < 0 then we mirrored our interpolate function: y0=yf, yf = y0,h = h+abs(yf-y0)
+  yf = x_t(0.5)*(yf+y0+abs(yf-y0));
+  h = h + x_t(0.5)*(abs(yf-y0)-(yf-y0));
+  if (yf-y0 < 0){
+    t = x_t(1) - t;
+  }
   x_t g = t;
   x_t pi = x_t(acos(-1));
   x_t phi = pi/x_t(2);
@@ -235,6 +254,12 @@ y_t ShiftedSineSQRT(y_t y0, y_t yf, y_t h, x_t t) {
   static_assert(std::is_floating_point<y_t>::value,
                 "must specify input h>0 and yf-y0>=0");
   assert(h > 0); // && yf-y0 >= 0
+    y0 = x_t(0.5)*(yf+y0-abs(yf-y0)); // if yf-y0 < 0 then we mirrored our interpolate function: y0=yf, yf = y0,h = h+abs(yf-y0)
+  yf = x_t(0.5)*(yf+y0+abs(yf-y0));
+  h = h + x_t(0.5)*(abs(yf-y0)-(yf-y0));
+  if (yf-y0 < 0){
+    t = x_t(1) - t;
+  }
   x_t g = sqrt(x_t(1.2)*t+x_t(0.01))-x_t(0.1); //g(t) -- is a new basis function
   //d2y/d2t = d2f/d2g * (dg/dt)^2 + df/dg * d2g/d2t - differentiation rule
   x_t pi = x_t(acos(-1));
@@ -266,6 +291,12 @@ y_t ShiftedSineFirstDerivativeSQRT(y_t y0, y_t yf, y_t h, x_t t) {
   static_assert(std::is_floating_point<y_t>::value,
                 "must specify input h>0 and yf-y0>=0");
   assert(h > 0); //&& yf-y0 >= 0
+  y0 = x_t(0.5)*(yf+y0-abs(yf-y0)); // if yf-y0 < 0 then we mirrored our interpolate function: y0=yf, yf = y0,h = h+abs(yf-y0)
+  yf = x_t(0.5)*(yf+y0+abs(yf-y0));
+  h = h + x_t(0.5)*(abs(yf-y0)-(yf-y0));
+  if (yf-y0 < 0){
+    t = x_t(1) - t;
+  }
   x_t g = sqrt(x_t(1.2)*t+x_t(0.01))-x_t(0.1); //g(t) -- is a new basis function
   //d2y/d2t = d2f/d2g * (dg/dt)^2 + df/dg * d2g/d2t - differentiation rule
   x_t pi = x_t(acos(-1));
@@ -300,6 +331,12 @@ y_t ShiftedSineSecondDerivativeSQRT(y_t y0, y_t yf, y_t h, x_t t) {
   static_assert(std::is_floating_point<y_t>::value,
                 "must specify input h>0 and yf-y0>=0");
   assert(h > 0);// && yf-y0 >= 0
+  y0 = x_t(0.5)*(yf+y0-abs(yf-y0)); // if yf-y0 < 0 then we mirrored our interpolate function: y0=yf, yf = y0,h = h+abs(yf-y0)
+  yf = x_t(0.5)*(yf+y0+abs(yf-y0));
+  h = h + x_t(0.5)*(abs(yf-y0)-(yf-y0));
+  if (yf-y0 < 0){
+    t = x_t(1) - t;
+  }
   x_t g = sqrt(x_t(1.2)*t+x_t(0.01))-x_t(0.1); //g(t) -- is a new basis function
   //d2y/d2t = d2f/d2g * (dg/dt)^2 + df/dg * d2g/d2t - differentiation rule
   x_t pi = x_t(acos(-1));
