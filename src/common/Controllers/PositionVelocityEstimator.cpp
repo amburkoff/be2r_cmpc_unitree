@@ -102,9 +102,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
     int i1 = 3 * i;
     Quadruped<T>& quadruped = *(this->_stateEstimatorData.legControllerData->quadruped);
     Vec3<T> ph = quadruped.getHipLocation(i); // hip positions relative to CoM
-    // hw_i->leg_controller->leg_datas[i].p;
     Vec3<T> p_rel = ph + this->_stateEstimatorData.legControllerData[i].p;
-    // hw_i->leg_controller->leg_datas[i].v;
     Vec3<T> dp_rel = this->_stateEstimatorData.legControllerData[i].v;
     Vec3<T> p_f = Rbod * p_rel;
     Vec3<T> dp_f = Rbod * (this->_stateEstimatorData.result->omegaBody.cross(p_rel) + dp_rel);
@@ -131,13 +129,10 @@ void LinearKFPositionVelocityEstimator<T>::run()
     T high_suspect_number(100);
 
     // printf("Trust %d: %.3f\n", i, trust);
-    Q.block(qindex, qindex, 3, 3) =
-        (T(1) + (T(1) - trust) * high_suspect_number) * Q.block(qindex, qindex, 3, 3);
+    Q.block(qindex, qindex, 3, 3) = (T(1) + (T(1) - trust) * high_suspect_number) * Q.block(qindex, qindex, 3, 3);
     R.block(rindex1, rindex1, 3, 3) = 1 * R.block(rindex1, rindex1, 3, 3);
-    R.block(rindex2, rindex2, 3, 3) =
-        (T(1) + (T(1) - trust) * high_suspect_number) * R.block(rindex2, rindex2, 3, 3);
-    R(rindex3, rindex3) =
-        (T(1) + (T(1) - trust) * high_suspect_number) * R(rindex3, rindex3);
+    R.block(rindex2, rindex2, 3, 3) = (T(1) + (T(1) - trust) * high_suspect_number) * R.block(rindex2, rindex2, 3, 3);
+    R(rindex3, rindex3) = (T(1) + (T(1) - trust) * high_suspect_number) * R(rindex3, rindex3);
 
     trusts(i) = trust;
 

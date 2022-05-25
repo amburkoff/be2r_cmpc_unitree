@@ -122,8 +122,6 @@ public:
    */
   const StateEstimate<T>& getResult()
   {
-    // std::cout << "[StateEstimate] getResult func start" << std::endl;
-
     return *_data.result;
   }
 
@@ -156,18 +154,25 @@ public:
     _data.result->swingProgress = phase;
   }
 
-
   /*!
    * Set the contact state (binary)
    */
   void setContactSensorData(Vec4<uint8_t>& state)
   {
     *_data.contactSensor = state;
+
+    // std::cout << "&: " << (int)state(0) << " data: " << _data.contactSensor[0] << " end" << std::endl;
   }
 
   void setContactSensorData(Vec4<uint8_t>* state)
   {
     _data.contactSensor = state;
+  }
+
+  Vec4<uint8_t> getContactSensorData()
+  {
+    // std::cout << " get data: " << _data.contactSensor[0] << " end" << std::endl;
+    return *_data.contactSensor;
   }
 
   /*!
@@ -191,21 +196,19 @@ public:
   void removeEstimator()
   {
     int nRemoved = 0;
-    _estimators.erase(
-        std::remove_if(_estimators.begin(), _estimators.end(),
-                       [&nRemoved](GenericEstimator<T>* e) {
-                         if (dynamic_cast<EstimatorToRemove*>(e))
-                         {
-                           delete e;
-                           nRemoved++;
-                           return true;
-                         }
-                         else
-                         {
-                           return false;
-                         }
-                       }),
-        _estimators.end());
+    _estimators.erase(std::remove_if(_estimators.begin(), _estimators.end(), [&nRemoved](GenericEstimator<T>* e) {
+                        if (dynamic_cast<EstimatorToRemove*>(e))
+                        {
+                          delete e;
+                          nRemoved++;
+                          return true;
+                        }
+                        else
+                        {
+                          return false;
+                        }
+                      }),
+                      _estimators.end());
   }
 
   /*!

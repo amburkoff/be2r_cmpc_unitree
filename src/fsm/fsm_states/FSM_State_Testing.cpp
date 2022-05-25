@@ -23,6 +23,19 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData) : FS
   // Post control safety checks
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
+
+  CMPC = new CMPCLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+
+  this->turnOnAllSafetyChecks();
+
+  // Turn off Foot pos command since it is set in WBC as operational task
+  this->checkPDesFoot = false;
+
+  // Initialize GRF and footstep locations to 0s
+  this->footFeedForwardForces = Mat34<T>::Zero();
+  this->footstepLocations = Mat34<T>::Zero();
+  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->_quadruped->buildModel());
+  _wbc_data = new LocomotionCtrlData<T>();
 }
 
 template <typename T>
@@ -34,7 +47,9 @@ void FSM_State_Testing<T>::onEnter()
   // Reset the transition data
   this->transitionData.zero();
 
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  CMPC->initialize();
+
+  this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
 
   // Reset iteration counter
   iter = 0;
@@ -42,9 +57,6 @@ void FSM_State_Testing<T>::onEnter()
   for (size_t leg(0); leg < 4; ++leg)
   {
     _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
-
-    // pFoot[leg] = seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(leg) + this->_data->_legController->datas[leg].p);
-    // pFoot[leg] = Vec3<float>(-0, -0.15, -0.2);
 
     firstSwing[leg] = true;
   }
@@ -132,7 +144,8 @@ void FSM_State_Testing<T>::test1()
 template <typename T>
 void FSM_State_Testing<T>::run()
 {
-  test1();
+  // test1();
+  LocomotionControlStep();
 }
 
 template <typename T>
@@ -388,7 +401,104 @@ void FSM_State_Testing<T>::onExit()
   // this->_data->_legController->zeroCommand();
 
   this->_data->_legController->setEnabled(false);
-  // this->_data->_legController->is_low_level = true;
+}
+
+template <typename T>
+void FSM_State_Testing<T>::LocomotionControlStep()
+{
+  // Contact state logic
+  // estimateContact();
+
+  CMPC->run<T>(*this->_data);
+
+  Vec3<T> pDes_backup[4];
+  Vec3<T> vDes_backup[4];
+  Mat3<T> Kp_backup[4];
+  Mat3<T> Kd_backup[4];
+
+  for (int leg(0); leg < 4; ++leg)
+  {
+    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+  }
+
+  if (this->_data->userParameters->use_wbc > 0.9)
+  {
+    _wbc_data->pBody_des = CMPC->pBody_des;
+    _wbc_data->vBody_des = CMPC->vBody_des;
+    _wbc_data->aBody_des = CMPC->aBody_des;
+
+    _wbc_data->pBody_RPY_des = CMPC->pBody_RPY_des;
+    _wbc_data->vBody_Ori_des = CMPC->vBody_Ori_des;
+
+    for (size_t i(0); i < 4; ++i)
+    {
+      _wbc_data->pFoot_des[i] = CMPC->pFoot_des[i];
+      _wbc_data->vFoot_des[i] = CMPC->vFoot_des[i];
+      _wbc_data->aFoot_des[i] = CMPC->aFoot_des[i];
+      _wbc_data->Fr_des[i] = CMPC->Fr_des[i];
+    }
+    _wbc_data->contact_state = CMPC->contact_state;
+    _wbc_ctrl->run(_wbc_data, *this->_data);
+  }
+
+  for (int leg(0); leg < 4; ++leg)
+  {
+    //originally commented
+    this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
+    this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
+
+    this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
+    this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
+  }
+}
+
+template <typename T>
+bool FSM_State_Testing<T>::locomotionSafe()
+{
+  auto& seResult = this->_data->_stateEstimator->getResult();
+
+  const T max_roll = 40;
+  const T max_pitch = 40;
+
+  if (std::fabs(seResult.rpy[0]) > ori::deg2rad(max_roll))
+  {
+    printf("Unsafe locomotion: roll is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[0]), max_roll);
+    return false;
+  }
+
+  if (std::fabs(seResult.rpy[1]) > ori::deg2rad(max_pitch))
+  {
+    printf("Unsafe locomotion: pitch is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[1]), max_pitch);
+    return false;
+  }
+
+  for (int leg = 0; leg < 4; leg++)
+  {
+    auto p_leg = this->_data->_legController->datas[leg].p;
+    if (p_leg[2] > 0)
+    {
+      printf("Unsafe locomotion: leg %d is above hip (%.3f m)\n", leg, p_leg[2]);
+      return false;
+    }
+
+    if (std::fabs(p_leg[1] > 0.18))
+    {
+      printf("Unsafe locomotion: leg %d's y-position is bad (%.3f m)\n", leg, p_leg[1]);
+      return false;
+    }
+
+    auto v_leg = this->_data->_legController->datas[leg].v.norm();
+    if (std::fabs(v_leg) > 9.)
+    {
+      printf("Unsafe locomotion: leg %d is moving too quickly (%.3f m/s)\n", leg, v_leg);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 // template class FSM_State_Testing<double>;

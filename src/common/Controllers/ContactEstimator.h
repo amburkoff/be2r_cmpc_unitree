@@ -28,8 +28,10 @@ public:
   {
     // На данный момент никакой обработки данных нет
     this->_stateEstimatorData.result->contactEstimate = *this->_stateEstimatorData.contactPhase;
-    if (this->_stateEstimatorData.contactSensor)
-      this->_stateEstimatorData.result->contactSensor = *this->_stateEstimatorData.contactSensor;
+    // if (this->_stateEstimatorData.contactSensor)
+    // {
+    //   this->_stateEstimatorData.result->contactSensor = *this->_stateEstimatorData.contactSensor;
+    // }
   }
 
   /*!

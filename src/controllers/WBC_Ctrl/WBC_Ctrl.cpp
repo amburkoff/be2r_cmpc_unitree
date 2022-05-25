@@ -2,13 +2,9 @@
 #include <Utilities/Timer.h>
 #include <Utilities/Utilities_print.h>
 
-template<typename T>
+template <typename T>
 WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model)
-  : _full_config(cheetah::num_act_joint + 7)
-  , _tau_ff(cheetah::num_act_joint)
-  , _des_jpos(cheetah::num_act_joint)
-  , _des_jvel(cheetah::num_act_joint)
-  , _wbcLCM(getLcmUrl(255))
+    : _full_config(cheetah::num_act_joint + 7), _tau_ff(cheetah::num_act_joint), _des_jpos(cheetah::num_act_joint), _des_jvel(cheetah::num_act_joint), _wbcLCM(getLcmUrl(255))
 {
   _iter = 0;
   _full_config.setZero();
@@ -34,7 +30,7 @@ WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model)
   _state.qd = DVec<T>::Zero(cheetah::num_act_joint);
 }
 
-template<typename T>
+template <typename T>
 WBC_Ctrl<T>::~WBC_Ctrl()
 {
   delete _kin_wbc;
@@ -58,7 +54,7 @@ WBC_Ctrl<T>::~WBC_Ctrl()
   _contact_list.clear();
 }
 
-template<typename T>
+template <typename T>
 void WBC_Ctrl<T>::_ComputeWBC()
 {
   // TEST
@@ -69,7 +65,7 @@ void WBC_Ctrl<T>::_ComputeWBC()
   _wbic->MakeTorque(_tau_ff, _wbic_data);
 }
 
-template<typename T>
+template <typename T>
 void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
 {
   ++_iter;
@@ -87,7 +83,7 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   _UpdateLegCMD(data);
 }
 
-template<typename T>
+template <typename T>
 void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
 {
   LegControllerCommand<T>* cmd = data._legController->commands;
@@ -132,7 +128,7 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
   // data._legController->is_low_level = true;
 }
 
-template<typename T>
+template <typename T>
 void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est,
                                const LegControllerData<T>* leg_data)
 {

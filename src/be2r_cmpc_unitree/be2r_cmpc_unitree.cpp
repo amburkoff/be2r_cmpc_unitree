@@ -332,7 +332,7 @@ void Body_Manager::finalizeStep()
     _debug->all_legs_info.leg.at(leg_num).v_act.y = _legController->datas[leg_num].v[1];
     _debug->all_legs_info.leg.at(leg_num).v_act.z = _legController->datas[leg_num].v[2];
 
-    if (controlParameters.control_mode != K_LOCOMOTION)
+    if ((controlParameters.control_mode != K_LOCOMOTION) && (controlParameters.control_mode != K_TESTING))
     {
       _debug->all_legs_info.leg.at(leg_num).p_des.x = _legController->commands[leg_num].pDes[0];
       _debug->all_legs_info.leg.at(leg_num).p_des.y = _legController->commands[leg_num].pDes[1];
@@ -510,6 +510,7 @@ void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
     //    }
   }
 
+  // cout << "bm: " << (int)footContactState(0) << endl;
   _stateEstimator->setContactSensorData(footContactState);
 
   // Фильтрация данных

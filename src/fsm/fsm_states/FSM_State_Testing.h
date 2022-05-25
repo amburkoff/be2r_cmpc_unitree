@@ -1,8 +1,13 @@
 #ifndef FSM_STATE_TESTING_H
 #define FSM_STATE_TESTING_H
 
+#include "CMPC/CMPC_Locomotion.h"
 #include "FSM_State.h"
 #include <FootSwingTrajectory.h>
+#include <Utilities/Timer.h>
+#include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
+
+#define ITERATIONS_BETWEEN_MPC 13
 
 /**
  *
@@ -32,6 +37,13 @@ public:
   void onExit();
 
   TransitionData<T> testTransition();
+
+  CMPCLocomotion* CMPC;
+  WBC_Ctrl<T>* _wbc_ctrl;
+  LocomotionCtrlData<T>* _wbc_data;
+  void LocomotionControlStep();
+
+  bool locomotionSafe();
 
 private:
   // Keep track of the control iterations

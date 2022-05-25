@@ -8,6 +8,7 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 
 file(GLOB_RECURSE sources "convexMPC/*.cpp"
+                          "CMPC/*.cpp"
                           "BackFlip/*.cpp"
                           "VisionMPC/*.cpp")
 
