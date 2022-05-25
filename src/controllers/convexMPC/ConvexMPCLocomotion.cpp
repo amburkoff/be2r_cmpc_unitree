@@ -550,8 +550,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
         data._legController->commands[foot].kdCartesian = Kd_stance;
       }
-      //            cout << "Foot " << foot << " force: " <<
-      //            f_ff[foot].transpose() << "\n";
+
       se_contactState[foot] = contactState;
 
       data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
@@ -563,7 +562,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
 
       // Update for WBC
-      Fr_des[foot] = -f_ff[foot];
       std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
       marker[foot].header.frame_id = names[foot];
       marker[foot].header.stamp = ros::Time();

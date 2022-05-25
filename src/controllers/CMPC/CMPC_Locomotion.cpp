@@ -95,8 +95,8 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
 
-  // _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
-  _yaw_des += dt * _yaw_turn_rate;
+  _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  // _yaw_des += dt * _yaw_turn_rate;
   _roll_des = 0.;
   _pitch_des = 0.;
 
@@ -125,12 +125,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   _SetupCommand(data);
 
   gaitNumber = data.userParameters->cmpc_gait;
-
-  // if (gaitNumber >= 10)
-  // {
-  //   gaitNumber -= 10;
-  //   omniMode = true;
-  // }
 
   auto& seResult = data._stateEstimator->getResult();
 
@@ -179,7 +173,7 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
   // gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
-  // gait->earlyContactHandle(data._stateEstimator->getContactSensorData(), iterationsBetweenMPC, iterationCounter);
+  gait->earlyContactHandle(data._stateEstimator->getContactSensorData(), iterationsBetweenMPC, iterationCounter);
   //  std::cout << "iterationCounter " << iterationCounter << std::endl;
 
   recompute_timing(default_iterations_between_mpc);
@@ -290,8 +284,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-    Pf[2] = 0.0;
-    // Pf[2] = z_des[i];
+    // Pf[2] = 0.0;
+    Pf[2] = z_des[i];
 
     footSwingTrajectories[i].setFinalPosition(Pf);
     data.debug->all_legs_info.leg[i].swing_pf.x = Pf(0);
@@ -520,9 +514,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg[foot].v_w_des.x = vDesFootWorld[0];
       data.debug->all_legs_info.leg[foot].v_w_des.y = vDesFootWorld[1];
       data.debug->all_legs_info.leg[foot].v_w_des.z = vDesFootWorld[2];
-
-      // Update for WBC
-      Fr_des[foot] = -f_ff[foot];
     }
   }
 
