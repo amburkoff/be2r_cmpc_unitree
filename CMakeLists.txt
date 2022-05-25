@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(be2r_cmpc_unitree)
 
+set(CMAKE_CXX_STANDARD 17)
 # Запуск скрипта для создания типов lcm
 execute_process(
   COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_types_no_java.sh

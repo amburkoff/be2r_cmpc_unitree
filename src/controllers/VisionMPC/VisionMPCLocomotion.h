@@ -10,12 +10,13 @@ using Eigen::Array4f;
 using Eigen::Array4i;
 
 // Step height maximum [m]
-#define MAX_STEP_HEIGHT 0.15
+#define MAX_STEP_HEIGHT 0.2
 
 class VisionGait
 {
 public:
-  VisionGait(int nMPC_segments, Vec4<int> offsets, Vec4<int> durations, const std::string& name = "");
+  VisionGait(int nMPC_segments, Vec4<int> offsets, Vec4<int> durations,
+             const std::string& name = "");
   ~VisionGait();
   Vec4<float> getContactState();
   Vec4<float> getSwingState();
@@ -39,11 +40,12 @@ private:
 class VisionMPCLocomotion
 {
 public:
-  VisionMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
+                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd, const grid_map::GridMap& height_map,
-           const grid_map::GridMap& height_map_raw);
+  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
+           const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -61,11 +63,13 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos, const grid_map::GridMap& height_map,
+  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
+                       const grid_map::GridMap& height_map,
                        const grid_map::GridMap& height_map_raw);
-  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
-                       const grid_map::GridMap& height_map);
+  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected,
+                       int& y_idx_selected, const grid_map::GridMap& height_map);
   void _updateParams(ControlFSMData<float>& data);
+  float _updateTrajHeight(size_t foot);
 
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 

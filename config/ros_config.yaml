@@ -73,4 +73,16 @@ dynamic_loader:
   gait_switching_phase  : 0.5
   gait_override         : 4
 
+static_params:
+  controller_dt     : 0.002
+  control_mode      : 0
+  stand_kd_cartesian: [2.5,2.5,2.5]
+  stand_kp_cartesian: [50, 50, 50]
+  # Estimators
+  foot_height_sensor_noise      :  0.001
+  foot_process_noise_position   :  0.002
+  foot_sensor_noise_position    :  0.001
+  foot_sensor_noise_velocity    :  0.1
+  imu_process_noise_position    :  0.02
+  imu_process_noise_velocity    :  0.02
 
