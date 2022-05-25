@@ -4,7 +4,7 @@
   <arg name="torque_safe_limit" default="0"/>
   <arg name="udp_connection" default="0"/>
 
-  <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/ros_config.yaml"/>
+  <include file="$(find be2r_cmpc_unitree)/launch/set_dyn_params.launch" />
 
   <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find raisim_unitree_ros_driver)/description/urdf/a1_edited.urdf' " />
 
