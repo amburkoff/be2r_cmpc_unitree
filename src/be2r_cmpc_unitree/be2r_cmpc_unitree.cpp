@@ -598,8 +598,6 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
   (void)level;
   _is_param_updated = true;
   _rosParameters = config;
-  //  controlParameters.control_mode = config.FSM_State;
-
   ROS_INFO_STREAM("New dynamic data!");
 }
 
