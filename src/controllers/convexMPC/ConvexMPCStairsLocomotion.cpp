@@ -365,6 +365,7 @@ void ConvexMPCStairsLocomotion::run(ControlFSMData<float>& data)
     footSwingTrajectories[i].setFinalPosition(Pf);
   }
 
+  
   // calc gait
   iterationCounter++;
 

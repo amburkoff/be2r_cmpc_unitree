@@ -13,6 +13,7 @@
 #include <visualization_msgs/Marker.h>
 
 #include <cstdio>
+#include <Metrics.h>
 
 using Eigen::Array4f;
 using Eigen::Array4i;

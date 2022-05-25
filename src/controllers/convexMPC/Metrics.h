@@ -53,6 +53,7 @@ private:
   Vec3<T> _position;
   Vec3<T> _state_coord;
   LegControllerData<T> datas[4];
+  T _KinEnergy;
 };
 //   float _E = 0;
 //   Vec3<float> _pBody_des;
