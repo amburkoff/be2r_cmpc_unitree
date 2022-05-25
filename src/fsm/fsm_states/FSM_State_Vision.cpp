@@ -53,8 +53,9 @@ FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
 
   ros::readParam("~map_topic", map_topic, std::string("elevation_map"));
   ros::readParam("~localization_topic", robot_pose_topic, std::string("/base_pose"));
-  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic, 1,
-                                                   &FSM_State_Vision<T>::_elevMapCallback, this);
+  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic, 1, &FSM_State_Vision<T>::_elevMapCallback, this);
+  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>("/elevation_mapping/elevation_map_raw", 1,
+                                                       &FSM_State_Vision<T>::_elevMapRawCallback, this);
   //  _robot_pose_sub = _nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>(
   //    robot_pose_topic, 1, &FSM_State_Vision<T>::_robotPoseCallback, this);
 }
@@ -68,8 +69,15 @@ void FSM_State_Vision<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr&
 }
 
 template<typename T>
-void FSM_State_Vision<T>::_robotPoseCallback(
-  const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+void FSM_State_Vision<T>::_elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_raw);
+  if (!_grid_map_raw.isDefaultStartIndex())
+    _grid_map_raw.convertToDefaultStartIndex();
+}
+
+template<typename T>
+void FSM_State_Vision<T>::_robotPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
   _robot_pose = *msg;
   tf2::Quaternion quat;
@@ -94,8 +102,8 @@ void FSM_State_Vision<T>::_robotPoseCallback(
 }
 
 template<typename T>
-void FSM_State_Vision<T>::handleLocalization(const lcm::ReceiveBuffer* rbuf,
-                                             const std::string& chan, const localization_lcmt* msg)
+void FSM_State_Vision<T>::handleLocalization(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                                             const localization_lcmt* msg)
 {
   (void)rbuf;
   (void)chan;
@@ -109,8 +117,8 @@ void FSM_State_Vision<T>::handleLocalization(const lcm::ReceiveBuffer* rbuf,
 }
 
 template<typename T>
-void FSM_State_Vision<T>::handleHeightmapLCM(const lcm::ReceiveBuffer* rbuf,
-                                             const std::string& chan, const heightmap_t* msg)
+void FSM_State_Vision<T>::handleHeightmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                                             const heightmap_t* msg)
 {
   (void)rbuf;
   (void)chan;
@@ -125,8 +133,8 @@ void FSM_State_Vision<T>::handleHeightmapLCM(const lcm::ReceiveBuffer* rbuf,
 }
 
 template<typename T>
-void FSM_State_Vision<T>::handleHeightmap333LCM(const lcm::ReceiveBuffer* rbuf,
-                                                const std::string& chan, const heightmap333_t* msg)
+void FSM_State_Vision<T>::handleHeightmap333LCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                                                const heightmap333_t* msg)
 {
   (void)rbuf;
   (void)chan;
@@ -140,8 +148,8 @@ void FSM_State_Vision<T>::handleHeightmap333LCM(const lcm::ReceiveBuffer* rbuf,
   }
 }
 template<typename T>
-void FSM_State_Vision<T>::handleHeightmapnewLCM(const lcm::ReceiveBuffer* rbuf,
-                                                const std::string& chan, const heightnew_t* msg)
+void FSM_State_Vision<T>::handleHeightmapnewLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                                                const heightnew_t* msg)
 {
   (void)rbuf;
   (void)chan;
@@ -172,8 +180,7 @@ void FSM_State_Vision<T>::handleIndexmapLCM(const lcm::ReceiveBuffer* rbuf, cons
   }
 }
 template<typename T>
-void FSM_State_Vision<T>::handleIndexmapfloatLCM(const lcm::ReceiveBuffer* rbuf,
-                                                 const std::string& chan,
+void FSM_State_Vision<T>::handleIndexmapfloatLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
                                                  const traversability_float_t* msg)
 {
   (void)rbuf;
@@ -398,18 +405,17 @@ void FSM_State_Vision<T>::_UpdateObstacle_trav()
         }
         //标准差
         mean = sum / 9;
-        sd =
-          sqrt(((tmpmap[0] - mean) * (tmpmap[0] - mean) + (tmpmap[1] - mean) * (tmpmap[1] - mean) +
-                (tmpmap[2] - mean) * (tmpmap[2] - mean) + (tmpmap[3] - mean) * (tmpmap[3] - mean) +
-                (tmpmap[4] - mean) * (tmpmap[4] - mean) + (tmpmap[5] - mean) * (tmpmap[5] - mean) +
-                (tmpmap[6] - mean) * (tmpmap[6] - mean) + (tmpmap[7] - mean) * (tmpmap[7] - mean) +
-                (tmpmap[8] - mean) * (tmpmap[8] - mean)) /
-               9.0);
+        sd = sqrt(((tmpmap[0] - mean) * (tmpmap[0] - mean) + (tmpmap[1] - mean) * (tmpmap[1] - mean) +
+                   (tmpmap[2] - mean) * (tmpmap[2] - mean) + (tmpmap[3] - mean) * (tmpmap[3] - mean) +
+                   (tmpmap[4] - mean) * (tmpmap[4] - mean) + (tmpmap[5] - mean) * (tmpmap[5] - mean) +
+                   (tmpmap[6] - mean) * (tmpmap[6] - mean) + (tmpmap[7] - mean) * (tmpmap[7] - mean) +
+                   (tmpmap[8] - mean) * (tmpmap[8] - mean)) /
+                  9.0);
         //斜率
         slope = slope / 8;
         // traversability map
-        score = w_sd * sd + w_sl * slope + w_max * (hmax - _height_mapnew(i, j)) +
-                w_min * (_height_mapnew(i, j) - hmin);
+        score =
+          w_sd * sd + w_sl * slope + w_max * (hmax - _height_mapnew(i, j)) + w_min * (_height_mapnew(i, j) - hmin);
         trav_lcm.map[i][j] = score;
         //                cout << "i" << i << " j" << j << " score " <<
         //                trav_lcm.map[i][j] << " slope: " << slope <<" sd:
@@ -482,9 +488,8 @@ void FSM_State_Vision<T>::_UpdateObstacle()
           // check distance with already added obstacle
           for (size_t idx_obs(0); idx_obs < _obs_list.size(); ++idx_obs)
           {
-            dist = sqrt(
-              (obs_loc333[0] - _obs_list[idx_obs][0]) * (obs_loc333[0] - _obs_list[idx_obs][0]) +
-              (obs_loc333[1] - _obs_list[idx_obs][1]) * (obs_loc333[1] - _obs_list[idx_obs][1]));
+            dist = sqrt((obs_loc333[0] - _obs_list[idx_obs][0]) * (obs_loc333[0] - _obs_list[idx_obs][0]) +
+                        (obs_loc333[1] - _obs_list[idx_obs][1]) * (obs_loc333[1] - _obs_list[idx_obs][1]));
             if (dist < threshold_gap)
             {
               add_obs = false;
@@ -770,7 +775,7 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
   // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
 
   // Contact state logic
-  vision_MPC.run(*this->_data, des_vel, _grid_map);
+  vision_MPC.run(*this->_data, des_vel, _grid_map, _grid_map_raw);
   //  vision_MPC.run<T>(*this->_data, des_vel, _height_map, idx_map);
 
   if (this->_data->userParameters->use_wbc)

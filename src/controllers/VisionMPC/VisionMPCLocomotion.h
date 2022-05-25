@@ -15,8 +15,7 @@ using Eigen::Array4i;
 class VisionGait
 {
 public:
-  VisionGait(int nMPC_segments, Vec4<int> offsets, Vec4<int> durations,
-             const std::string& name = "");
+  VisionGait(int nMPC_segments, Vec4<int> offsets, Vec4<int> durations, const std::string& name = "");
   ~VisionGait();
   Vec4<float> getContactState();
   Vec4<float> getSwingState();
@@ -40,12 +39,11 @@ private:
 class VisionMPCLocomotion
 {
 public:
-  VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
-                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  VisionMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
-           const grid_map::GridMap& height_map);
+  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd, const grid_map::GridMap& height_map,
+           const grid_map::GridMap& height_map_raw);
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -63,10 +61,13 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
+  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos, const grid_map::GridMap& height_map,
+                       const grid_map::GridMap& height_map_raw);
+  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
                        const grid_map::GridMap& height_map);
-  void _IdxMapChecking(int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
-                       const DMat<int>& idx_map);
+  void _updateParams(ControlFSMData<float>& data);
+
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 
   Vec3<float> _fin_foot_loc[4];
   float grid_size = 0.02;
@@ -75,10 +76,11 @@ private:
   Vec3<float> rpy_des;
   Vec3<float> v_rpy_des;
 
-  float _body_height = 0.29;
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
   int iterationsBetweenMPC;
+  float _body_height;
+  int _gait_period;
   int horizonLength;
   float dt;
   float dtMPC;
@@ -100,8 +102,6 @@ private:
   Vec3<float> rpy_comp;
   Vec3<float> pFoot[4];
   float trajAll[12 * 36];
-
-  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 };
 
 #endif // CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
