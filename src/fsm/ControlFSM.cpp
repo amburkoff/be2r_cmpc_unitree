@@ -24,10 +24,8 @@ using namespace std;
 template<typename T>
 ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* _stateEstimator,
                           LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
-                          DesiredStateCommand<T>* _desiredStateCommand,
-                          RobotControlParameters* controlParameters,
-                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
-                          Debug* debug)
+                          DesiredStateCommand<T>* _desiredStateCommand, StaticParams* staticParams,
+                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters, Debug* debug)
 {
   // Add the pointers to the ControlFSMData struct
   data._quadruped = _quadruped;
@@ -35,7 +33,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
   data._legController = _legController;
   data._gaitScheduler = _gaitScheduler;
   data._desiredStateCommand = _desiredStateCommand;
-  data.controlParameters = controlParameters;
+  data.staticParams = staticParams;
   data.userParameters = userParameters;
   data.debug = debug;
 
@@ -179,8 +177,7 @@ FSM_OperatingMode ControlFSM<T>::safetyPreCheck()
 {
 
   // Check for safe orientation if the current state requires it
-  if (currentState->checkSafeOrientation &&
-      data.controlParameters->control_mode != K_RECOVERY_STAND)
+  if (currentState->checkSafeOrientation && data.userParameters->FSM_State != K_RECOVERY_STAND)
   {
     if (!safetyChecker->checkSafeOrientation())
     {

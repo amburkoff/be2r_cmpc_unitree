@@ -13,9 +13,9 @@
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template <typename T>
+template<typename T>
 FSM_State_FrontJump<T>::FSM_State_FrontJump(ControlFSMData<T>* _controlFSMData)
-    : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP")
+  : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP")
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -30,11 +30,11 @@ FSM_State_FrontJump<T>::FSM_State_FrontJump(ControlFSMData<T>* _controlFSMData)
 
   _data_reader = new DataReader(this->_data->_quadruped->_robotType, FSM_StateName::FRONTJUMP);
 
-  front_jump_ctrl_ = new FrontJumpCtrl<T>(_data_reader, this->_data->controlParameters->controller_dt);
+  front_jump_ctrl_ = new FrontJumpCtrl<T>(_data_reader, this->_data->staticParams->controller_dt);
   front_jump_ctrl_->SetParameter();
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_FrontJump<T>::onEnter()
 {
   // Default is to not transition
@@ -62,7 +62,7 @@ void FSM_State_FrontJump<T>::onEnter()
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
-template <typename T>
+template<typename T>
 void FSM_State_FrontJump<T>::run()
 {
 
@@ -80,10 +80,10 @@ void FSM_State_FrontJump<T>::run()
   }
 
   ++_count;
-  _curr_time += this->_data->controlParameters->controller_dt;
+  _curr_time += this->_data->staticParams->controller_dt;
 }
 
-template <typename T>
+template<typename T>
 bool FSM_State_FrontJump<T>::_Initialization()
 { // do away with this?
   static bool test_initialized(false);
@@ -111,7 +111,7 @@ bool FSM_State_FrontJump<T>::_Initialization()
   return false;
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_FrontJump<T>::ComputeCommand()
 {
   // if (_b_first_visit)
@@ -142,7 +142,7 @@ void FSM_State_FrontJump<T>::ComputeCommand()
   // }
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_FrontJump<T>::_SafeCommand()
 {
   for (int leg = 0; leg < 4; ++leg)
@@ -150,16 +150,16 @@ void FSM_State_FrontJump<T>::_SafeCommand()
     for (int jidx = 0; jidx < 3; ++jidx)
     {
       this->_data->_legController->commands[leg].tauFeedForward[jidx] = 0.;
-      this->_data->_legController->commands[leg].qDes[jidx] = this->_data->_legController->datas[leg].q[jidx];
+      this->_data->_legController->commands[leg].qDes[jidx] =
+        this->_data->_legController->datas[leg].q[jidx];
       this->_data->_legController->commands[leg].qdDes[jidx] = 0.;
     }
   }
 }
 
-template <typename T>
-void FSM_State_FrontJump<T>::_SetJPosInterPts(
-    const size_t& curr_iter, size_t max_iter, int leg,
-    const Vec3<T>& ini, const Vec3<T>& fin)
+template<typename T>
+void FSM_State_FrontJump<T>::_SetJPosInterPts(const size_t& curr_iter, size_t max_iter, int leg,
+                                              const Vec3<T>& ini, const Vec3<T>& fin)
 {
 
   float a(0.f);
@@ -178,15 +178,15 @@ void FSM_State_FrontJump<T>::_SetJPosInterPts(
   // do control
   this->jointPDControl(leg, inter_pos, zero_vec3);
 
-  //if(curr_iter == 0){
-  //printf("flag:%d, curr iter: %lu, state iter: %llu, motion start iter: %d\n",
+  // if(curr_iter == 0){
+  // printf("flag:%d, curr iter: %lu, state iter: %llu, motion start iter: %d\n",
   //_flag, curr_iter, _state_iter, _motion_start_iter);
-  //printf("inter pos: %f, %f, %f\n", inter_pos[0], inter_pos[1], inter_pos[2]);
+  // printf("inter pos: %f, %f, %f\n", inter_pos[0], inter_pos[1], inter_pos[2]);
   //}
-  //if(curr_iter == max_iter){
-  //printf("flag:%d, curr iter: %lu, state iter: %llu, motion start iter: %d\n",
+  // if(curr_iter == max_iter){
+  // printf("flag:%d, curr iter: %lu, state iter: %llu, motion start iter: %d\n",
   //_flag, curr_iter, _state_iter, _motion_start_iter);
-  //printf("inter pos: %f, %f, %f\n", inter_pos[0], inter_pos[1], inter_pos[2]);
+  // printf("inter pos: %f, %f, %f\n", inter_pos[0], inter_pos[1], inter_pos[2]);
   //}
 }
 
@@ -196,38 +196,37 @@ void FSM_State_FrontJump<T>::_SetJPosInterPts(
  *
  * @return the enumerated FSM state name to transition into
  */
-template <typename T>
+template<typename T>
 FSM_StateName FSM_State_FrontJump<T>::checkTransition()
 {
   this->nextStateName = this->stateName;
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
-  case K_FRONTJUMP:
-    break;
+    case K_FRONTJUMP:
+      break;
 
-  case K_RECOVERY_STAND:
-    this->nextStateName = FSM_StateName::RECOVERY_STAND;
-    break;
+    case K_RECOVERY_STAND:
+      this->nextStateName = FSM_StateName::RECOVERY_STAND;
+      break;
 
-  case K_LOCOMOTION:
-    this->nextStateName = FSM_StateName::LOCOMOTION;
-    break;
+    case K_LOCOMOTION:
+      this->nextStateName = FSM_StateName::LOCOMOTION;
+      break;
 
-  case K_PASSIVE: // normal c
-    this->nextStateName = FSM_StateName::PASSIVE;
-    break;
+    case K_PASSIVE: // normal c
+      this->nextStateName = FSM_StateName::PASSIVE;
+      break;
 
-  case K_BALANCE_STAND:
-    this->nextStateName = FSM_StateName::BALANCE_STAND;
-    break;
+    case K_BALANCE_STAND:
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
-              << K_FRONTJUMP << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_FRONTJUMP << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -240,31 +239,30 @@ FSM_StateName FSM_State_FrontJump<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_FrontJump<T>::transition()
 {
   // Finish Transition
   switch (this->nextStateName)
   {
-  case FSM_StateName::PASSIVE: // normal
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::PASSIVE: // normal
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::BALANCE_STAND:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::BALANCE_STAND:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::LOCOMOTION:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::LOCOMOTION:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::RECOVERY_STAND:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::RECOVERY_STAND:
+      this->transitionData.done = true;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition"
-              << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM
@@ -274,7 +272,7 @@ TransitionData<T> FSM_State_FrontJump<T>::transition()
 /**
  * Cleans up the state information on exiting the state.
  */
-template <typename T>
+template<typename T>
 void FSM_State_FrontJump<T>::onExit()
 {
   // nothing to clean up?

@@ -120,7 +120,7 @@ FSM_StateName FSM_State_Passive<T>::checkTransition()
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
   case K_PASSIVE: // normal c (0)
     // Normal operation for state based transitions
@@ -149,7 +149,7 @@ FSM_StateName FSM_State_Passive<T>::checkTransition()
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
               << K_PASSIVE << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+              << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state

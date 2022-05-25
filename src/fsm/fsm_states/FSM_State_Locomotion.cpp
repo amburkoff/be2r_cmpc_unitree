@@ -29,7 +29,7 @@ template<typename T>
 FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData)
   : FSM_State<T>(_controlFSMData, FSM_StateName::LOCOMOTION, "LOCOMOTION")
 {
-  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
+  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->staticParams->controller_dt,
                                     ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
   // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
   //                                   //30 / (1000. *
@@ -98,7 +98,7 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
   // Switch FSM control mode
   if (locomotionSafe())
   {
-    switch ((int)this->_data->controlParameters->control_mode)
+    switch ((int)this->_data->userParameters->FSM_State)
     {
       case K_LOCOMOTION:
         break;
@@ -143,7 +143,7 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
 
       default:
         std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_LOCOMOTION << " to "
-                  << this->_data->controlParameters->control_mode << std::endl;
+                  << this->_data->userParameters->FSM_State << std::endl;
     }
   }
   else
@@ -343,10 +343,11 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
 template<typename T>
 void FSM_State_Locomotion<T>::StanceLegImpedanceControl(int leg)
 {
+  Vec3<double> stand_kp_cartesian(50, 50, 50);
+  Vec3<double> stand_kd_cartesian(2.5, 2.5, 2.5);
   // Impedance control for the stance leg
   this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(),
-                                  this->_data->controlParameters->stand_kp_cartesian,
-                                  this->_data->controlParameters->stand_kd_cartesian);
+                                  stand_kp_cartesian, stand_kd_cartesian);
 }
 
 // template class FSM_State_Locomotion<double>;

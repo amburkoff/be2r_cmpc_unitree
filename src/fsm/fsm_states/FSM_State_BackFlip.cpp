@@ -202,7 +202,7 @@
 //   iter++;
 
 //   // Switch FSM control mode
-//   switch ((int)this->_data->controlParameters->control_mode)
+//   switch ((int)this->_data->userParameters->FSM_State)
 //   {
 //   case K_BACKFLIP:
 //     break;
@@ -226,7 +226,7 @@
 //   default:
 //     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
 //               << K_BACKFLIP << " to "
-//               << this->_data->controlParameters->control_mode << std::endl;
+//               << this->_data->userParameters->FSM_State << std::endl;
 //   }
 
 //   // Get the next state
