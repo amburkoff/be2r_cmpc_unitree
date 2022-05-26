@@ -12,7 +12,7 @@
 // #define GAIT_PERIOD 14
 #define HORIZON 14
 
-#define GAIT_PERIOD 16
+#define GAIT_PERIOD 20
 // #define GAIT_PERIOD 34 //1000 Hz
 
 //лучшие параметры для только MPC
@@ -30,29 +30,30 @@ using namespace std;
 // Controller
 ////////////////////
 
-ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
-                                         be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
-    : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(_parameters->gait_period), horizonLength(16), dt(_dt), trotting(
-                                                                                                                                                      _gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
-                                                                                                                                                      Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
-                                                                                                                                                      "Trotting"),
-      trotting_copy(
-          _gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
-          Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
-          "Trotting_copy"),
-      bounding(_gait_period, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding"), pronking(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking"),
-      // bounding(_gait_period, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
-      jumping(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping"), galloping(_gait_period, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping"),
-      // galloping(_gait_period,
-      // Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
-      // galloping(_gait_period,
-      // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
-      standing(_gait_period, Vec4<int>(0, 0, 0, 0),
-               Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
-      trotRunning(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running"),
-      // trotRunning(_gait_period, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot
-      // Running"),
-      walking(_gait_period, Vec4<int>(0, 3, 5, 8), Vec4<int>(5, 5, 5, 5), "Walking"), walking2(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2"), pacing(_gait_period, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing"), random(_gait_period, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot"), random2(_gait_period, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
+ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters) : iterationsBetweenMPC(_iterations_between_mpc),
+                                                                                                                                            _parameters(parameters),
+                                                                                                                                            _gait_period(_parameters->gait_period),
+                                                                                                                                            horizonLength(HORIZON),
+                                                                                                                                            dt(_dt),
+                                                                                                                                            trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
+                                                                                                                                            trotting_copy(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting_copy"),
+                                                                                                                                            bounding(14, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding"),
+                                                                                                                                            pronking(14, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking"),
+                                                                                                                                            // bounding(_gait_period, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
+                                                                                                                                            jumping(14, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping"),
+                                                                                                                                            galloping(14, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping"),
+                                                                                                                                            // galloping(_gait_period,
+                                                                                                                                            // Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
+                                                                                                                                            // galloping(_gait_period,
+                                                                                                                                            // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
+                                                                                                                                            standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
+                                                                                                                                            trotRunning(14, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running"),
+                                                                                                                                            // trotRunning(_gait_period, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot Running"),
+                                                                                                                                            walking(14, Vec4<int>(0, 3, 5, 8), Vec4<int>(5, 5, 5, 5), "Walking"),
+                                                                                                                                            walking2(14, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2"),
+                                                                                                                                            pacing(14, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing"),
+                                                                                                                                            random(14, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot"),
+                                                                                                                                            random2(14, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
@@ -210,6 +211,10 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   else if (gaitNumber == 8)
   {
     gait = &pacing;
+  }
+  else if (gaitNumber == 10)
+  {
+    gait = &walking;
   }
   current_gait = gaitNumber;
   *gait = trotting_copy;
@@ -452,7 +457,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       path[foot].header.stamp = ros::Time::now();
       path[foot].header.frame_id = "odom";
 
-      _pub_des_traj[foot].publish(path[foot]);
+      // _pub_des_traj[foot].publish(path[foot]);
 
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;
@@ -512,7 +517,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       marker[foot].points.push_back(p1);
       marker[foot].points.push_back(p2);
 
-      _vis_pub[foot].publish(marker[foot]);
+      // _vis_pub[foot].publish(marker[foot]);
     }
     else // foot is in stance
     {
@@ -597,7 +602,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       marker[foot].points.clear();
       marker[foot].points.push_back(p1);
       marker[foot].points.push_back(p2);
-      _vis_pub[foot].publish(marker[foot]);
+      // _vis_pub[foot].publish(marker[foot]);
     }
   }
 

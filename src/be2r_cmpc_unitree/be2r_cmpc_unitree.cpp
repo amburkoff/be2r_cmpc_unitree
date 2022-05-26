@@ -74,6 +74,11 @@ unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(UNITREE_LEGGED_SDK::L
 
   ros_low_state.imu.temperature = udp_low_state.imu.temperature;
 
+  ros_low_state.footForce[0] = udp_low_state.footForce[0];
+  ros_low_state.footForce[1] = udp_low_state.footForce[1];
+  ros_low_state.footForce[2] = udp_low_state.footForce[2];
+  ros_low_state.footForce[3] = udp_low_state.footForce[3];
+
   return ros_low_state;
 }
 
@@ -153,6 +158,9 @@ void Body_Manager::_readRobotData()
   udp.GetRecv(_udp_low_state);
 
   _low_state = _udpStateToRos(_udp_low_state);
+
+  ros::Duration delta_t = ros::Time::now() - _time_start;
+  _low_state.header.stamp = _zero_time + delta_t;
   _pub_low_state.publish(_low_state);
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
@@ -181,10 +189,28 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[2] = _low_state.imu.quaternion[2]; // y
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
-  // Датчики контакта на лапах
+  //binary contact
+  int16_t force_threshold = 10;
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    if (_low_state.footForce[i] > force_threshold)
+    {
+      // _debug->all_legs_info.leg[i].is_contact = 1;
+      footContactState(i) = 1;
+    }
+    else
+    {
+      // _debug->all_legs_info.leg[i].is_contact = 0;
+      footContactState(i) = 0;
+    }
+  }
+
+  // // Датчики контакта на лапах
   // for (size_t leg = 0; leg < 4; leg++)
   // {
-  //   footContactState(leg) = _low_state.footForce[leg];
+  //   footContactState(leg) = msg.footForce[leg];
+
   //   //    if
   //   //    ((_stateEstimator->getResult().contactEstimate[leg]
   //   //    <= 0.001) &&
@@ -196,7 +222,12 @@ void Body_Manager::_readRobotData()
   //   //    }
   // }
 
-  // _stateEstimator->setContactSensorData(footContactState);
+  _stateEstimator->setContactSensorData(footContactState);
+
+  for (size_t leg_num = 0; leg_num < 4; leg_num++)
+  {
+    _debug->all_legs_info.leg[leg_num].is_contact = _stateEstimator->getContactSensorData()(leg_num);
+  }
 }
 
 void Body_Manager::run()
@@ -463,10 +494,6 @@ void Body_Manager::_initPublishers()
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
 {
-  // cout << "timer ns: " << t1.getNs() << endl;
-  // cout << "timer ms: " << t1.getMs() << endl;
-  // ROS_INFO("calback");
-
   _low_state = msg;
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)

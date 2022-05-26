@@ -10,8 +10,8 @@ dynamic_loader:
   Kp_joint_2: 3.0
 
   Kd_joint_0: 1.0
-  Kd_joint_1: 0.2
-  Kd_joint_2: 0.2
+  Kd_joint_1: 1.0
+  Kd_joint_2: 1.0
 
   Kp_ori_0: 100.0
   Kp_ori_1: 100.0
@@ -68,7 +68,7 @@ dynamic_loader:
 
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
-  gait_period           : 16
+  gait_period           : 30
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4
