@@ -25,6 +25,7 @@ void Debug::updatePlot()
   ros::Duration delta_t = ros::Time::now() - _time_start;
 
   all_legs_info.header.stamp = _zero_time + delta_t;
+  body_info.header.stamp = _zero_time + delta_t;
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {

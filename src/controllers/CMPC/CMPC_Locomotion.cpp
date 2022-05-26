@@ -183,6 +183,53 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
   Vec3<float> v_robot = seResult.vWorld;
 
+  // std::cout << "sensor data: " << data._stateEstimator->getContactSensorData()(0) << std::endl;
+  static Vec3<float> pDesFootWorldStance[4] = {pFoot[0], pFoot[1], pFoot[2], pFoot[3]};
+
+  //p front mid, p back mid
+  Vec3<float> p_fm = (pDesFootWorldStance[0] + pDesFootWorldStance[1]) / 2;
+  Vec3<float> p_bm = (pDesFootWorldStance[2] + pDesFootWorldStance[3]) / 2;
+  float des_pitch = 0;
+  float des_roll = 0;
+
+  //XZ plane
+  // float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (p_fm(0) - p_bm(0)) * (p_fm(0) - p_bm(0)));
+  float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (0.1805 * 2) * (0.1805 * 2));
+
+  if (abs(L_xz) < 0.0001)
+  {
+    des_pitch = 0;
+  }
+  // else if ((p_fm(2) - p_bm(2)) < 0.005)
+  // {
+  //   des_pitch = 0;
+  //   ROS_INFO("TOO LITTLE DIFF");
+  // }
+  else
+  {
+    des_pitch = des_pitch * (1 - 0.7) - 2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
+  }
+
+  // cout << "pfm z: " << p_fm(2) << " pbm z: " << p_bm(2) << endl;
+
+  // //YZ plane
+  // float L_yz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (p_fm(1) - p_bm(1)) * (p_fm(1) - p_bm(1)));
+
+  // if (abs(L_yz) < 0.0001)
+  // {
+  //   des_roll = 0;
+  // }
+  // else
+  // {
+  //   des_roll = asin((p_fm(2) - p_bm(2)) / (L_yz));
+  // }
+
+  // cout << "des pitch correction: " << des_pitch << endl;
+
+  //put to target
+  _pitch_des = des_pitch;
+  data.debug->all_legs_info.leg[0].force_raw = des_pitch;
+
   // Integral-esque pitche and roll compensation
   if (fabs(v_robot[0]) > .2) // avoid dividing by zero
   {
@@ -310,45 +357,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     data.debug->all_legs_info.leg[leg_num].is_contact = data._stateEstimator->getContactSensorData()(leg_num);
   }
 
-  // std::cout << "sensor data: " << data._stateEstimator->getContactSensorData()(0) << std::endl;
-  static Vec3<float> pDesFootWorldStance[4] = {pFoot[0], pFoot[1], pFoot[2], pFoot[3]};
-
-  //p front mid, p back mid
-  Vec3<float> p_fm = (pDesFootWorldStance[0] + pDesFootWorldStance[1]) / 2;
-  Vec3<float> p_bm = (pDesFootWorldStance[2] + pDesFootWorldStance[3]) / 2;
-  float des_pitch = 0;
-  float des_roll = 0;
-
-  //XZ plane
-  float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (p_fm(0) - p_bm(0)) * (p_fm(0) - p_bm(0)));
-
-  if (abs(L_xz) < 0.0001)
-  {
-    des_pitch = 0;
-  }
-  else
-  {
-    des_pitch = des_pitch * (1 - 0.8) - asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.8;
-  }
-
-  // cout << "pfm z: " << p_fm(2) << " pbm z: " << p_bm(2) << endl;
-
-  // //YZ plane
-  // float L_yz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (p_fm(1) - p_bm(1)) * (p_fm(1) - p_bm(1)));
-
-  // if (abs(L_yz) < 0.0001)
-  // {
-  //   des_roll = 0;
-  // }
-  // else
-  // {
-  //   des_roll = asin((p_fm(2) - p_bm(2)) / (L_yz));
-  // }
-
-  // cout << "des pitch correction: " << des_pitch << endl;
-
-  data.debug->all_legs_info.leg[0].force_raw = des_pitch;
-
   updateMPCIfNeeded(mpcTable, data, omniMode);
 
   Vec4<float> se_contactState(0, 0, 0, 0);
@@ -370,7 +378,10 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       is_stance[foot] = 1;
 
       //foot position in world frame at contanct
-      pDesFootWorldStance[foot] = pFoot[foot] + footSwingTrajectories[foot].getPosition();
+      // pDesFootWorldStance[foot] = pFoot[foot] + footSwingTrajectories[foot].getPosition();
+      pDesFootWorldStance[foot] = pFoot[foot];
+      // pDesFootWorldStance[foot] = data._legController->datas[foot].p;
+      // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
     }
 
     // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]
@@ -532,7 +543,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.;
-  pBody_RPY_des[1] = 0.;
+  // pBody_RPY_des[1] = 0.;
+  pBody_RPY_des[1] = _pitch_des;
   pBody_RPY_des[2] = _yaw_des;
 
   vBody_Ori_des[0] = 0.;

@@ -173,12 +173,12 @@ void OffsetDurationGaitContact::earlyContactHandle(Vec4<uint8_t> footSensorState
     if ((getSwingState()[leg] > 0.65f) && (footSensorState(leg) == 1))
     {
       // Уменьшить оффсет, увеличить duration на ту же величину
-      std::cout << "SWING STATE before" << getSwingState()[leg] << std::endl;
+      // std::cout << "SWING STATE before" << getSwingState()[leg] << std::endl;
       float difference = _offsetsFloat(leg) - _phase < -0.001f ? _offsetsFloat(leg) - _phase + 1.0f : _offsetsFloat(leg) - _phase;
-      std::cout << "difference in phase " << difference << std::endl;
-      std::cout << "phase" << _phase << std::endl;
-      std::cout << "offset [ " << leg << "] " << _offsetsFloat(leg) << std::endl;
-      std::cout << "duration before [ " << leg << "] " << _durationsFloat(leg) << std::endl;
+      // std::cout << "difference in phase " << difference << std::endl;
+      // std::cout << "phase" << _phase << std::endl;
+      // std::cout << "offset [ " << leg << "] " << _offsetsFloat(leg) << std::endl;
+      // std::cout << "duration before [ " << leg << "] " << _durationsFloat(leg) << std::endl;
       _offsetsFloat(leg) -= difference * 1.0001;
       //      _offsets(leg) = int(_offsetsFloat(leg)) * _nIterations;
       //      if (_offsetsFloat(leg) == 0.5f)
@@ -189,10 +189,10 @@ void OffsetDurationGaitContact::earlyContactHandle(Vec4<uint8_t> footSensorState
       _durations(leg) = int(_durationsFloat(leg) * float(_nIterations));
       _offsets(leg) = int(_offsetsFloat(leg) * float(_nIterations));
       //      std::cout << "_durations(leg)" << _durations(leg) << std::endl;
-      std::cout << "offset after [ " << leg << "] " << _offsetsFloat(leg) << std::endl;
-      std::cout << "duration after [ " << leg << "] " << _durationsFloat(leg) << std::endl;
-      std::cout << "SWING STATE after" << getSwingState()[leg] << std::endl;
-      std::cout << "STANCE STATE after" << getContactState()[leg] << std::endl;
+      // std::cout << "offset after [ " << leg << "] " << _offsetsFloat(leg) << std::endl;
+      // std::cout << "duration after [ " << leg << "] " << _durationsFloat(leg) << std::endl;
+      // std::cout << "SWING STATE after" << getSwingState()[leg] << std::endl;
+      // std::cout << "STANCE STATE after" << getContactState()[leg] << std::endl;
     }
     if ((getSwingState()[leg] < 0.25f) && (footSensorState(leg) == 1))
     {

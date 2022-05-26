@@ -8,14 +8,24 @@ stand_kd_cartesian: [2.5,2.5,2.5]
 stand_kp_cartesian: [50, 50, 50]
 testValue         : 23
 cheater_mode      : 0
-foot_height_sensor_noise      :  0.001
-foot_process_noise_position   :  0.002
-foot_sensor_noise_position    :  0.001
-foot_sensor_noise_velocity    :  0.1
-imu_process_noise_position    :  0.02
-imu_process_noise_velocity    :  0.02
-kpCOM: [50,50,50]
-kdCOM: [10,10,10]
-kpBase: [300,200,100]
-kdBase: [20,10,10]
+# foot_height_sensor_noise      :  0.001
+# foot_process_noise_position   :  0.002
+# foot_sensor_noise_position    :  0.001
+# foot_sensor_noise_velocity    :  0.1
+# imu_process_noise_position    :  0.02
+# imu_process_noise_velocity    :  0.02
+foot_height_sensor_noise      :  0.9
+foot_process_noise_position   :  0.9
+foot_sensor_noise_position    :  0.9
+foot_sensor_noise_velocity    :  0.9
+imu_process_noise_position    :  0.9
+imu_process_noise_velocity    :  0.9
+# kpCOM: [50,50,50]
+# kdCOM: [10,10,10]
+# kpBase: [300,200,100]
+# kdBase: [20,10,10]
+kpCOM: [100,100,100]
+kdCOM: [40,40,40]
+kpBase: [700,700,700]
+kdBase: [40,40,40]
 use_rc: 0
