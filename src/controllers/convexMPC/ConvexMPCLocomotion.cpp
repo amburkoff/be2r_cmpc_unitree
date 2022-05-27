@@ -47,18 +47,16 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
       Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
       "Trotting_copy")
   , bounding(_gait_period, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding")
-  , pronking(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(4, 4, 4, 4), "Pronking")
-  ,
-  // bounding(_gait_period, Vec4<int>(5,5,0,0),Vec4<int>(3,3,3,3),"Bounding"),
-  jumping(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping")
+  , pronking(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(8, 8, 8, 8), "Pronking")
+  , jumping(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping")
   , galloping(_gait_period, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping")
-  ,
+  , standing(_gait_period, Vec4<int>(0, 0, 0, 0),
+           Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing")
   // galloping(_gait_period,
   // Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
   // galloping(_gait_period,
   // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
-  standing(_gait_period, Vec4<int>(0, 0, 0, 0),
-           Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing")
+
   , trotRunning(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running")
   ,
   // trotRunning(_gait_period, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot
@@ -199,7 +197,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   }
   else if (gaitNumber == 3)
   {
-    gait = &random;
+    gait = &jumping;
   }
   else if (gaitNumber == 4)
   {
@@ -211,7 +209,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   }
   else if (gaitNumber == 6)
   {
-    gait = &random2;
+    gait = &galloping;
   }
   else if (gaitNumber == 7)
   {
@@ -220,6 +218,14 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   else if (gaitNumber == 8)
   {
     gait = &pacing;
+  }
+  else if (gaitNumber == 10)
+  {
+    gait = &walking;
+  }
+  else if (gaitNumber == 11)
+  {
+    gait = &walking2;
   }
   current_gait = gaitNumber;
   *gait = trotting_copy;

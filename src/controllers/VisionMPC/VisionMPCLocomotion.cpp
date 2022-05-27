@@ -160,7 +160,7 @@ void VisionMPCLocomotion::initialize()
 }
 void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
                                           const grid_map::GridMap& height_map,
-                                          const grid_map::GridMap& height_map_raw)
+                                          const grid_map::GridMap& height_map_raw, int leg)
 {
   // Положение лапы в СК тела
   //  Vec3<float> scale(1.2, 1, 1);
@@ -176,12 +176,11 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& 
   // Минус для преобразования координат
   int x_idx = col_idx_half - floor(local_pf[0] / grid_size);
   int y_idx = row_idx_half - floor(local_pf[1] / grid_size);
-  //  std::cout << "Heightmap index (x y) : " << x_idx << " " << y_idx << std::endl;
 
   int x_idx_selected = x_idx;
   int y_idx_selected = y_idx;
 
-  //  _IdxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, height_map_raw);
+  _IdxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, height_map_raw, leg);
 
   // Минус для преобразования координат
   foot[0] = -(x_idx_selected - row_idx_half) * grid_size + body_pos[0];
@@ -192,17 +191,22 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& 
 
 void VisionMPCLocomotion::_IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx,
                                           int& x_idx_selected, int& y_idx_selected,
-                                          const grid_map::GridMap& height_map)
+                                          const grid_map::GridMap& height_map, int leg)
 {
-  grid_map::Position center(Pf[0], Pf[1]);
-  double radius = 0.1;
-
-  for (grid_map::SpiralIterator iterator(height_map, center, radius); !iterator.isPastEnd();
+  if (leg != 0)
+    return;
+  grid_map::Index center(x_idx, y_idx);
+  // std::cout << " Leg position (x,y) " << Pf[0] << " " << Pf[1] << std::endl;
+  double radius = 0.06;
+  // std::cout << "Normal is " << height_map.at("normal_vectors_z", Eigen::Array2i(x_idx, y_idx)) << std::endl;
+  for (grid_map_utils::SpiralIterator iterator(height_map, center, radius); !iterator.isPastEnd();
        ++iterator)
   {
-    if (height_map.at("normal_vectors_z", *iterator) < 0.5 &&
-        height_map.at("normal_vectors_z", *iterator) > 0.01)
-      std::cout << "Normal is " << height_map.at("normal_vectors_z", *iterator) << std::endl;
+    auto norm_z = height_map.at("normal_vectors_z", *iterator);
+    // if (height_map.at("normal_vectors_z", *iterator) < 0.999 &&
+    //     height_map.at("normal_vectors_z", *iterator) > 0.01)
+    if (!std::isnan(norm_z))
+      std::cout << "Normal is " << norm_z << std::endl;
   }
 }
 
@@ -358,8 +362,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-
-    _updateFoothold(Pf, seResult.position, height_map, height_map_raw);
+    _updateFoothold(Pf, seResult.position, height_map, height_map_raw, i);
     Pf[2] = Pf[2] >= 1e-3 ? Pf[2] : 0.; // Только положительные
     _fin_foot_loc[i] = Pf;
     //    std::cout << "Foot [" << i << "] target z is " << Pf[2] << std::endl;
