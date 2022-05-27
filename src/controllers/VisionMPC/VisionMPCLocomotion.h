@@ -11,7 +11,7 @@ using Eigen::Array4f;
 using Eigen::Array4i;
 
 // Step height maximum [m]
-#define MAX_STEP_HEIGHT 0.2
+#define MAX_STEP_HEIGHT 0.25
 
 class VisionGait
 {
