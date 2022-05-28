@@ -17,15 +17,21 @@ void Debug::_initPublishers()
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
   _pub_all_legs_info = _nh.advertise<unitree_legged_msgs::AllLegsInfo>("/all_legs_info", 1);
   _pub_body_info = _nh.advertise<unitree_legged_msgs::BodyInfo>("/body_info", 1);
-  // _pub_parameters = _nh.advertise<unitree_legged_msgs::Parameters>("/parameters", 1);
+
+#ifdef PUB_IMU_AND_ODOM
+  _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
+  _pub_imu = _nh.advertise<sensor_msgs::Imu>("/imu", 1);
+#endif
 }
 
 void Debug::updatePlot()
 {
   ros::Duration delta_t = ros::Time::now() - _time_start;
 
-  all_legs_info.header.stamp = _zero_time + delta_t;
-  body_info.header.stamp = _zero_time + delta_t;
+  // all_legs_info.header.stamp = _zero_time + delta_t;
+  // body_info.header.stamp = _zero_time + delta_t;
+  all_legs_info.header.stamp = ros::Time::now();
+  body_info.header.stamp = ros::Time::now();
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
@@ -56,6 +62,33 @@ void Debug::updatePlot()
 
   _pub_all_legs_info.publish(all_legs_info);
   _pub_body_info.publish(body_info);
+
+#ifdef PUB_IMU_AND_ODOM
+  nav_msgs::Odometry odom;
+
+  odom.header.stamp = ros::Time::now();
+  odom.header.frame_id = "odom";
+  odom.child_frame_id = "base";
+
+  odom.pose.pose.position = body_info.pos_act;
+
+  geometry_msgs::Quaternion odom_quat;
+  odom_quat.x = body_info.quat_act.y;
+  odom_quat.y = body_info.quat_act.z;
+  odom_quat.z = body_info.quat_act.w;
+  odom_quat.w = body_info.quat_act.x;
+  odom.pose.pose.orientation = odom_quat;
+  odom.twist.twist.linear = body_info.vel_act.linear;
+  odom.twist.twist.angular = body_info.vel_act.angular;
+
+  imu.header.frame_id = "imu_link";
+  imu.header.stamp = ros::Time::now();
+
+  imu.orientation = odom_quat;
+
+  _pub_odom.publish(odom);
+  _pub_imu.publish(imu);
+#endif
 }
 
 void Debug::updateVisualization()
