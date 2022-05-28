@@ -312,7 +312,8 @@ void Body_Manager::finalizeStep()
   _legController->updateCommand(&spiCommand);
   _iterations++;
 
-  _debug->all_legs_info.header.stamp = _zero_time + delta_t;
+  // _debug->all_legs_info.header.stamp = _zero_time + delta_t;
+  _debug->all_legs_info.header.stamp = ros::Time::now();
 
   //put actual body info
   _debug->body_info.pos_act.x = _stateEstimator->getResult().position.x();
@@ -335,6 +336,14 @@ void Body_Manager::finalizeStep()
   _debug->body_info.vel_act.angular.x = _stateEstimator->getResult().omegaBody[0];
   _debug->body_info.vel_act.angular.y = _stateEstimator->getResult().omegaBody[1];
   _debug->body_info.vel_act.angular.z = _stateEstimator->getResult().omegaBody[2];
+
+  _debug->imu.angular_velocity.x = _low_state.imu.gyroscope[0];
+  _debug->imu.angular_velocity.y = _low_state.imu.gyroscope[1];
+  _debug->imu.angular_velocity.z = _low_state.imu.gyroscope[2];
+
+  _debug->imu.linear_acceleration.x = _low_state.imu.accelerometer[0];
+  _debug->imu.linear_acceleration.y = _low_state.imu.accelerometer[1];
+  _debug->imu.linear_acceleration.z = _low_state.imu.accelerometer[2];
 
   //put actual q and dq in debug class
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
@@ -394,7 +403,8 @@ void Body_Manager::finalizeStep()
     }
   }
 
-  _low_cmd.header.stamp = _zero_time + delta_t;
+  // _low_cmd.header.stamp = _zero_time + delta_t;
+  _low_cmd.header.stamp = ros::Time::now();
 
   for (uint8_t leg = 0; leg < 4; leg++)
   {

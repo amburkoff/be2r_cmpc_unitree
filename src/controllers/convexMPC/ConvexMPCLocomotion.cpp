@@ -216,6 +216,10 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   {
     gait = &walking;
   }
+  else if (gaitNumber == 11)
+  {
+    gait = &jumping;
+  }
   current_gait = gaitNumber;
   *gait = trotting_copy;
 
@@ -484,7 +488,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
 
       marker[foot].header.frame_id = names[foot];
-      marker[foot].header.stamp = ros::Time();
+      marker[foot].header.stamp = ros::Time::now();
       marker[foot].ns = "my_namespace";
       marker[foot].id = 0;
       marker[foot].type = visualization_msgs::Marker::ARROW;
@@ -569,7 +573,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       // Update for WBC
       std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
       marker[foot].header.frame_id = names[foot];
-      marker[foot].header.stamp = ros::Time();
+      marker[foot].header.stamp = ros::Time::now();
       marker[foot].ns = "my_namespace";
       marker[foot].id = 0;
       marker[foot].type = visualization_msgs::Marker::ARROW;
