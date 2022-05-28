@@ -20,11 +20,11 @@ bool SafetyChecker<T>::checkSafeOrientation()
 {
   // cout << "[SafetyChecker] checkSafeOrientation func start" << endl;
 
-  if (abs(data->_stateEstimator->getResult().rpy(0)) >= 0.5 ||
-      abs(data->_stateEstimator->getResult().rpy(1)) >= 0.5)
+  if (abs(data->_stateEstimator->getResult().rpy(0)) >= 1.0 ||
+      abs(data->_stateEstimator->getResult().rpy(1)) >= 1.0)
   {
-    cout << "[SafetyChecker] abs 0 " << abs(data->_stateEstimator->getResult().rpy(0)) << endl;
-    cout << "[SafetyChecker] abs 1 " << abs(data->_stateEstimator->getResult().rpy(1)) << endl;
+    cout << "[SafetyChecker] Roll is " << abs(data->_stateEstimator->getResult().rpy(0)) << endl;
+    cout << "[SafetyChecker] Pitch is " << abs(data->_stateEstimator->getResult().rpy(1)) << endl;
 
     printf("Orientation safety check failed!\n");
     return false;
