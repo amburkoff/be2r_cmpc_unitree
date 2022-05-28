@@ -205,8 +205,15 @@ void VisionMPCLocomotion::_IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx,
     auto norm_z = height_map.at("normal_vectors_z", *iterator);
     // if (height_map.at("normal_vectors_z", *iterator) < 0.999 &&
     //     height_map.at("normal_vectors_z", *iterator) > 0.01)
-    if (!std::isnan(norm_z))
-      std::cout << "Normal is " << norm_z << std::endl;
+    if (!std::isnan(norm_z) && norm_z > 0.98)
+    {
+      x_idx_selected = (*iterator)(0);
+      y_idx_selected = (*iterator)(1);
+      if ( (x_idx != x_idx_selected) && (y_idx != y_idx_selected) )
+        std::cout << "Edit footstep from ( " << x_idx << " " << y_idx << ") to ( " << x_idx_selected <<
+      " "<< y_idx_selected <<  std::endl;
+      return;
+    }
   }
 }
 
