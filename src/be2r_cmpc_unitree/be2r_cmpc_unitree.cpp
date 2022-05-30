@@ -303,7 +303,6 @@ void Body_Manager::setupStep()
   _legController->is_low_level = _is_low_level;
 
   // todo safety checks, sanity checks, etc...
-  
 }
 
 void Body_Manager::finalizeStep()
@@ -345,6 +344,8 @@ void Body_Manager::finalizeStep()
   _debug->imu.linear_acceleration.x = _low_state.imu.accelerometer[0];
   _debug->imu.linear_acceleration.y = _low_state.imu.accelerometer[1];
   _debug->imu.linear_acceleration.z = _low_state.imu.accelerometer[2];
+
+  _debug->ground_truth_odom = ground_truth;
 
   //put actual q and dq in debug class
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
@@ -511,6 +512,8 @@ void Body_Manager::_initPublishers()
 
 void Body_Manager::_groundTruthCallback(nav_msgs::Odometry ground_truth_msg)
 {
+  ground_truth = ground_truth_msg;
+
   _cheater_state.position[0] = ground_truth_msg.pose.pose.position.x;
   _cheater_state.position[1] = ground_truth_msg.pose.pose.position.y;
   _cheater_state.position[2] = ground_truth_msg.pose.pose.position.z;

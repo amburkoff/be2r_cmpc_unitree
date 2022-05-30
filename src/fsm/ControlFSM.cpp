@@ -177,7 +177,6 @@ void ControlFSM<T>::runFSM()
 template <typename T>
 FSM_OperatingMode ControlFSM<T>::safetyPreCheck()
 {
-
   // Check for safe orientation if the current state requires it
   if (currentState->checkSafeOrientation && data.controlParameters->control_mode != K_RECOVERY_STAND)
   {
@@ -187,7 +186,10 @@ FSM_OperatingMode ControlFSM<T>::safetyPreCheck()
       // std::cout << "broken: Orientation Safety Check FAIL" << std::endl;
       ROS_ERROR_STREAM("Broken: Orientation Safety Check FAIL!");
     }
+  }
 
+  if (data.userParameters->joint_limits && data.controlParameters->control_mode != K_RECOVERY_STAND)
+  {
     if (!safetyChecker->checkJointLimits())
     {
       operatingMode = FSM_OperatingMode::ESTOP;

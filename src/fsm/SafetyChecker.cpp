@@ -254,13 +254,18 @@ template <typename T>
 bool SafetyChecker<T>::checkJointLimits()
 {
   //from software guide unitree a1
-  //hip -46 ~ 46 deg
-  //thigh -60 ~ 240 deg
-  //calf -154.5 ~ -52.5 deg
+  //hip -46 ~ 46 deg (-0.8 ~ 0.8 rad)
+  //thigh -60 ~ 240 deg (-1.04 ~ 4.18 rad)
+  //calf -154.5 ~ -52.5 deg (-2.68 ~ -0.907 rad)
   //from urdf
   // lower="-0.802851455917" upper="0.802851455917" hip
   // lower="-1.0471975512" upper="4.18879020479" thigh
   // lower="-2.69653369433" upper="-0.916297857297" calf
+
+  //real
+  //hip -0.876 ~ 0.896 rad
+  //thigh -1.092 ~ 4.142 rad
+  //calf -2.677 ~ -0.854 rad
 
   //changed sighs for MiniCheetah
   static const float limit_joint0[2] = {-46 * M_PI / 180, 46 * M_PI / 180};

@@ -27,6 +27,7 @@ public:
 
   unitree_legged_msgs::AllLegsInfo all_legs_info = {};
   unitree_legged_msgs::BodyInfo body_info = {};
+  nav_msgs::Odometry ground_truth_odom = {};
   sensor_msgs::Imu imu;
 
 private:
@@ -43,6 +44,7 @@ private:
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
   tf::TransformBroadcaster odom_broadcaster;
+  tf::TransformBroadcaster world_broadcaster;
 
 private:
 };

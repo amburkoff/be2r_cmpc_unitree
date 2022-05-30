@@ -313,6 +313,7 @@ void FSM_State<T>::turnOnAllSafetyChecks()
   checkPDesFoot = true;         // do not command footsetps too far
   checkForceFeedForward = true; // do not command huge forces
   checkLegSingularity = true;   // do not let leg
+  checkJointLimits = true;
 }
 
 /**
@@ -328,6 +329,7 @@ void FSM_State<T>::turnOffAllSafetyChecks()
   checkPDesFoot = false;         // do not command footsetps too far
   checkForceFeedForward = false; // do not command huge forces
   checkLegSingularity = false;   // do not let leg
+  checkJointLimits = false;
 }
 
 template<typename T>

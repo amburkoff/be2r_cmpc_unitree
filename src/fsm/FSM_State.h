@@ -117,6 +117,7 @@ public:
 
   // Pre controls safety checks
   bool checkSafeOrientation = false; // check roll and pitch
+  bool checkJointLimits = false; // check joint limits
 
   // Post control safety checks
   bool checkPDesFoot = false;         // do not command footsetps too far

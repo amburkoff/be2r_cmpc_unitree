@@ -118,6 +118,7 @@ private:
   void _readRobotData();
   UNITREE_LEGGED_SDK::LowCmd _udp_low_cmd = {};
   UNITREE_LEGGED_SDK::LowState _udp_low_state = {};
+  nav_msgs::Odometry ground_truth = {};
   UNITREE_LEGGED_SDK::LowCmd _rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd);
   unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
 

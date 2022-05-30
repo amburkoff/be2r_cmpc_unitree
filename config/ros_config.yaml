@@ -49,6 +49,9 @@ dynamic_loader:
   body_height: 0.29
 
 
+  # safety
+  joint_limits: 0
+
   Swing_traj_height  : 0.09   # Set swing traj top point
 
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC

@@ -146,4 +146,21 @@ void Debug::tfPublish()
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
+
+  geometry_msgs::TransformStamped ground_truth_tf;
+
+  ground_truth_tf.header.stamp = odom_trans.header.stamp;
+  ground_truth_tf.header.frame_id = "world";
+  ground_truth_tf.child_frame_id = "odom";
+
+  ground_truth_tf.transform.translation.x = 0;
+  ground_truth_tf.transform.translation.y = 0;
+  ground_truth_tf.transform.translation.z = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
+
+  ground_truth_tf.transform.rotation.x = 0;
+  ground_truth_tf.transform.rotation.y = 0;
+  ground_truth_tf.transform.rotation.z = 0;
+  ground_truth_tf.transform.rotation.w = 1;
+
+  world_broadcaster.sendTransform(ground_truth_tf);
 }
