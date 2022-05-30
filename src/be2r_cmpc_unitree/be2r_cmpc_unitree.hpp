@@ -49,9 +49,9 @@
 #define MOTOR_BREAK 0x00
 #define MOTOR_ON 0x0A
 
-const float max_max_torque[3] = { 170.f, 170.f, 260.f }; // TODO CHECK WITH BEN
-const float wimp_torque[3] = { 6.f, 6.f, 6.f };          // TODO CHECK WITH BEN
-const float disabled_torque[3] = { 0.f, 0.f, 0.f };
+const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
+const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
+const float disabled_torque[3] = {0.f, 0.f, 0.f};
 
 constexpr double PosStopF = (2.146E+9f);
 constexpr double VelStopF = (16000.0f);
@@ -88,6 +88,7 @@ private:
 
   ros::Publisher _pub_low_cmd;
   ros::Publisher _pub_low_state;
+  ros::Subscriber _sub_ground_truth;
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
   ros::Time _time_start;
@@ -108,8 +109,8 @@ private:
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
-  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
-                                uint32_t level);
+  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
+  void _groundTruthCallback(nav_msgs::Odometry ground_truth_msg);
 
   // Unitree sdk
   UNITREE_LEGGED_SDK::Safety safe;
@@ -126,6 +127,7 @@ private:
   StateEstimatorContainer<float>* _stateEstimator;
   StateEstimate<float> _stateEstimate;
   DesiredStateCommand<float>* _desiredStateCommand;
+  CheaterState<float> _cheater_state;
   Debug* _debug;
   GamepadCommand driverCommand;
   unitree_legged_msgs::LowState _low_state;
@@ -142,7 +144,7 @@ private:
   ControlParameters* _userControlParameters = nullptr;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig _rosParameters;
 
-  template<typename T>
+  template <typename T>
   bool readRosParam(std::string param_name, T& param_var)
   {
     if (!ros::param::get(param_name, param_var))

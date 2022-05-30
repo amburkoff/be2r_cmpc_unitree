@@ -250,6 +250,70 @@ bool SafetyChecker<T>::checkForceFeedForward()
   return safeForceFeedForward;
 }
 
+template <typename T>
+bool SafetyChecker<T>::checkJointLimits()
+{
+  //from software guide unitree a1
+  //hip -46 ~ 46 deg
+  //thigh -60 ~ 240 deg
+  //calf -154.5 ~ -52.5 deg
+  //from urdf
+  // lower="-0.802851455917" upper="0.802851455917" hip
+  // lower="-1.0471975512" upper="4.18879020479" thigh
+  // lower="-2.69653369433" upper="-0.916297857297" calf
+
+  //changed sighs for MiniCheetah
+  static const float limit_joint0[2] = {-46 * M_PI / 180, 46 * M_PI / 180};
+  static const float limit_joint1[2] = {-240 * M_PI / 180, 60 * M_PI / 180};
+  static const float limit_joint2[2] = {52.5 * M_PI / 180, 154.5 * M_PI / 180};
+
+  static const float safety_spread = 1.0;
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    //joint 0 min
+    if (data->_legController->datas[i].q(0) < limit_joint0[0] * safety_spread)
+    {
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 min limit exceeded! Act: " << data->_legController->datas[i].q(0) << " Limit: " << limit_joint0[0] * safety_spread);
+      return false;
+    }
+    //joint 0 max
+    if (data->_legController->datas[i].q(0) > limit_joint0[1] * safety_spread)
+    {
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 max limit exceeded! Act: " << data->_legController->datas[i].q(0) << " Limit: " << limit_joint0[1] * safety_spread);
+      return false;
+    }
+
+    //joint 1 min
+    if (data->_legController->datas[i].q(1) < limit_joint1[0] * safety_spread)
+    {
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 min limit exceeded! Act: " << data->_legController->datas[i].q(1) << " Limit: " << limit_joint1[0] * safety_spread);
+      return false;
+    }
+    //joint 1 max
+    if (data->_legController->datas[i].q(1) > limit_joint1[1] * safety_spread)
+    {
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 max limit exceeded! Act: " << data->_legController->datas[i].q(1) << " Limit: " << limit_joint1[1] * safety_spread);
+      return false;
+    }
+
+    //joint 2 min
+    if (data->_legController->datas[i].q(2) < limit_joint2[0] * safety_spread)
+    {
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 min limit exceeded! Act: " << data->_legController->datas[i].q(2) << " Limit: " << limit_joint2[0] * safety_spread);
+      return false;
+    }
+    //joint 2 max
+    if (data->_legController->datas[i].q(2) > limit_joint2[1] * safety_spread)
+    {
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 max limit exceeded! Act: " << data->_legController->datas[i].q(2) << " Limit: " << limit_joint2[1] * safety_spread);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // template class SafetyChecker<double>; This should be fixed... need to make
 // RobotRunner a template
 template class SafetyChecker<float>;

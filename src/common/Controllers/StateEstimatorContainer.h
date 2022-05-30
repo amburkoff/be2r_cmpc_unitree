@@ -48,7 +48,7 @@ struct StateEstimatorData
 {
   StateEstimate<T>* result; // where to write the output to
   VectorNavData* vectorNavData;
-  CheaterState<double>* cheaterState;
+  CheaterState<float>* cheaterState;
   LegControllerData<T>* legControllerData;
   Vec4<T>* contactPhase;
   Vec4<uint8_t>* contactSensor;
@@ -89,6 +89,7 @@ public:
                           LegControllerData<T>* legControllerData,
                           Vec4<uint8_t>* footContactState,
                           StateEstimate<T>* stateEstimate,
+                          CheaterState<T>* cheaterState,
                           RobotControlParameters* parameters)
   {
     _data.vectorNavData = vectorNavData;
@@ -98,6 +99,7 @@ public:
     _data.contactPhase = &_phase;
     _data.contactSensor = footContactState;
     _data.parameters = parameters;
+    _data.cheaterState = cheaterState;
   }
 
   /*!
@@ -123,6 +125,14 @@ public:
   const StateEstimate<T>& getResult()
   {
     return *_data.result;
+  }
+
+  /*!
+   * Get cheater data
+   */
+  const StateEstimate<T>& getCheaterData()
+  {
+    return *_data.cheaterState;
   }
 
   /*!

@@ -132,7 +132,7 @@ void Body_Manager::init()
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &controlParameters);
+  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &_cheater_state, &controlParameters);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
@@ -303,6 +303,7 @@ void Body_Manager::setupStep()
   _legController->is_low_level = _is_low_level;
 
   // todo safety checks, sanity checks, etc...
+  
 }
 
 void Body_Manager::finalizeStep()
@@ -466,8 +467,6 @@ void Body_Manager::finalizeStep()
   }
 
   _pub_low_cmd.publish(_low_cmd);
-  // t1.start();
-  // ROS_INFO("pub");
 }
 
 /*!
@@ -484,22 +483,57 @@ void Body_Manager::initializeStateEstimator()
   contactDefault << 0.5, 0.5, 0.5, 0.5;
   _stateEstimator->setContactPhase(contactDefault);
 
-  _stateEstimator->addEstimator<VectorNavOrientationEstimator<float>>();
-  _stateEstimator->addEstimator<LinearKFPositionVelocityEstimator<float>>();
+  if (controlParameters.cheater_mode)
+  {
+    ROS_INFO("Cheater Mode!");
+    _stateEstimator->addEstimator<CheaterOrientationEstimator<float>>();
+    _stateEstimator->addEstimator<CheaterPositionVelocityEstimator<float>>();
+  }
+  else
+  {
+    _stateEstimator->addEstimator<VectorNavOrientationEstimator<float>>();
+    _stateEstimator->addEstimator<LinearKFPositionVelocityEstimator<float>>();
+  }
 }
 
 void Body_Manager::_initSubscribers()
 {
-  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this,
-                                 ros::TransportHints().tcpNoDelay(true));
-  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this,
-                               ros::TransportHints().tcpNoDelay(true));
+  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
 }
 
 void Body_Manager::_initPublishers()
 {
   _pub_low_cmd = _nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 1);
   _pub_low_state = _nh.advertise<unitree_legged_msgs::LowState>("/low_state", 1);
+}
+
+void Body_Manager::_groundTruthCallback(nav_msgs::Odometry ground_truth_msg)
+{
+  _cheater_state.position[0] = ground_truth_msg.pose.pose.position.x;
+  _cheater_state.position[1] = ground_truth_msg.pose.pose.position.y;
+  _cheater_state.position[2] = ground_truth_msg.pose.pose.position.z;
+
+  _cheater_state.vBody[0] = ground_truth_msg.twist.twist.linear.x;
+  _cheater_state.vBody[1] = ground_truth_msg.twist.twist.linear.y;
+  _cheater_state.vBody[2] = ground_truth_msg.twist.twist.linear.z;
+
+  _cheater_state.vBody = _stateEstimator->getResult().rBody * _cheater_state.vBody;
+
+  _cheater_state.acceleration[0] = vectorNavData.accelerometer[0];
+  _cheater_state.acceleration[1] = vectorNavData.accelerometer[1];
+  _cheater_state.acceleration[2] = vectorNavData.accelerometer[2];
+
+  _cheater_state.omegaBody[0] = vectorNavData.gyro[0];
+  _cheater_state.omegaBody[1] = vectorNavData.gyro[1];
+  _cheater_state.omegaBody[2] = vectorNavData.gyro[2];
+
+  _cheater_state.orientation = vectorNavData.quat;
+  // _cheater_state.orientation[0] = ground_truth_msg.pose.pose.orientation.w;
+  // _cheater_state.orientation[1] = ground_truth_msg.pose.pose.orientation.x;
+  // _cheater_state.orientation[2] = ground_truth_msg.pose.pose.orientation.y;
+  // _cheater_state.orientation[3] = ground_truth_msg.pose.pose.orientation.z;
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
