@@ -94,8 +94,10 @@ void LinearKFPositionVelocityEstimator<T>::run()
   Vec4<T> pzs = Vec4<T>::Zero();
   Vec4<T> trusts = Vec4<T>::Zero();
   Vec3<T> p0, v0;
+  Vec4<T> pzs0;
   p0 << _xhat[0], _xhat[1], _xhat[2];
   v0 << _xhat[3], _xhat[4], _xhat[5];
+  pzs0 <<  _xhat[8], _xhat[11], _xhat[14], _xhat[17];
 
   for (int i = 0; i < 4; i++)
   {
@@ -103,11 +105,18 @@ void LinearKFPositionVelocityEstimator<T>::run()
     Quadruped<T>& quadruped = *(this->_stateEstimatorData.legControllerData->quadruped);
     Vec3<T> ph = quadruped.getHipLocation(i); // hip positions relative to CoM
     // hw_i->leg_controller->leg_datas[i].p;
-    Vec3<T> p_rel = ph + this->_stateEstimatorData.legControllerData[i].p;
+    Vec3<T> p_rel = ph + this->_stateEstimatorData.legControllerData[i].p; // Local frame distance from COM to leg(i)
     // hw_i->leg_controller->leg_datas[i].v;
+
+    // Local frame velocity of leg(i) relative to COM
     Vec3<T> dp_rel = this->_stateEstimatorData.legControllerData[i].v;
-    Vec3<T> p_f = Rbod * p_rel;
+
+    //Distance to leg(i) from Aligned with World frame body frame
+    Vec3<T> p_f = Rbod * p_rel; 
+
+    // World leg(i) velocity in Aligned with World frame body frame
     Vec3<T> dp_f = Rbod * (this->_stateEstimatorData.result->omegaBody.cross(p_rel) + dp_rel);
+    
 
     qindex = 6 + i1;
     rindex1 = i1;
@@ -119,13 +128,16 @@ void LinearKFPositionVelocityEstimator<T>::run()
     //T trust_window = T(0.25);
     T trust_window = T(0.2);
 
+    // trust from 0 to 1 when phase< trust_window and  phase > 1 - trust_window
+    // In other phases trust = 1
+    // That could happen because of the big noise/deviations during the contact moment
     if (phase < trust_window)
     {
-      trust = phase / trust_window;
+      trust = phase / trust_window; // trust from 0 to 1
     }
-    else if (phase > (T(1) - trust_window))
+    else if (phase > (T(1) - trust_window)) //  1 > (1- p)tr_w
     {
-      trust = (T(1) - phase) / trust_window;
+      trust = (T(1) - phase) / trust_window; // trust from 1 to 0
     }
     //T high_suspect_number(1000);
     T high_suspect_number(100);
@@ -140,12 +152,14 @@ void LinearKFPositionVelocityEstimator<T>::run()
         (T(1) + (T(1) - trust) * high_suspect_number) * R(rindex3, rindex3);
 
     trusts(i) = trust;
-
+  
     _ps.segment(i1, 3) = -p_f;
     _vs.segment(i1, 3) = (1.0f - trust) * v0 + trust * (-dp_f);
-    pzs(i) = (1.0f - trust) * (p0(2) + p_f(2));
+    pzs(i) = trust*pzs0(i) + (1.0f - trust) *(p0(2) + p_f(2)) ;//
+    std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
   }
-
+  //std::cout <<"Trusts"<< " " << trusts(0)<< " "<< trusts(1)<< " "<< trusts(2)<< " "<< trusts(3)<< " "<< std::endl;
+  
   Eigen::Matrix<T, 28, 1> y;
   y << _ps, _vs, pzs;
   _xhat = _A * _xhat + _B * a;
@@ -157,6 +171,18 @@ void LinearKFPositionVelocityEstimator<T>::run()
   Eigen::Matrix<T, 28, 28> S = _C * Pm * Ct + R;
 
   // todo compute LU only once
+  // LU decompostion is a method to solve linear system of algebra equations, find inverse matrix 
+  // and determinant
+  // Ax=b or A.lu().solve(b) make lower-upper triangular matrix decomposition for A = LU
+  // and the make a replacement z = Ux such that we have Lz=b
+  // Example: 
+  // A = [1 1;2 4] b = [5; 6]
+  // L = [1 0;2 1] U = [1 1;0 2]
+  // Z1 = 5 | 2*Z1+Z2 = 6 => Z2= -4
+  // 2*X2 = -4 | X1 + X2 = 5 => X1 = 7
+  // Check: 2*X1+4*X2 = 6 | 14-8=6 
+
+  // A has to be invertiable.
   Eigen::Matrix<T, 28, 1> S_ey = S.lu().solve(ey);
   _xhat += Pm * Ct * S_ey;
 

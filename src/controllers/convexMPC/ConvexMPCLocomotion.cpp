@@ -360,7 +360,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
     Pf[2] = 0.01;
-    cout << "Foot " << i << " final position desired: " << Pf.transpose() << "\n";
+    //cout << "Foot " << i << " final position desired: " << Pf.transpose() << "\n";
     footSwingTrajectories[i].setFinalPosition(Pf);
   }
 
