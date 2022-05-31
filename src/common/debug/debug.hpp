@@ -45,8 +45,6 @@ private:
   ros::Publisher _pub_body_info;
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster world_broadcaster;
-
-private:
 };
 
 #endif //DEBUG_H

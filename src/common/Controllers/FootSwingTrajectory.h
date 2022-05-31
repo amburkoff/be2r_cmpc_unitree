@@ -55,6 +55,7 @@ public:
   void setHeight(T h) { _height = h; }
 
   void computeSwingTrajectoryBezier(T phase, T swingTime);
+  void computeStairsSwingTrajectoryBezier(T phase, T swingTime);
 
   /*!
    * Get the foot position at the current point along the swing

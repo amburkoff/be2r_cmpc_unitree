@@ -39,6 +39,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc
                                                                                                                                   trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
                                                                                                                                   trot_contact(GAIT_PERIOD, Vec4<int>(0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, 0), Vec4<int>(GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25), "Trot contact"),
                                                                                                                                   standing(GAIT_PERIOD, Vec4<int>(0, 0, 0, 0), Vec4<int>(GAIT_PERIOD, GAIT_PERIOD, GAIT_PERIOD, GAIT_PERIOD), "Standing"),
+                                                                                                                                  walking(14, Vec4<int>(0, 0, 0, 0), Vec4<int>(14, 14, 14, 14), "Walking"),
                                                                                                                                   two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, 0, _gait_period, 0), "Two legs balance")
 
 {
@@ -177,6 +178,10 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   {
     gait = &trotting;
   }
+  else if (current_gait == 10)
+  {
+    gait = &walking;
+  }
 
   gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
@@ -215,7 +220,7 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   // }
   else
   {
-    des_pitch = des_pitch * (1 - 0.7) - 1* asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
+    des_pitch = des_pitch * (1 - 0.7) - 1.2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
   }
 
   // cout << "pfm z: " << p_fm(2) << " pbm z: " << p_bm(2) << endl;
@@ -425,13 +430,14 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       }
 
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
+      // footSwingTrajectories[foot].computeStairsSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
       // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].p + data._quadruped->getHipLocation(foot)) + seResult.position;
-      // Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].v) + seResult.vWorld;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].v) + seResult.vWorld;
 
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;
@@ -453,9 +459,9 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       // data.debug->all_legs_info.leg[foot].p_w_act.y = pActFootWorld[1];
       // data.debug->all_legs_info.leg[foot].p_w_act.z = pActFootWorld[2];
 
-      // data.debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
-      // data.debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
-      // data.debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
+      data.debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
+      data.debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
+      data.debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
 
       data.debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorld[0];
       data.debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorld[1];
@@ -479,8 +485,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       firstSwing[foot] = true;
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
-      Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
-      // Vec3<float> vDesFootWorld(0, 0, 0);
+      // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+      Vec3<float> vDesFootWorld(0, 0, 0);
       // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorldStance[foot] - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);

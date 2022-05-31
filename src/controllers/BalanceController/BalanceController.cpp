@@ -22,7 +22,8 @@ Cheetah-3-Documentation-Control:
 using namespace std;
 
 BalanceController::BalanceController()
-    : QProblemObj_qpOASES(NUM_VARIABLES_QP, NUM_CONSTRAINTS_QP) {
+    : QProblemObj_qpOASES(NUM_VARIABLES_QP, NUM_CONSTRAINTS_QP)
+{
   // *!! It seems like this next block of 5 lines does not actually do anything,
   // I had to set print level in the OptimizationThread class
   Options options;
@@ -33,9 +34,12 @@ BalanceController::BalanceController()
   QPFinished = false;
 
   lcm = new lcm::LCM("udpm://239.255.76.67:7667?ttl=1");
-  if (lcm->good()) {
+  if (lcm->good())
+  {
     printf("LCM IN BALANCE CONTROL INITIALIZED\n");
-  } else {
+  }
+  else
+  {
     printf("LCM IN BALANCE CONTROLLER FAILED\n");
     exit(-1);
   }
@@ -115,7 +119,8 @@ BalanceController::BalanceController()
   xOptPrev.setZero(12);
   yOptPrev.setZero(NUM_VARIABLES_QP + NUM_CONSTRAINTS_QP);
 
-  for (int i = 0; i < NUM_VARIABLES_QP; i++) {
+  for (int i = 0; i < NUM_VARIABLES_QP; i++)
+  {
     xOpt_qpOASES[i] = 0.0;
     xOpt_initialGuess[i] = 0.0;
   }
@@ -125,7 +130,8 @@ BalanceController::BalanceController()
   xOpt_initialGuess[8] = 100;
   xOpt_initialGuess[11] = 100;
 
-  for (int i = 0; i < NUM_VARIABLES_QP + NUM_CONSTRAINTS_QP; i++) {
+  for (int i = 0; i < NUM_VARIABLES_QP + NUM_CONSTRAINTS_QP; i++)
+  {
     yOpt_qpOASES[i] = 0.0;
   }
 
@@ -186,7 +192,8 @@ void BalanceController::set_base_support_flag(double sflag)
 void BalanceController::updateProblemData(double* xfb_in, double* p_feet_in,
                                           double* p_des, double* p_act,
                                           double* v_des, double* v_act,
-                                          double* O_err, double yaw_act_in) {
+                                          double* O_err, double yaw_act_in)
+{
   // Unpack inputs
   copy_Array_to_Eigen(quat_b_world, xfb_in, 4, 0);
   copy_Array_to_Eigen(x_COM_world, xfb_in, 3, 4);
@@ -226,7 +233,8 @@ void BalanceController::updateProblemData(double* xfb_in, double* p_feet_in,
 
 void BalanceController::SetContactData(double* contact_state_in,
                                        double* min_forces_in,
-                                       double* max_forces_in) {
+                                       double* max_forces_in)
+{
   // Unpack inputs
   copy_Array_to_Eigen(contact_state, contact_state_in, 4, 0);
   copy_Array_to_Eigen(minNormalForces_feet, min_forces_in, 4, 0);
@@ -236,21 +244,27 @@ void BalanceController::SetContactData(double* contact_state_in,
   calc_lbA_ubA_qpOASES();
 }
 
-void BalanceController::set_desired_swing_pos(double* pFeet_des_in) {
-  for (int i = 0; i < 12; i++) {
+void BalanceController::set_desired_swing_pos(double* pFeet_des_in)
+{
+  for (int i = 0; i < 12; i++)
+  {
     qp_controller_data.pfeet_des[i] = pFeet_des_in[i];
   }
 }
 
-void BalanceController::set_actual_swing_pos(double* pFeet_act_in) {
-  for (int i = 0; i < 12; i++) {
+void BalanceController::set_actual_swing_pos(double* pFeet_act_in)
+{
+  for (int i = 0; i < 12; i++)
+  {
     qp_controller_data.pfeet_act[i] = pFeet_act_in[i];
   }
 }
 
-void BalanceController::solveQP_nonThreaded(double* xOpt) {
+void BalanceController::solveQP_nonThreaded(double* xOpt)
+{
   // &cpu_time
-  if (qp_not_init == 1.0) {
+  if (qp_not_init == 1.0)
+  {
     qp_exit_flag = QProblemObj_qpOASES.init(
         H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES,
         ubA_qpOASES, nWSR_qpOASES, &cpu_time, xOpt_initialGuess);
@@ -258,7 +272,9 @@ void BalanceController::solveQP_nonThreaded(double* xOpt) {
 
     nWSR_initial = nWSR_qpOASES;
     cpu_time_initial = cpu_time;
-  } else {
+  }
+  else
+  {
     qp_exit_flag = QProblemObj_qpOASES.init(
         H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES,
         ubA_qpOASES, nWSR_qpOASES, &cpu_time, xOpt_qpOASES, yOpt_qpOASES,
@@ -303,13 +319,15 @@ void BalanceController::solveQP_nonThreaded(double* xOpt) {
 
   b_control_Opt = A_control * xOpt_eigen;
 
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++)
+  {
     qp_controller_data.b_control_Opt[i] = b_control_Opt(i);
   }
 
   xOptPrev = xOpt_eigen;
 
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++)
+  {
     tempVector3 = -R_b_world.transpose() * xOpt_eigen.segment(3 * i, 3);
     xOpt[3 * i] = tempVector3(0);
     xOpt[3 * i + 1] = tempVector3(1);
@@ -321,7 +339,8 @@ void BalanceController::solveQP_nonThreaded(double* xOpt) {
   qp_controller_data_publish = qp_controller_data;
 }
 
-void BalanceController::verifyModel(double* vbd_command) {
+void BalanceController::verifyModel(double* vbd_command)
+{
   vbd_command_eigen =
       (1.0 / mass) * A_control.block<3, 12>(0, 0) * xOpt_eigen - gravity;
   copy_Eigen_to_double(vbd_command, vbd_command_eigen, 3);
@@ -329,7 +348,8 @@ void BalanceController::verifyModel(double* vbd_command) {
 
 /* --------------- Control Math ------------ */
 
-void BalanceController::calc_PDcontrol() {
+void BalanceController::calc_PDcontrol()
+{
   // calculate error in yaw rotated coordinates
   error_x_rotated = R_yaw_act.transpose() * (x_COM_world_desired - x_COM_world);
   error_dx_rotated =
@@ -368,29 +388,35 @@ void BalanceController::calc_PDcontrol() {
   // std::cout << "orientation_error = " << orientation_error << "\n";
 }
 
-void BalanceController::calc_constraint_check() {
+void BalanceController::calc_constraint_check()
+{
   C_times_f_control = C_control * xOpt_eigen;
 
-  for (int i = 0; i < NUM_VARIABLES_QP; i++) {
+  for (int i = 0; i < NUM_VARIABLES_QP; i++)
+  {
     qp_controller_data.xOpt[i] = xOpt_eigen(i);
   }
 
-  for (int i = 0; i < NUM_CONSTRAINTS_QP; i++) {
+  for (int i = 0; i < NUM_CONSTRAINTS_QP; i++)
+  {
     qp_controller_data.lbA[i] = lbA_qpOASES[i];
     qp_controller_data.ubA[i] = ubA_qpOASES[i];
     qp_controller_data.C_times_f[i] = C_times_f_control(i);
   }
 
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++)
+  {
     qp_controller_data.b_control[i] = b_control(i);
   }
 }
 
 /* --------------- QP Matrices and Problem Data ------------ */
 
-void BalanceController::update_A_control() {
+void BalanceController::update_A_control()
+{
   // Update the A matrix in the controller notation A*f = b
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++)
+  {
     A_control.block<3, 3>(0, 3 * i) << R_yaw_act.transpose();
 
     tempVector3 << contact_state(i) * p_feet.col(i);
@@ -399,7 +425,8 @@ void BalanceController::update_A_control() {
   }
 }
 
-void BalanceController::calc_H_qpOASES() {
+void BalanceController::calc_H_qpOASES()
+{
   // Use the A matrix to compute the QP cost matrix H
   H_eigen = 2 * (A_control.transpose() * S_control * A_control +
                  (alpha_control + 1e-3) * W_control);
@@ -408,13 +435,15 @@ void BalanceController::calc_H_qpOASES() {
   copy_Eigen_to_real_t(H_qpOASES, H_eigen, NUM_VARIABLES_QP, NUM_VARIABLES_QP);
 }
 
-void BalanceController::calc_A_qpOASES() {
+void BalanceController::calc_A_qpOASES()
+{
   Eigen::Vector3d t1x;
   t1x << 1, 0, 0;
   Eigen::Vector3d t2y;
   t2y << 0, 1, 0;
 
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++)
+  {
     C_control.block<1, 3>(5 * i + 0, 3 * i)
         << -mu_friction * direction_normal_flatGround.transpose() +
                t1x.transpose();
@@ -431,12 +460,14 @@ void BalanceController::calc_A_qpOASES() {
         << direction_normal_flatGround.transpose();
   }
 
-  if (use_hard_constraint_pitch == 1) {
+  if (use_hard_constraint_pitch == 1)
+  {
     C_control.row(NUM_CONSTRAINTS_QP - 1) =
-        A_control.row(5 - 1);  // add hard constraint on pitch control
+        A_control.row(5 - 1); // add hard constraint on pitch control
   }
 
-  else {
+  else
+  {
     C_control.row(NUM_CONSTRAINTS_QP - 1) = 0 * A_control.row(5 - 1);
   }
 
@@ -444,16 +475,20 @@ void BalanceController::calc_A_qpOASES() {
                        NUM_VARIABLES_QP);
 }
 
-void BalanceController::calc_g_qpOASES() {
+void BalanceController::calc_g_qpOASES()
+{
   g_eigen = -2 * A_control.transpose() * S_control * b_control;
   g_eigen += -2 * xOptPrev.transpose() * alpha_control;
   // Copy to real_t array (qpOASES data type)
   copy_Eigen_to_real_t(g_qpOASES, g_eigen, NUM_VARIABLES_QP, 1);
 }
 
-void BalanceController::calc_lb_ub_qpOASES() {
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
-    for (int j = 0; j < NUM_VARIABLES_PER_FOOT; j++) {
+void BalanceController::calc_lb_ub_qpOASES()
+{
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++)
+  {
+    for (int j = 0; j < NUM_VARIABLES_PER_FOOT; j++)
+    {
       lb_qpOASES[NUM_VARIABLES_PER_FOOT * i + j] =
           contact_state(i) * NEGATIVE_NUMBER;
       ub_qpOASES[NUM_VARIABLES_PER_FOOT * i + j] =
@@ -462,16 +497,20 @@ void BalanceController::calc_lb_ub_qpOASES() {
   }
 
   // add constraint on f_y=0 for jumping
-  if (use_hard_constraint_pitch == 1) {
-    for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+  if (use_hard_constraint_pitch == 1)
+  {
+    for (int i = 0; i < NUM_CONTACT_POINTS; i++)
+    {
       lb_qpOASES[NUM_VARIABLES_PER_FOOT * i + 1] = 0;
       ub_qpOASES[NUM_VARIABLES_PER_FOOT * i + 1] = 0;
     }
   }
 }
 
-void BalanceController::calc_lbA_ubA_qpOASES() {
-  for (int i = 0; i < NUM_CONTACT_POINTS; i++) {
+void BalanceController::calc_lbA_ubA_qpOASES()
+{
+  for (int i = 0; i < NUM_CONTACT_POINTS; i++)
+  {
     lbA_qpOASES[NUM_CONSTRAINTS_PER_FOOT * i] =
         contact_state(i) * NEGATIVE_NUMBER;
     lbA_qpOASES[NUM_CONSTRAINTS_PER_FOOT * i + 1] =
@@ -492,36 +531,42 @@ void BalanceController::calc_lbA_ubA_qpOASES() {
   }
 
   // add hard constraint on pitch control
-  if (use_hard_constraint_pitch == 1) {
+  if (use_hard_constraint_pitch == 1)
+  {
     lbA_qpOASES[NUM_CONSTRAINTS_QP - 1] = b_control(5 - 1);
     ubA_qpOASES[NUM_CONSTRAINTS_QP - 1] = b_control(5 - 1);
   }
 
-  else if (use_hard_constraint_pitch > 1) {
+  else if (use_hard_constraint_pitch > 1)
+  {
     lbA_qpOASES[NUM_CONSTRAINTS_QP - 1] = POSITIVE_NUMBER;
     ubA_qpOASES[NUM_CONSTRAINTS_QP - 1] = NEGATIVE_NUMBER;
   }
 
-  else {
+  else
+  {
     lbA_qpOASES[NUM_CONSTRAINTS_QP - 1] = NEGATIVE_NUMBER;
     ubA_qpOASES[NUM_CONSTRAINTS_QP - 1] = POSITIVE_NUMBER;
   }
 }
 
-void BalanceController::publish_data_lcm() {
+void BalanceController::publish_data_lcm()
+{
   lcm->publish("CONTROLLER_qp_controller_data", &qp_controller_data_publish);
 }
 
 void BalanceController::update_log_variables(double* p_des, double* p_act,
                                              double* v_des, double* v_act,
-                                             double* O_err) {
+                                             double* O_err)
+{
   copy_Eigen_to_double(p_des, x_COM_world_desired, 3);
   copy_Eigen_to_double(p_act, x_COM_world, 3);
   copy_Eigen_to_double(v_des, xdot_COM_world_desired, 3);
   copy_Eigen_to_double(v_act, xdot_COM_world, 3);
   copy_Eigen_to_double(O_err, orientation_error, 3);
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++)
+  {
     qp_controller_data.p_des[i] = x_COM_world_desired(i);
     qp_controller_data.p_act[i] = x_COM_world(i);
     qp_controller_data.v_des[i] = xdot_COM_world_desired(i);
@@ -534,7 +579,8 @@ void BalanceController::update_log_variables(double* p_des, double* p_act,
 /* ------------ Set Parameter Values -------------- */
 
 void BalanceController::set_PDgains(double* Kp_COM_in, double* Kd_COM_in,
-                                    double* Kp_Base_in, double* Kd_Base_in) {
+                                    double* Kp_Base_in, double* Kd_Base_in)
+{
   Kp_COMx = Kp_COM_in[0];
   Kp_COMy = Kp_COM_in[1];
   Kp_COMz = Kp_COM_in[2];
@@ -554,7 +600,7 @@ void BalanceController::set_PDgains(double* Kp_COM_in, double* Kd_COM_in,
 
 void BalanceController::set_desiredTrajectoryData(
     double* rpy_des_in, double* p_des_in, double* omegab_des_in,
-    double* v_des_in)  //, double* vdot_des_in)
+    double* v_des_in) //, double* vdot_des_in)
 {
   x_COM_world_desired << p_des_in[0], p_des_in[1], p_des_in[2];
   rpyToR(R_b_world_desired, rpy_des_in);
@@ -564,7 +610,8 @@ void BalanceController::set_desiredTrajectoryData(
 }
 
 void BalanceController::set_wrench_weights(double* COM_weights_in,
-                                           double* Base_weights_in) {
+                                           double* Base_weights_in)
+{
   S_control(0, 0) = COM_weights_in[0];
   S_control(1, 1) = COM_weights_in[1];
   S_control(2, 2) = COM_weights_in[2];
@@ -574,17 +621,20 @@ void BalanceController::set_wrench_weights(double* COM_weights_in,
   S_control(5, 5) = Base_weights_in[2];
 }
 
-void BalanceController::set_QP_options(double use_hard_constraint_pitch_in) {
+void BalanceController::set_QP_options(double use_hard_constraint_pitch_in)
+{
   use_hard_constraint_pitch = use_hard_constraint_pitch_in;
 }
 
-void BalanceController::set_QPWeights() {
+void BalanceController::set_QPWeights()
+{
   S_control.setIdentity();
   W_control.setIdentity();
   alpha_control = .1;
 }
 
-void BalanceController::set_worldData() {
+void BalanceController::set_worldData()
+{
   direction_normal_flatGround << 0, 0, 1;
   gravity << 0, 0, 9.81;
   direction_tangential_flatGround << 0.7071, 0.7071, 0;
@@ -593,13 +643,15 @@ void BalanceController::set_worldData() {
 
 void BalanceController::set_friction(double mu_in) { mu_friction = mu_in; }
 
-void BalanceController::set_alpha_control(double alpha_control_in) {
+void BalanceController::set_alpha_control(double alpha_control_in)
+{
   alpha_control = alpha_control_in;
 }
 
 void BalanceController::set_mass(double mass_in) { mass = mass_in; }
 
-void BalanceController::set_RobotLimits() {
+void BalanceController::set_RobotLimits()
+{
   minNormalForces_feet << 10, 10, 10, 10;
   maxNormalForces_feet << 160, 160, 160, 160;
 }
@@ -608,7 +660,8 @@ void BalanceController::set_RobotLimits() {
 
 bool BalanceController::getQPFinished() { return QPFinished; }
 
-void BalanceController::print_QPData() {
+void BalanceController::print_QPData()
+{
   std::cout << "\n\n";
   std::cout << "\n\nH = ";
   print_real_t(H_qpOASES, NUM_VARIABLES_QP, NUM_VARIABLES_QP);
@@ -626,10 +679,13 @@ void BalanceController::print_QPData() {
   print_real_t(ubA_qpOASES, NUM_CONSTRAINTS_QP, 1);
 }
 
-void BalanceController::print_real_t(real_t* matrix, int nRows, int nCols) {
+void BalanceController::print_real_t(real_t* matrix, int nRows, int nCols)
+{
   int count = 0;
-  for (int i = 0; i < nRows; i++) {
-    for (int j = 0; j < nCols; j++) {
+  for (int i = 0; i < nRows; i++)
+  {
+    for (int j = 0; j < nCols; j++)
+    {
       std::cout << matrix[count] << "\t";
       count++;
     }
@@ -639,13 +695,16 @@ void BalanceController::print_real_t(real_t* matrix, int nRows, int nCols) {
 
 void BalanceController::copy_Eigen_to_real_t(real_t* target,
                                              Eigen::MatrixXd& source, int nRows,
-                                             int nCols) {
+                                             int nCols)
+{
   int count = 0;
 
   // Strange Behavior: Eigen matrix matrix(count) is stored by columns (not
   // rows)
-  for (int i = 0; i < nRows; i++) {
-    for (int j = 0; j < nCols; j++) {
+  for (int i = 0; i < nRows; i++)
+  {
+    for (int j = 0; j < nCols; j++)
+    {
       target[count] = source(i, j);
       count++;
     }
@@ -654,60 +713,78 @@ void BalanceController::copy_Eigen_to_real_t(real_t* target,
 
 void BalanceController::copy_Eigen_to_double(double* target,
                                              Eigen::VectorXd& source,
-                                             int length) {
-  for (int i = 0; i < length; i++) {
+                                             int length)
+{
+  for (int i = 0; i < length; i++)
+  {
     target[i] = source(i);
   }
 }
 
 void BalanceController::copy_Array_to_Eigen(Eigen::VectorXd& target,
                                             double* source, int len,
-                                            int startIndex) {
-  for (int i = 0; i < len; i++) {
+                                            int startIndex)
+{
+  for (int i = 0; i < len; i++)
+  {
     target(i) = source[i + startIndex];
   }
 }
 
 void BalanceController::copy_Array_to_Eigen(Eigen::MatrixXd& target,
                                             double* source, int len,
-                                            int startIndex) {
-  for (int i = 0; i < len; i++) {
+                                            int startIndex)
+{
+  for (int i = 0; i < len; i++)
+  {
     target(i) = source[i + startIndex];
   }
 }
 
 void BalanceController::copy_real_t_to_Eigen(Eigen::VectorXd& target,
-                                             real_t* source, int len) {
-  for (int i = 0; i < len; i++) {
+                                             real_t* source, int len)
+{
+  for (int i = 0; i < len; i++)
+  {
     target(i) = source[i];
   }
 }
 
 void BalanceController::matrixLogRot(const Eigen::MatrixXd& R,
-                                     Eigen::VectorXd& omega) {
+                                     Eigen::VectorXd& omega)
+{
   // theta = acos( (Trace(R) - 1)/2 )
   double theta;
   double tmp = (R(0, 0) + R(1, 1) + R(2, 2) - 1) / 2;
-  if (tmp >= 1.) {
+  if (tmp >= 1.)
+  {
     theta = 0;
-  } else if (tmp <= -1.) {
+  }
+  else if (tmp <= -1.)
+  {
     theta = M_PI;
-  } else {
+  }
+  else
+  {
     theta = acos(tmp);
   }
 
   // Matrix3F omegaHat = (R-R.transpose())/(2 * sin(theta));
   // crossExtract(omegaHat,omega);
   omega << R(2, 1) - R(1, 2), R(0, 2) - R(2, 0), R(1, 0) - R(0, 1);
-  if (theta > 10e-5) {
+  if (theta > 10e-5)
+  {
     omega *= theta / (2 * sin(theta));
-  } else {
+  }
+  else
+  {
     omega /= 2;
   }
 }
 
 void BalanceController::crossMatrix(Eigen::MatrixXd& R,
-                                    const Eigen::VectorXd& omega) {
+                                    const Eigen::VectorXd& omega)
+{
   R(0, 1) = -omega(2);
   R(0, 2) = omega(1);
   R(1, 0) = omega(2);
@@ -717,11 +794,13 @@ void BalanceController::crossMatrix(Eigen::MatrixXd& R,
 }
 
 void BalanceController::matrixExpOmegaCross(const Eigen::VectorXd& omega,
-                                            Eigen::MatrixXd& R) {
+                                            Eigen::MatrixXd& R)
+{
   double theta = omega.norm();
   R.setIdentity();
 
-  if (theta > 1e-9) {
+  if (theta > 1e-9)
+  {
     omegaHat.setZero();
     crossMatrix(omegaHat, omega / theta);
     // R = I + omegaHat sin(theta) + omegaHat^2 (1-cos(theta))
@@ -730,7 +809,8 @@ void BalanceController::matrixExpOmegaCross(const Eigen::VectorXd& omega,
 }
 
 void BalanceController::quaternion_to_rotationMatrix(Eigen::MatrixXd& R,
-                                                     Eigen::VectorXd& quat) {
+                                                     Eigen::VectorXd& quat)
+{
   // wikipedia
   R(0, 0) = 1 - 2 * quat(2) * quat(2) - 2 * quat(3) * quat(3);
   R(0, 1) = 2 * quat(1) * quat(2) - 2 * quat(0) * quat(3);
@@ -743,7 +823,8 @@ void BalanceController::quaternion_to_rotationMatrix(Eigen::MatrixXd& R,
   R(2, 2) = 1 - 2 * quat(1) * quat(1) - 2 * quat(2) * quat(2);
 }
 
-void BalanceController::rpyToR(Eigen::MatrixXd& R, double* rpy_in) {
+void BalanceController::rpyToR(Eigen::MatrixXd& R, double* rpy_in)
+{
   Eigen::Matrix3d Rz, Ry, Rx;
 
   Rz.setIdentity();
