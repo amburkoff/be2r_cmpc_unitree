@@ -94,7 +94,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   Vec4<T> pzs = Vec4<T>::Zero();
   Vec4<T> trusts = Vec4<T>::Zero();
   Vec3<T> p0, v0;
-  p0 << _xhat[0], _xhat[1], _xhat[2];
+  p0 << _xhat[0], _xhat[1], _xhat[2]; // _xhat[0], _xhat[1] in odom frame (_xhat[2])
   v0 << _xhat[3], _xhat[4], _xhat[5];
 
   for (int i = 0; i < 4; i++)
@@ -106,7 +106,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
     Vec3<T> p_rel = ph + this->_stateEstimatorData.legControllerData[i].p;
     // hw_i->leg_controller->leg_datas[i].v;
     Vec3<T> dp_rel = this->_stateEstimatorData.legControllerData[i].v;
-    Vec3<T> p_f = Rbod * p_rel;
+    Vec3<T> p_f = Rbod * p_rel; // in base frame
     Vec3<T> dp_f = Rbod * (this->_stateEstimatorData.result->omegaBody.cross(p_rel) + dp_rel);
 
     qindex = 6 + i1;

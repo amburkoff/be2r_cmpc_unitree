@@ -2,7 +2,9 @@
 
 Debug::Debug(ros::Time time_start) : _zero_time(0), _time_start(time_start)
 {
+  z_offset = 0.f;
   _init();
+  _sub_ground_truth = _nh.subscribe("ground_truth_pose", 1, &Debug::_ground_truth_callback, this, ros::TransportHints().tcpNoDelay(true));
 }
 
 void Debug::_init()
@@ -10,6 +12,11 @@ void Debug::_init()
   _initPublishers();
 
   body_info.quat_act.w = 1.0;
+}
+
+void Debug::_ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+{
+  _ground_trurh_pose = *msg;
 }
 
 void Debug::_initPublishers()
@@ -112,4 +119,16 @@ void Debug::tfPublish()
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
+
+  geometry_msgs::TransformStamped odom_trans_world;
+
+  odom_trans_world.header.stamp = odom_trans.header.stamp;
+  odom_trans_world.header.frame_id = "world";
+  odom_trans_world.child_frame_id = "odom";
+
+  z_offset = _ground_trurh_pose.pose.pose.position.z - body_info.pos_act.z;
+  odom_trans_world.transform.translation.z = z_offset;
+  odom_trans_world.transform.rotation.w = 1.;
+
+  world_odom_broadcaster.sendTransform(odom_trans_world);
 }

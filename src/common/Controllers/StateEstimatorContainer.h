@@ -146,6 +146,8 @@ public:
    */
   void setContactSensorData(Vec4<uint8_t>& state) { *_data.contactSensor = state; }
 
+  Vec4<uint8_t> getContactSensorData() { return *_data.contactSensor;}
+
   void setContactSensorData(Vec4<uint8_t>* state) { _data.contactSensor = state; }
 
   /*!

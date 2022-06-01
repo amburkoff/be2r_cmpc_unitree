@@ -58,10 +58,8 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
 
   , trotRunning(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running")
-  ,
-  // trotRunning(_gait_period, Vec4<int>(0,5,5,0),Vec4<int>(3,3,3,3),"Trot
-  // Running"),
-  walking(_gait_period, Vec4<int>(0, 3, 5, 8), Vec4<int>(5, 5, 5, 5), "Walking")
+  , walking(_gait_period, Vec4<int>(2*_gait_period/4., 0, _gait_period/4.,3*_gait_period/4.),
+   Vec4<int>(0.75*_gait_period, 0.75*_gait_period, 0.75*_gait_period, 0.75*_gait_period), "Walking")
   , walking2(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2")
   , pacing(_gait_period, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing")
   , random(_gait_period, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot")
@@ -162,11 +160,11 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   // Command Setup
   _SetupCommand(data);
   gaitNumber = data.userParameters->cmpc_gait;
-  if (gaitNumber >= 10)
-  {
-    gaitNumber -= 10;
-    omniMode = true;
-  }
+  // if (gaitNumber >= 10)
+  // {
+  //   gaitNumber -= 10;
+  //   omniMode = true;
+  // }
 
   auto& seResult = data._stateEstimator->getResult();
 
@@ -535,7 +533,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       firstSwing[foot] = true;
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
-      Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+      // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+      Vec3<float> vDesFootWorld = Vec3<float>::Zero();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) -
                             data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);

@@ -1,59 +1,47 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
  <tabbed_widget name="Main Window" parent="main_window">
-  <Tab containers="1" tab_name="p_body">
+  <Tab tab_name="p_body" containers="1">
    <Container>
     <DockSplitter orientation="-" sizes="1" count="1">
      <DockSplitter orientation="|" sizes="0.5;0.5" count="2">
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000725" bottom="-0.029717"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/pos_act/x" color="#1f77b4"/>
-         <curve name="/body_info/pos_des/x" color="#ff7f0e"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.049018" bottom="-0.001196"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/pos_act/y" color="#d62728"/>
-         <curve name="/body_info/pos_des/y" color="#f14cc1"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.243083" bottom="-0.005929"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/pos_act/z" color="#1ac938"/>
-         <curve name="/body_info/pos_des/z" color="#9467bd"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000015" bottom="-0.000598"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/euler_act/x" color="#17becf"/>
-         <curve name="/body_info/euler_des/x" color="#d62728"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.001132" bottom="-0.046415"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/euler_act/y" color="#bcbd22"/>
-         <curve name="/body_info/euler_des/y" color="#1ac938"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.007746" bottom="-0.000189"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/euler_act/z" color="#1f77b4"/>
-         <curve name="/body_info/euler_des/z" color="#ff7f0e"/>
         </plot>
        </DockArea>
       </DockSplitter>
@@ -61,53 +49,47 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="p_body_err">
+  <Tab tab_name="p_body_err" containers="1">
    <Container>
     <DockSplitter orientation="-" sizes="1" count="1">
      <DockSplitter orientation="|" sizes="0.5;0.5" count="2">
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.028993" bottom="0.028928"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/p/x" color="#bcbd22"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="-0.047785" bottom="-0.047824"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/p/y" color="#1f77b4"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="-0.237143" bottom="-0.237154"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/p/z" color="#d62728"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000586" bottom="0.000464"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/euler/x" color="#1ac938"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.045288" bottom="0.045083"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/euler/y" color="#ff7f0e"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="-0.007555" bottom="-0.007557"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/euler/z" color="#f14cc1"/>
         </plot>
        </DockArea>
       </DockSplitter>
@@ -115,59 +97,47 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="v_body">
+  <Tab tab_name="v_body" containers="1">
    <Container>
     <DockSplitter orientation="-" sizes="1" count="1">
      <DockSplitter orientation="|" sizes="0.5;0.5" count="2">
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000227" bottom="-0.000305"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/vel_act/linear/x" color="#f14cc1"/>
-         <curve name="/body_info/vel_des/linear/x" color="#bcbd22"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000149" bottom="-0.000154"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/vel_act/linear/y" color="#9467bd"/>
-         <curve name="/body_info/vel_des/linear/y" color="#1f77b4"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000018" bottom="-0.000747"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/vel_act/linear/z" color="#17becf"/>
-         <curve name="/body_info/vel_des/linear/z" color="#d62728"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000459" bottom="-0.000449"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/vel_act/angular/x" color="#1ac938"/>
-         <curve name="/body_info/vel_des/angular/x" color="#9467bd"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000788" bottom="-0.000828"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/vel_act/angular/y" color="#ff7f0e"/>
-         <curve name="/body_info/vel_des/angular/y" color="#17becf"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000005" bottom="-0.000004"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/vel_act/angular/z" color="#f14cc1"/>
-         <curve name="/body_info/vel_des/angular/z" color="#bcbd22"/>
         </plot>
        </DockArea>
       </DockSplitter>
@@ -175,53 +145,51 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="v_body_err">
+  <Tab tab_name="v_body_err" containers="1">
    <Container>
     <DockSplitter orientation="-" sizes="1" count="1">
-     <DockSplitter orientation="|" sizes="0.5;0.5" count="2">
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+     <DockSplitter orientation="|" sizes="0.476161;0.523839" count="2">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="2.338103" right="7.336095" top="0.000185" bottom="-0.000112"/>
+         <range bottom="-0.154794" top="0.562735" left="0.000000" right="14.098479"/>
          <limitY/>
-         <curve name="/body_info/state_error/v/linear/x" color="#9467bd"/>
+         <curve name="/all_legs_info/leg.0/p_w_des/z" color="#1f77b4"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="2.338103" right="7.336095" top="0.000087" bottom="-0.000084"/>
+         <range bottom="-0.166937" top="0.274653" left="0.000000" right="14.098479"/>
          <limitY/>
-         <curve name="/body_info/state_error/v/linear/y" color="#17becf"/>
+         <curve name="/all_legs_info/leg.1/p_w_des/z" color="#d62728"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="2.338103" right="7.336095" top="0.000713" bottom="0.000677"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/v/linear/z" color="#bcbd22"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="2.338103" right="7.336095" top="0.000253" bottom="-0.000262"/>
+         <range bottom="-0.025000" top="1.025000" left="0.000000" right="14.098479"/>
          <limitY/>
-         <curve name="/body_info/state_error/v/angular/x" color="#1f77b4"/>
+         <curve name="/all_legs_info/leg.1/stance_time" color="#9467bd"/>
+         <curve name="/all_legs_info/leg.1/swing_time" color="#17becf"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="2.338103" right="7.336095" top="0.000462" bottom="-0.000435"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/v/angular/y" color="#d62728"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="2.338103" right="7.336095" top="0.000002" bottom="-0.000003"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/body_info/state_error/v/angular/z" color="#1ac938"/>
         </plot>
        </DockArea>
       </DockSplitter>
@@ -229,82 +197,69 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="leg_0_pvt">
+  <Tab tab_name="leg_0_pvt" containers="1">
    <Container>
     <DockSplitter orientation="-" sizes="1" count="1">
-     <DockSplitter orientation="|" sizes="0.333123;0.333754;0.333123" count="3">
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+     <DockSplitter orientation="|" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.026130" bottom="0.023574"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/all_legs_info/leg.0/p_act/x" color="#1f77b4"/>
-         <curve name="/all_legs_info/leg.0/p_des/x" color="#ff7f0e"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="-0.119691" bottom="-0.127355"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/all_legs_info/leg.0/p_act/y" color="#d62728"/>
-         <curve name="/all_legs_info/leg.0/p_des/y" color="#f14cc1"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="-0.246729" bottom="-0.250080"/>
+         <range bottom="-0.123645" top="0.327407" left="0.000000" right="14.098479"/>
          <limitY/>
-         <curve name="/all_legs_info/leg.0/p_act/z" color="#1ac938"/>
-         <curve name="/all_legs_info/leg.0/p_des/z" color="#9467bd"/>
+         <curve name="/all_legs_info/leg.3/p_w_des/z" color="#9467bd"/>
+         <curve name="/all_legs_info/leg.3/p_w_act/z" color="#17becf"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000073" bottom="-0.000068"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/all_legs_info/leg.0/v_act/x" color="#17becf"/>
-         <curve name="/all_legs_info/leg.0/v_des/x" color="#d62728"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000039" bottom="-0.000036"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/all_legs_info/leg.0/v_act/y" color="#bcbd22"/>
-         <curve name="/all_legs_info/leg.0/v_des/y" color="#1ac938"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="0.000131" bottom="-0.000127"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/all_legs_info/leg.0/v_act/z" color="#1f77b4"/>
-         <curve name="/all_legs_info/leg.0/v_des/z" color="#ff7f0e"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" sizes="0.333333;0.333333;0.333333" count="3">
+      <DockSplitter orientation="-" sizes="0.333741;0.332518;0.333741" count="3">
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="4.701245" bottom="4.697237"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/low_cmd/motorCmd.0/tau" color="#f14cc1"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="1.432437" bottom="1.426952"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/low_cmd/motorCmd.1/tau" color="#9467bd"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-         <range left="0.000095" right="5.000060" top="3.822862" bottom="3.818434"/>
+         <range bottom="0.000000" top="1.000000" left="0.000000" right="1.000000"/>
          <limitY/>
-         <curve name="/low_cmd/motorCmd.2/tau" color="#17becf"/>
         </plot>
        </DockArea>
       </DockSplitter>
@@ -312,14 +267,150 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <currentTabIndex index="3"/>
+  <Tab tab_name="tab2" containers="1">
+   <Container>
+    <DockSplitter orientation="-" sizes="0.249694;0.250918;0.249694;0.249694" count="4">
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.025000" top="1.025000" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.1/stance_time" color="#9467bd"/>
+       <curve name="/all_legs_info/leg.1/swing_time" color="#17becf"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.025000" top="1.025000" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.0/swing_time" color="#bcbd22"/>
+       <curve name="/all_legs_info/leg.0/stance_time" color="#1f77b4"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.025000" top="1.025000" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.2/swing_time" color="#d62728"/>
+       <curve name="/all_legs_info/leg.2/stance_time" color="#1ac938"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.025000" top="1.025000" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.3/swing_time" color="#ff7f0e"/>
+       <curve name="/all_legs_info/leg.3/stance_time" color="#f14cc1"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="tab3" containers="1">
+   <Container>
+    <DockSplitter orientation="-" sizes="0.500611;0.499389" count="2">
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.409023" top="0.144841" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.0/p_act/y" color="#bcbd22"/>
+       <curve name="/all_legs_info/leg.0/p_des/y" color="#1f77b4"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.374538" top="0.261886" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.2/p_act/y" color="#d62728"/>
+       <curve name="/all_legs_info/leg.2/p_des/y" color="#1ac938"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="p_foot" containers="1">
+   <Container>
+    <DockSplitter orientation="-" sizes="0.249694;0.250918;0.249694;0.249694" count="4">
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.321675" top="0.411548" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.0/p_act/z" color="#ff7f0e"/>
+       <curve name="/all_legs_info/leg.0/p_des/z" color="#f14cc1"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.398031" top="0.159113" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.1/p_act/z" color="#9467bd"/>
+       <curve name="/all_legs_info/leg.1/p_des/z" color="#17becf"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.366210" top="0.260560" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.2/p_des/z" color="#bcbd22"/>
+       <curve name="/all_legs_info/leg.2/p_act/z" color="#1f77b4"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.354671" top="0.372374" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.3/p_act/z" color="#d62728"/>
+       <curve name="/all_legs_info/leg.3/p_des/z" color="#1ac938"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="p_foot_world" containers="1">
+   <Container>
+    <DockSplitter orientation="-" sizes="0.249694;0.250918;0.249694;0.249694" count="4">
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.166695" top="0.563025" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.0/p_w_act/z" color="#17becf"/>
+       <curve name="/all_legs_info/leg.0/p_w_des/z" color="#1f77b4"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.167507" top="0.274667" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.1/p_w_act/z" color="#9467bd"/>
+       <curve name="/all_legs_info/leg.1/p_w_des/z" color="#d62728"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.291715" top="0.244905" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.2/p_w_des/z" color="#ff7f0e"/>
+       <curve name="/all_legs_info/leg.2/p_w_act/z" color="#f14cc1"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+       <range bottom="-0.123645" top="0.327407" left="0.000000" right="14.098479"/>
+       <limitY/>
+       <curve name="/all_legs_info/leg.3/p_w_act/z" color="#17becf"/>
+       <curve name="/all_legs_info/leg.3/p_w_des/z" color="#9467bd"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="8"/>
  </tabbed_widget>
  <use_relative_time_offset enabled="1"/>
  <!-- - - - - - - - - - - - - - - -->
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default time_axis="" delimiter="0"/>
+   <default delimiter="0" time_axis=""/>
   </plugin>
   <plugin ID="DataLoad ROS bags">
    <use_header_stamp value="true"/>
@@ -349,7 +440,21 @@
   <plugin ID="ROS Topic Re-Publisher"/>
  </Plugins>
  <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles>
+  <fileInfo filename="../../../../bags/2022-05-31-19-09-22.bag" prefix="">
+   <selected_datasources value="/all_legs_info;/body_info;/low_cmd;/low_state"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <discard_large_arrays value="false"/>
+    <max_array_size value="100"/>
+    <boolean_strings_to_number value="true"/>
+    <remove_suffix_from_strings value="false"/>
+   </plugin>
+  </fileInfo>
+ </previouslyLoaded_Datafiles>
  <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
  <!-- - - - - - - - - - - - - - - -->
 </root>
 

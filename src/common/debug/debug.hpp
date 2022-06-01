@@ -8,6 +8,7 @@
 #include <unitree_legged_msgs/AllLegsInfo.h>
 #include <unitree_legged_msgs/BodyInfo.h>
 #include <unitree_legged_msgs/StateError.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 using std::cout;
 using std::endl;
@@ -23,10 +24,12 @@ public:
 
   unitree_legged_msgs::AllLegsInfo all_legs_info = {};
   unitree_legged_msgs::BodyInfo body_info = {};
+  float z_offset;
 
 private:
   void _init();
   void _initPublishers();
+  void _ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
 
   ros::NodeHandle _nh;
   const ros::Time _zero_time;
@@ -35,7 +38,11 @@ private:
   ros::Publisher _pub_joint_states;
   ros::Publisher _pub_all_legs_info;
   ros::Publisher _pub_body_info;
+  ros::Subscriber _sub_ground_truth;
   tf::TransformBroadcaster odom_broadcaster;
+  tf::TransformBroadcaster world_odom_broadcaster;
+  geometry_msgs::PoseWithCovarianceStamped _ground_trurh_pose;
+
 
 private:
 };

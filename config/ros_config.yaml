@@ -46,10 +46,10 @@ dynamic_loader:
   Kd_cartesian_1: 2.5
   Kd_cartesian_2: 2.5
 
-  body_height: 0.24
+  body_height: 0.3
 
 
-  Swing_traj_height  : 0.06   # Set swing traj top point
+  Swing_traj_height  : 0.1   # Set swing traj top point
 
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC
   cmpc_use_sparse   : 0       # switch between sparce and dense mpc
@@ -68,7 +68,7 @@ dynamic_loader:
 
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
-  gait_period           : 14
+  gait_period           : 30
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4

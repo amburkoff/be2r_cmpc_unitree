@@ -11,7 +11,7 @@ using Eigen::Array4f;
 using Eigen::Array4i;
 
 // Step height maximum [m]
-#define MAX_STEP_HEIGHT 0.25
+#define MAX_STEP_HEIGHT 0.20
 
 class VisionGait
 {
@@ -23,6 +23,7 @@ public:
   Vec4<float> getSwingState();
   int* mpc_gait();
   void setIterations(int iterationsPerMPC, int currentIteration);
+  int getCurrentGaitPhase() { return _iteration; }
   int _stance;
   int _swing;
 
@@ -93,7 +94,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  VisionGait trotting, bounding, pronking, galloping, standing, trotRunning;
+  VisionGait trotting, bounding, pronking, galloping, standing, trotRunning, walking;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -107,6 +108,7 @@ private:
   Vec3<float> rpy_comp;
   Vec3<float> pFoot[4];
   float trajAll[12 * 36];
+  ControlFSMData<float>* _data;
 };
 
 #endif // CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H

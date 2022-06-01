@@ -20,8 +20,8 @@ bool SafetyChecker<T>::checkSafeOrientation()
 {
   // cout << "[SafetyChecker] checkSafeOrientation func start" << endl;
 
-  if (abs(data->_stateEstimator->getResult().rpy(0)) >= 0.5 ||
-      abs(data->_stateEstimator->getResult().rpy(1)) >= 0.5)
+  if (abs(data->_stateEstimator->getResult().rpy(0)) >= 0.99 ||
+      abs(data->_stateEstimator->getResult().rpy(1)) >= 0.99)
   {
     cout << "[SafetyChecker] abs 0 " << abs(data->_stateEstimator->getResult().rpy(0)) << endl;
     cout << "[SafetyChecker] abs 1 " << abs(data->_stateEstimator->getResult().rpy(1)) << endl;
