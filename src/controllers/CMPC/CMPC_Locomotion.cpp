@@ -12,9 +12,11 @@
 // #define GAIT_PERIOD 14
 #define HORIZON 14
 
-// #define GAIT_PERIOD 16
-#define GAIT_PERIOD 25
+#define GAIT_PERIOD 16
+// #define GAIT_PERIOD 22
 // #define GAIT_PERIOD 34 //1000 Hz
+
+#define GAIT_PERIOD_WALKING 26
 
 //лучшие параметры для только MPC
 // #define GAIT_PERIOD 18
@@ -37,16 +39,18 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc
                                                                                                                                   horizonLength(HORIZON),
                                                                                                                                   dt(_dt),
                                                                                                                                   trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
+                                                                                                                                  // trotting(GAIT_PERIOD, Vec4<int>(0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, 0), Vec4<int>(GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0), "Trotting"),
                                                                                                                                   trot_contact(GAIT_PERIOD, Vec4<int>(0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, 0), Vec4<int>(GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25), "Trot contact"),
                                                                                                                                   standing(GAIT_PERIOD, Vec4<int>(0, 0, 0, 0), Vec4<int>(GAIT_PERIOD, GAIT_PERIOD, GAIT_PERIOD, GAIT_PERIOD), "Standing"),
-                                                                                                                                  walking(14, Vec4<int>(0, 0, 0, 0), Vec4<int>(14, 14, 14, 14), "Walking"),
+                                                                                                                                  // walking(30, Vec4<int>(2 * 30 / 4., 0, 30 / 4., 3 * 30 / 4.), Vec4<int>(0.75 * 30, 0.75 * 30, 0.75 * 30, 0.75 * 30), "Walking"), //for sim
+                                                                                                                                  walking(GAIT_PERIOD_WALKING, Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.), Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING), "Walking"), //for real
                                                                                                                                   two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, 0, _gait_period, 0), "Two legs balance")
 
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
-  setup_problem(dtMPC, horizonLength, 0.4, 120); // original
+  setup_problem(dtMPC, horizonLength, 0.4, 150); // original
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -717,13 +721,11 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
   auto seResult = data._stateEstimator->getResult();
 
-  // float Q[12] = {0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2};
-
+  //original
   // float Q[12] = {0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1};
-  // //original
-  float Q[12] = {2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1};
+  // float Q[12] = {2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1};
+  float Q[12] = {2.5, 2.5, 10, 300, 300, 300, 0, 0, 0.5, 1.5, 1.5, 1};
 
-  // float Q[12] = {0.25, 0.25, 10, 2, 2, 40, 0, 0, 0.3, 0.2, 0.2, 0.2};
   float yaw = seResult.rpy[2];
   float* weights = Q;
   float alpha = 4e-5; // make setting eventually
@@ -847,7 +849,7 @@ void CMPCLocomotion::initSparseMPC()
   Mat3<double> baseInertia;
   baseInertia << 0.07, 0, 0, 0, 0.26, 0, 0, 0, 0.242;
   double mass = 9;
-  double maxForce = 120;
+  double maxForce = 150;
 
   std::vector<double> dtTraj;
   for (int i = 0; i < horizonLength; i++)

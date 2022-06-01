@@ -261,6 +261,11 @@ void Body_Manager::run()
     // Find the current gait schedule
     _gaitScheduler->step();
 
+    if (_is_do_step)
+    {
+      driverCommand.leftStickAnalog[1] = 0.2;
+    }
+
     // Find the desired state trajectory
     _desiredStateCommand->convertToStateCommands();
 
@@ -502,6 +507,16 @@ void Body_Manager::_initSubscribers()
   _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
   _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
   _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _srv_do_step = _nh.advertiseService("/do_step", &Body_Manager::_srvDoStep, this);
+}
+
+bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response)
+{
+  ROS_INFO("DO STEP!");
+
+  _is_do_step = !_is_do_step;
+
+  return true;
 }
 
 void Body_Manager::_initPublishers()
