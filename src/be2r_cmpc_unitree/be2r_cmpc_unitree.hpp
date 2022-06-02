@@ -38,6 +38,7 @@
 
 // BE2R
 #include "debug.hpp"
+#include "Controllers/be2rPositionVelocityEstimator.h"
 
 // Unitree sdk
 #include "unitree_legged_sdk/unitree_legged_sdk.h"

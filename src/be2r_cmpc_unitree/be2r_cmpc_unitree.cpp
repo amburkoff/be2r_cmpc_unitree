@@ -499,6 +499,7 @@ void Body_Manager::initializeStateEstimator()
   {
     _stateEstimator->addEstimator<VectorNavOrientationEstimator<float>>();
     _stateEstimator->addEstimator<LinearKFPositionVelocityEstimator<float>>();
+    _stateEstimator->addEstimator<PositionEstimator<float>>();
   }
 }
 
