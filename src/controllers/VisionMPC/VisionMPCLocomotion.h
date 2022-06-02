@@ -4,14 +4,14 @@
 #include "cppTypes.h"
 #include <ControlFSMData.h>
 #include <Controllers/FootSwingTrajectory.h>
-#include <grid_map_ros/grid_map_ros.hpp>
 #include <Utilities/SpiralIterator.hpp>
+#include <grid_map_ros/grid_map_ros.hpp>
 
 using Eigen::Array4f;
 using Eigen::Array4i;
 
 // Step height maximum [m]
-#define MAX_STEP_HEIGHT 0.20
+#define MAX_STEP_HEIGHT 0.18
 
 class VisionGait
 {
@@ -66,8 +66,8 @@ public:
 
 private:
   void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
-                       const grid_map::GridMap& height_map,
-                       const grid_map::GridMap& height_map_raw, int leg);
+                       const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw,
+                       int leg);
   void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected,
                        int& y_idx_selected, const grid_map::GridMap& height_map, int leg);
   void _updateParams(ControlFSMData<float>& data);

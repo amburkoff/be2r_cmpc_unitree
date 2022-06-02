@@ -31,11 +31,14 @@ private:
   Eigen::Matrix<T, 12, 1> _ps;
   Eigen::Matrix<T, 12, 1> _vs;
   Eigen::Matrix<T, 18, 18> _A;
+  Eigen::Matrix<T, 6, 6> _A2;
   Eigen::Matrix<T, 18, 18> _Q0;
   Eigen::Matrix<T, 18, 18> _P;
   Eigen::Matrix<T, 28, 28> _R0;
   Eigen::Matrix<T, 18, 3> _B;
+  Eigen::Matrix<T, 6, 3> _B2;
   Eigen::Matrix<T, 28, 18> _C;
+  Eigen::Matrix<T, 24, 6> _C_2;
 };
 
 /*!

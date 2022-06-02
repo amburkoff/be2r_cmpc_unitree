@@ -1,6 +1,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <iostream>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
@@ -8,7 +9,6 @@
 #include <unitree_legged_msgs/AllLegsInfo.h>
 #include <unitree_legged_msgs/BodyInfo.h>
 #include <unitree_legged_msgs/StateError.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 using std::cout;
 using std::endl;
@@ -43,8 +43,7 @@ private:
   tf::TransformBroadcaster world_odom_broadcaster;
   geometry_msgs::PoseWithCovarianceStamped _ground_trurh_pose;
 
-
 private:
 };
 
-#endif //DEBUG_H
+#endif // DEBUG_H

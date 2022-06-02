@@ -123,7 +123,7 @@ VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
   : _parameters(parameters)
   , iterationsBetweenMPC(_iterations_between_mpc)
   , _body_height(_parameters->body_height)
-  , _gait_period(20)
+  , _gait_period(25)
   , horizonLength(16)
   , dt(_dt)
   , trotting(
@@ -167,6 +167,8 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& 
                                           const grid_map::GridMap& height_map,
                                           const grid_map::GridMap& height_map_raw, int leg)
 {
+  static bool leg2 = 0;
+  static bool leg3 = 0;
   // Положение лапы в СК тела
   //  Vec3<float> scale(1.2, 1, 1);
   Vec3<float> local_pf = foot - body_pos;
@@ -191,6 +193,38 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& 
   foot[0] = -(x_idx_selected - row_idx_half) * grid_size + body_pos[0];
   foot[1] = -(y_idx_selected - col_idx_half) * grid_size + body_pos[1];
   auto h = height_map.at("elevation", Eigen::Array2i(x_idx_selected, y_idx_selected));
+  //  if (leg == 2 || leg == 3)
+  //  {
+  //    if (footSwingTrajectories[leg].getInitialPosition()[2] > 0.1)
+  //      _data->debug->z_offset += h;
+  //  }
+  //  if (leg == 3 && pFoot[leg][2] > 0.1 && footSwingTrajectories[leg].getInitialPosition()[2] >
+  //  0.1)
+  //  {
+  //    leg3 = true;
+  //    if (leg3 && leg2)
+  //    {
+  //      _data->debug->z_offset += h;
+  //      leg3 = false;
+  //      leg2 = false;
+  //    }
+  //  }
+  //  if (leg == 2 && pFoot[leg][2] > 0.1 && footSwingTrajectories[leg].getInitialPosition()[2] >
+  //  0.1)
+  //  {
+  //    leg2 = true;
+  //    if (leg3 && leg2)
+  //    {
+  //      _data->debug->z_offset += h;
+  //      leg2 = false;
+  //      leg3 = false;
+  //    }
+  //  }
+  if (_data->_stateEstimator->getResult().position(0) > 0.63)
+  {
+    double x = _data->_stateEstimator->getResult().position(0) - 0.63;
+    _data->debug->z_offset = x * 0.42;
+  }
   h -= _data->debug->z_offset;
   foot[2] = std::isnan(h) ? 0. : h;
 }
@@ -203,7 +237,7 @@ void VisionMPCLocomotion::_IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx,
     return;
   grid_map::Index center(x_idx, y_idx);
   // std::cout << " Leg position (x,y) " << Pf[0] << " " << Pf[1] << std::endl;
-  double radius = 0.06;
+  double radius = 0.03;
   // std::cout << "Normal is " << height_map.at("normal_vectors_z", Eigen::Array2i(x_idx, y_idx)) <<
   // std::endl;
   for (grid_map_utils::SpiralIterator iterator(height_map, center, radius); !iterator.isPastEnd();

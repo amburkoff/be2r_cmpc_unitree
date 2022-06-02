@@ -18,6 +18,7 @@ void LinearKFPositionVelocityEstimator<T>::setup()
   T dt = 0.002;
   // T dt = this->_stateEstimatorData.parameters->controller_dt;
   _xhat.setZero();
+  _xhat_.setZero();
   _ps.setZero();
   _vs.setZero();
   _A.setZero();
@@ -25,8 +26,14 @@ void LinearKFPositionVelocityEstimator<T>::setup()
   _A.block(0, 3, 3, 3) = dt * Eigen::Matrix<T, 3, 3>::Identity();
   _A.block(3, 3, 3, 3) = Eigen::Matrix<T, 3, 3>::Identity();
   _A.block(6, 6, 12, 12) = Eigen::Matrix<T, 12, 12>::Identity();
+  _A2.setZero();
+  _A2.block(0, 0, 3, 3) = Eigen::Matrix<T, 3, 3>::Identity();
+  _A2.block(0, 3, 3, 3) = dt * Eigen::Matrix<T, 3, 3>::Identity();
+  _A2.block(3, 3, 3, 3) = Eigen::Matrix<T, 3, 3>::Identity();
   _B.setZero();
   _B.block(3, 0, 3, 3) = dt * Eigen::Matrix<T, 3, 3>::Identity();
+  _B2.setZero();
+  _B2.block(3, 0, 3, 3) = dt * Eigen::Matrix<T, 3, 3>::Identity();
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> C1(3, 6);
   C1 << Eigen::Matrix<T, 3, 3>::Identity(), Eigen::Matrix<T, 3, 3>::Zero();
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> C2(3, 6);
@@ -94,6 +101,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   // std::cout << "A WORLD\n" << a << "\n";
   Vec4<T> pzs = Vec4<T>::Zero();
   Vec4<T> pzs_ = Vec4<T>::Zero();
+  Vec4<T> pzs_prev = Vec4<T>::Zero();
   Vec4<T> pz0 = Vec4<T>::Zero();
   Vec4<T> trusts = Vec4<T>::Zero();
   Vec3<T> p0, v0;
@@ -101,16 +109,19 @@ void LinearKFPositionVelocityEstimator<T>::run()
   v0 << _xhat[3], _xhat[4], _xhat[5];
   pz0 << _xhat_[8], _xhat_[11], _xhat_[14], _xhat_[17];
 
+  Vec3<T> p_rel;
+  Vec3<T> p_f;
+
   for (int i = 0; i < 4; i++)
   {
     int i1 = 3 * i;
     Quadruped<T>& quadruped = *(this->_stateEstimatorData.legControllerData->quadruped);
     Vec3<T> ph = quadruped.getHipLocation(i); // hip positions relative to CoM
     // hw_i->leg_controller->leg_datas[i].p;
-    Vec3<T> p_rel = ph + this->_stateEstimatorData.legControllerData[i].p;
+    p_rel = ph + this->_stateEstimatorData.legControllerData[i].p;
     // hw_i->leg_controller->leg_datas[i].v;
     Vec3<T> dp_rel = this->_stateEstimatorData.legControllerData[i].v;
-    Vec3<T> p_f = Rbod * p_rel; // in base frame
+    p_f = Rbod * p_rel; // in base frame
     Vec3<T> dp_f = Rbod * (this->_stateEstimatorData.result->omegaBody.cross(p_rel) + dp_rel);
 
     qindex = 6 + i1;
@@ -148,6 +159,9 @@ void LinearKFPositionVelocityEstimator<T>::run()
     _vs.segment(i1, 3) = (1.0f - trust) * v0 + trust * (-dp_f);
     pzs(i) = (1.0f - trust) * (p0(2) + p_f(2));
     pzs_(i) = trust * pz0(i) + (1.0f - trust) * (p0(2) + p_f(2));
+    pzs_prev(i) = pzs_(i);
+    //    std::cout << " P0 = " << p0(2) << " PF = " << p_f(2) << std::endl;
+    //    std::cout << "PZS [ " << i << " ] " << pzs_(i) << std::endl;
   }
 
   Eigen::Matrix<T, 28, 1> y;
@@ -188,7 +202,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   this->_stateEstimatorData.result->vWorld = _xhat.block(3, 0, 3, 1);
   this->_stateEstimatorData.result->vBody =
     this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
-  this->_stateEstimatorData.result->heightBody = _xhat_(2);
+  //  this->_stateEstimatorData.result->heightBody = _xhat_(2);
   //  std::cout << "z = " << _xhat_(2) << std::endl;
 }
 
