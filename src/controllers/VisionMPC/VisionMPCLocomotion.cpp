@@ -123,7 +123,7 @@ VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
   : _parameters(parameters)
   , iterationsBetweenMPC(_iterations_between_mpc)
   , _body_height(_parameters->body_height)
-  , _gait_period(_parameters->gait_period)
+  , _gait_period(20)
   , horizonLength(16)
   , dt(_dt)
   , trotting(

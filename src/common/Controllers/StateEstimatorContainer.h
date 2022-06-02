@@ -34,6 +34,7 @@ struct StateEstimate
   Vec3<T> omegaWorld;
   Vec3<T> vWorld;
   Vec3<T> aBody, aWorld;
+  float heightBody;
 };
 
 /*!
@@ -146,7 +147,7 @@ public:
    */
   void setContactSensorData(Vec4<uint8_t>& state) { *_data.contactSensor = state; }
 
-  Vec4<uint8_t> getContactSensorData() { return *_data.contactSensor;}
+  Vec4<uint8_t> getContactSensorData() { return *_data.contactSensor; }
 
   void setContactSensorData(Vec4<uint8_t>* state) { _data.contactSensor = state; }
 

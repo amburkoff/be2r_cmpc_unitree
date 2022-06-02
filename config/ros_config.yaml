@@ -68,7 +68,7 @@ dynamic_loader:
 
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
-  gait_period           : 30
+  gait_period           : 35
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4

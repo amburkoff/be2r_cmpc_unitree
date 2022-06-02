@@ -51,15 +51,17 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   , jumping(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping")
   , galloping(_gait_period, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping")
   , standing(_gait_period, Vec4<int>(0, 0, 0, 0),
-           Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing")
+             Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing")
   // galloping(_gait_period,
   // Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
   // galloping(_gait_period,
   // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
 
   , trotRunning(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running")
-  , walking(_gait_period, Vec4<int>(2*_gait_period/4., 0, _gait_period/4.,3*_gait_period/4.),
-   Vec4<int>(0.75*_gait_period, 0.75*_gait_period, 0.75*_gait_period, 0.75*_gait_period), "Walking")
+  , walking(
+      _gait_period, Vec4<int>(2 * _gait_period / 4., 0, _gait_period / 4., 3 * _gait_period / 4.),
+      Vec4<int>(0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period),
+      "Walking")
   , walking2(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2")
   , pacing(_gait_period, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing")
   , random(_gait_period, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot")
@@ -268,7 +270,31 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
   Vec3<float> v_robot = seResult.vWorld;
 
-  // pretty_print(v_des_world, std::cout, "v des world");
+  //                      Pitch compensation
+  static Vec3<float> pDesFootWorldStance[4] = { pFoot[0], pFoot[1], pFoot[2], pFoot[3] };
+
+  // p front mid, p back mid
+  Vec3<float> p_fm = (pDesFootWorldStance[0] + pDesFootWorldStance[1]) / 2;
+  Vec3<float> p_bm = (pDesFootWorldStance[2] + pDesFootWorldStance[3]) / 2;
+  float des_pitch = 0;
+  float des_roll = 0;
+
+  // XZ plane
+  float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (0.1805 * 2) * (0.1805 * 2));
+
+  if (abs(L_xz) < 0.0001)
+  {
+    des_pitch = 0;
+  }
+  else
+  {
+    des_pitch = des_pitch * (1 - 0.7) - 2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
+  }
+
+  // put to target
+  _pitch_des = des_pitch;
+  data.debug->all_legs_info.leg[0].force_raw = des_pitch;
+  //                      Pitch compensation
 
   // Integral-esque pitche and roll compensation
   if (fabs(v_robot[0]) > .2) // avoid dividing by zero
@@ -629,7 +655,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.;
-  pBody_RPY_des[1] = 0.;
+  pBody_RPY_des[1] = _pitch_des;
   pBody_RPY_des[2] = _yaw_des;
 
   vBody_Ori_des[0] = 0.;

@@ -297,6 +297,8 @@ void Body_Manager::finalizeStep()
   _debug->body_info.vel_act.angular.y = _stateEstimator->getResult().omegaBody[1];
   _debug->body_info.vel_act.angular.z = _stateEstimator->getResult().omegaBody[2];
 
+  _debug->body_info.pos_z_global = _stateEstimator->getResult().heightBody;
+
   // put actual q and dq in debug class
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
