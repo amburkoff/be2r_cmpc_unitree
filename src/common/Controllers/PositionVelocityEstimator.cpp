@@ -154,8 +154,8 @@ void LinearKFPositionVelocityEstimator<T>::run()
     trusts(i) = trust;
   
     _ps.segment(i1, 3) = -p_f;
-    _vs.segment(i1, 3) = (1.0f - trust) * v0 + trust * (-dp_f);
-    pzs(i) = trust*pzs0(i) + (1.0f - trust) *(p0(2) + p_f(2)) ;//
+    _vs.segment(i1, 3) =  v0 + trust * (-dp_f);//(1.0f - trust) *
+    pzs(i) = pzs0(i) + (1.0f - trust) *(p0(2) + p_f(2)) ;//trust*
     std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
   }
   //std::cout <<"Trusts"<< " " << trusts(0)<< " "<< trusts(1)<< " "<< trusts(2)<< " "<< trusts(3)<< " "<< std::endl;
