@@ -66,6 +66,8 @@ public:
 
   void computeSwingTrajectoryBezier(T phase, T swingTime);
   void computeSwingTrajectoryModified(T phase, T swingTime,int mode);
+  void computeStairsSwingTrajectoryBezier(T phase, T swingTime);
+
   /*!
    * Get the foot position at the current point along the swing
    * @return : the foot position

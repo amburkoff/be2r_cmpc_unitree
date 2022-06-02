@@ -87,7 +87,6 @@ public:
 
   //
   void jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes);
-  void lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes);
   void cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes, Vec3<double> kp_cartesian,
                                  Vec3<double> kd_cartesian);
   void footstepHeuristicPlacement(int leg);
@@ -120,6 +119,7 @@ public:
 
   // Pre controls safety checks
   bool checkSafeOrientation = false; // check roll and pitch
+  bool checkJointLimits = false; // check joint limits
 
   // Post control safety checks
   bool checkPDesFoot = false;         // do not command footsetps too far

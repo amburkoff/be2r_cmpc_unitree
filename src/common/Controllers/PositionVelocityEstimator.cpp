@@ -143,13 +143,10 @@ void LinearKFPositionVelocityEstimator<T>::run()
     T high_suspect_number(100);
 
     // printf("Trust %d: %.3f\n", i, trust);
-    Q.block(qindex, qindex, 3, 3) =
-        (T(1) + (T(1) - trust) * high_suspect_number) * Q.block(qindex, qindex, 3, 3);
+    Q.block(qindex, qindex, 3, 3) = (T(1) + (T(1) - trust) * high_suspect_number) * Q.block(qindex, qindex, 3, 3);
     R.block(rindex1, rindex1, 3, 3) = 1 * R.block(rindex1, rindex1, 3, 3);
-    R.block(rindex2, rindex2, 3, 3) =
-        (T(1) + (T(1) - trust) * high_suspect_number) * R.block(rindex2, rindex2, 3, 3);
-    R(rindex3, rindex3) =
-        (T(1) + (T(1) - trust) * high_suspect_number) * R(rindex3, rindex3);
+    R.block(rindex2, rindex2, 3, 3) = (T(1) + (T(1) - trust) * high_suspect_number) * R.block(rindex2, rindex2, 3, 3);
+    R(rindex3, rindex3) = (T(1) + (T(1) - trust) * high_suspect_number) * R(rindex3, rindex3);
 
     trusts(i) = trust;
   
@@ -168,6 +165,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   Eigen::Matrix<T, 18, 28> Ct = _C.transpose();
   Eigen::Matrix<T, 28, 1> yModel = _C * _xhat;
   Eigen::Matrix<T, 28, 1> ey = y - yModel;
+  // std::cout << yModel[0] << " " << yModel[1] << " " << yModel[2] << std::endl; 
   Eigen::Matrix<T, 28, 28> S = _C * Pm * Ct + R;
 
   // todo compute LU only once

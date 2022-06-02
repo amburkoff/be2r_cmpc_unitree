@@ -1,8 +1,7 @@
-#ifndef CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
-#define CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
+#pragma once
 
 #include "Controllers/DesiredStateCommand.h"
-#include "Gait.h"
+#include "Gait_contact.h"
 #include "cppTypes.h"
 #include <ControlFSMData.h>
 #include <FootSwingTrajectory.h>
@@ -17,14 +16,14 @@
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-template<typename T>
-struct CMPC_Result
+template <typename T>
+struct CMPC_result
 {
   LegControllerCommand<T> commands[4];
   Vec4<T> contactPhase;
 };
 
-struct CMPC_Jump
+struct CMPC_jump
 {
   static constexpr int START_SEG = 6;
   static constexpr int END_SEG = 0;
@@ -93,16 +92,15 @@ struct CMPC_Jump
   }
 };
 
-class ConvexMPCLocomotion
+class CMPCLocomotion
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
-                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  template<typename T>
+  template <typename T>
   void run(ControlFSMData<T>& data);
   bool currently_jumping = false;
 
@@ -125,17 +123,15 @@ private:
   void _SetupCommand(ControlFSMData<float>& data);
 
   float _yaw_turn_rate;
-  float _yaw_des;
+  float _yaw_des = 0;
 
   float _roll_des;
   float _pitch_des;
 
   float _x_vel_des = 0.;
   float _y_vel_des = 0.;
-  float _z_vel_des = 0.;
 
   // High speed running
-  // float _body_height = 0.34;
   float _body_height = 0.29;
 
   float _body_height_running = 0.29;
@@ -157,9 +153,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGait trotting, trotting_copy, bounding, pronking, jumping, galloping, standing,
-    trotRunning, walking, walking2, pacing;
-  MixedFrequncyGait random, random2;
+  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -173,18 +167,16 @@ private:
   Vec3<float> rpy_comp;
   float x_comp_integral = 0;
   Vec3<float> pFoot[4];
-  CMPC_Result<float> result;
+  CMPC_result<float> result;
   float trajAll[12 * 36];
   ros::Publisher _pub_des_traj[4];
   ros::NodeHandle _nh;
   visualization_msgs::Marker marker[4];
   ros::Publisher _vis_pub[4];
 
-  CMPC_Jump jump_state;
+  CMPC_jump jump_state;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
 
   SparseCMPC _sparseCMPC;
 };
-
-#endif // CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H

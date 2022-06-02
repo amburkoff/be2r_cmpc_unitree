@@ -8,7 +8,6 @@
 #include "FSM_State_Locomotion.h"
 #include <Utilities/Timer.h>
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
-// #include <rt/rt_interface_lcm.h>
 
 //оригинальный параметр для MPC+WBC
 #define ITERATIONS_BETWEEN_MPC 13

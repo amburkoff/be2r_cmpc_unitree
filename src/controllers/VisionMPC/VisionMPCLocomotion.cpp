@@ -118,7 +118,7 @@ void VisionGait::setIterations(int iterationsPerMPC, int currentIteration)
 ////////////////////
 
 VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
-                                         MIT_UserParameters* parameters)
+                                         be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
   : iterationsBetweenMPC(_iterations_between_mpc)
   , horizonLength(18)
   , dt(_dt)

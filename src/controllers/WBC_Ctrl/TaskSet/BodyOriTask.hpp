@@ -3,22 +3,22 @@
 // (Rx, Ry, Rz)
 #include <WBC/Task.hpp>
 
-template <typename T>
+template<typename T>
 class FloatingBaseModel;
 
-template <typename T>
-class BodyOriTask : public Task<T> {
- public:
+template<typename T>
+class BodyOriTask : public Task<T>
+{
+public:
   BodyOriTask(const FloatingBaseModel<T>*);
   virtual ~BodyOriTask();
 
-  DVec<T> _Kp_kin;
-  DVec<T> _Kp, _Kd;
+  Vec3<T> _Kp_kin;
+  Vec3<T> _Kp, _Kd;
 
- protected:
+protected:
   // Update op_cmd_
-  virtual bool _UpdateCommand(const void* pos_des, const DVec<T>& vel_des,
-                              const DVec<T>& acc_des);
+  virtual bool _UpdateCommand(const void* pos_des, const DVec<T>& vel_des, const DVec<T>& acc_des);
   // Update Jt_
   virtual bool _UpdateTaskJacobian();
   // Update JtDotQdot_

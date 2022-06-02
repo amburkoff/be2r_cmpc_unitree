@@ -40,7 +40,8 @@ private:
 class VisionMPCLocomotion
 {
 public:
-  VisionMPCLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters);
+  VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
+                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
   void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
@@ -100,7 +101,7 @@ private:
   Vec3<float> pFoot[4];
   float trajAll[12 * 36];
 
-  MIT_UserParameters* _parameters = nullptr;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 };
 
 #endif // CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H

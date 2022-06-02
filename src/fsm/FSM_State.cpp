@@ -12,8 +12,12 @@
  * @param stateNameIn the enumerated state name
  * @param stateStringIn the string name of the current FSM state
  */
-template <typename T>
-FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn, std::string stateStringIn) : _data(_controlFSMData), stateName(stateNameIn), stateString(stateStringIn)
+template<typename T>
+FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn,
+                        std::string stateStringIn)
+  : _data(_controlFSMData)
+  , stateName(stateNameIn)
+  , stateString(stateStringIn)
 {
   transitionData.zero();
   std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn << std::endl;
@@ -26,40 +30,19 @@ FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateN
  * @param qDes desired joint position
  * @param dqDes desired joint velocity
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
   // MIT old params
-  //  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
-  //  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
+  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
-  _data->_legController->commands[leg].kpJoint = _data->userParameters->Kp_joint.template cast<float>().asDiagonal();
-  _data->_legController->commands[leg].kdJoint = _data->userParameters->Kd_joint.template cast<float>().asDiagonal();
-
-  _data->_legController->commands[leg].qDes = qDes;
-  _data->_legController->commands[leg].qdDes = qdDes;
-}
-
-/**
- * Low level joint control for given leg.
- *
- * @param leg the leg number to control
- * @param qDes desired joint position
- * @param dqDes desired joint velocity
- */
-template <typename T>
-void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
-{
-  // for sim
-  // kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
-  // kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-
-  // for real
-  kpMat << 120, 0, 0, 0, 120, 0, 0, 0, 120;
-  kdMat << 10, 0, 0, 0, 10, 0, 0, 0, 10;
-
-  _data->_legController->commands[leg].kpJoint = kpMat;
-  _data->_legController->commands[leg].kdJoint = kdMat;
+  _data->_legController->commands[leg].kpJoint = Eigen::DiagonalMatrix<T, 3>(
+    _data->userParameters->Kp_joint_0, _data->userParameters->Kp_joint_1,
+    _data->userParameters->Kp_joint_2);
+  _data->_legController->commands[leg].kdJoint = Eigen::DiagonalMatrix<T, 3>(
+    _data->userParameters->Kd_joint_0, _data->userParameters->Kd_joint_1,
+    _data->userParameters->Kd_joint_2);
 
   _data->_legController->commands[leg].qDes = qDes;
   _data->_legController->commands[leg].qdDes = qdDes;
@@ -74,7 +57,7 @@ void FSM_State<T>::lowLeveljointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
  * @param kp_cartesian P gains
  * @param kd_cartesian D gains
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes,
                                              Vec3<double> kp_cartesian, Vec3<double> kd_cartesian)
 {
@@ -152,7 +135,7 @@ void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes
  * Gait independent formulation for choosing appropriate GRF and step locations
  * as well as converting them to leg controller understandable values.
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::runControls()
 {
   // This option should be set from the user interface or autonomously
@@ -320,7 +303,7 @@ void FSM_State<T>::runControls()
  * Gait independent formulation for choosing appropriate GRF and step locations
  * as well as converting them to leg controller understandable values.
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::turnOnAllSafetyChecks()
 {
   // Pre controls safety checks
@@ -330,12 +313,13 @@ void FSM_State<T>::turnOnAllSafetyChecks()
   checkPDesFoot = true;         // do not command footsetps too far
   checkForceFeedForward = true; // do not command huge forces
   checkLegSingularity = true;   // do not let leg
+  checkJointLimits = true;
 }
 
 /**
  *
  */
-template <typename T>
+template<typename T>
 void FSM_State<T>::turnOffAllSafetyChecks()
 {
   // Pre controls safety checks
@@ -345,9 +329,10 @@ void FSM_State<T>::turnOffAllSafetyChecks()
   checkPDesFoot = false;         // do not command footsetps too far
   checkForceFeedForward = false; // do not command huge forces
   checkLegSingularity = false;   // do not let leg
+  checkJointLimits = false;
 }
 
-template <typename T>
+template<typename T>
 Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
 {
   Vec3<T> q_eval;
@@ -398,6 +383,9 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
     q_eval(0) = -(Qrad - Q0rad);
     q_eval(1) = Arad - a1_rad;
     q_eval(2) = -(M_PI - a_rad);
+
+    q_eval(1) = - q_eval(1);
+    q_eval(2) = - q_eval(2);
     break;
 
   // Front Left

@@ -20,6 +20,7 @@ class SafetyChecker {
   // Post checks to make sure controls can be sent to robot
   bool checkPDesFoot();          // desired foot position is not too far
   bool checkForceFeedForward();  // desired feedforward forces are not too large
+  bool checkJointLimits();
 
   // Stores the data from the ControlFSM
   ControlFSMData<T>* data;
