@@ -35,7 +35,7 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
                                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
   : iterationsBetweenMPC(_iterations_between_mpc)
   , _parameters(parameters)
-  , _gait_period(_parameters->gait_period)
+  , _gait_period(20)
   , horizonLength(16)
   , dt(_dt)
   , trotting(
@@ -81,6 +81,7 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   rpy_int[2] = 0;
 
   _yaw_des = 0;
+  _pitch_des = 0.;
 
   for (int i = 0; i < 4; i++)
   {
@@ -482,6 +483,14 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
                             data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
 
+      if (foot == 3 || foot == 2)
+      {
+        std::cout << "Foot z P0 = " << footSwingTrajectories[foot].getInitialPosition()[2]
+                  << std::endl;
+        std::cout << "Foot z PF = " << footSwingTrajectories[foot].getFinalPosition()[2]
+                  << std::endl;
+      }
+
       // temporary debug
       data.debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesLeg);
       data.debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesLeg);
@@ -557,6 +566,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     else // foot is in stance
     {
       firstSwing[foot] = true;
+      pDesFootWorldStance[foot] = pFoot[foot];
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();

@@ -123,7 +123,7 @@ VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
   : _parameters(parameters)
   , iterationsBetweenMPC(_iterations_between_mpc)
   , _body_height(_parameters->body_height)
-  , _gait_period(25)
+  , _gait_period(30)
   , horizonLength(16)
   , dt(_dt)
   , trotting(
@@ -220,24 +220,24 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& 
   //      leg3 = false;
   //    }
   //  }
-  if (_data->_stateEstimator->getResult().position(0) > 0.63)
+  if (_data->_stateEstimator->getResult().position(0) > 0.6)
   {
-    double x = _data->_stateEstimator->getResult().position(0) - 0.63;
+    double x = _data->_stateEstimator->getResult().position(0) - 0.6;
     _data->debug->z_offset = x * 0.42;
   }
   h -= _data->debug->z_offset;
   foot[2] = std::isnan(h) ? 0. : h;
+  //  if (leg == 3 || leg == 2)
+  //    std::cout << "Foot z PF = " << foot[2] << std::endl;
 }
 
 void VisionMPCLocomotion::_IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx,
                                           int& x_idx_selected, int& y_idx_selected,
                                           const grid_map::GridMap& height_map, int leg)
 {
-  if (leg != 0)
-    return;
   grid_map::Index center(x_idx, y_idx);
   // std::cout << " Leg position (x,y) " << Pf[0] << " " << Pf[1] << std::endl;
-  double radius = 0.03;
+  double radius = 0.04;
   // std::cout << "Normal is " << height_map.at("normal_vectors_z", Eigen::Array2i(x_idx, y_idx)) <<
   // std::endl;
   for (grid_map_utils::SpiralIterator iterator(height_map, center, radius); !iterator.isPastEnd();
@@ -433,8 +433,9 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-    _updateFoothold(Pf, seResult.position, height_map, height_map_raw, i);
-    Pf[2] = Pf[2] >= 1e-3 ? Pf[2] : 0.; // Только положительные
+    Pf[2] = 0.0;
+    //    _updateFoothold(Pf, seResult.position, height_map, height_map_raw, i);
+    //    Pf[2] = Pf[2] >= 1e-3 ? Pf[2] : 0.; // Только положительные
     _fin_foot_loc[i] = Pf;
     //    std::cout << "Foot [" << i << "] target z is " << Pf[2] << std::endl;
     footSwingTrajectories[i].setFinalPosition(Pf);
@@ -471,7 +472,10 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
       if (firstSwing[foot])
       {
         firstSwing[foot] = false;
-        footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+        auto p_0 = pFoot[foot];
+        //        p_0[2] = 0.;
+        //        p_0(2) = fmax(0.f, p_0(2));
+        footSwingTrajectories[foot].setInitialPosition(p_0);
       }
       //      footSwingTrajectories[foot].setHeight(_fin_foot_loc[foot][2] + 0.04); // change to
       //      hardcode
@@ -481,7 +485,15 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
 
       // TODO: прибавлять к высоте траектории разницу в высоте между передними/задними лапами
       double swing_height = _updateTrajHeight(foot);
-      footSwingTrajectories[foot].setHeight(swing_height);
+      footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
+      if (foot == 0 || foot == 1)
+      {
+        std::cout << "Foot [" << foot << "] = height = " << swing_height << std::endl;
+        std::cout << "Foot z P0 = " << footSwingTrajectories[foot].getInitialPosition()[2]
+                  << std::endl;
+        std::cout << "Foot z PF = " << footSwingTrajectories[foot].getFinalPosition()[2]
+                  << std::endl;
+      }
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
@@ -708,6 +720,9 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 
 float VisionMPCLocomotion::_updateTrajHeight(size_t foot)
 {
+  if (foot == 2 || foot == 3)
+    return _parameters->Swing_traj_height;
+
   double h = 0;
 
   h = (footSwingTrajectories[foot].getFinalPosition()(2) -

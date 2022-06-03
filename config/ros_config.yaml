@@ -49,7 +49,7 @@ dynamic_loader:
   body_height: 0.3
 
 
-  Swing_traj_height  : 0.1   # Set swing traj top point
+  Swing_traj_height  : 0.14   # Set swing traj top point
 
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC
   cmpc_use_sparse   : 0       # switch between sparce and dense mpc
