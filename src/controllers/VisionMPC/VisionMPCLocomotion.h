@@ -1,6 +1,7 @@
 #ifndef CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
 #define CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
 
+#include "Gait.h"
 #include "cppTypes.h"
 #include <ControlFSMData.h>
 #include <Controllers/FootSwingTrajectory.h>
@@ -72,6 +73,8 @@ private:
                        int& y_idx_selected, const grid_map::GridMap& height_map, int leg);
   void _updateParams(ControlFSMData<float>& data);
   float _updateTrajHeight(size_t foot);
+  void recompute_timing(int iterations_per_mpc);
+  void _SetupCommand(ControlFSMData<float>& data);
 
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 
@@ -82,6 +85,7 @@ private:
   Vec3<float> rpy_des;
   Vec3<float> v_rpy_des;
 
+  //  void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data);
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
   int iterationsBetweenMPC;
@@ -94,7 +98,8 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  VisionGait trotting, bounding, pronking, galloping, standing, trotRunning, walking;
+  //  VisionGait trotting, bounding, pronking, galloping, standing, trotRunning, walking;
+  OffsetDurationGait trotting, walking, standing;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -102,6 +107,7 @@ private:
   float stand_traj[6];
   int current_gait;
   int gaitNumber;
+  int default_iterations_between_mpc;
 
   Vec3<float> world_position_desired;
   Vec3<float> rpy_int;
@@ -109,6 +115,17 @@ private:
   Vec3<float> pFoot[4];
   float trajAll[12 * 36];
   ControlFSMData<float>* _data;
+
+  // cmpc
+  float _yaw_turn_rate;
+  float _yaw_des;
+
+  float _roll_des;
+  float _pitch_des;
+
+  float _x_vel_des = 0.;
+  float _y_vel_des = 0.;
+  float x_comp_integral = 0;
 };
 
 #endif // CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
