@@ -123,7 +123,7 @@ VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
   : _parameters(parameters)
   , iterationsBetweenMPC(_iterations_between_mpc)
   , _body_height(_parameters->body_height)
-  , _gait_period(30)
+  , _gait_period(20)
   , horizonLength(16)
   , dt(_dt)
   , trotting(
@@ -237,7 +237,7 @@ void VisionMPCLocomotion::_IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx,
 {
   grid_map::Index center(x_idx, y_idx);
   // std::cout << " Leg position (x,y) " << Pf[0] << " " << Pf[1] << std::endl;
-  double radius = 0.04;
+  double radius = 0.06;
   // std::cout << "Normal is " << height_map.at("normal_vectors_z", Eigen::Array2i(x_idx, y_idx)) <<
   // std::endl;
   for (grid_map_utils::SpiralIterator iterator(height_map, center, radius); !iterator.isPastEnd();
@@ -434,7 +434,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
     Pf[2] = 0.0;
-    //    _updateFoothold(Pf, seResult.position, height_map, height_map_raw, i);
+    _updateFoothold(Pf, seResult.position, height_map, height_map_raw, i);
     //    Pf[2] = Pf[2] >= 1e-3 ? Pf[2] : 0.; // Только положительные
     _fin_foot_loc[i] = Pf;
     //    std::cout << "Foot [" << i << "] target z is " << Pf[2] << std::endl;
@@ -485,7 +485,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
 
       // TODO: прибавлять к высоте траектории разницу в высоте между передними/задними лапами
       double swing_height = _updateTrajHeight(foot);
-      footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
+      footSwingTrajectories[foot].setHeight(swing_height);
       if (foot == 0 || foot == 1)
       {
         std::cout << "Foot [" << foot << "] = height = " << swing_height << std::endl;
