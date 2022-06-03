@@ -132,7 +132,7 @@ void Body_Manager::init()
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &_cheater_state, &controlParameters);
+  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &_cheater_state, _debug, &controlParameters);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
@@ -500,6 +500,7 @@ void Body_Manager::initializeStateEstimator()
     _stateEstimator->addEstimator<VectorNavOrientationEstimator<float>>();
     _stateEstimator->addEstimator<LinearKFPositionVelocityEstimator<float>>();
     _stateEstimator->addEstimator<PositionEstimator<float>>();
+    _stateEstimator->addEstimator<KFPositionVelocityEstimator<float>>();
   }
 }
 

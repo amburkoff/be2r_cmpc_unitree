@@ -35,6 +35,11 @@ private:
   Eigen::Matrix<T, 28, 28> _R0;
   Eigen::Matrix<T, 18, 3> _B;
   Eigen::Matrix<T, 28, 18> _C;
+  Vec3<T> a_old;
+  Vec3<T> a_filt;
+  Vec3<T> da_filt;
+  Vec3<T> da_filt_prev;
+  Vec3<T> a_world;
 };
 
 /*!

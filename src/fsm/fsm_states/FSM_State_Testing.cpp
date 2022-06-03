@@ -323,7 +323,7 @@ void FSM_State_Testing<T>::test2()
   // Vec3<float> q_des(0, 0, 0);
   // Vec3<float> dq_des(0, 0, 0);
 
-  q_des = this->findAngles(0, p_des);
+  //q_des = this->findAngles(0, p_des);
   //dq_des = computeLegJacobianAndPosition
   // this->jointPDControl(0, q_des, dq_des);
   // this->lowLeveljointPDControl(0, q_des, dq_des);

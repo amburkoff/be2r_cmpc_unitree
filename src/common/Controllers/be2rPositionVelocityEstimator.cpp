@@ -44,6 +44,7 @@ void PositionEstimator<T>::run()
   // float phase[4];
 
   Vec3<T> acceleration = this->_stateEstimatorData.result->aWorld + Vec3<float>(0, 0, -9.81);
+  
   // phase[0] = this->_stateEstimatorData.result->contactEstimate(0);
   // phase[1] = this->_stateEstimatorData.result->contactEstimate(1);
   // phase[2] = this->_stateEstimatorData.result->contactEstimate(2);
@@ -85,11 +86,11 @@ void PositionEstimator<T>::run()
     // cout << "trust: " << trust << endl;
     // cout << "ac x: " << a_filtered[0] << " y: " << a_filtered[1] << " z: " << a_filtered[2] << endl;
     // cout << "vel x: " << v_body[0] << " y: " << v_body[1] << " z: " << v_body[2] << endl;
-    cout << "x: " << p_body[0] << " y: " << p_body[1] << " z: " << p_body[2] << endl;
+    //cout << "x: " << p_body[0] << " y: " << p_body[1] << " z: " << p_body[2] << endl;
     // cout << (ros::Time::now() - time_start).toSec() << endl;
     z += vz_filtered2(2) * dt;
     // z += vz_filtered(2) * dt;
-    std::cout << "z: " << z << std::endl;
+    //std::cout << "z: " << z << std::endl;
   }
 }
 

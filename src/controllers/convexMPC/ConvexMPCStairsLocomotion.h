@@ -99,7 +99,7 @@ class ConvexMPCStairsLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ConvexMPCStairsLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters);
+  ConvexMPCStairsLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
   template <typename T>
@@ -177,7 +177,7 @@ private:
   visualization_msgs::Marker marker[4];
   ros::Publisher _vis_pub[4];
 
-  MIT_UserParameters* _parameters = nullptr;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
   CMPC_Jump_Stairs jump_state;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;

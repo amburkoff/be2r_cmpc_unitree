@@ -14,6 +14,7 @@
 #include "Controllers/LegController.h"
 #include "SimUtilities/IMUTypes.h"
 #include "SimUtilities/VisualizationData.h"
+#include "debug.hpp"
 
 /*!
  * Result of state estimation
@@ -53,6 +54,7 @@ struct StateEstimatorData
   Vec4<T>* contactPhase;
   Vec4<uint8_t>* contactSensor;
   RobotControlParameters* parameters;
+  Debug* debug;
 };
 
 /*!
@@ -90,6 +92,7 @@ public:
                           Vec4<uint8_t>* footContactState,
                           StateEstimate<T>* stateEstimate,
                           CheaterState<T>* cheaterState,
+                          Debug* debug,
                           RobotControlParameters* parameters)
   {
     _data.vectorNavData = vectorNavData;
@@ -100,6 +103,7 @@ public:
     _data.contactSensor = footContactState;
     _data.parameters = parameters;
     _data.cheaterState = cheaterState;
+    _data.debug = debug;
   }
 
   /*!

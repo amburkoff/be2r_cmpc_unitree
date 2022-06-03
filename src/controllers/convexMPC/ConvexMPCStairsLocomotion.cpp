@@ -30,7 +30,7 @@ using namespace std;
 // Controller
 ////////////////////
 
-ConvexMPCStairsLocomotion::ConvexMPCStairsLocomotion(float _dt, int _iterations_between_mpc, MIT_UserParameters* parameters) : iterationsBetweenMPC(_iterations_between_mpc), horizonLength(HORIZON),
+ConvexMPCStairsLocomotion::ConvexMPCStairsLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters) : iterationsBetweenMPC(_iterations_between_mpc), horizonLength(HORIZON),
                                                                                                                    //  horizonLength(10),
                                                                                                                    dt(_dt),
                                                                                                                    trotting(GAIT_PERIOD, Vec4<int>(0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, 0), Vec4<int>(GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0), "Trotting"),
@@ -129,11 +129,11 @@ void ConvexMPCStairsLocomotion::_SetupCommand(ControlFSMData<float>& data)
 
   // Update PD coefs
   // for sim
-  Kp = _parameters->Swing_Kp_cartesian.cast<float>().asDiagonal();
-  Kp_stance = Kp;
+  //Kp = _parameters->Swing_Kp_cartesian.cast<float>().asDiagonal();
+  //Kp_stance = Kp;
 
-  Kd = _parameters->Swing_Kd_cartesian.cast<float>().asDiagonal();
-  Kd_stance = Kd;
+  //Kd = _parameters->Swing_Kd_cartesian.cast<float>().asDiagonal();
+  //Kd_stance = Kd;
 
   // for real
   //  Kp << 150, 0, 0, 0, 150, 0, 0, 0, 150;
@@ -527,7 +527,7 @@ void ConvexMPCStairsLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kdCartesian = Kd_stance;
 
         data._legController->commands[foot].forceFeedForward = f_ff[foot];
-        data._legController->commands[foot].kdJoint = _parameters->Kd_joint.cast<float>().asDiagonal();
+        data._legController->commands[foot].kdJoint = Vec3<float>(_parameters->Kd_joint_0, _parameters->Kd_joint_1, _parameters->Kd_joint_2).asDiagonal();
 
         //      footSwingTrajectories[foot]->updateFF(hw_i->leg_controller->leg_datas[foot].q,
         //                                          hw_i->leg_controller->leg_datas[foot].qd,
