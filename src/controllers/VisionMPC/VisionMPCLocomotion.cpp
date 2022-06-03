@@ -123,7 +123,7 @@ VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
   : _parameters(parameters)
   , iterationsBetweenMPC(_iterations_between_mpc)
   , _body_height(_parameters->body_height)
-  , _gait_period(20)
+  , _gait_period(25)
   , horizonLength(16)
   , dt(_dt)
   , trotting(
@@ -220,11 +220,11 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& foot, const Vec3<float>& 
   //      leg3 = false;
   //    }
   //  }
-  if (_data->_stateEstimator->getResult().position(0) > 0.6)
-  {
-    double x = _data->_stateEstimator->getResult().position(0) - 0.6;
-    _data->debug->z_offset = x * 0.42;
-  }
+  //  if (_data->_stateEstimator->getResult().position(0) > 0.6)
+  //  {
+  //    double x = _data->_stateEstimator->getResult().position(0) - 0.6;
+  //    _data->debug->z_offset = x * 0.42;
+  //  }
   h -= _data->debug->z_offset;
   foot[2] = std::isnan(h) ? 0. : h;
   //  if (leg == 3 || leg == 2)
@@ -486,14 +486,18 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
       // TODO: прибавлять к высоте траектории разницу в высоте между передними/задними лапами
       double swing_height = _updateTrajHeight(foot);
       footSwingTrajectories[foot].setHeight(swing_height);
-      if (foot == 0 || foot == 1)
-      {
-        std::cout << "Foot [" << foot << "] = height = " << swing_height << std::endl;
-        std::cout << "Foot z P0 = " << footSwingTrajectories[foot].getInitialPosition()[2]
-                  << std::endl;
-        std::cout << "Foot z PF = " << footSwingTrajectories[foot].getFinalPosition()[2]
-                  << std::endl;
-      }
+      //      if (foot == 0 || foot == 1)
+      //      {
+      //        std::cout << "Foot [" << foot << "] = height = " << swing_height << std::endl;
+      //        std::cout << "Foot z P0 = " << footSwingTrajectories[foot].getInitialPosition()[2]
+      //                  << std::endl;
+      //        std::cout << "Foot z PF = " << footSwingTrajectories[foot].getFinalPosition()[2]
+      //                  << std::endl;
+      _data->debug->all_legs_info.leg[foot].swing_ps =
+        ros::toMsg(footSwingTrajectories[foot].getInitialPosition());
+      _data->debug->all_legs_info.leg[foot].swing_pf =
+        ros::toMsg(footSwingTrajectories[foot].getFinalPosition());
+      //      }
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
@@ -721,13 +725,13 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 float VisionMPCLocomotion::_updateTrajHeight(size_t foot)
 {
   if (foot == 2 || foot == 3)
-    return _parameters->Swing_traj_height;
+    return 0.08;
 
   double h = 0;
 
   h = (footSwingTrajectories[foot].getFinalPosition()(2) -
        footSwingTrajectories[foot].getInitialPosition()(2)) *
-      0.5;
+      0.75;
   // Saturate h
   h = std::clamp(h, -_parameters->Swing_traj_height, _parameters->Swing_traj_height);
   double out = _parameters->Swing_traj_height + h;
