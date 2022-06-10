@@ -3,7 +3,9 @@
 using namespace std;
 
 Body_Manager::Body_Manager()
-    : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+  : _zero_time(0)
+  , safe(UNITREE_LEGGED_SDK::LeggedType::A1)
+  , udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
@@ -42,7 +44,8 @@ UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCm
   return udp_low_cmd;
 }
 
-unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state)
+unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(
+  UNITREE_LEGGED_SDK::LowState udp_low_state)
 {
   unitree_legged_msgs::LowState ros_low_state;
 
@@ -90,25 +93,11 @@ void Body_Manager::init()
 
   _time_start = ros::Time::now();
 
-  printf("[Hardware Bridge] Loading parameters from file...\n");
+  printf("[Body_Manager] Loading parameters from ros server\n");
 
-  try
-  {
-    controlParameters.initializeFromYamlFile(THIS_COM "config/mini-cheetah-defaults.yaml");
-  }
-  catch (std::exception& e)
-  {
-    printf("Failed to initialize robot parameters from yaml file: %s\n", e.what());
-    exit(1);
-  }
+  _rosStaticParams.read();
 
-  if (!controlParameters.isFullyInitialized())
-  {
-    printf("Failed to initialize all robot parameters\n");
-    exit(1);
-  }
-
-  printf("Loaded robot parameters\n");
+  printf("[Body_Manager] Loaded robot parameters\n");
 
   // TODO: check exist
   if (_is_param_updated)
@@ -122,8 +111,8 @@ void Body_Manager::init()
 
   _quadruped = buildMiniCheetah<float>();
 
-  controlParameters.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
-  cout << controlParameters.controller_dt << " dt" << endl;
+  _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
+  cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << endl;
 
   // Initialize the model and robot data
   _model = _quadruped.buildModel();
@@ -136,17 +125,19 @@ void Body_Manager::init()
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &controlParameters, &_stateEstimate, controlParameters.controller_dt);
+  _desiredStateCommand = new DesiredStateCommand<float>(
+    &driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
 
   // Initialize a new GaitScheduler object
-  _gaitScheduler = new GaitScheduler<float>(&_rosParameters, controlParameters.controller_dt);
+  _gaitScheduler = new GaitScheduler<float>(&_rosParameters, _rosStaticParams.controller_dt);
 
   // Initializes the Control FSM with all the
   // required data
-  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
-                                      _desiredStateCommand, &controlParameters, &_rosParameters, _debug);
+  _controlFSM =
+    new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
+                          _desiredStateCommand, &_rosStaticParams, &_rosParameters, _debug);
 
-  controlParameters.control_mode = 0;
+  _rosParameters.FSM_State = 0;
 }
 
 void Body_Manager::_readRobotData()
@@ -320,7 +311,7 @@ void Body_Manager::finalizeStep()
   // _debug->all_legs_info.header.stamp = _zero_time + delta_t;
   _debug->all_legs_info.header.stamp = ros::Time::now();
 
-  //put actual body info
+  // put actual body info
   _debug->body_info.pos_act.x = _stateEstimator->getResult().position.x();
   _debug->body_info.pos_act.y = _stateEstimator->getResult().position.y();
   _debug->body_info.pos_act.z = _stateEstimator->getResult().position.z();
@@ -353,6 +344,9 @@ void Body_Manager::finalizeStep()
   _debug->ground_truth_odom = ground_truth;
 
   //put actual q and dq in debug class
+  _debug->body_info.pos_z_global = _stateEstimator->getResult().heightBody;
+
+  // put actual q and dq in debug class
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
     _debug->all_legs_info.leg.at(leg_num).joint.at(0).q = spiData.q_abad[leg_num];
@@ -396,7 +390,7 @@ void Body_Manager::finalizeStep()
     _torqueCalculator(&spiCommand, &spiData, &_spi_torque, i);
   }
 
-  uint8_t mode[4] = {MOTOR_BREAK};
+  uint8_t mode[4] = { MOTOR_BREAK };
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -625,19 +619,19 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
   if (_legController->is_low_level == false)
   {
     torque_out->tau_abad[board_num] =
-        cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
-        cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
-        cmd->tau_abad_ff[board_num];
+      cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
+      cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
+      cmd->tau_abad_ff[board_num];
 
     torque_out->tau_hip[board_num] =
-        cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
-        cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
-        cmd->tau_hip_ff[board_num];
+      cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
+      cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
+      cmd->tau_hip_ff[board_num];
 
     torque_out->tau_knee[board_num] =
-        cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
-        cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
-        cmd->tau_knee_ff[board_num];
+      cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
+      cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
+      cmd->tau_knee_ff[board_num];
   }
   else
   {
@@ -648,8 +642,8 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
     torque_out->tau_knee[board_num] = cmd->tau_knee_ff[board_num];
   }
 
-  const float safe_torque[3] = {4.f, 4.f, 4.f};
-  const float max_torque[3] = {17.f, 17.f, 26.f};
+  const float safe_torque[3] = { 4.f, 4.f, 4.f };
+  const float max_torque[3] = { 17.f, 17.f, 26.f };
   const float* torque_limits;
 
   if (_is_torque_safe)
@@ -694,13 +688,12 @@ void Body_Manager::_initParameters()
   readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
 }
 
-void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
+void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
+                                            uint32_t level)
 {
   (void)level;
   _is_param_updated = true;
   _rosParameters = config;
-  controlParameters.control_mode = config.FSM_State;
-
   ROS_INFO_STREAM("New dynamic data!");
 }
 

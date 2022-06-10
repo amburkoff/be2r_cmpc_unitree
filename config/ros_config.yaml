@@ -42,11 +42,11 @@ dynamic_loader:
   Kp_cartesian_0: 150
   Kp_cartesian_1: 150
   Kp_cartesian_2: 150
-  Kd_cartesian_0: 3
-  Kd_cartesian_1: 3
-  Kd_cartesian_2: 3
+  Kd_cartesian_0: 2.5
+  Kd_cartesian_1: 2.5
+  Kd_cartesian_2: 2.5
 
-  body_height: 0.29
+  body_height: 0.3
 
 
   # safety
@@ -71,9 +71,18 @@ dynamic_loader:
 
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
-  gait_period           : 22
+  gait_period           : 20
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4
 
+static_params:
+  controller_dt     : 0.002
+  # Estimators
+  foot_height_sensor_noise      :  0.001
+  foot_process_noise_position   :  0.002
+  foot_sensor_noise_position    :  0.001
+  foot_sensor_noise_velocity    :  0.1
+  imu_process_noise_position    :  0.02
+  imu_process_noise_velocity    :  0.02
 

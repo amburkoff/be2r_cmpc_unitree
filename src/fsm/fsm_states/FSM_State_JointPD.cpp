@@ -12,14 +12,15 @@
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template <typename T>
-FSM_State_JointPD<T>::FSM_State_JointPD(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::JOINT_PD, "JOINT_PD"),
-                                                                              _ini_jpos(cheetah::num_act_joint)
+template<typename T>
+FSM_State_JointPD<T>::FSM_State_JointPD(ControlFSMData<T>* _controlFSMData)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::JOINT_PD, "JOINT_PD")
+  , _ini_jpos(cheetah::num_act_joint)
 {
   // Do nothing here yet
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_JointPD<T>::onEnter()
 {
   // Default is to not transition
@@ -43,7 +44,7 @@ void FSM_State_JointPD<T>::onEnter()
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
-template <typename T>
+template<typename T>
 void FSM_State_JointPD<T>::run()
 {
   // This is just a test, should be running whatever other code you want
@@ -53,10 +54,10 @@ void FSM_State_JointPD<T>::run()
   qdDes << 0, 0, 0;
 
   static double progress(0.);
-  progress += this->_data->controlParameters->controller_dt;
+  progress += this->_data->staticParams->controller_dt;
   double movement_duration(3.0);
   double ratio = progress / movement_duration;
-  
+
   if (ratio > 1.)
   {
     ratio = 1.;
@@ -74,7 +75,7 @@ void FSM_State_JointPD<T>::run()
  *
  * @return the enumerated FSM state name to transition into
  */
-template <typename T>
+template<typename T>
 FSM_StateName FSM_State_JointPD<T>::checkTransition()
 {
   this->nextStateName = this->stateName;
@@ -82,46 +83,45 @@ FSM_StateName FSM_State_JointPD<T>::checkTransition()
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
-  case K_JOINT_PD:
-    // Normal operation for state based transitions
-    break;
+    case K_JOINT_PD:
+      // Normal operation for state based transitions
+      break;
 
-  case K_IMPEDANCE_CONTROL:
-    // Requested change to impedance control
-    this->nextStateName = FSM_StateName::IMPEDANCE_CONTROL;
+    case K_IMPEDANCE_CONTROL:
+      // Requested change to impedance control
+      this->nextStateName = FSM_StateName::IMPEDANCE_CONTROL;
 
-    // Transition time is 1 second
-    this->transitionDuration = 1.0;
-    break;
+      // Transition time is 1 second
+      this->transitionDuration = 1.0;
+      break;
 
-  case K_STAND_UP:
-    // Requested change to impedance control
-    this->nextStateName = FSM_StateName::STAND_UP;
+    case K_STAND_UP:
+      // Requested change to impedance control
+      this->nextStateName = FSM_StateName::STAND_UP;
 
-    // Transition time is immediate
-    this->transitionDuration = 0.0;
-    break;
+      // Transition time is immediate
+      this->transitionDuration = 0.0;
+      break;
 
-  case K_BALANCE_STAND:
-    // Requested change to balance stand
-    this->nextStateName = FSM_StateName::BALANCE_STAND;
-    break;
+    case K_BALANCE_STAND:
+      // Requested change to balance stand
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
+      break;
 
-  case K_PASSIVE:
-    // Requested change to BALANCE_STAND
-    this->nextStateName = FSM_StateName::PASSIVE;
+    case K_PASSIVE:
+      // Requested change to BALANCE_STAND
+      this->nextStateName = FSM_StateName::PASSIVE;
 
-    // Transition time is immediate
-    this->transitionDuration = 0.0;
+      // Transition time is immediate
+      this->transitionDuration = 0.0;
 
-    break;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
-              << K_JOINT_PD << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_JOINT_PD << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -134,46 +134,45 @@ FSM_StateName FSM_State_JointPD<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_JointPD<T>::transition()
 {
   // Switch FSM control mode
   switch (this->nextStateName)
   {
-  case FSM_StateName::IMPEDANCE_CONTROL:
+    case FSM_StateName::IMPEDANCE_CONTROL:
 
-    iter++;
-    if (iter >= this->transitionDuration * 1000)
-    {
+      iter++;
+      if (iter >= this->transitionDuration * 1000)
+      {
+        this->transitionData.done = true;
+      }
+      else
+      {
+        this->transitionData.done = false;
+      }
+      break;
+
+    case FSM_StateName::STAND_UP:
       this->transitionData.done = true;
-    }
-    else
-    {
-      this->transitionData.done = false;
-    }
-    break;
 
-  case FSM_StateName::STAND_UP:
-    this->transitionData.done = true;
+      break;
 
-    break;
+    case FSM_StateName::BALANCE_STAND:
+      this->transitionData.done = true;
 
-  case FSM_StateName::BALANCE_STAND:
-    this->transitionData.done = true;
+      break;
 
-    break;
+    case FSM_StateName::PASSIVE:
+      this->turnOffAllSafetyChecks();
 
-  case FSM_StateName::PASSIVE:
-    this->turnOffAllSafetyChecks();
+      this->transitionData.done = true;
 
-    this->transitionData.done = true;
+      break;
 
-    break;
-
-  default:
-    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
-              << K_JOINT_PD << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_JOINT_PD << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
   }
   // Finish transition
   this->transitionData.done = true;
@@ -185,7 +184,7 @@ TransitionData<T> FSM_State_JointPD<T>::transition()
 /**
  * Cleans up the state information on exiting the state.
  */
-template <typename T>
+template<typename T>
 void FSM_State_JointPD<T>::onExit()
 {
   // Nothing to clean up when exiting

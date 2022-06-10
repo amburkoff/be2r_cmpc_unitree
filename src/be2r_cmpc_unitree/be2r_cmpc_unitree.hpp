@@ -25,7 +25,6 @@
 #include "Controllers/StateEstimatorContainer.h"
 #include "LegController.h"
 #include "MiniCheetah.h"
-#include "RobotParameters.h"
 #include "lcm_msgs/spi_command_t.hpp"
 #include "lcm_msgs/spi_data_t.hpp"
 #include "lcm_msgs/spi_torque_t.hpp"
@@ -71,7 +70,6 @@ public:
   void initializeStateEstimator();
 
   VectorNavData vectorNavData;
-  RobotControlParameters controlParameters;
   SpiData spiData;
   SpiCommand spiCommand;
   u64 _iterations = 0;
@@ -145,18 +143,6 @@ private:
 
   // Gait Scheduler controls the nominal contact schedule for the feet
   GaitScheduler<float>* _gaitScheduler;
-  ControlParameters* _userControlParameters = nullptr;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig _rosParameters;
-
-  template <typename T>
-  bool readRosParam(std::string param_name, T& param_var)
-  {
-    if (!ros::param::get(param_name, param_var))
-    {
-      ROS_WARN_STREAM("Can't read param " << param_name);
-      return false;
-    }
-    // std::cout << "[ROS PARAM] " << param_name << ": " << param_var << std::endl;
-    return true;
-  }
+  StaticParams _rosStaticParams;
 };

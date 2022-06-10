@@ -254,7 +254,7 @@ FSM_StateName FSM_State_RecoveryStand<T>::checkTransition()
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
   case K_RECOVERY_STAND:
     break;
@@ -285,7 +285,7 @@ FSM_StateName FSM_State_RecoveryStand<T>::checkTransition()
 
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_RECOVERY_STAND
-              << " to " << this->_data->controlParameters->control_mode << std::endl;
+              << " to " << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state

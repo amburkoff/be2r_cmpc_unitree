@@ -4,13 +4,14 @@
 #include "cppTypes.h"
 #include <ControlFSMData.h>
 #include <Controllers/FootSwingTrajectory.h>
+#include <Utilities/SpiralIterator.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 
 using Eigen::Array4f;
 using Eigen::Array4i;
 
 // Step height maximum [m]
-#define MAX_STEP_HEIGHT 0.15
+#define MAX_STEP_HEIGHT 0.18
 
 class VisionGait
 {
@@ -22,6 +23,7 @@ public:
   Vec4<float> getSwingState();
   int* mpc_gait();
   void setIterations(int iterationsPerMPC, int currentIteration);
+  int getCurrentGaitPhase() { return _iteration; }
   int _stance;
   int _swing;
 
@@ -45,7 +47,7 @@ public:
   void initialize();
 
   void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
-           const grid_map::GridMap& height_map);
+           const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -64,9 +66,14 @@ public:
 
 private:
   void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
-                       const grid_map::GridMap& height_map);
-  void _IdxMapChecking(int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
-                       const DMat<int>& idx_map);
+                       const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw,
+                       int leg);
+  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected,
+                       int& y_idx_selected, const grid_map::GridMap& height_map, int leg);
+  void _updateParams(ControlFSMData<float>& data);
+  float _updateTrajHeight(size_t foot);
+
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 
   Vec3<float> _fin_foot_loc[4];
   float grid_size = 0.02;
@@ -75,10 +82,11 @@ private:
   Vec3<float> rpy_des;
   Vec3<float> v_rpy_des;
 
-  float _body_height = 0.29;
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
   int iterationsBetweenMPC;
+  float _body_height;
+  int _gait_period;
   int horizonLength;
   float dt;
   float dtMPC;
@@ -86,7 +94,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  VisionGait trotting, bounding, pronking, galloping, standing, trotRunning;
+  VisionGait trotting, bounding, pronking, galloping, standing, trotRunning, walking;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -100,8 +108,7 @@ private:
   Vec3<float> rpy_comp;
   Vec3<float> pFoot[4];
   float trajAll[12 * 36];
-
-  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
+  ControlFSMData<float>* _data;
 };
 
 #endif // CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
