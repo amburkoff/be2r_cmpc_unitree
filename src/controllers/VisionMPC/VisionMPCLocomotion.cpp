@@ -434,7 +434,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
     Pf[2] = 0.0;
-    _updateFoothold(Pf, seResult.position, height_map, height_map_raw, i);
+    //    _updateFoothold(Pf, seResult.position, height_map, height_map_raw, i);
     //    Pf[2] = Pf[2] >= 1e-3 ? Pf[2] : 0.; // Только положительные
     _fin_foot_loc[i] = Pf;
     //    std::cout << "Foot [" << i << "] target z is " << Pf[2] << std::endl;
@@ -708,6 +708,7 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 
   dtMPC = dt * iterationsBetweenMPC;
   vision_setup_problem(dtMPC, horizonLength, 0.4, 120);
+  vision_update_x_drag(0);
   vision_update_problem_data_floats(p, v, q, w, r, yaw, weights, trajAll, alpha, mpcTable);
 
   for (int leg = 0; leg < 4; leg++)

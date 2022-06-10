@@ -89,24 +89,20 @@ void Body_Manager::init()
 {
   _initSubscribers();
   _initPublishers();
+  ROS_INFO_STREAM("[Body_Manager] Loading parameters from ros server\n");
   _initParameters();
 
   _time_start = ros::Time::now();
 
-  printf("[Body_Manager] Loading parameters from ros server\n");
-
-  _rosStaticParams.read();
-
-  printf("[Body_Manager] Loaded robot parameters\n");
-
   // TODO: check exist
   if (_is_param_updated)
   {
-    ROS_INFO_STREAM("Get params from dynamic reconfigure");
+    ROS_INFO_STREAM("[Body_Manager] Get params from dynamic reconfigure");
+    ROS_INFO_STREAM("[Body_Manager] Loaded robot parameters\n");
   }
   else
   {
-    ROS_WARN_STREAM("No dynamic config data");
+    ROS_WARN_STREAM("[Body_Manager] No dynamic config data");
   }
 
   _quadruped = buildMiniCheetah<float>();
@@ -121,7 +117,9 @@ void Body_Manager::init()
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate, &_cheater_state, &controlParameters);
+  _stateEstimator =
+    new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
+                                       &_stateEstimate, &_cheater_state, &_rosStaticParams);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
@@ -131,8 +129,7 @@ void Body_Manager::init()
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, _rosStaticParams.controller_dt);
 
-  // Initializes the Control FSM with all the
-  // required data
+  // Initializes the Control FSM with all the required data
   _controlFSM =
     new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
                           _desiredStateCommand, &_rosStaticParams, &_rosParameters, _debug);
@@ -180,7 +177,7 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[2] = _low_state.imu.quaternion[2]; // y
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
-  //binary contact
+  // binary contact
   int16_t force_threshold = 10;
 
   for (size_t i = 0; i < 4; i++)
@@ -217,7 +214,8 @@ void Body_Manager::_readRobotData()
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    _debug->all_legs_info.leg[leg_num].is_contact = _stateEstimator->getContactSensorData()(leg_num);
+    _debug->all_legs_info.leg[leg_num].is_contact =
+      _stateEstimator->getContactSensorData()(leg_num);
   }
 }
 
@@ -343,7 +341,7 @@ void Body_Manager::finalizeStep()
 
   _debug->ground_truth_odom = ground_truth;
 
-  //put actual q and dq in debug class
+  // put actual q and dq in debug class
   _debug->body_info.pos_z_global = _stateEstimator->getResult().heightBody;
 
   // put actual q and dq in debug class
@@ -373,7 +371,7 @@ void Body_Manager::finalizeStep()
     _debug->all_legs_info.leg.at(leg_num).v_act.y = _legController->datas[leg_num].v[1];
     _debug->all_legs_info.leg.at(leg_num).v_act.z = _legController->datas[leg_num].v[2];
 
-    if ((controlParameters.control_mode != K_LOCOMOTION) && (controlParameters.control_mode != K_TESTING))
+    if ((_rosParameters.FSM_State != K_LOCOMOTION) && (_rosParameters.FSM_State != K_TESTING))
     {
       _debug->all_legs_info.leg.at(leg_num).p_des.x = _legController->commands[leg_num].pDes[0];
       _debug->all_legs_info.leg.at(leg_num).p_des.y = _legController->commands[leg_num].pDes[1];
@@ -483,7 +481,7 @@ void Body_Manager::initializeStateEstimator()
   contactDefault << 0.5, 0.5, 0.5, 0.5;
   _stateEstimator->setContactPhase(contactDefault);
 
-  if (controlParameters.cheater_mode)
+  if (_rosStaticParams.cheater_mode)
   {
     ROS_INFO("Cheater Mode!");
     _stateEstimator->addEstimator<CheaterOrientationEstimator<float>>();
@@ -499,13 +497,17 @@ void Body_Manager::initializeStateEstimator()
 
 void Body_Manager::_initSubscribers()
 {
-  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
-  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
-  _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this,
+                                 ros::TransportHints().tcpNoDelay(true));
+  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this,
+                               ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback,
+                                    this, ros::TransportHints().tcpNoDelay(true));
   _srv_do_step = _nh.advertiseService("/do_step", &Body_Manager::_srvDoStep, this);
 }
 
-bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response)
+bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest,
+                              std_srvs::Trigger::Response& response)
 {
   ROS_INFO("DO STEP!");
 
@@ -686,6 +688,7 @@ void Body_Manager::_initParameters()
   readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
   readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
   readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
+  _rosStaticParams.read();
 }
 
 void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,

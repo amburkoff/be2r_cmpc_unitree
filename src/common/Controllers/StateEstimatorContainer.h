@@ -85,12 +85,9 @@ public:
   /*!
    * Construct a new state estimator container
    */
-  StateEstimatorContainer(VectorNavData* vectorNavData,
-                          LegControllerData<T>* legControllerData,
-                          Vec4<uint8_t>* footContactState,
-                          StateEstimate<T>* stateEstimate,
-                          CheaterState<T>* cheaterState,
-                          StaticParams* parameters)
+  StateEstimatorContainer(VectorNavData* vectorNavData, LegControllerData<T>* legControllerData,
+                          Vec4<uint8_t>* footContactState, StateEstimate<T>* stateEstimate,
+                          CheaterState<T>* cheaterState, StaticParams* parameters)
   {
     _data.vectorNavData = vectorNavData;
     _data.legControllerData = legControllerData;
@@ -122,18 +119,12 @@ public:
   /*!
    * Get the result
    */
-  const StateEstimate<T>& getResult()
-  {
-    return *_data.result;
-  }
+  const StateEstimate<T>& getResult() { return *_data.result; }
 
   /*!
    * Get cheater data
    */
-  const StateEstimate<T>& getCheaterData()
-  {
-    return *_data.cheaterState;
-  }
+  const StateEstimate<T>& getCheaterData() { return *_data.cheaterState; }
 
   /*!
    * Get the result
@@ -160,12 +151,6 @@ public:
   Vec4<uint8_t> getContactSensorData() { return *_data.contactSensor; }
 
   void setContactSensorData(Vec4<uint8_t>* state) { _data.contactSensor = state; }
-
-  Vec4<uint8_t> getContactSensorData()
-  {
-    // std::cout << " get data: " << _data.contactSensor[0] << " end" << std::endl;
-    return *_data.contactSensor;
-  }
 
   /*!
    * Add an estimator of the given type

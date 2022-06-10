@@ -78,6 +78,7 @@ dynamic_loader:
 
 static_params:
   controller_dt     : 0.002
+  cheater_mode      : false
   # Estimators
   foot_height_sensor_noise      :  0.001
   foot_process_noise_position   :  0.002

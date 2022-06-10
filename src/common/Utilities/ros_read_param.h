@@ -39,8 +39,10 @@ struct StaticParams
     readRosParam("/static_params/foot_sensor_noise_velocity", foot_sensor_noise_velocity);
     readRosParam("/static_params/imu_process_noise_position", imu_process_noise_position);
     readRosParam("/static_params/imu_process_noise_velocity", imu_process_noise_velocity);
+    readRosParam("/static_params/cheater_mode", cheater_mode);
   }
   double controller_dt;
+  bool cheater_mode;
   double foot_height_sensor_noise;
   double foot_process_noise_position;
   double foot_sensor_noise_position;

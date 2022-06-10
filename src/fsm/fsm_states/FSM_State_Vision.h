@@ -105,13 +105,18 @@ private:
   DMat<int> _idx_map;
   DMat<float> idx_map;
 
-  void handleHeightmapnewLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan, const heightnew_t* msg);
-  void handleHeightmap333LCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan, const heightmap333_t* msg);
-  void handleHeightmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan, const heightmap_t* msg);
-  void handleIndexmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan, const traversability_map_t* msg);
+  void handleHeightmapnewLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                             const heightnew_t* msg);
+  void handleHeightmap333LCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                             const heightmap333_t* msg);
+  void handleHeightmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                          const heightmap_t* msg);
+  void handleIndexmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                         const traversability_map_t* msg);
   void handleIndexmapfloatLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
                               const traversability_float_t* msg);
-  void handleLocalization(const lcm::ReceiveBuffer* rbuf, const std::string& chan, const localization_lcmt* msg);
+  void handleLocalization(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+                          const localization_lcmt* msg);
   bool _b_localization_data = false;
 
   void visionLCMThread();
@@ -119,9 +124,6 @@ private:
   void _elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg);
   void _elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg);
   void _robotPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
-
-  lcm::LCM _visionLCM;
-  std::thread _visionLCMThread;
 
   vectorAligned<Vec3<T>> _obs_list; // loc, height
   obstacle_visual_t _obs_visual_lcm;
