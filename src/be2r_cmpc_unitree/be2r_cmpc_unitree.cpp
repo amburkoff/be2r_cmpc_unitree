@@ -385,7 +385,7 @@ void Body_Manager::finalizeStep()
 
   for (int i = 0; i < 4; i++)
   {
-    _torqueCalculator(&spiCommand, &spiData, &_spi_torque, i);
+    _torqueCalculator(&spiCommand, &spiData, i);
   }
 
   uint8_t mode[4] = { MOTOR_BREAK };
@@ -439,13 +439,6 @@ void Body_Manager::finalizeStep()
       _low_cmd.motorCmd[leg * 3 + 2].Kp = spiCommand.kp_knee[leg];
       _low_cmd.motorCmd[leg * 3 + 2].Kd = spiCommand.kd_knee[leg];
     }
-  }
-
-  for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
-  {
-    _low_cmd.motorCmd[leg_num * 3 + 0].tau = _spi_torque.tau_abad[leg_num];
-    _low_cmd.motorCmd[leg_num * 3 + 1].tau = -_spi_torque.tau_hip[leg_num];
-    _low_cmd.motorCmd[leg_num * 3 + 2].tau = -_spi_torque.tau_knee[leg_num];
   }
 
   _low_cmd.levelFlag = UNITREE_LEGGED_SDK::LOWLEVEL;
@@ -615,33 +608,32 @@ void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
 /*!
  * Emulate the spi board to estimate the torque.
  */
-void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out,
-                                     int board_num)
+void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num)
 {
   if (_legController->is_low_level == false)
   {
-    torque_out->tau_abad[board_num] =
-      cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
-      cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
-      cmd->tau_abad_ff[board_num];
+    _low_cmd.motorCmd[leg_num * 3 + 0].tau =
+      cmd->kp_abad[leg_num] * (cmd->q_des_abad[leg_num] - data->q_abad[leg_num]) +
+      cmd->kd_abad[leg_num] * (cmd->qd_des_abad[leg_num] - data->qd_abad[leg_num]) +
+      cmd->tau_abad_ff[leg_num];
 
-    torque_out->tau_hip[board_num] =
-      cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
-      cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
-      cmd->tau_hip_ff[board_num];
+    _low_cmd.motorCmd[leg_num * 3 + 1].tau =
+      cmd->kp_hip[leg_num] * (cmd->q_des_hip[leg_num] - data->q_hip[leg_num]) +
+      cmd->kd_hip[leg_num] * (cmd->qd_des_hip[leg_num] - data->qd_hip[leg_num]) +
+      cmd->tau_hip_ff[leg_num];
 
-    torque_out->tau_knee[board_num] =
-      cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
-      cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
-      cmd->tau_knee_ff[board_num];
+    _low_cmd.motorCmd[leg_num * 3 + 2].tau =
+      cmd->kp_knee[leg_num] * (cmd->q_des_knee[leg_num] - data->q_knee[leg_num]) +
+      cmd->kd_knee[leg_num] * (cmd->qd_des_knee[leg_num] - data->qd_knee[leg_num]) +
+      cmd->tau_knee_ff[leg_num];
   }
   else
   {
-    torque_out->tau_abad[board_num] = cmd->tau_abad_ff[board_num];
+    _low_cmd.motorCmd[leg_num * 3 + 0].tau = cmd->tau_abad_ff[leg_num];
 
-    torque_out->tau_hip[board_num] = cmd->tau_hip_ff[board_num];
+    _low_cmd.motorCmd[leg_num * 3 + 1].tau = cmd->tau_hip_ff[leg_num];
 
-    torque_out->tau_knee[board_num] = cmd->tau_knee_ff[board_num];
+    _low_cmd.motorCmd[leg_num * 3 + 2].tau = cmd->tau_knee_ff[leg_num];
   }
 
   const float safe_torque[3] = { 4.f, 4.f, 4.f };
@@ -657,30 +649,33 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
     torque_limits = max_torque;
   }
 
-  if (torque_out->tau_abad[board_num] > torque_limits[0])
+  if (_low_cmd.motorCmd[leg_num * 3 + 0].tau > torque_limits[0])
   {
-    torque_out->tau_abad[board_num] = torque_limits[0];
+    _low_cmd.motorCmd[leg_num * 3 + 0].tau = torque_limits[0];
   }
-  if (torque_out->tau_abad[board_num] < -torque_limits[0])
+  if (_low_cmd.motorCmd[leg_num * 3 + 0].tau < -torque_limits[0])
   {
-    torque_out->tau_abad[board_num] = -torque_limits[0];
+    _low_cmd.motorCmd[leg_num * 3 + 0].tau = -torque_limits[0];
   }
-  if (torque_out->tau_hip[board_num] > torque_limits[1])
+  if (_low_cmd.motorCmd[leg_num * 3 + 1].tau > torque_limits[1])
   {
-    torque_out->tau_hip[board_num] = torque_limits[1];
+    _low_cmd.motorCmd[leg_num * 3 + 1].tau = torque_limits[1];
   }
-  if (torque_out->tau_hip[board_num] < -torque_limits[1])
+  if (_low_cmd.motorCmd[leg_num * 3 + 1].tau < -torque_limits[1])
   {
-    torque_out->tau_hip[board_num] = -torque_limits[1];
+    _low_cmd.motorCmd[leg_num * 3 + 1].tau = -torque_limits[1];
   }
-  if (torque_out->tau_knee[board_num] > torque_limits[2])
+  if (_low_cmd.motorCmd[leg_num * 3 + 2].tau > torque_limits[2])
   {
-    torque_out->tau_knee[board_num] = torque_limits[2];
+    _low_cmd.motorCmd[leg_num * 3 + 2].tau = torque_limits[2];
   }
-  if (torque_out->tau_knee[board_num] < -torque_limits[2])
+  if (_low_cmd.motorCmd[leg_num * 3 + 2].tau < -torque_limits[2])
   {
-    torque_out->tau_knee[board_num] = -torque_limits[2];
+    _low_cmd.motorCmd[leg_num * 3 + 2].tau = -torque_limits[2];
   }
+
+  _low_cmd.motorCmd[leg_num * 3 + 1].tau *= -1.;
+  _low_cmd.motorCmd[leg_num * 3 + 2].tau *= -1.;
 }
 
 void Body_Manager::_initParameters()

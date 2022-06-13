@@ -41,11 +41,7 @@ std::string getCurrentTimeAndDate()
  * Todo: do something better to keep track of where we are relative to the
  * config directory
  */
-std::string getConfigDirectoryPath()
-{
-  return (THIS_COM "config/");
-  // return "/home/splitmind/mit_original_ros_ws/src/mit_original_ros/config/";
-}
+std::string getConfigDirectoryPath() { return (THIS_COM "config/"); }
 
 /*!
  * Get the LCM URL with desired TTL.
