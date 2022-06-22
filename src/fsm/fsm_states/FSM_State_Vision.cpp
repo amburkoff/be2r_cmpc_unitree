@@ -473,6 +473,7 @@ void FSM_State_Vision<T>::_print_obstacle_list()
 template<typename T>
 void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
 {
+  static Vec3<T> des_vel_filtered(0, 0, 0);
   des_vel.setZero();
   //
   //    Vec3<T> target_pos, curr_pos, curr_ori_rpy;
@@ -530,12 +531,20 @@ void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
   //  des_vel[0] = fminf(fmaxf(des_vel[0], -1.), 1.);
   //  des_vel[1] = fminf(fmaxf(des_vel[1], -1.), 1.);
 
+  float filter(0.1);
+
   // prev proportional k = [0.5, 0.2, 0.5]
+  // des vel in robot frame
   des_vel[0] = this->_data->_desiredStateCommand->leftAnalogStick[1];
   des_vel[1] = this->_data->_desiredStateCommand->leftAnalogStick[0];
   des_vel[2] = this->_data->_desiredStateCommand->rightAnalogStick[0];
 
-  des_vel = this->_data->_stateEstimator->getResult().rBody.transpose() * des_vel;
+  des_vel_filtered[0] = des_vel_filtered[0] * (1 - filter) + des_vel[0] * filter;
+  des_vel_filtered[1] = des_vel_filtered[1] * (1 - filter) + des_vel[1] * filter;
+  des_vel_filtered[2] = des_vel[2];
+
+  // des vel in world frame
+  des_vel = this->_data->_stateEstimator->getResult().rBody.transpose() * des_vel_filtered;
   // saturation [-1;1]
   des_vel[0] = fminf(fmaxf(des_vel[0], -1.), 1.);
   des_vel[1] = fminf(fmaxf(des_vel[1], -1.), 1.);
