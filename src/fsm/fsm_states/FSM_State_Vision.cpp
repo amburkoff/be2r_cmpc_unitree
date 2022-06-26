@@ -16,9 +16,8 @@
 template<typename T>
 FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
   : FSM_State<T>(_controlFSMData, FSM_StateName::VISION, "VISION")
-  , vision_MPC(0.002, 13, _controlFSMData->userParameters)
-  , cMPCOld(0.002, 13, _controlFSMData->userParameters)
-  , _visionLCM(getLcmUrl(255))
+  , vision_MPC(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters)
+  , cMPCOld(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters)
 {
   // Set the safety checks
   this->turnOnAllSafetyChecks();
@@ -34,27 +33,12 @@ FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
   _global_robot_loc.setZero();
   _robot_rpy.setZero();
 
-  //  _visionLCM.subscribe("heightmapnew", &FSM_State_Vision<T>::handleHeightmapnewLCM, this);
-  //    _visionLCM.subscribe("heightmap333",
-  //    &FSM_State_Vision<T>::handleHeightmap333LCM, this);
-  //  _visionLCM.subscribe("traversability_float", &FSM_State_Vision<T>::handleIndexmapfloatLCM,
-  //  this);
-
-  //  _visionLCM.subscribe("local_heightmap", &FSM_State_Vision<T>::handleHeightmapLCM, this);
-  //    _visionLCM.subscribe("traversability",
-  //    &FSM_State_Vision<T>::handleIndexmapLCM, this);
-  //  _visionLCM.subscribe("global_to_robot", &FSM_State_Vision<T>::handleLocalization, this);
-  _visionLCMThread = std::thread(&FSM_State_Vision<T>::visionLCMThread, this);
-  _height_map = DMat<T>::Zero(x_size, y_size);
-  _height_map333 = DMat<T>::Zero(x333_size, y333_size);
-  _height_mapnew = DMat<T>::Zero(xnew_size, ynew_size);
-  _idx_map = DMat<int>::Zero(x_size, y_size);
-  idx_map = DMat<float>::Zero(x_size, y_size);
-
   ros::readParam("~map_topic", map_topic, std::string("elevation_map"));
   ros::readParam("~localization_topic", robot_pose_topic, std::string("/base_pose"));
   _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic, 1,
                                                    &FSM_State_Vision<T>::_elevMapCallback, this);
+  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>(
+    "/elevation_mapping/elevation_map_raw", 1, &FSM_State_Vision<T>::_elevMapRawCallback, this);
   //  _robot_pose_sub = _nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>(
   //    robot_pose_topic, 1, &FSM_State_Vision<T>::_robotPoseCallback, this);
 }
@@ -65,6 +49,14 @@ void FSM_State_Vision<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr&
   grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map);
   if (!_grid_map.isDefaultStartIndex())
     _grid_map.convertToDefaultStartIndex();
+}
+
+template<typename T>
+void FSM_State_Vision<T>::_elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_raw);
+  if (!_grid_map_raw.isDefaultStartIndex())
+    _grid_map_raw.convertToDefaultStartIndex();
 }
 
 template<typename T>
@@ -84,108 +76,6 @@ void FSM_State_Vision<T>::_robotPoseCallback(
   _global_robot_loc[2] = _robot_pose.pose.pose.position.z;
 
   _b_localization_data = true;
-  localization_lcmt lcm_msg;
-  for (size_t i(0); i < 3; ++i)
-  {
-    lcm_msg.rpy[i] = _robot_rpy[i];
-    lcm_msg.xyz[i] = _global_robot_loc[i];
-  }
-  _visionLCM.publish("global_to_robot", &lcm_msg);
-}
-
-template<typename T>
-void FSM_State_Vision<T>::handleLocalization(const lcm::ReceiveBuffer* rbuf,
-                                             const std::string& chan, const localization_lcmt* msg)
-{
-  (void)rbuf;
-  (void)chan;
-
-  for (size_t i(0); i < 3; ++i)
-  {
-    _robot_rpy[i] = msg->rpy[i];
-    _global_robot_loc[i] = msg->xyz[i];
-  }
-  _b_localization_data = true;
-}
-
-template<typename T>
-void FSM_State_Vision<T>::handleHeightmapLCM(const lcm::ReceiveBuffer* rbuf,
-                                             const std::string& chan, const heightmap_t* msg)
-{
-  (void)rbuf;
-  (void)chan;
-
-  for (size_t i(0); i < x_size; ++i)
-  {
-    for (size_t j(0); j < y_size; ++j)
-    {
-      _height_map(i, j) = msg->map[i][j];
-    }
-  }
-}
-
-template<typename T>
-void FSM_State_Vision<T>::handleHeightmap333LCM(const lcm::ReceiveBuffer* rbuf,
-                                                const std::string& chan, const heightmap333_t* msg)
-{
-  (void)rbuf;
-  (void)chan;
-
-  for (size_t i(0); i < x333_size; ++i)
-  {
-    for (size_t j(0); j < y333_size; ++j)
-    {
-      _height_map333(i, j) = msg->map[i][j];
-    }
-  }
-}
-template<typename T>
-void FSM_State_Vision<T>::handleHeightmapnewLCM(const lcm::ReceiveBuffer* rbuf,
-                                                const std::string& chan, const heightnew_t* msg)
-{
-  (void)rbuf;
-  (void)chan;
-
-  ROS_INFO_ONCE("Get heightmap message");
-
-  for (size_t i(0); i < xnew_size; ++i)
-  {
-    for (size_t j(0); j < ynew_size; ++j)
-    {
-      _height_mapnew(i, j) = msg->map[i][j];
-    }
-  }
-}
-template<typename T>
-void FSM_State_Vision<T>::handleIndexmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
-                                            const traversability_map_t* msg)
-{
-  (void)rbuf;
-  (void)chan;
-
-  for (size_t i(0); i < x_size; ++i)
-  {
-    for (size_t j(0); j < y_size; ++j)
-    {
-      _idx_map(i, j) = msg->map[i][j];
-    }
-  }
-}
-template<typename T>
-void FSM_State_Vision<T>::handleIndexmapfloatLCM(const lcm::ReceiveBuffer* rbuf,
-                                                 const std::string& chan,
-                                                 const traversability_float_t* msg)
-{
-  (void)rbuf;
-  (void)chan;
-
-  for (size_t i(0); i < x_size; ++i)
-  {
-    for (size_t j(0); j < y_size; ++j)
-    {
-      idx_map(i, j) = msg->map[i][j];
-    }
-  }
 }
 
 template<typename T>
@@ -245,7 +135,7 @@ void FSM_State_Vision<T>::_RCLocomotionControl()
 {
   cMPCOld.run<T>(*this->_data);
 
-  if (this->_data->userParameters->use_wbc > 0.9)
+  if (this->_data->userParameters->use_wbc)
   {
     _wbc_data->pBody_des = cMPCOld.pBody_des;
     _wbc_data->vBody_des = cMPCOld.vBody_des;
@@ -291,141 +181,145 @@ void FSM_State_Vision<T>::_JPosStand()
     this->jointPDControl(leg, stand_jpos, zero_vec3);
   }
 }
-template<typename T>
-void FSM_State_Vision<T>::_UpdateObstacle_new()
-{
 
-  _obs_list.clear();
-  T obstacle_height = 0.15;
-  T threshold_gap = 0.1;
-  T cam_offset = 0.2;
-  bool add_obs(true);
-  Vec3<T> robot_loc;
-  //    std::cout<<_global_robot_loc<<endl;
-  if (_b_localization_data)
-  { // 由于没有定位数据，false
-    robot_loc = _global_robot_loc;
-  }
-  else
-  {
-    robot_loc = (this->_data->_stateEstimator->getResult()).position;
-  }
-  Vec3<T> obs;
-  obs[2] = 0.2;
-  T dist = 0;
-  for (size_t i(0); i < xnew_size; ++i)
-  { // 101
-    for (size_t j(0); j < ynew_size; ++j)
-    { // 101
-      if ((_height_mapnew(i, j) > obstacle_height))
-      { // if too high point
-        add_obs = true;
-        obs[0] = -(i * grid_size) + 100 * grid_size + robot_loc[0] + cam_offset; // WORLD FRAME OBS
-                                                                                 // LOCATION
-        obs[1] = -(j * grid_size) + 50 * grid_size + robot_loc[1];
-        // check distance with already added obstacle
-        for (size_t idx_obs(0); idx_obs < _obs_list.size(); ++idx_obs)
-        {
-          dist = sqrt((obs[0] - _obs_list[idx_obs][0]) * (obs[0] - _obs_list[idx_obs][0]) +
-                      (obs[1] - _obs_list[idx_obs][1]) * (obs[1] - _obs_list[idx_obs][1]));
-          if (dist < threshold_gap)
-          {
-            add_obs = false;
-            break;
-          }
-        } // distance check
-        if (add_obs)
-        {
-          _obs_list.push_back(obs);
-          //                    cout<<"x "<<obs[0]<<" y "<<obs[1]<<" i "<<i<<" j
-          //                    "<<j<<endl;
-        }
-      }
-    } // y loop
-  }   // x loop
-}
+// template<typename T>
+// void FSM_State_Vision<T>::_UpdateObstacle_new()
+//{
 
-template<typename T>
-void FSM_State_Vision<T>::_UpdateObstacle_trav()
-{
-  traversability_float_t trav_lcm;
+//  _obs_list.clear();
+//  T obstacle_height = 0.15;
+//  T threshold_gap = 0.1;
+//  T cam_offset = 0.2;
+//  bool add_obs(true);
+//  Vec3<T> robot_loc;
+//  //    std::cout<<_global_robot_loc<<endl;
+//  if (_b_localization_data)
+//  { // 由于没有定位数据，false
+//    robot_loc = _global_robot_loc;
+//  }
+//  else
+//  {
+//    robot_loc = (this->_data->_stateEstimator->getResult()).position;
+//  }
+//  Vec3<T> obs;
+//  obs[2] = 0.2;
+//  T dist = 0;
+//  for (size_t i(0); i < xnew_size; ++i)
+//  { // 101
+//    for (size_t j(0); j < ynew_size; ++j)
+//    { // 101
+//      if ((_height_mapnew(i, j) > obstacle_height))
+//      { // if too high point
+//        add_obs = true;
+//        obs[0] = -(i * grid_size) + 100 * grid_size + robot_loc[0] + cam_offset; // WORLD FRAME
+//        OBS
+//                                                                                 // LOCATION
+//        obs[1] = -(j * grid_size) + 50 * grid_size + robot_loc[1];
+//        // check distance with already added obstacle
+//        for (size_t idx_obs(0); idx_obs < _obs_list.size(); ++idx_obs)
+//        {
+//          dist = sqrt((obs[0] - _obs_list[idx_obs][0]) * (obs[0] - _obs_list[idx_obs][0]) +
+//                      (obs[1] - _obs_list[idx_obs][1]) * (obs[1] - _obs_list[idx_obs][1]));
+//          if (dist < threshold_gap)
+//          {
+//            add_obs = false;
+//            break;
+//          }
+//        } // distance check
+//        if (add_obs)
+//        {
+//          _obs_list.push_back(obs);
+//          //                    cout<<"x "<<obs[0]<<" y "<<obs[1]<<" i "<<i<<" j
+//          //                    "<<j<<endl;
+//        }
+//      }
+//    } // y loop
+//  }   // x loop
+//}
 
-  Vec3<T> robot_loc;
-  //    std::cout<<_global_robot_loc<<endl;
-  if (_b_localization_data)
-  { // 由于没有定位数据，false
-    robot_loc = _global_robot_loc;
-  }
-  else
-  {
-    robot_loc = (this->_data->_stateEstimator->getResult()).position;
-  }
+// template<typename T>
+// void FSM_State_Vision<T>::_UpdateObstacle_trav()
+//{
+//  traversability_float_t trav_lcm;
 
-  float w_sd = 60., w_sl = 30., w_max = 10., w_min = 10.; // score wieght
+//  Vec3<T> robot_loc;
+//  //    std::cout<<_global_robot_loc<<endl;
+//  if (_b_localization_data)
+//  { // 由于没有定位数据，false
+//    robot_loc = _global_robot_loc;
+//  }
+//  else
+//  {
+//    robot_loc = (this->_data->_stateEstimator->getResult()).position;
+//  }
 
-  for (size_t i(0); i < xnew_size; ++i)
-  { // 101
-    for (size_t j(0); j < ynew_size; ++j)
-    { // 101
-      //            float travmap[100][100];
-      if (i >= 1 && j >= 1 && i + 1 < xnew_size && j + 1 < ynew_size)
-      {
-        float slope = 0, sum = 0;
-        float hmax = _height_mapnew(i, j), hmin = _height_mapnew(i, j);
-        float mean, sd, score;
-        float tmpmap[9];
-        int k = 0;
-        for (size_t m(i - 1); m <= (i + 1); m++)
-        {
-          for (size_t n(j - 1); n <= (j + 1); n++)
-          {
-            if (!(m == i && n == j))
-              //                            cout<<_height_mapnew(m,n)<<endl;
-              // slope
-              slope = abs((_height_mapnew(i, j) - _height_mapnew(m, n)) /
-                          sqrt((int)((i - m) * (i - m) + (j - n) * (j - n)))) +
-                      slope;
-            // max
-            if (_height_mapnew(m, n) > hmax)
-              hmax = _height_mapnew(m, n);
-            // min
-            if (_height_mapnew(m, n) < hmin)
-              hmin = _height_mapnew(m, n);
-            sum = sum + _height_mapnew(m, n);
-            tmpmap[k] = _height_mapnew(m, n);
-            k++;
-          }
-        }
-        //标准差
-        mean = sum / 9;
-        sd =
-          sqrt(((tmpmap[0] - mean) * (tmpmap[0] - mean) + (tmpmap[1] - mean) * (tmpmap[1] - mean) +
-                (tmpmap[2] - mean) * (tmpmap[2] - mean) + (tmpmap[3] - mean) * (tmpmap[3] - mean) +
-                (tmpmap[4] - mean) * (tmpmap[4] - mean) + (tmpmap[5] - mean) * (tmpmap[5] - mean) +
-                (tmpmap[6] - mean) * (tmpmap[6] - mean) + (tmpmap[7] - mean) * (tmpmap[7] - mean) +
-                (tmpmap[8] - mean) * (tmpmap[8] - mean)) /
-               9.0);
-        //斜率
-        slope = slope / 8;
-        // traversability map
-        score = w_sd * sd + w_sl * slope + w_max * (hmax - _height_mapnew(i, j)) +
-                w_min * (_height_mapnew(i, j) - hmin);
-        trav_lcm.map[i][j] = score;
-        //                cout << "i" << i << " j" << j << " score " <<
-        //                trav_lcm.map[i][j] << " slope: " << slope <<" sd:
-        //                "<<sd<<endl;
-      }
-      else if ((i == 0 || j == 0) && i + 1 < xnew_size && j + 1 < ynew_size)
-      {
-        trav_lcm.map[i][j] = 0;
-        //                cout << "i" << i << " j" << j << " score " <<
-        //                trav_lcm.map[i][j] << endl;
-      }
-    } // y loop
-  }   // x loop
+//  float w_sd = 60., w_sl = 30., w_max = 10., w_min = 10.; // score wieght
 
-  _visionLCM.publish("traversability_float", &trav_lcm);
-}
+//  for (size_t i(0); i < xnew_size; ++i)
+//  { // 101
+//    for (size_t j(0); j < ynew_size; ++j)
+//    { // 101
+//      //            float travmap[100][100];
+//      if (i >= 1 && j >= 1 && i + 1 < xnew_size && j + 1 < ynew_size)
+//      {
+//        float slope = 0, sum = 0;
+//        float hmax = _height_mapnew(i, j), hmin = _height_mapnew(i, j);
+//        float mean, sd, score;
+//        float tmpmap[9];
+//        int k = 0;
+//        for (size_t m(i - 1); m <= (i + 1); m++)
+//        {
+//          for (size_t n(j - 1); n <= (j + 1); n++)
+//          {
+//            if (!(m == i && n == j))
+//              //                            cout<<_height_mapnew(m,n)<<endl;
+//              // slope
+//              slope = abs((_height_mapnew(i, j) - _height_mapnew(m, n)) /
+//                          sqrt((int)((i - m) * (i - m) + (j - n) * (j - n)))) +
+//                      slope;
+//            // max
+//            if (_height_mapnew(m, n) > hmax)
+//              hmax = _height_mapnew(m, n);
+//            // min
+//            if (_height_mapnew(m, n) < hmin)
+//              hmin = _height_mapnew(m, n);
+//            sum = sum + _height_mapnew(m, n);
+//            tmpmap[k] = _height_mapnew(m, n);
+//            k++;
+//          }
+//        }
+//        //标准差
+//        mean = sum / 9;
+//        sd =
+//          sqrt(((tmpmap[0] - mean) * (tmpmap[0] - mean) + (tmpmap[1] - mean) * (tmpmap[1] - mean)
+//          +
+//                (tmpmap[2] - mean) * (tmpmap[2] - mean) + (tmpmap[3] - mean) * (tmpmap[3] - mean)
+//                + (tmpmap[4] - mean) * (tmpmap[4] - mean) + (tmpmap[5] - mean) * (tmpmap[5] -
+//                mean) + (tmpmap[6] - mean) * (tmpmap[6] - mean) + (tmpmap[7] - mean) * (tmpmap[7]
+//                - mean) + (tmpmap[8] - mean) * (tmpmap[8] - mean)) /
+//               9.0);
+//        //斜率
+//        slope = slope / 8;
+//        // traversability map
+//        score = w_sd * sd + w_sl * slope + w_max * (hmax - _height_mapnew(i, j)) +
+//                w_min * (_height_mapnew(i, j) - hmin);
+//        trav_lcm.map[i][j] = score;
+//        //                cout << "i" << i << " j" << j << " score " <<
+//        //                trav_lcm.map[i][j] << " slope: " << slope <<" sd:
+//        //                "<<sd<<endl;
+//      }
+//      else if ((i == 0 || j == 0) && i + 1 < xnew_size && j + 1 < ynew_size)
+//      {
+//        trav_lcm.map[i][j] = 0;
+//        //                cout << "i" << i << " j" << j << " score " <<
+//        //                trav_lcm.map[i][j] << endl;
+//      }
+//    } // y loop
+//  }   // x loop
+
+//  _visionLCM.publish("traversability_float", &trav_lcm);
+//}
+
 template<typename T>
 void FSM_State_Vision<T>::_UpdateObstacle()
 {
@@ -539,6 +433,7 @@ void FSM_State_Vision<T>::_UpdateObstacle()
 
   //_print_obstacle_list();
 }
+
 template<typename T>
 void FSM_State_Vision<T>::_print_obstacle_list()
 {
@@ -548,36 +443,37 @@ void FSM_State_Vision<T>::_print_obstacle_list()
   }
 }
 
-template<typename T>
-void FSM_State_Vision<T>::_Visualization(const Vec3<T>& des_vel)
-{
-  velocity_visual_t vel_visual;
-  for (size_t i(0); i < 3; ++i)
-  {
-    vel_visual.vel_cmd[i] = des_vel[i];
-    // 1022
-    if (i == 2)
-      vel_visual.base_position[2] = (this->_data->_stateEstimator->getResult()).rpy[2];
-    else
-      vel_visual.base_position[i] = (this->_data->_stateEstimator->getResult()).position[i];
-  }
-  _visionLCM.publish("velocity_cmd", &vel_visual);
+// template<typename T>
+// void FSM_State_Vision<T>::_Visualization(const Vec3<T>& des_vel)
+//{
+//  velocity_visual_t vel_visual;
+//  for (size_t i(0); i < 3; ++i)
+//  {
+//    vel_visual.vel_cmd[i] = des_vel[i];
+//    // 1022
+//    if (i == 2)
+//      vel_visual.base_position[2] = (this->_data->_stateEstimator->getResult()).rpy[2];
+//    else
+//      vel_visual.base_position[i] = (this->_data->_stateEstimator->getResult()).position[i];
+//  }
+//  _visionLCM.publish("velocity_cmd", &vel_visual);
 
-  _obs_visual_lcm.num_obs = _obs_list.size();
-  for (size_t i(0); i < _obs_list.size(); ++i)
-  {
-    _obs_visual_lcm.location[i][0] = _obs_list[i][0];
-    _obs_visual_lcm.location[i][1] = _obs_list[i][1];
-    _obs_visual_lcm.location[i][2] = _obs_list[i][2];
-  }
-  _obs_visual_lcm.sigma = 0.15;
-  _obs_visual_lcm.height = 0.5;
-  _visionLCM.publish("obstacle_visual", &_obs_visual_lcm);
-}
+//  _obs_visual_lcm.num_obs = _obs_list.size();
+//  for (size_t i(0); i < _obs_list.size(); ++i)
+//  {
+//    _obs_visual_lcm.location[i][0] = _obs_list[i][0];
+//    _obs_visual_lcm.location[i][1] = _obs_list[i][1];
+//    _obs_visual_lcm.location[i][2] = _obs_list[i][2];
+//  }
+//  _obs_visual_lcm.sigma = 0.15;
+//  _obs_visual_lcm.height = 0.5;
+//  _visionLCM.publish("obstacle_visual", &_obs_visual_lcm);
+//}
 
 template<typename T>
 void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
 {
+  static Vec3<T> des_vel_filtered(0, 0, 0);
   des_vel.setZero();
   //
   //    Vec3<T> target_pos, curr_pos, curr_ori_rpy;
@@ -635,12 +531,21 @@ void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
   //  des_vel[0] = fminf(fmaxf(des_vel[0], -1.), 1.);
   //  des_vel[1] = fminf(fmaxf(des_vel[1], -1.), 1.);
 
-  des_vel[0] = this->_data->_desiredStateCommand->leftAnalogStick[1] * 0.5;
-  des_vel[1] = this->_data->_desiredStateCommand->leftAnalogStick[0] * 0.2;
-  des_vel[2] = this->_data->_desiredStateCommand->rightAnalogStick[0] * 0.5;
+  float filter(0.1);
 
-  des_vel = this->_data->_stateEstimator->getResult().rBody.transpose() * des_vel;
+  // prev proportional k = [0.5, 0.2, 0.5]
+  // des vel in robot frame
+  des_vel[0] = this->_data->_desiredStateCommand->leftAnalogStick[1];
+  des_vel[1] = this->_data->_desiredStateCommand->leftAnalogStick[0];
+  des_vel[2] = this->_data->_desiredStateCommand->rightAnalogStick[0];
 
+  des_vel_filtered[0] = des_vel_filtered[0] * (1 - filter) + des_vel[0] * filter;
+  des_vel_filtered[1] = des_vel_filtered[1] * (1 - filter) + des_vel[1] * filter;
+  des_vel_filtered[2] = des_vel[2];
+
+  // des vel in world frame
+  des_vel = this->_data->_stateEstimator->getResult().rBody.transpose() * des_vel_filtered;
+  // saturation [-1;1]
   des_vel[0] = fminf(fmaxf(des_vel[0], -1.), 1.);
   des_vel[1] = fminf(fmaxf(des_vel[1], -1.), 1.);
 }
@@ -658,7 +563,7 @@ FSM_StateName FSM_State_Vision<T>::checkTransition()
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
     case K_VISION:
       break;
@@ -693,7 +598,7 @@ FSM_StateName FSM_State_Vision<T>::checkTransition()
 
     default:
       std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_VISION << " to "
-                << this->_data->controlParameters->control_mode << std::endl;
+                << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Return the next state name to the FSM
@@ -767,13 +672,22 @@ void FSM_State_Vision<T>::onExit()
 template<typename T>
 void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
 {
-  // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
+  vision_MPC.run(*this->_data, des_vel, _grid_map, _grid_map_raw);
 
-  // Contact state logic
-  vision_MPC.run(*this->_data, des_vel, _grid_map);
-  //  vision_MPC.run<T>(*this->_data, des_vel, _height_map, idx_map);
+  Vec3<T> pDes_backup[4];
+  Vec3<T> vDes_backup[4];
+  Mat3<T> Kp_backup[4];
+  Mat3<T> Kd_backup[4];
 
-  if (this->_data->userParameters->use_wbc > 0.9)
+  for (int leg(0); leg < 4; ++leg)
+  {
+    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+  }
+
+  if (this->_data->userParameters->use_wbc)
   {
     _wbc_data->pBody_des = vision_MPC.pBody_des;
     _wbc_data->vBody_des = vision_MPC.vBody_des;
@@ -792,13 +706,16 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
     _wbc_data->contact_state = vision_MPC.contact_state;
     _wbc_ctrl->run(_wbc_data, *this->_data);
   }
-}
 
-template<typename T>
-void FSM_State_Vision<T>::visionLCMThread()
-{
-  while (true)
-    _visionLCM.handle();
+  for (int leg(0); leg < 4; ++leg)
+  {
+    // originally commented
+    this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
+    this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
+
+    this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
+    this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
+  }
 }
 
 template class FSM_State_Vision<float>;

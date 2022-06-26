@@ -2,7 +2,6 @@ include_directories(".")
 include_directories("../third-party")
 include_directories(SYSTEM "../third-party/qpOASES/include")
 include_directories("../third-party/ParamHandler")
-include_directories("/usr/local/include/lcm/")   # lcm includes
 #include_directories("/usr/local/include/eigen3")
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
@@ -18,4 +17,4 @@ add_subdirectory(WBC_Ctrl)
 
 
 add_library(controllers_lib ${sources})
-target_link_libraries(controllers_lib WBC_Ctrl common_lib qpOASES lcm)
+target_link_libraries(controllers_lib WBC_Ctrl common_lib qpOASES)

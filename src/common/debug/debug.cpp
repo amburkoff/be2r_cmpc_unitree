@@ -1,8 +1,13 @@
 #include "debug.hpp"
 
-Debug::Debug(ros::Time time_start) : _zero_time(0), _time_start(time_start)
+Debug::Debug(ros::Time time_start)
+  : _zero_time(0)
+  , _time_start(time_start)
 {
+  z_offset = 0.f;
   _init();
+  _sub_ground_truth = _nh.subscribe("ground_truth_pose", 1, &Debug::_ground_truth_callback, this,
+                                    ros::TransportHints().tcpNoDelay(true));
 }
 
 void Debug::_init()
@@ -10,6 +15,11 @@ void Debug::_init()
   _initPublishers();
 
   body_info.quat_act.w = 1.0;
+}
+
+void Debug::_ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+{
+  _ground_trurh_pose = *msg;
 }
 
 void Debug::_initPublishers()
@@ -35,13 +45,19 @@ void Debug::updatePlot()
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    all_legs_info.leg.at(leg_num).p_error.x = all_legs_info.leg.at(leg_num).p_des.x - all_legs_info.leg.at(leg_num).p_act.x;
-    all_legs_info.leg.at(leg_num).p_error.y = all_legs_info.leg.at(leg_num).p_des.y - all_legs_info.leg.at(leg_num).p_act.y;
-    all_legs_info.leg.at(leg_num).p_error.z = all_legs_info.leg.at(leg_num).p_des.z - all_legs_info.leg.at(leg_num).p_act.z;
+    all_legs_info.leg.at(leg_num).p_error.x =
+      all_legs_info.leg.at(leg_num).p_des.x - all_legs_info.leg.at(leg_num).p_act.x;
+    all_legs_info.leg.at(leg_num).p_error.y =
+      all_legs_info.leg.at(leg_num).p_des.y - all_legs_info.leg.at(leg_num).p_act.y;
+    all_legs_info.leg.at(leg_num).p_error.z =
+      all_legs_info.leg.at(leg_num).p_des.z - all_legs_info.leg.at(leg_num).p_act.z;
 
-    all_legs_info.leg.at(leg_num).v_error.x = all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
-    all_legs_info.leg.at(leg_num).v_error.y = all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
-    all_legs_info.leg.at(leg_num).v_error.z = all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
+    all_legs_info.leg.at(leg_num).v_error.x =
+      all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
+    all_legs_info.leg.at(leg_num).v_error.y =
+      all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
+    all_legs_info.leg.at(leg_num).v_error.z =
+      all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
   }
 
   body_info.state_error.p.x = body_info.pos_des.x - body_info.pos_act.x;
@@ -147,20 +163,15 @@ void Debug::tfPublish()
 
   odom_broadcaster.sendTransform(odom_trans);
 
-  geometry_msgs::TransformStamped ground_truth_tf;
+  geometry_msgs::TransformStamped odom_trans_world;
 
-  ground_truth_tf.header.stamp = odom_trans.header.stamp;
-  ground_truth_tf.header.frame_id = "world";
-  ground_truth_tf.child_frame_id = "odom";
+  odom_trans_world.header.stamp = odom_trans.header.stamp;
+  odom_trans_world.header.frame_id = "world";
+  odom_trans_world.child_frame_id = "odom";
 
-  ground_truth_tf.transform.translation.x = 0;
-  ground_truth_tf.transform.translation.y = 0;
-  ground_truth_tf.transform.translation.z = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
+  z_offset = _ground_trurh_pose.pose.pose.position.z - body_info.pos_act.z;
+  odom_trans_world.transform.translation.z = z_offset;
+  odom_trans_world.transform.rotation.w = 1.;
 
-  ground_truth_tf.transform.rotation.x = 0;
-  ground_truth_tf.transform.rotation.y = 0;
-  ground_truth_tf.transform.rotation.z = 0;
-  ground_truth_tf.transform.rotation.w = 1;
-
-  world_broadcaster.sendTransform(ground_truth_tf);
+  world_odom_broadcaster.sendTransform(odom_trans_world);
 }

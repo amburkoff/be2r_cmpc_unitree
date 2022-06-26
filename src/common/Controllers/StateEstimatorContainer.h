@@ -10,15 +10,14 @@
 #ifndef PROJECT_STATEESTIMATOR_H
 #define PROJECT_STATEESTIMATOR_H
 
-#include "ControlParameters/RobotParameters.h"
 #include "Controllers/LegController.h"
 #include "SimUtilities/IMUTypes.h"
 #include "SimUtilities/VisualizationData.h"
-
+#include "ros_read_param.h"
 /*!
  * Result of state estimation
  */
-template <typename T>
+template<typename T>
 struct StateEstimate
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -35,6 +34,7 @@ struct StateEstimate
   Vec3<T> omegaWorld;
   Vec3<T> vWorld;
   Vec3<T> aBody, aWorld;
+  float heightBody;
 };
 
 /*!
@@ -43,7 +43,7 @@ struct StateEstimate
  * it should be added here. (You should also a setter method to
  * StateEstimatorContainer)
  */
-template <typename T>
+template<typename T>
 struct StateEstimatorData
 {
   StateEstimate<T>* result; // where to write the output to
@@ -52,13 +52,13 @@ struct StateEstimatorData
   LegControllerData<T>* legControllerData;
   Vec4<T>* contactPhase;
   Vec4<uint8_t>* contactSensor;
-  RobotControlParameters* parameters;
+  StaticParams* parameters;
 };
 
 /*!
  * All Estimators should inherit from this class
  */
-template <typename T>
+template<typename T>
 class GenericEstimator
 {
 public:
@@ -76,7 +76,7 @@ public:
  * Contains all GenericEstimators, and can run them
  * Also updates visualizations
  */
-template <typename T>
+template<typename T>
 class StateEstimatorContainer
 {
 public:
@@ -85,12 +85,9 @@ public:
   /*!
    * Construct a new state estimator container
    */
-  StateEstimatorContainer(VectorNavData* vectorNavData,
-                          LegControllerData<T>* legControllerData,
-                          Vec4<uint8_t>* footContactState,
-                          StateEstimate<T>* stateEstimate,
-                          CheaterState<T>* cheaterState,
-                          RobotControlParameters* parameters)
+  StateEstimatorContainer(VectorNavData* vectorNavData, LegControllerData<T>* legControllerData,
+                          Vec4<uint8_t>* footContactState, StateEstimate<T>* stateEstimate,
+                          CheaterState<T>* cheaterState, StaticParams* parameters)
   {
     _data.vectorNavData = vectorNavData;
     _data.legControllerData = legControllerData;
@@ -122,74 +119,44 @@ public:
   /*!
    * Get the result
    */
-  const StateEstimate<T>& getResult()
-  {
-    return *_data.result;
-  }
+  const StateEstimate<T>& getResult() { return *_data.result; }
 
   /*!
    * Get cheater data
    */
-  const StateEstimate<T>& getCheaterData()
-  {
-    return *_data.cheaterState;
-  }
+  const StateEstimate<T>& getCheaterData() { return *_data.cheaterState; }
 
   /*!
    * Get the result
    */
-  const VectorNavData& getVectorNavData()
-  {
-    return *_data.vectorNavData;
-  }
+  const VectorNavData& getVectorNavData() { return *_data.vectorNavData; }
 
-  StateEstimate<T>* getResultHandle()
-  {
-    return _data.result;
-  }
+  StateEstimate<T>* getResultHandle() { return _data.result; }
 
   /*!
    * Set the contact phase
    */
-  void setContactPhase(Vec4<T>& phase)
-  {
-    *_data.contactPhase = phase;
-  }
+  void setContactPhase(Vec4<T>& phase) { *_data.contactPhase = phase; }
 
   /*!
    * Set the contact phase
    */
-  void setSwingPhase(Vec4<T> phase)
-  {
-    _data.result->swingProgress = phase;
-  }
+  void setSwingPhase(Vec4<T> phase) { _data.result->swingProgress = phase; }
 
   /*!
    * Set the contact state (binary)
    */
-  void setContactSensorData(Vec4<uint8_t>& state)
-  {
-    *_data.contactSensor = state;
+  void setContactSensorData(Vec4<uint8_t>& state) { *_data.contactSensor = state; }
 
-    // std::cout << "&: " << (int)state(0) << " data: " << _data.contactSensor[0] << " end" << std::endl;
-  }
+  Vec4<uint8_t> getContactSensorData() { return *_data.contactSensor; }
 
-  void setContactSensorData(Vec4<uint8_t>* state)
-  {
-    _data.contactSensor = state;
-  }
-
-  Vec4<uint8_t> getContactSensorData()
-  {
-    // std::cout << " get data: " << _data.contactSensor[0] << " end" << std::endl;
-    return *_data.contactSensor;
-  }
+  void setContactSensorData(Vec4<uint8_t>* state) { _data.contactSensor = state; }
 
   /*!
    * Add an estimator of the given type
    * @tparam EstimatorToAdd
    */
-  template <typename EstimatorToAdd>
+  template<typename EstimatorToAdd>
   void addEstimator()
   {
     auto* estimator = new EstimatorToAdd();
@@ -202,22 +169,24 @@ public:
    * Remove all estimators of a given type
    * @tparam EstimatorToRemove
    */
-  template <typename EstimatorToRemove>
+  template<typename EstimatorToRemove>
   void removeEstimator()
   {
     int nRemoved = 0;
-    _estimators.erase(std::remove_if(_estimators.begin(), _estimators.end(), [&nRemoved](GenericEstimator<T>* e) {
-                        if (dynamic_cast<EstimatorToRemove*>(e))
-                        {
-                          delete e;
-                          nRemoved++;
-                          return true;
-                        }
-                        else
-                        {
-                          return false;
-                        }
-                      }),
+    _estimators.erase(std::remove_if(_estimators.begin(), _estimators.end(),
+                                     [&nRemoved](GenericEstimator<T>* e)
+                                     {
+                                       if (dynamic_cast<EstimatorToRemove*>(e))
+                                       {
+                                         delete e;
+                                         nRemoved++;
+                                         return true;
+                                       }
+                                       else
+                                       {
+                                         return false;
+                                       }
+                                     }),
                       _estimators.end());
   }
 

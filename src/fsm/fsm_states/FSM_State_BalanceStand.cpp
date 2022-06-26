@@ -33,7 +33,7 @@ FSM_State_BalanceStand<T>::FSM_State_BalanceStand(ControlFSMData<T>* _controlFSM
   _wbc_ctrl->setFloatingBaseWeight(1000.);
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_BalanceStand<T>::onEnter()
 {
   // Default is to not transition
@@ -61,7 +61,7 @@ void FSM_State_BalanceStand<T>::onEnter()
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
-template <typename T>
+template<typename T>
 void FSM_State_BalanceStand<T>::run()
 {
   Vec4<T> contactState;
@@ -77,14 +77,14 @@ void FSM_State_BalanceStand<T>::run()
  *
  * @return the enumerated FSM state name to transition into
  */
-template <typename T>
+template<typename T>
 FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
 {
   // Get the next state
   _iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
   case K_BALANCE_STAND:
     // Normal operation for state based transitions
@@ -179,7 +179,7 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_BalanceStand<T>::transition()
 {
   // this->_data->_legController->is_low_level = true;
@@ -187,33 +187,33 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
   // Switch FSM control mode
   switch (this->nextStateName)
   {
-  case FSM_StateName::LOCOMOTION:
-    BalanceStandStep();
+    case FSM_StateName::LOCOMOTION:
+      BalanceStandStep();
 
-    _iter++;
-    if (_iter >= this->transitionDuration * 1000)
-    {
+      _iter++;
+      if (_iter >= this->transitionDuration * 1000)
+      {
+        this->transitionData.done = true;
+      }
+      else
+      {
+        this->transitionData.done = false;
+      }
+
+      break;
+
+    case FSM_StateName::PASSIVE:
+      this->turnOffAllSafetyChecks();
       this->transitionData.done = true;
-    }
-    else
-    {
-      this->transitionData.done = false;
-    }
+      break;
 
-    break;
+    case FSM_StateName::RECOVERY_STAND:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::PASSIVE:
-    this->turnOffAllSafetyChecks();
-    this->transitionData.done = true;
-    break;
-
-  case FSM_StateName::RECOVERY_STAND:
-    this->transitionData.done = true;
-    break;
-
-  case FSM_StateName::BACKFLIP:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::BACKFLIP:
+      this->transitionData.done = true;
+      break;
 
   case FSM_StateName::STAND_UP:
     this->transitionData.done = true;
@@ -231,8 +231,8 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
     this->transitionData.done = true;
     break;
 
-  default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM
@@ -242,7 +242,7 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
 /**
  * Cleans up the state information on exiting the state.
  */
-template <typename T>
+template<typename T>
 void FSM_State_BalanceStand<T>::onExit()
 {
   _iter = 0;
@@ -251,7 +251,7 @@ void FSM_State_BalanceStand<T>::onExit()
 /**
  * Calculate the commands for the leg controllers for each of the feet.
  */
-template <typename T>
+template<typename T>
 void FSM_State_BalanceStand<T>::BalanceStandStep()
 {
   _wbc_data->pBody_des = _ini_body_pos;
@@ -279,14 +279,19 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   }
 
   // Orientation
-  _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
-  _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
-  _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
+  _wbc_data->pBody_RPY_des[1] =
+    0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
+  _wbc_data->pBody_RPY_des[0] =
+    0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
+  _wbc_data->pBody_RPY_des[2] -=
+    0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
 
   // Height
-  _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
+  _wbc_data->pBody_des[2] +=
+    0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
 
-  // cout << "des rpy: " << _wbc_data->pBody_RPY_des[0] << " " << _wbc_data->pBody_RPY_des[1] << " " << _wbc_data->pBody_RPY_des[2] << endl;
+  // cout << "des rpy: " << _wbc_data->pBody_RPY_des[0] << " " << _wbc_data->pBody_RPY_des[1] << " "
+  // << _wbc_data->pBody_RPY_des[2] << endl;
 
   _wbc_data->vBody_Ori_des.setZero();
 

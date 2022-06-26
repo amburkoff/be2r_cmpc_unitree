@@ -13,8 +13,7 @@
 /*!
  * Write std::string to file with given name
  */
-void writeStringToFile(const std::string& fileName,
-                       const std::string& fileData)
+void writeStringToFile(const std::string& fileName, const std::string& fileData)
 {
   FILE* fp = fopen(fileName.c_str(), "w");
   if (!fp)
@@ -42,11 +41,7 @@ std::string getCurrentTimeAndDate()
  * Todo: do something better to keep track of where we are relative to the
  * config directory
  */
-std::string getConfigDirectoryPath()
-{
-  return (THIS_COM "config/");
-  // return "/home/splitmind/mit_original_ros_ws/src/mit_original_ros/config/";
-}
+std::string getConfigDirectoryPath() { return (THIS_COM "config/"); }
 
 /*!
  * Get the LCM URL with desired TTL.
@@ -55,4 +50,13 @@ std::string getLcmUrl(s64 ttl)
 {
   assert(ttl >= 0 && ttl <= 255);
   return "udpm://239.255.76.67:7667?ttl=" + std::to_string(ttl);
+}
+
+geometry_msgs::Point ros::toMsg(const Vec3<float>& data)
+{
+  geometry_msgs::Point out;
+  out.x = data(0);
+  out.y = data(1);
+  out.z = data(2);
+  return out;
 }

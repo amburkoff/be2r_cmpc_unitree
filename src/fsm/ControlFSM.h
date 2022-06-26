@@ -75,11 +75,9 @@ class ControlFSM
 public:
   ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* _stateEstimator,
              LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
-             DesiredStateCommand<T>* _desiredStateCommand,
-             RobotControlParameters* controlParameters,
+             DesiredStateCommand<T>* _desiredStateCommand, StaticParams* controlParameters,
              //  VisualizationData* visualizationData,
-             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
-             Debug* debug);
+             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters, Debug* debug);
 
   // Initializes the Control FSM instance
   void initialize();

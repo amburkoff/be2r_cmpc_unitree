@@ -7,7 +7,7 @@
 
 #define MOVING_AVERAGE 4
 
-template <typename T>
+template<typename T>
 class PositionEstimator : public GenericEstimator<T>
 {
 public:
@@ -35,4 +35,9 @@ private:
   Vec3<float> p_body;
   Vec3<float> v_body;
   ros::Time time_start;
+  float acc_z;
+  Vec3<float> _offset;
+  double _offset_vel;
 };
+
+float simpleKalman(float newVal, double dt, double k);

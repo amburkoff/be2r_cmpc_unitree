@@ -24,3 +24,14 @@ git clone https://github.com/anybotics/kindr
 git clone https://github.com/anybotics/kindr_ros
 catkin build
 ```
+
+## Usage
+
+# Raisim simulator
+For your choice
+```
+# unity
+roslaunch raisim unity.launch
+# opengl
+roslaunch raisim opengl.launch
+```

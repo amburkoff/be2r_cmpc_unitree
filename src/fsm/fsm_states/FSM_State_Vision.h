@@ -2,21 +2,12 @@
 #define FSM_STATE_VISION_H
 
 #include "FSM_State.h"
-#include "lcm_msgs/localization_lcmt.hpp"
-#include "lcm_msgs/obstacle_visual_t.hpp"
-#include "lcm_msgs/traversability_float_t.hpp"
-#include "lcm_msgs/traversability_map_t.hpp"
-#include "lcm_msgs/velocity_visual_t.hpp"
 #include <Utilities/Timer.h>
 #include <Utilities/ros_read_param.h>
 #include <controllers/VisionMPC/VisionMPCLocomotion.h>
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
 #include <controllers/convexMPC/ConvexMPCLocomotion.h>
 #include <fstream>
-#include <lcm/lcm-cpp.hpp>
-#include <lcm_msgs/heightmap333_t.hpp>
-#include <lcm_msgs/heightmap_t.hpp>
-#include <lcm_msgs/heightnew_t.hpp>
 #include <ros/ros.h>
 #include <tf2/convert.h>
 #include <tf2/utils.h>
@@ -63,9 +54,11 @@ private:
   //-----ROS-------
   ros::NodeHandle _nh;
   ros::Subscriber _map_sub;
+  ros::Subscriber _map_raw_sub;
   ros::Subscriber _robot_pose_sub;
 
   grid_map::GridMap _grid_map;
+  grid_map::GridMap _grid_map_raw;
   geometry_msgs::PoseWithCovarianceStamped _robot_pose;
   // Keep track of the control iterations
   int iter = 0;
@@ -103,30 +96,13 @@ private:
   DMat<int> _idx_map;
   DMat<float> idx_map;
 
-  void handleHeightmapnewLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
-                             const heightnew_t* msg);
-  void handleHeightmap333LCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
-                             const heightmap333_t* msg);
-  void handleHeightmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
-                          const heightmap_t* msg);
-  void handleIndexmapLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
-                         const traversability_map_t* msg);
-  void handleIndexmapfloatLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
-                              const traversability_float_t* msg);
-  void handleLocalization(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
-                          const localization_lcmt* msg);
   bool _b_localization_data = false;
 
-  void visionLCMThread();
-
   void _elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg);
+  void _elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg);
   void _robotPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
 
-  lcm::LCM _visionLCM;
-  std::thread _visionLCMThread;
-
   vectorAligned<Vec3<T>> _obs_list; // loc, height
-  obstacle_visual_t _obs_visual_lcm;
 
   void _updateStateEstimator();
   void _JPosStand();

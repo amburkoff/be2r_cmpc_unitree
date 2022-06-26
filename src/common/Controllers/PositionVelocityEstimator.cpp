@@ -12,11 +12,10 @@
 /*!
  * Initialize the state estimator
  */
-template <typename T>
+template<typename T>
 void LinearKFPositionVelocityEstimator<T>::setup()
 {
-  T dt = 0.002;
-  // T dt = this->_stateEstimatorData.parameters->controller_dt;
+  T dt = this->_stateEstimatorData.parameters->controller_dt;
   _xhat.setZero();
   _ps.setZero();
   _vs.setZero();
@@ -49,19 +48,20 @@ void LinearKFPositionVelocityEstimator<T>::setup()
   _P = T(100) * _P;
   _Q0.setIdentity();
   _Q0.block(0, 0, 3, 3) = (dt / 20.f) * Eigen::Matrix<T, 3, 3>::Identity();
-  _Q0.block(3, 3, 3, 3) =
-      (dt * 9.8f / 20.f) * Eigen::Matrix<T, 3, 3>::Identity();
+  _Q0.block(3, 3, 3, 3) = (dt * 9.8f / 20.f) * Eigen::Matrix<T, 3, 3>::Identity();
   _Q0.block(6, 6, 12, 12) = dt * Eigen::Matrix<T, 12, 12>::Identity();
   _R0.setIdentity();
 }
 
-template <typename T>
-LinearKFPositionVelocityEstimator<T>::LinearKFPositionVelocityEstimator() {}
+template<typename T>
+LinearKFPositionVelocityEstimator<T>::LinearKFPositionVelocityEstimator()
+{
+}
 
 /*!
  * Run state estimator
  */
-template <typename T>
+template<typename T>
 void LinearKFPositionVelocityEstimator<T>::run()
 {
   T process_noise_pimu = this->_stateEstimatorData.parameters->imu_process_noise_position;
@@ -114,7 +114,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
 
     T trust = T(1);
     T phase = fmin(this->_stateEstimatorData.result->contactEstimate(i), T(1));
-    //T trust_window = T(0.25);
+    // T trust_window = T(0.25);
     T trust_window = T(0.2);
 
     if (phase < trust_window)
@@ -125,7 +125,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
     {
       trust = (T(1) - phase) / trust_window;
     }
-    //T high_suspect_number(1000);
+    // T high_suspect_number(1000);
     T high_suspect_number(100);
 
     // printf("Trust %d: %.3f\n", i, trust);
@@ -172,7 +172,8 @@ void LinearKFPositionVelocityEstimator<T>::run()
 
   this->_stateEstimatorData.result->position = _xhat.block(0, 0, 3, 1);
   this->_stateEstimatorData.result->vWorld = _xhat.block(3, 0, 3, 1);
-  this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
+  this->_stateEstimatorData.result->vBody =
+    this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
 }
 
 template class LinearKFPositionVelocityEstimator<float>;
@@ -181,12 +182,16 @@ template class LinearKFPositionVelocityEstimator<double>;
 /*!
  * Run cheater estimator to copy cheater state into state estimate
  */
-template <typename T>
+template<typename T>
 void CheaterPositionVelocityEstimator<T>::run()
 {
-  this->_stateEstimatorData.result->position = this->_stateEstimatorData.cheaterState->position.template cast<T>();
-  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() * this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
-  this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+  this->_stateEstimatorData.result->position =
+    this->_stateEstimatorData.cheaterState->position.template cast<T>();
+  this->_stateEstimatorData.result->vWorld =
+    this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
+    this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+  this->_stateEstimatorData.result->vBody =
+    this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
 }
 
 template class CheaterPositionVelocityEstimator<float>;

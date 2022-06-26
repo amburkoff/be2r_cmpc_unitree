@@ -22,7 +22,7 @@
 /**
  *
  */
-template <typename T>
+template<typename T>
 struct DesiredStateData
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -43,14 +43,13 @@ struct DesiredStateData
 /**
  *
  */
-template <typename T>
+template<typename T>
 class DesiredStateCommand
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // Initialize with the GamepadCommand struct
-  DesiredStateCommand(GamepadCommand* command,
-                      RobotControlParameters* _parameters,
+  DesiredStateCommand(GamepadCommand* command, StaticParams* _parameters,
                       StateEstimate<T>* sEstimate, float _dt)
   {
     gamepadCommand = command;
@@ -66,8 +65,8 @@ public:
   }
 
   void convertToStateCommands();
-  void setCommandLimits(T minVelX_in, T maxVelX_in,
-                        T minVelY_in, T maxVelY_in, T minTurnRate_in, T maxTurnRate_in);
+  void setCommandLimits(T minVelX_in, T maxVelX_in, T minVelY_in, T maxVelY_in, T minTurnRate_in,
+                        T maxTurnRate_in);
   void desiredStateTrajectory(int N, Vec10<T> dtVec);
   void printRawInfo();
   void printStateCommandInfo();
@@ -80,16 +79,11 @@ public:
   T minPitch = -0.4;
   T maxVelX = 3.0;
   T minVelX = -3.0;
-  //T maxVelX = 5.0;
-  //T minVelX = -5.0;
-  // T maxVelY = 2.0;
-  // T minVelY = -2.0;
   T maxVelY = 0.5;
   T minVelY = -0.5;
   T maxTurnRate = 4.5;
   T minTurnRate = -4.5;
-  //T maxTurnRate = 0.5;
-  //T minTurnRate = -0.5;
+
 
   Vec2<float> leftAnalogStick;
   Vec2<float> rightAnalogStick;
@@ -103,7 +97,7 @@ public:
 
 private:
   StateEstimate<T>* stateEstimate;
-  RobotControlParameters* parameters;
+  StaticParams* parameters;
 
   // Dynamics matrix for discrete time approximation
   Mat12<T> A;
@@ -113,7 +107,7 @@ private:
 
   // Value cutoff for the analog stick deadband
   T deadbandRegion = 0.075;
-  //const T filter = 0.01;
+  // const T filter = 0.01;
   const T filter = 0.1;
 
   // Choose how often to print info, every N iterations

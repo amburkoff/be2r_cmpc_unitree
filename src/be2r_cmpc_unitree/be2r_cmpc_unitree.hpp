@@ -25,10 +25,6 @@
 #include "Controllers/StateEstimatorContainer.h"
 #include "LegController.h"
 #include "MiniCheetah.h"
-#include "RobotParameters.h"
-#include "lcm_msgs/spi_command_t.hpp"
-#include "lcm_msgs/spi_data_t.hpp"
-#include "lcm_msgs/spi_torque_t.hpp"
 // #include "Controllers/ContactEstimator.h"
 #include "Controllers/ContactEstimator.h"
 #include "Controllers/DesiredStateCommand.h"
@@ -37,8 +33,8 @@
 #include "Controllers/PositionVelocityEstimator.h"
 
 // BE2R
-#include "debug.hpp"
 #include "Controllers/be2rPositionVelocityEstimator.h"
+#include "debug.hpp"
 
 // Unitree sdk
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
@@ -51,9 +47,9 @@
 #define MOTOR_BREAK 0x00
 #define MOTOR_ON 0x0A
 
-const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
-const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
-const float disabled_torque[3] = {0.f, 0.f, 0.f};
+const float max_max_torque[3] = { 170.f, 170.f, 260.f }; // TODO CHECK WITH BEN
+const float wimp_torque[3] = { 6.f, 6.f, 6.f };          // TODO CHECK WITH BEN
+const float disabled_torque[3] = { 0.f, 0.f, 0.f };
 
 constexpr double PosStopF = (2.146E+9f);
 constexpr double VelStopF = (16000.0f);
@@ -71,7 +67,6 @@ public:
   void initializeStateEstimator();
 
   VectorNavData vectorNavData;
-  RobotControlParameters controlParameters;
   SpiData spiData;
   SpiCommand spiCommand;
   u64 _iterations = 0;
@@ -110,8 +105,9 @@ private:
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
-  void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
-  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
+  void _torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num);
+  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
+                                uint32_t level);
   void _groundTruthCallback(nav_msgs::Odometry ground_truth_msg);
   bool _srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response);
 
@@ -139,24 +135,10 @@ private:
   bool _is_low_level = false;
   bool _is_torque_safe = true;
 
-  spi_torque_t _spi_torque;
-
   ControlFSM<float>* _controlFSM;
 
   // Gait Scheduler controls the nominal contact schedule for the feet
   GaitScheduler<float>* _gaitScheduler;
-  ControlParameters* _userControlParameters = nullptr;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig _rosParameters;
-
-  template <typename T>
-  bool readRosParam(std::string param_name, T& param_var)
-  {
-    if (!ros::param::get(param_name, param_var))
-    {
-      ROS_WARN_STREAM("Can't read param " << param_name);
-      return false;
-    }
-    // std::cout << "[ROS PARAM] " << param_name << ": " << param_var << std::endl;
-    return true;
-  }
+  StaticParams _rosStaticParams;
 };
