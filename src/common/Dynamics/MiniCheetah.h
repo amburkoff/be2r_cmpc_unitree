@@ -30,9 +30,9 @@ Quadruped<T> buildMiniCheetah()
   cheetah._bodyLength = 0.1805 * 2;
   cheetah._bodyWidth = 0.047 * 2;
   cheetah._bodyHeight = 0.05 * 2;
-  cheetah._abadGearRatio = 6;
-  cheetah._hipGearRatio = 6;
-  cheetah._kneeGearRatio = 9.33;
+  cheetah._abadGearRatio = 1;
+  cheetah._hipGearRatio = 1;
+  cheetah._kneeGearRatio = 1;
   cheetah._abadLinkLength = 0.0838;
   cheetah._hipLinkLength = 0.2;
   cheetah._kneeLinkY_offset = 0.0;

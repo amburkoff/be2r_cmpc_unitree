@@ -129,7 +129,12 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
     this->nextStateName = FSM_StateName::PASSIVE;
     // Transition time is immediate
     this->transitionDuration = 0.0;
+    break;
 
+  case K_STAND_UP:
+    this->nextStateName = FSM_StateName::STAND_UP;
+    // Transition time is immediate
+    this->transitionDuration = 0.0;
     break;
 
   case K_VISION:
@@ -146,6 +151,11 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
 
   case K_BACKFLIP:
     this->nextStateName = FSM_StateName::BACKFLIP;
+    this->transitionDuration = 0.;
+    break;
+
+  case K_TESTING:
+    this->nextStateName = FSM_StateName::TESTING;
     this->transitionDuration = 0.;
     break;
 
@@ -205,7 +215,15 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
     this->transitionData.done = true;
     break;
 
+  case FSM_StateName::STAND_UP:
+    this->transitionData.done = true;
+    break;
+
   case FSM_StateName::VISION:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::TESTING:
     this->transitionData.done = true;
     break;
 
@@ -240,10 +258,10 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   _wbc_data->vBody_des.setZero();
   _wbc_data->aBody_des.setZero();
 
+  _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; //original
   _wbc_data->pBody_RPY_des[0] = 0;
   _wbc_data->pBody_RPY_des[1] = 0;
-  _wbc_data->pBody_RPY_des[2] = 0;
-  // _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; //original
+  // _wbc_data->pBody_RPY_des[2] = 0;
 
   // cout << "init rpy: " << _ini_body_ori_rpy << endl;
 

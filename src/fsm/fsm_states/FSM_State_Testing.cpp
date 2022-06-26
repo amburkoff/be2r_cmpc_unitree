@@ -353,6 +353,10 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
     this->nextStateName = FSM_StateName::PASSIVE;
     break;
 
+  case K_BALANCE_STAND: 
+    this->nextStateName = FSM_StateName::BALANCE_STAND;
+    break;
+
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
               << K_TESTING << " to "
@@ -380,6 +384,10 @@ TransitionData<T> FSM_State_Testing<T>::transition()
     break;
 
   case FSM_StateName::STAND_UP:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::BALANCE_STAND:
     this->transitionData.done = true;
     break;
 

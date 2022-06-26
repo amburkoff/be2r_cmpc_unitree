@@ -36,7 +36,7 @@ template <typename T>
 void PositionEstimator<T>::run()
 {
   T dt = 0.002;
-  float filter = 0.5;
+  float filter = 0.001;
   static uint16_t counter = 0;
   static float z = 0.056;
   static Vec3<float> vz_filtered(0, 0, 0);
@@ -71,11 +71,14 @@ void PositionEstimator<T>::run()
   else
   {
     // filter = trust;
-    a_filtered = _filter(acceleration, 1);
-    a_filtered2 = a_filtered2 * (1 - filter) + a_filtered * filter;
+    // a_filtered = _filter(acceleration, 1);
+    // a_filtered2 = a_filtered2 * (1 - filter) + a_filtered * filter;
+    a_filtered = a_filtered * (1 - filter) + acceleration * filter;
+    a_filtered2 = _filter(a_filtered, 1);
 
-    vz_filtered = _filter(Vec3<float>(0, 0, this->_stateEstimatorData.result->vWorld[2]), 0);
-    vz_filtered2 = vz_filtered2 * (1 - filter) + vz_filtered * filter;
+    // vz_filtered = _filter(Vec3<float>(0, 0, this->_stateEstimatorData.result->vWorld[2]), 0);
+    // vz_filtered2 = vz_filtered2 * (1 - filter) + vz_filtered * filter;
+    vz_filtered2 = vz_filtered2 * (1 - filter) + this->_stateEstimatorData.result->vWorld * filter;
 
     // v_body += acceleration * dt;
     v_body += a_filtered2 * dt;
@@ -85,11 +88,12 @@ void PositionEstimator<T>::run()
     // cout << "trust: " << trust << endl;
     // cout << "ac x: " << a_filtered[0] << " y: " << a_filtered[1] << " z: " << a_filtered[2] << endl;
     // cout << "vel x: " << v_body[0] << " y: " << v_body[1] << " z: " << v_body[2] << endl;
-    cout << "x: " << p_body[0] << " y: " << p_body[1] << " z: " << p_body[2] << endl;
+    // cout << "x: " << p_body[0] << " y: " << p_body[1] << " z: " << p_body[2] << endl;
     // cout << (ros::Time::now() - time_start).toSec() << endl;
-    z += vz_filtered2(2) * dt;
-    // z += vz_filtered(2) * dt;
-    std::cout << "z: " << z << std::endl;
+    // z += vz_filtered2(2) * dt;
+    z += vz_filtered2(2) * dt + a_filtered2(2) * dt * dt / 2;
+    // z += this->_stateEstimatorData.result->vWorld[2] * dt + a_filtered2(2) * dt * dt / 2;
+    // std::cout << "z: " << z << std::endl;
   }
 }
 

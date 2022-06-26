@@ -139,6 +139,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
     _ps.segment(i1, 3) = -p_f;
     _vs.segment(i1, 3) = (1.0f - trust) * v0 + trust * (-dp_f);
     pzs(i) = (1.0f - trust) * (p0(2) + p_f(2));
+    // std::cout << pzs(0) << std::endl;
   }
 
   Eigen::Matrix<T, 28, 1> y;
@@ -149,7 +150,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   Eigen::Matrix<T, 18, 28> Ct = _C.transpose();
   Eigen::Matrix<T, 28, 1> yModel = _C * _xhat;
   Eigen::Matrix<T, 28, 1> ey = y - yModel;
-  // std::cout << yModel[0] << " " << yModel[1] << " " << yModel[2] << std::endl; 
+  // std::cout << yModel[0] << " " << yModel[1] << " " << yModel[2] << std::endl;
   Eigen::Matrix<T, 28, 28> S = _C * Pm * Ct + R;
 
   // todo compute LU only once
