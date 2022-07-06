@@ -30,7 +30,7 @@ FSM_State_BackFlip<T>::FSM_State_BackFlip(ControlFSMData<T>* _controlFSMData)
 
   _data_reader = new DataReader(this->_data->_quadruped->_robotType, FSM_StateName::BACKFLIP);
 
-  backflip_ctrl_ = new BackFlipCtrl<T>(_data_reader, this->_data->controlParameters->controller_dt);
+  backflip_ctrl_ = new BackFlipCtrl<T>(_data_reader, this->_data->staticParams->controller_dt);
   backflip_ctrl_->SetParameter();
 }
 
@@ -79,7 +79,7 @@ void FSM_State_BackFlip<T>::run()
   }
 
   ++_count;
-  _curr_time += this->_data->controlParameters->controller_dt;
+  _curr_time += this->_data->staticParams->controller_dt;
 }
 
 template <typename T>
@@ -188,7 +188,7 @@ FSM_StateName FSM_State_BackFlip<T>::checkTransition()
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
   case K_BACKFLIP:
     break;
@@ -212,7 +212,7 @@ FSM_StateName FSM_State_BackFlip<T>::checkTransition()
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
               << K_BACKFLIP << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+              << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state

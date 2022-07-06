@@ -21,7 +21,8 @@ Cheetah-3-Documentation-Control:
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "sim_command_t.hpp"
+#include "Utilities/sim_command_t.hpp"
+#include "Utilities/qp_controller_data_t.hpp"
 #include <eigen3/Eigen/Dense>
 #include <qpOASES.hpp>
 

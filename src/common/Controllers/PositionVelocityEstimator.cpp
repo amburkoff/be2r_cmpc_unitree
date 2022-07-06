@@ -12,7 +12,7 @@
 /*!
  * Initialize the state estimator
  */
-template<typename T>
+template <typename T>
 void LinearKFPositionVelocityEstimator<T>::setup()
 {
   T dt = this->_stateEstimatorData.parameters->controller_dt;
@@ -53,7 +53,92 @@ void LinearKFPositionVelocityEstimator<T>::setup()
   _R0.setIdentity();
 }
 
-template<typename T>
+template <typename T>
+float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
+{
+  // std::cout << "yo " << this->_stateEstimatorData.debug->last_p_stance[0].x << std::endl;
+
+  //find 1 with most difference
+  //get average of 3 others and return
+  float z = 0;
+
+  float z_cost[4] = {0, 0, 0, 0};
+
+  Vec3<float> p[4];
+
+  // p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[0]);
+  // p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[1]);
+  // p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[2]);
+  // p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[3]);
+
+  p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[0]);
+  p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[1]);
+  p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[2]);
+  p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[3]);
+
+  // for (size_t i = 0; i < 4; i++)
+  // {
+  //   if (this->_stateEstimatorData.result->contactEstimate(i) > 0.0)
+  //   {
+  //     p[i] = ros::fromMsg(this->_stateEstimatorData.debug->all_legs_info.leg[i].p_act);
+  //   }
+  // }
+
+  // std::cout << "p0z: " << p[0](2) << std::endl;
+  // std::cout << "p1z: " << p[1](2) << std::endl;
+  // std::cout << "p2z: " << p[2](2) << std::endl;
+  // std::cout << "p3z: " << p[3](2) << std::endl;
+
+  uint8_t num_p_unnecessary = 0;
+
+  // for (size_t i = 0; i < 4; i++)
+  // {
+  //   for (size_t j = 0; j < 3; j++)
+  //   {
+  //     z_cost[i] += abs(p[0](2)1)
+  //   }
+
+  //   z_cost[i] =
+  // }
+
+  z_cost[0] = abs(p[0](2) - p[1](2)) + abs(p[0](2) - p[2](2)) + abs(p[0](2) - p[3](2));
+  z_cost[1] = abs(p[1](2) - p[2](2)) + abs(p[1](2) - p[3](2)) + abs(p[1](2) - p[0](2));
+  z_cost[2] = abs(p[2](2) - p[3](2)) + abs(p[2](2) - p[0](2)) + abs(p[2](2) - p[1](2));
+  z_cost[3] = abs(p[3](2) - p[0](2)) + abs(p[3](2) - p[1](2)) + abs(p[3](2) - p[2](2));
+  float z_cost_max = 0;
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    if (z_cost[i] >= z_cost_max)
+    {
+      z_cost_max = z_cost[i];
+      num_p_unnecessary = i;
+    }
+  }
+
+  float z_sum = 0;
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    // if (i != num_p_unnecessary)
+    if(1)
+    {
+      z_sum += p[i](2);
+    }
+  }
+
+  // z = z_sum / 3.0;
+  z = z_sum / 4.0;
+  this->_stateEstimatorData.debug->body_info.pos_z_global = -z;
+
+  // std::cout << "phase0: " << this->_stateEstimatorData.result->contactEstimate(0) << std::endl;
+  // std::cout << "new z: " << z << " unnec: " << (int)num_p_unnecessary << std::endl
+  //           << std::endl;
+
+  return z;
+}
+
+template <typename T>
 LinearKFPositionVelocityEstimator<T>::LinearKFPositionVelocityEstimator()
 {
 }
@@ -61,7 +146,7 @@ LinearKFPositionVelocityEstimator<T>::LinearKFPositionVelocityEstimator()
 /*!
  * Run state estimator
  */
-template<typename T>
+template <typename T>
 void LinearKFPositionVelocityEstimator<T>::run()
 {
   T process_noise_pimu = this->_stateEstimatorData.parameters->imu_process_noise_position;
@@ -170,10 +255,11 @@ void LinearKFPositionVelocityEstimator<T>::run()
     _P.block(0, 0, 2, 2) /= T(10);
   }
 
+  _getLocalBodyHeight();
+
   this->_stateEstimatorData.result->position = _xhat.block(0, 0, 3, 1);
   this->_stateEstimatorData.result->vWorld = _xhat.block(3, 0, 3, 1);
-  this->_stateEstimatorData.result->vBody =
-    this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
+  this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
 }
 
 template class LinearKFPositionVelocityEstimator<float>;
@@ -182,16 +268,16 @@ template class LinearKFPositionVelocityEstimator<double>;
 /*!
  * Run cheater estimator to copy cheater state into state estimate
  */
-template<typename T>
+template <typename T>
 void CheaterPositionVelocityEstimator<T>::run()
 {
   this->_stateEstimatorData.result->position =
-    this->_stateEstimatorData.cheaterState->position.template cast<T>();
+      this->_stateEstimatorData.cheaterState->position.template cast<T>();
   this->_stateEstimatorData.result->vWorld =
-    this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
-    this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+      this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
+      this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
   this->_stateEstimatorData.result->vBody =
-    this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+      this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
 }
 
 template class CheaterPositionVelocityEstimator<float>;

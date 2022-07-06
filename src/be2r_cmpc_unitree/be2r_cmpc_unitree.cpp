@@ -3,9 +3,7 @@
 using namespace std;
 
 Body_Manager::Body_Manager()
-  : _zero_time(0)
-  , safe(UNITREE_LEGGED_SDK::LeggedType::A1)
-  , udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+    : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
@@ -45,7 +43,7 @@ UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCm
 }
 
 unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(
-  UNITREE_LEGGED_SDK::LowState udp_low_state)
+    UNITREE_LEGGED_SDK::LowState udp_low_state)
 {
   unitree_legged_msgs::LowState ros_low_state;
 
@@ -118,21 +116,21 @@ void Body_Manager::init()
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
   _stateEstimator =
-    new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
-                                       &_stateEstimate, &_cheater_state, &_rosStaticParams);
+      new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
+                                         &_stateEstimate, &_cheater_state, &_rosStaticParams, _debug);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
   _desiredStateCommand = new DesiredStateCommand<float>(
-    &driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
+      &driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, _rosStaticParams.controller_dt);
 
   // Initializes the Control FSM with all the required data
   _controlFSM =
-    new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
-                          _desiredStateCommand, &_rosStaticParams, &_rosParameters, _debug);
+      new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
+                            _desiredStateCommand, &_rosStaticParams, &_rosParameters, _debug);
 
   _rosParameters.FSM_State = 0;
 }
@@ -215,7 +213,7 @@ void Body_Manager::_readRobotData()
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
     _debug->all_legs_info.leg[leg_num].is_contact =
-      _stateEstimator->getContactSensorData()(leg_num);
+        _stateEstimator->getContactSensorData()(leg_num);
   }
 }
 
@@ -342,7 +340,7 @@ void Body_Manager::finalizeStep()
   _debug->ground_truth_odom = ground_truth;
 
   // put actual q and dq in debug class
-  _debug->body_info.pos_z_global = _stateEstimator->getResult().heightBody;
+  // _debug->body_info.pos_z_global = _stateEstimator->getResult().heightBody;
 
   // put actual q and dq in debug class
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
@@ -388,7 +386,7 @@ void Body_Manager::finalizeStep()
     _torqueCalculator(&spiCommand, &spiData, i);
   }
 
-  uint8_t mode[4] = { MOTOR_BREAK };
+  uint8_t mode[4] = {MOTOR_BREAK};
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -484,7 +482,7 @@ void Body_Manager::initializeStateEstimator()
   {
     _stateEstimator->addEstimator<VectorNavOrientationEstimator<float>>();
     _stateEstimator->addEstimator<LinearKFPositionVelocityEstimator<float>>();
-    _stateEstimator->addEstimator<PositionEstimator<float>>();
+    // _stateEstimator->addEstimator<PositionEstimator<float>>();
   }
 }
 
@@ -613,19 +611,19 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num
   if (_legController->is_low_level == false)
   {
     _low_cmd.motorCmd[leg_num * 3 + 0].tau =
-      cmd->kp_abad[leg_num] * (cmd->q_des_abad[leg_num] - data->q_abad[leg_num]) +
-      cmd->kd_abad[leg_num] * (cmd->qd_des_abad[leg_num] - data->qd_abad[leg_num]) +
-      cmd->tau_abad_ff[leg_num];
+        cmd->kp_abad[leg_num] * (cmd->q_des_abad[leg_num] - data->q_abad[leg_num]) +
+        cmd->kd_abad[leg_num] * (cmd->qd_des_abad[leg_num] - data->qd_abad[leg_num]) +
+        cmd->tau_abad_ff[leg_num];
 
     _low_cmd.motorCmd[leg_num * 3 + 1].tau =
-      cmd->kp_hip[leg_num] * (cmd->q_des_hip[leg_num] - data->q_hip[leg_num]) +
-      cmd->kd_hip[leg_num] * (cmd->qd_des_hip[leg_num] - data->qd_hip[leg_num]) +
-      cmd->tau_hip_ff[leg_num];
+        cmd->kp_hip[leg_num] * (cmd->q_des_hip[leg_num] - data->q_hip[leg_num]) +
+        cmd->kd_hip[leg_num] * (cmd->qd_des_hip[leg_num] - data->qd_hip[leg_num]) +
+        cmd->tau_hip_ff[leg_num];
 
     _low_cmd.motorCmd[leg_num * 3 + 2].tau =
-      cmd->kp_knee[leg_num] * (cmd->q_des_knee[leg_num] - data->q_knee[leg_num]) +
-      cmd->kd_knee[leg_num] * (cmd->qd_des_knee[leg_num] - data->qd_knee[leg_num]) +
-      cmd->tau_knee_ff[leg_num];
+        cmd->kp_knee[leg_num] * (cmd->q_des_knee[leg_num] - data->q_knee[leg_num]) +
+        cmd->kd_knee[leg_num] * (cmd->qd_des_knee[leg_num] - data->qd_knee[leg_num]) +
+        cmd->tau_knee_ff[leg_num];
   }
   else
   {
@@ -636,8 +634,8 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = cmd->tau_knee_ff[leg_num];
   }
 
-  const float safe_torque[3] = { 4.f, 4.f, 4.f };
-  const float max_torque[3] = { 17.f, 17.f, 26.f };
+  const float safe_torque[3] = {4.f, 4.f, 4.f};
+  const float max_torque[3] = {17.f, 17.f, 26.f};
   const float* torque_limits;
 
   if (_is_torque_safe)
@@ -686,8 +684,7 @@ void Body_Manager::_initParameters()
   _rosStaticParams.read();
 }
 
-void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
-                                            uint32_t level)
+void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level)
 {
   (void)level;
   _is_param_updated = true;

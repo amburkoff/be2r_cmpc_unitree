@@ -105,7 +105,7 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
     // TEST: in place to show automatic non user requested transitions
     /*if (_iter >= 5458) {
         this->nextStateName = FSM_StateName::LOCOMOTION;
-        this->_data->controlParameters->control_mode = K_LOCOMOTION;
+        this->_data->userParameters->FSM_State = K_LOCOMOTION;
         this->transitionDuration = 0.0;
         this->_data->_gaitScheduler->gaitData._nextGait =
             GaitType::AMBLE;  // TROT; // Or get whatever is in
@@ -166,7 +166,7 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
               << K_BALANCE_STAND << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+              << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Return the next state name to the FSM

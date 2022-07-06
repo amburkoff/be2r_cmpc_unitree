@@ -399,6 +399,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       pDesFootWorldStance[foot] = pFoot[foot];
       // pDesFootWorldStance[foot] = data._legController->datas[foot].p;
       // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
+      data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
+      data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p);
     }
 
     // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]

@@ -1,5 +1,4 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#pragma once
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <iostream>
@@ -11,6 +10,8 @@
 #include <unitree_legged_msgs/StateError.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
+#include <visualization_msgs/Marker.h>
+#include <Utilities/utilities.h>
 
 using std::cout;
 using std::endl;
@@ -31,11 +32,16 @@ public:
   float z_offset;
   nav_msgs::Odometry ground_truth_odom = {};
   sensor_msgs::Imu imu;
+  geometry_msgs::Point last_p_stance[4] = {};
+  geometry_msgs::Point last_p_local_stance[4] = {};
 
 private:
   void _init();
   void _initPublishers();
   void _ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
+  Vec3<float> _getHipLocation(uint8_t leg_num);
+  void _drawLastStancePoints();
+  void _drawEstimatedStancePLane();
 
   ros::NodeHandle _nh;
   const ros::Time _zero_time;
@@ -46,10 +52,8 @@ private:
   ros::Publisher _pub_all_legs_info;
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
-  ros::Subscriber _sub_ground_truth;
+  ros::Publisher _pub_visual_last_p_stance;
+  ros::Publisher _pub_estimated_stance_plane;
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster world_odom_broadcaster;
-  geometry_msgs::PoseWithCovarianceStamped _ground_trurh_pose;
 };
-
-#endif // DEBUG_H

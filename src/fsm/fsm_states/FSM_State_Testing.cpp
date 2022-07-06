@@ -372,7 +372,7 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
               << K_TESTING << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+              << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state

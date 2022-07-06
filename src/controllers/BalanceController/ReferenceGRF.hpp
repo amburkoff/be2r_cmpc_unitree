@@ -17,7 +17,7 @@ Manipulation. CRC
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "qp_controller_data_t.hpp"
+// #include "qp_controller_data_t.hpp"
 #include <eigen3/Eigen/Dense>
 #include <qpOASES.hpp>
 
