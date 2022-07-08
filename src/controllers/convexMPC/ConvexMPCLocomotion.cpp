@@ -82,11 +82,6 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
   vBody_des.setZero();
   aBody_des.setZero();
 
-  _pub_des_traj[0] = _nh.advertise<nav_msgs::Path>("/des_traj_0", 1);
-  _pub_des_traj[1] = _nh.advertise<nav_msgs::Path>("/des_traj_1", 1);
-  _pub_des_traj[2] = _nh.advertise<nav_msgs::Path>("/des_traj_2", 1);
-  _pub_des_traj[3] = _nh.advertise<nav_msgs::Path>("/des_traj_3", 1);
-
   _vis_pub[0] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_0", 1);
   _vis_pub[1] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_1", 1);
   _vis_pub[2] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_2", 1);
@@ -497,7 +492,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       path[foot].header.stamp = ros::Time::now();
       path[foot].header.frame_id = "odom";
 
-      // _pub_des_traj[foot].publish(path[foot]);
+      // _pub_visual_des_traj[foot].publish(path[foot]);
 
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;

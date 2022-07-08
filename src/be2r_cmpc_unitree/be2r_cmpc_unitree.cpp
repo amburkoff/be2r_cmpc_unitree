@@ -42,8 +42,7 @@ UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCm
   return udp_low_cmd;
 }
 
-unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(
-    UNITREE_LEGGED_SDK::LowState udp_low_state)
+unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state)
 {
   unitree_legged_msgs::LowState ros_low_state;
 
@@ -115,22 +114,19 @@ void Body_Manager::init()
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator =
-      new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
-                                         &_stateEstimate, &_cheater_state, &_rosStaticParams, _debug);
+  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
+                                                       &_stateEstimate, &_cheater_state, &_rosStaticParams, _debug);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(
-      &driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
+  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, _rosStaticParams.controller_dt);
 
   // Initializes the Control FSM with all the required data
-  _controlFSM =
-      new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
-                            _desiredStateCommand, &_rosStaticParams, &_rosParameters, _debug);
+  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
+                                      _desiredStateCommand, &_rosStaticParams, &_rosParameters, _debug);
 
   _rosParameters.FSM_State = 0;
 }
@@ -458,10 +454,6 @@ void Body_Manager::finalizeStep()
   _pub_low_cmd.publish(_low_cmd);
 }
 
-/*!
- * Reset the state estimator in the given mode.
- * @param cheaterMode
- */
 void Body_Manager::initializeStateEstimator()
 {
   _stateEstimator->removeAllEstimators();

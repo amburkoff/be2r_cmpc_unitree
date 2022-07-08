@@ -191,6 +191,8 @@ void BalanceController::updateProblemData(double* xfb_in, double* p_feet_in, dou
   copy_Array_to_Eigen(xdot_COM_world, xfb_in, 3, 10);
   copy_Array_to_Eigen(p_feet, p_feet_in, 12, 0);
 
+  // cout << "quat: " <<  quat_b_world << endl;
+
   yaw_act = yaw_act_in;
 
   R_yaw_act.setZero();

@@ -12,7 +12,7 @@
 // #define GAIT_PERIOD 14
 #define HORIZON 14
 
-#define GAIT_PERIOD 16
+#define GAIT_PERIOD 18
 // #define GAIT_PERIOD 22
 // #define GAIT_PERIOD 34 //1000 Hz
 
@@ -217,13 +217,9 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   {
     des_pitch = 0;
   }
-  // else if ((p_fm(2) - p_bm(2)) < 0.005)
-  // {
-  //   des_pitch = 0;
-  //   ROS_INFO("TOO LITTLE DIFF");
-  // }
   else
   {
+    //TODO адекватную оценку наклона корпуса
     des_pitch = des_pitch * (1 - 0.7) - 1.2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
   }
 
@@ -245,7 +241,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
   //put to target
   _pitch_des = des_pitch;
-  data.debug->all_legs_info.leg[0].force_raw = des_pitch;
 
   // Integral-esque pitche and roll compensation
   if (fabs(v_robot[0]) > .2) // avoid dividing by zero
@@ -348,7 +343,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-    // Pf[2] = 0.0;
     Pf[2] = z_des[i];
 
     footSwingTrajectories[i].setFinalPosition(Pf);
@@ -395,7 +389,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       is_stance[foot] = 1;
 
       //foot position in world frame at contanct
-      // pDesFootWorldStance[foot] = pFoot[foot] + footSwingTrajectories[foot].getPosition();
       pDesFootWorldStance[foot] = pFoot[foot];
       // pDesFootWorldStance[foot] = data._legController->datas[foot].p;
       // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
@@ -433,6 +426,22 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
         data.debug->all_legs_info.leg[foot].swing_ps.z = pFoot[foot](2);
 
         z_des[foot] = pFoot[foot][2];
+      }
+
+      //for visual
+      geometry_msgs::PoseStamped pose_traj;
+      Vec3<float> p_des_traj(0, 0, 0);
+      data.debug->visual_leg_traj_des[foot].poses.clear();
+      data.debug->visual_leg_traj_des[foot].header.stamp = ros::Time::now();
+
+      for (size_t i = 0; i < 11; i++)
+      {
+        footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + ((1.0 - swingState) / 11.0 * (float)i), swingTimes[foot]);
+        p_des_traj = footSwingTrajectories[foot].getPosition();
+
+        pose_traj.pose.position = ros::toMsg(p_des_traj);
+
+        data.debug->visual_leg_traj_des[foot].poses.push_back(pose_traj);
       }
 
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
@@ -489,6 +498,9 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     else // foot is in stance
     {
       firstSwing[foot] = true;
+
+      data.debug->visual_leg_traj_des[foot].poses.clear();
+      data.debug->visual_leg_traj_des[foot].header.stamp = ros::Time::now();
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();

@@ -21,7 +21,11 @@ void Debug::_initPublishers()
   _pub_body_info = _nh.advertise<unitree_legged_msgs::BodyInfo>("/body_info", 1);
 
   _pub_visual_last_p_stance = _nh.advertise<visualization_msgs::Marker>("/visual/last_p_stance", 1);
-  _pub_estimated_stance_plane = _nh.advertise<visualization_msgs::Marker>("/visual/estimated_stance_plane", 1);
+  _pub_visual_estimated_stance_plane = _nh.advertise<visualization_msgs::Marker>("/visual/estimated_stance_plane", 1);
+  _pub_visual_leg_des_traj[0] = _nh.advertise<nav_msgs::Path>("/visual/leg0_des_traj", 1);
+  _pub_visual_leg_des_traj[1] = _nh.advertise<nav_msgs::Path>("/visual/leg1_des_traj", 1);
+  _pub_visual_leg_des_traj[2] = _nh.advertise<nav_msgs::Path>("/visual/leg2_des_traj", 1);
+  _pub_visual_leg_des_traj[3] = _nh.advertise<nav_msgs::Path>("/visual/leg3_des_traj", 1);
 
 #ifdef PUB_IMU_AND_ODOM
   _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
@@ -137,6 +141,7 @@ void Debug::updateVisualization()
 
   _drawLastStancePoints();
   _drawEstimatedStancePLane();
+  _drawLegsDesiredTrajectory();
 }
 
 void Debug::tfPublish()
@@ -277,9 +282,19 @@ void Debug::_drawEstimatedStancePLane()
   marker.scale.y = 0.5;
   marker.scale.z = 0.00001;
   marker.color.a = 1.0;
-  marker.color.r = 0.0;
+  marker.color.r = 0.5;
   marker.color.g = 1.0;
   marker.color.b = 0.0;
 
-  _pub_estimated_stance_plane.publish(marker);
+  _pub_visual_estimated_stance_plane.publish(marker);
+}
+
+void Debug::_drawLegsDesiredTrajectory()
+{
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    visual_leg_traj_des[i].header.frame_id = "odom";
+    _pub_visual_leg_des_traj[i].publish(visual_leg_traj_des[i]);
+  }
 }

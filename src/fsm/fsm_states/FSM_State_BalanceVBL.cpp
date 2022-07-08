@@ -43,12 +43,13 @@ void FSM_State_BalanceVBL<T>::run()
 {
   double minForce = 25;
   double maxForce = 500;
-  double contactStateScheduled[4] = {1, 1, 1, 1};
+  // double contactStateScheduled[4] = {1, 1, 1, 1};
+  double contactStateScheduled[4];
 
-  // for (int i = 0; i < 4; i++)
-  // {
-  //   contactStateScheduled[i] = _data->_gaitScheduler->gaitData.contactStateScheduled(i);
-  // }
+  for (int i = 0; i < 4; i++)
+  {
+    contactStateScheduled[i] = _data->_gaitScheduler->gaitData.contactStateScheduled(i);
+  }
 
   double minForces[4]; // = {minForce, minForce, minForce, minForce};
   double maxForces[4]; // = {maxForce, maxForce, maxForce, maxForce};
@@ -84,10 +85,10 @@ void FSM_State_BalanceVBL<T>::run()
     se_xfb[10 + i] = (double)_data->_stateEstimator->getResult().vBody(i);
 
     // Set the translational and orientation gains
-    kpCOM[i] = 5.0;
-    kdCOM[i] = 1.0;
-    kpBase[i] = 20;
-    kdBase[i] = 2;
+    kpCOM[i] = 50.0;
+    kdCOM[i] = 10.0;
+    kpBase[i] = 200;
+    kdBase[i] = 20;
   }
 
   p_des[0] = 0.0;
@@ -112,7 +113,7 @@ void FSM_State_BalanceVBL<T>::run()
 
   balanceController->set_alpha_control(0.01);
   balanceController->set_friction(0.5);
-  balanceController->set_mass(6.0);
+  balanceController->set_mass(12.0);
   balanceController->set_wrench_weights(COM_weights_stance, Base_weights_stance);
   balanceController->set_PDgains(kpCOM, kdCOM, kpBase, kdBase);
   balanceController->set_desiredTrajectoryData(rpy, p_des, omegaDes, v_des);
@@ -130,12 +131,14 @@ void FSM_State_BalanceVBL<T>::run()
     footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
 
     Vec3<float> f_ff;
-    f_ff << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
+    // f_ff << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
+    f_ff << 0.0, 0.0, (T)fOpt[leg * 3 + 2];
 
     _data->_legController->commands[leg].forceFeedForward = f_ff;
   }
 
-  // cout << footFeedForwardForces << endl;
+  cout << footFeedForwardForces << endl;
+  cout << endl;
 }
 
 /**

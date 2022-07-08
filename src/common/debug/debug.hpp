@@ -1,17 +1,18 @@
 #pragma once
 
+#include <Utilities/utilities.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <iostream>
+#include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <ros/ros.h>
+#include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
 #include <unitree_legged_msgs/AllLegsInfo.h>
 #include <unitree_legged_msgs/BodyInfo.h>
 #include <unitree_legged_msgs/StateError.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Imu.h>
 #include <visualization_msgs/Marker.h>
-#include <Utilities/utilities.h>
 
 using std::cout;
 using std::endl;
@@ -35,6 +36,8 @@ public:
   geometry_msgs::Point last_p_stance[4] = {};
   geometry_msgs::Point last_p_local_stance[4] = {};
 
+  nav_msgs::Path visual_leg_traj_des[4];
+
 private:
   void _init();
   void _initPublishers();
@@ -42,6 +45,7 @@ private:
   Vec3<float> _getHipLocation(uint8_t leg_num);
   void _drawLastStancePoints();
   void _drawEstimatedStancePLane();
+  void _drawLegsDesiredTrajectory();
 
   ros::NodeHandle _nh;
   const ros::Time _zero_time;
@@ -53,7 +57,8 @@ private:
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
   ros::Publisher _pub_visual_last_p_stance;
-  ros::Publisher _pub_estimated_stance_plane;
+  ros::Publisher _pub_visual_estimated_stance_plane;
+  ros::Publisher _pub_visual_leg_des_traj[4];
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster world_odom_broadcaster;
 };
