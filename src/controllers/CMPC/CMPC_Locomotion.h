@@ -169,10 +169,7 @@ private:
   Vec3<float> pFoot[4];
   CMPC_result<float> result;
   float trajAll[12 * 36];
-  ros::Publisher _pub_visual_des_traj[4];
   ros::NodeHandle _nh;
-  visualization_msgs::Marker marker[4];
-  ros::Publisher _vis_pub[4];
 
   CMPC_jump jump_state;
 

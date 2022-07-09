@@ -20,12 +20,16 @@ void Debug::_initPublishers()
   _pub_all_legs_info = _nh.advertise<unitree_legged_msgs::AllLegsInfo>("/all_legs_info", 1);
   _pub_body_info = _nh.advertise<unitree_legged_msgs::BodyInfo>("/body_info", 1);
 
-  _pub_visual_last_p_stance = _nh.advertise<visualization_msgs::Marker>("/visual/last_p_stance", 1);
-  _pub_visual_estimated_stance_plane = _nh.advertise<visualization_msgs::Marker>("/visual/estimated_stance_plane", 1);
-  _pub_visual_leg_des_traj[0] = _nh.advertise<nav_msgs::Path>("/visual/leg0_des_traj", 1);
-  _pub_visual_leg_des_traj[1] = _nh.advertise<nav_msgs::Path>("/visual/leg1_des_traj", 1);
-  _pub_visual_leg_des_traj[2] = _nh.advertise<nav_msgs::Path>("/visual/leg2_des_traj", 1);
-  _pub_visual_leg_des_traj[3] = _nh.advertise<nav_msgs::Path>("/visual/leg3_des_traj", 1);
+  _pub_vis_last_p_stance = _nh.advertise<visualization_msgs::Marker>("/visual/last_p_stance", 1);
+  _pub_vis_estimated_stance_plane = _nh.advertise<visualization_msgs::Marker>("/visual/estimated_stance_plane", 1);
+  _pub_vis_leg_des_traj[0] = _nh.advertise<nav_msgs::Path>("/visual/leg0/des_traj", 1);
+  _pub_vis_leg_des_traj[1] = _nh.advertise<nav_msgs::Path>("/visual/leg1/des_traj", 1);
+  _pub_vis_leg_des_traj[2] = _nh.advertise<nav_msgs::Path>("/visual/leg2/des_traj", 1);
+  _pub_vis_leg_des_traj[3] = _nh.advertise<nav_msgs::Path>("/visual/leg3/des_traj", 1);
+  _pub_vis_leg_force[0] = _nh.advertise<visualization_msgs::Marker>("/visual/leg0/force", 1);
+  _pub_vis_leg_force[1] = _nh.advertise<visualization_msgs::Marker>("/visual/leg1/force", 1);
+  _pub_vis_leg_force[2] = _nh.advertise<visualization_msgs::Marker>("/visual/leg2/force", 1);
+  _pub_vis_leg_force[3] = _nh.advertise<visualization_msgs::Marker>("/visual/leg3/force", 1);
 
 #ifdef PUB_IMU_AND_ODOM
   _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
@@ -142,6 +146,7 @@ void Debug::updateVisualization()
   _drawLastStancePoints();
   _drawEstimatedStancePLane();
   _drawLegsDesiredTrajectory();
+  _drawLegsForce();
 }
 
 void Debug::tfPublish()
@@ -254,7 +259,7 @@ void Debug::_drawLastStancePoints()
   marker.points.push_back(p3);
   marker.points.push_back(p2);
 
-  _pub_visual_last_p_stance.publish(marker);
+  _pub_vis_last_p_stance.publish(marker);
 }
 
 void Debug::_drawEstimatedStancePLane()
@@ -281,20 +286,61 @@ void Debug::_drawEstimatedStancePLane()
   marker.scale.x = 0.5;
   marker.scale.y = 0.5;
   marker.scale.z = 0.00001;
-  marker.color.a = 1.0;
+  marker.color.a = 0.7;
   marker.color.r = 0.5;
   marker.color.g = 1.0;
   marker.color.b = 0.0;
 
-  _pub_visual_estimated_stance_plane.publish(marker);
+  _pub_vis_estimated_stance_plane.publish(marker);
 }
 
 void Debug::_drawLegsDesiredTrajectory()
 {
+  for (size_t i = 0; i < 4; i++)
+  {
+    leg_traj_des[i].header.frame_id = "odom";
+    _pub_vis_leg_des_traj[i].publish(leg_traj_des[i]);
+  }
+}
+
+void Debug::_drawLegsForce()
+{
+  visualization_msgs::Marker marker;
+  std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
+  float koef = 500;
 
   for (size_t i = 0; i < 4; i++)
   {
-    visual_leg_traj_des[i].header.frame_id = "odom";
-    _pub_visual_leg_des_traj[i].publish(visual_leg_traj_des[i]);
+    marker.header.frame_id = names[i];
+    marker.header.stamp = ros::Time::now();
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    // pose and orientation must be zero, except orientation.w = 1
+    marker.pose.position.x = 0;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = 0.005; // shaft diameter
+    marker.scale.y = 0.01;  // head diameter
+    marker.scale.z = 0.0;   // if not zero, specifies head length
+    marker.color.a = 0.8;   // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    geometry_msgs::Point p1, p2;
+    // start point
+    p1 = all_legs_info.leg[i].p_act;
+    // finish point
+    p2.x = all_legs_info.leg[i].p_act.x + (-leg_force[i].x / koef);
+    p2.y = all_legs_info.leg[i].p_act.y + (-leg_force[i].y / koef);
+    p2.z = all_legs_info.leg[i].p_act.z + (-leg_force[i].z / koef);
+    marker.points.clear();
+    marker.points.push_back(p1);
+    marker.points.push_back(p2);
+    _pub_vis_leg_force[i].publish(marker);
   }
 }

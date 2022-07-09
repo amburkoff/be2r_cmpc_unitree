@@ -8,7 +8,6 @@ Panels:
         - /Status1
         - /TF1/Frames1
         - /Last stance points1/Status1
-        - /Estimated stance plane1
       Splitter Ratio: 0.38786280155181885
     Tree Height: 1143
   - Class: rviz/Selection
@@ -205,34 +204,34 @@ Visualization Manager:
       Displays:
         - Class: rviz/Marker
           Enabled: true
-          Marker Topic: /visualization_marker_0
+          Marker Topic: /visual/leg0/force
           Name: Leg0 (FR)
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
           Enabled: true
-          Marker Topic: /visualization_marker_1
+          Marker Topic: /visual/leg1/force
           Name: Leg1 (FL)
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
           Enabled: true
-          Marker Topic: /visualization_marker_2
+          Marker Topic: /visual/leg2/force
           Name: Leg2 (BR)
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
           Enabled: true
-          Marker Topic: /visualization_marker_3
+          Marker Topic: /visual/leg3/force
           Name: Leg3 (BL)
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
       Enabled: true
@@ -260,7 +259,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /visual/leg0_des_traj
+          Topic: /visual/leg0/des_traj
           Unreliable: true
           Value: true
         - Alpha: 1
@@ -284,7 +283,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /visual/leg1_des_traj
+          Topic: /visual/leg1/des_traj
           Unreliable: true
           Value: true
         - Alpha: 1
@@ -308,7 +307,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /visual/leg2_des_traj
+          Topic: /visual/leg2/des_traj
           Unreliable: true
           Value: true
         - Alpha: 1
@@ -332,7 +331,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /visual/leg3_des_traj
+          Topic: /visual/leg3/des_traj
           Unreliable: true
           Value: true
       Enabled: true
@@ -397,9 +396,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.510399580001831
+      Pitch: 0.3853996992111206
       Target Frame: base
-      Yaw: 0.36048102378845215
+      Yaw: 0.540481686592102
     Saved: ~
 Window Geometry:
   Displays:
@@ -418,4 +417,4 @@ Window Geometry:
     collapsed: true
   Width: 889
   X: 1968
-  Y: 705
+  Y: 668

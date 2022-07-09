@@ -175,8 +175,6 @@ private:
   CMPC_Result<float> result;
   float trajAll[12 * 36];
   ros::NodeHandle _nh;
-  visualization_msgs::Marker marker[4];
-  ros::Publisher _vis_pub[4];
 
   CMPC_Jump jump_state;
 

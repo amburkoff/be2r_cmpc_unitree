@@ -295,18 +295,13 @@ void Body_Manager::setupStep()
 
 void Body_Manager::finalizeStep()
 {
-  ros::Duration delta_t = ros::Time::now() - _time_start;
-
   _legController->updateCommand(&spiCommand);
   _iterations++;
 
-  // _debug->all_legs_info.header.stamp = _zero_time + delta_t;
   _debug->all_legs_info.header.stamp = ros::Time::now();
 
   // put actual body info
-  _debug->body_info.pos_act.x = _stateEstimator->getResult().position.x();
-  _debug->body_info.pos_act.y = _stateEstimator->getResult().position.y();
-  _debug->body_info.pos_act.z = _stateEstimator->getResult().position.z();
+  _debug->body_info.pos_act = ros::toMsg(_stateEstimator->getResult().position);
 
   _debug->body_info.vel_act.linear.x = _stateEstimator->getResult().vBody[0];
   _debug->body_info.vel_act.linear.y = _stateEstimator->getResult().vBody[1];

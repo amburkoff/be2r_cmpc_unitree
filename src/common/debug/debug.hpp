@@ -36,7 +36,8 @@ public:
   geometry_msgs::Point last_p_stance[4] = {};
   geometry_msgs::Point last_p_local_stance[4] = {};
 
-  nav_msgs::Path visual_leg_traj_des[4];
+  nav_msgs::Path leg_traj_des[4];
+  geometry_msgs::Point leg_force[4];
 
 private:
   void _init();
@@ -46,6 +47,7 @@ private:
   void _drawLastStancePoints();
   void _drawEstimatedStancePLane();
   void _drawLegsDesiredTrajectory();
+  void _drawLegsForce();
 
   ros::NodeHandle _nh;
   const ros::Time _zero_time;
@@ -56,9 +58,10 @@ private:
   ros::Publisher _pub_all_legs_info;
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
-  ros::Publisher _pub_visual_last_p_stance;
-  ros::Publisher _pub_visual_estimated_stance_plane;
-  ros::Publisher _pub_visual_leg_des_traj[4];
+  ros::Publisher _pub_vis_last_p_stance;
+  ros::Publisher _pub_vis_estimated_stance_plane;
+  ros::Publisher _pub_vis_leg_des_traj[4];
+  ros::Publisher _pub_vis_leg_force[4];
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster world_odom_broadcaster;
 };
