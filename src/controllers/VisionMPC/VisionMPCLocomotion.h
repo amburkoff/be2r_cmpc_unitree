@@ -25,12 +25,11 @@ class VisionMPCLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
-                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  VisionMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
-           const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd, const grid_map::GridMap& height_map,
+           const grid_map::GridMap& height_map_raw);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -51,11 +50,11 @@ public:
 private:
   void _SetupCommand(ControlFSMData<float>& data);
   float _updateTrajHeight(size_t foot);
-  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
-                       const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw,
-                       int leg);
-  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected,
-                       int& y_idx_selected, const grid_map::GridMap& height_map, int leg);
+  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos, const grid_map::GridMap& height_map,
+                       const grid_map::GridMap& height_map_raw, int leg);
+
+  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
+                       const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw, int leg);
 
   ControlFSMData<float>* _data;
 
