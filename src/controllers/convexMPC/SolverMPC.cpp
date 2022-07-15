@@ -14,14 +14,14 @@
 
 //#define K_PRINT_EVERYTHING
 #define BIG_NUMBER 5e10
-//big enough to act like infinity, small enough to avoid numerical weirdness.
+// big enough to act like infinity, small enough to avoid numerical weirdness.
 
 RobotState rs;
 using Eigen::Dynamic;
 using std::cout;
 using std::endl;
 
-//qpOASES::real_t a;
+// qpOASES::real_t a;
 
 Matrix<fpt, Dynamic, 13> A_qp;
 Matrix<fpt, Dynamic, Dynamic> B_qp;
@@ -56,20 +56,11 @@ u8 real_allocated = 0;
 char var_elim[2000];
 char con_elim[2000];
 
-mfp* get_q_soln()
-{
-  return q_soln;
-}
+mfp* get_q_soln() { return q_soln; }
 
-s8 near_zero(fpt a)
-{
-  return (a < 0.01 && a > -.01);
-}
+s8 near_zero(fpt a) { return (a < 0.01 && a > -.01); }
 
-s8 near_one(fpt a)
-{
-  return near_zero(a - 1);
-}
+s8 near_one(fpt a) { return near_zero(a - 1); }
 void matrix_to_real(qpOASES::real_t* dst, Matrix<fpt, Dynamic, Dynamic> src, s16 rows, s16 cols)
 {
   s32 a = 0;
@@ -93,9 +84,7 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   Adt = expmm.block(0, 0, 13, 13);
   Bdt = expmm.block(0, 13, 13, 12);
 #ifdef K_PRINT_EVERYTHING
-  cout << "Adt: \n"
-       << Adt << "\nBdt:\n"
-       << Bdt << endl;
+  cout << "Adt: \n" << Adt << "\nBdt:\n" << Bdt << endl;
 #endif
   if (horizon > 19)
   {
@@ -111,7 +100,7 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
 
   for (s16 r = 0; r < horizon; r++)
   {
-    A_qp.block(13 * r, 0, 13, 13) = powerMats[r + 1]; //Adt.pow(r+1);
+    A_qp.block(13 * r, 0, 13, 13) = powerMats[r + 1]; // Adt.pow(r+1);
     for (s16 c = 0; c < horizon; c++)
     {
       if (r >= c)
@@ -123,9 +112,7 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   }
 
 #ifdef K_PRINT_EVERYTHING
-  cout << "AQP:\n"
-       << A_qp << "\nBQP:\n"
-       << B_qp << endl;
+  cout << "AQP:\n" << A_qp << "\nBQP:\n" << B_qp << endl;
 #endif
 }
 
@@ -161,7 +148,7 @@ void resize_qp_mats(s16 horizon)
   eye_12h.resize(12 * horizon, 12 * horizon);
   mcount += 12 * 12 * horizon;
 
-  //printf("realloc'd %d floating point numbers.\n",mcount);
+  // printf("realloc'd %d floating point numbers.\n",mcount);
   mcount = 0;
 
   A_qp.setZero();
@@ -173,7 +160,7 @@ void resize_qp_mats(s16 horizon)
   qH.setZero();
   eye_12h.setIdentity();
 
-  //TODO: use realloc instead of free/malloc on size changes
+  // TODO: use realloc instead of free/malloc on size changes
 
   if (real_allocated)
   {
@@ -219,7 +206,7 @@ void resize_qp_mats(s16 horizon)
   mcount += 12 * horizon;
   real_allocated = 1;
 
-  //printf("malloc'd %d floating point numbers.\n",mcount);
+  // printf("malloc'd %d floating point numbers.\n",mcount);
 
 #ifdef K_DEBUG
   printf("RESIZED MATRICES FOR HORIZON: %d\n", horizon);
@@ -229,13 +216,12 @@ void resize_qp_mats(s16 horizon)
 inline Matrix<fpt, 3, 3> cross_mat(Matrix<fpt, 3, 3> I_inv, Matrix<fpt, 3, 1> r)
 {
   Matrix<fpt, 3, 3> cm;
-  cm << 0.f, -r(2), r(1),
-      r(2), 0.f, -r(0),
-      -r(1), r(0), 0.f;
+  cm << 0.f, -r(2), r(1), r(2), 0.f, -r(0), -r(1), r(0), 0.f;
   return I_inv * cm;
 }
-//continuous time state space matrices.
-void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matrix<fpt, 3, 3> R_yaw, Matrix<fpt, 13, 13>& A, Matrix<fpt, 13, 12>& B, float x_drag)
+// continuous time state space matrices.
+void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matrix<fpt, 3, 3> R_yaw,
+                Matrix<fpt, 13, 13>& A, Matrix<fpt, 13, 12>& B, float x_drag)
 {
   A.setZero();
   A(3, 9) = 1.f;
@@ -258,13 +244,15 @@ void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matr
 
 void quat_to_rpy(Quaternionf q, Matrix<fpt, 3, 1>& rpy)
 {
-  //from my MATLAB implementation
+  // from my MATLAB implementation
 
-  //edge case!
+  // edge case!
   fpt as = t_min(-2. * (q.x() * q.z() - q.w() * q.y()), .99999);
-  rpy(0) = atan2(2.f * (q.x() * q.y() + q.w() * q.z()), sq(q.w()) + sq(q.x()) - sq(q.y()) - sq(q.z()));
+  rpy(0) =
+    atan2(2.f * (q.x() * q.y() + q.w() * q.z()), sq(q.w()) + sq(q.x()) - sq(q.y()) - sq(q.z()));
   rpy(1) = asin(as);
-  rpy(2) = atan2(2.f * (q.y() * q.z() + q.w() * q.x()), sq(q.w()) - sq(q.x()) - sq(q.y()) + sq(q.z()));
+  rpy(2) =
+    atan2(2.f * (q.y() * q.z() + q.w() * q.x()), sq(q.w()) - sq(q.x()) - sq(q.y()) + sq(q.z()));
 }
 void print_problem_setup(problem_setup* setup)
 {
@@ -309,46 +297,42 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   print_update_data(update, setup->horizon);
 #endif
 
-  //roll pitch yaw
+  // roll pitch yaw
   Matrix<fpt, 3, 1> rpy;
   quat_to_rpy(rs.q, rpy);
 
-  //initial state (13 state representation)
+  // initial state (13 state representation)
   x_0 << rpy(2), rpy(1), rpy(0), rs.p, rs.w, rs.v, -9.8f;
-  I_world = rs.R_yaw * rs.I_body * rs.R_yaw.transpose(); //original
-  //I_world = rs.R_yaw.transpose() * rs.I_body * rs.R_yaw;
-  //cout<<rs.R_yaw<<endl;
+  I_world = rs.R_yaw * rs.I_body * rs.R_yaw.transpose(); // original
+  // I_world = rs.R_yaw.transpose() * rs.I_body * rs.R_yaw;
+  // cout<<rs.R_yaw<<endl;
   ct_ss_mats(I_world, rs.m, rs.r_feet, rs.R_yaw, A_ct, B_ct_r, update->x_drag);
 
 #ifdef K_PRINT_EVERYTHING
-  cout << "Initial state: \n"
-       << x_0 << endl;
-  cout << "World Inertia: \n"
-       << I_world << endl;
-  cout << "A CT: \n"
-       << A_ct << endl;
-  cout << "B CT (simplified): \n"
-       << B_ct_r << endl;
+  cout << "Initial state: \n" << x_0 << endl;
+  cout << "World Inertia: \n" << I_world << endl;
+  cout << "A CT: \n" << A_ct << endl;
+  cout << "B CT (simplified): \n" << B_ct_r << endl;
 #endif
-  //QP matrices
+  // QP matrices
   c2qp(A_ct, B_ct_r, setup->dt, setup->horizon);
 
-  //weights
+  // weights
   Matrix<fpt, 13, 1> full_weight;
   for (u8 i = 0; i < 12; i++)
     full_weight(i) = update->weights[i];
   full_weight(12) = 0.f;
   S.diagonal() = full_weight.replicate(setup->horizon, 1);
 
-  //trajectory
+  // trajectory
   for (s16 i = 0; i < setup->horizon; i++)
   {
     for (s16 j = 0; j < 12; j++)
       X_d(13 * i + j, 0) = update->traj[12 * i + j];
   }
-  //cout<<"XD:\n"<<X_d<<endl;
+  // cout<<"XD:\n"<<X_d<<endl;
 
-  //note - I'm not doing the shifting here.
+  // note - I'm not doing the shifting here.
   s16 k = 0;
   for (s16 i = 0; i < setup->horizon; i++)
   {
@@ -366,11 +350,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   fpt mu = 1.f / setup->mu;
   Matrix<fpt, 5, 3> f_block;
 
-  f_block << mu, 0, 1.f,
-      -mu, 0, 1.f,
-      0, mu, 1.f,
-      0, -mu, 1.f,
-      0, 0, 1.f;
+  f_block << mu, 0, 1.f, -mu, 0, 1.f, 0, mu, 1.f, 0, -mu, 1.f, 0, 0, 1.f;
 
   for (s16 i = 0; i < setup->horizon * 4; i++)
   {
@@ -445,7 +425,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
         }
       }
     }
-    //if(new_vars != num_variables)
+    // if(new_vars != num_variables)
     if (1 == 1)
     {
       int var_ind[new_vars];
@@ -510,7 +490,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
         op.setToMPC();
         op.printLevel = qpOASES::PL_NONE;
         problem_red.setOptions(op);
-        //int_t nWSR = 50000;
+        // int_t nWSR = 50000;
 
         int rval = problem_red.init(H_red, g_red, A_red, NULL, NULL, lb_red, ub_red, nWSR);
         (void)rval;
@@ -616,6 +596,6 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   }
 
 #ifdef K_PRINT_EVERYTHING
-  //cout<<"fmat:\n"<<fmat<<endl;
+  // cout<<"fmat:\n"<<fmat<<endl;
 #endif
 }

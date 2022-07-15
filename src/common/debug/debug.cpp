@@ -6,8 +6,9 @@ Debug::Debug(ros::Time time_start)
 {
   z_offset = 0.f;
   _init();
-  _sub_ground_truth = _nh.subscribe("ground_truth_pose", 1, &Debug::_ground_truth_callback, this,
-                                    ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth =
+    _nh.subscribe("/raisim_unitree_ros_driver/ground_truth_pose", 1, &Debug::_ground_truth_callback,
+                  this, ros::TransportHints().tcpNoDelay(true));
 }
 
 void Debug::_init()
@@ -19,6 +20,7 @@ void Debug::_init()
 
 void Debug::_ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
+  ROS_INFO_ONCE("Get ground truth pose");
   _ground_trurh_pose = *msg;
 }
 

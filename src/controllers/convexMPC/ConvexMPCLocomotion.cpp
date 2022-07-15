@@ -485,10 +485,10 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
       if (foot == 3 || foot == 2)
       {
-        std::cout << "Foot z P0 = " << footSwingTrajectories[foot].getInitialPosition()[2]
-                  << std::endl;
-        std::cout << "Foot z PF = " << footSwingTrajectories[foot].getFinalPosition()[2]
-                  << std::endl;
+        //        std::cout << "Foot z P0 = " << footSwingTrajectories[foot].getInitialPosition()[2]
+        //                  << std::endl;
+        //        std::cout << "Foot z PF = " << footSwingTrajectories[foot].getFinalPosition()[2]
+        //                  << std::endl;
       }
 
       // temporary debug
@@ -626,7 +626,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
 
       // Update for WBC
-      std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
+      std::string names[4] = { "FR_hip", "FL_hip", "RR_hip", "RL_hip" };
       marker[foot].header.frame_id = names[foot];
       marker[foot].header.stamp = ros::Time::now();
       marker[foot].ns = "my_namespace";
