@@ -37,26 +37,20 @@ std::string getCurrentTimeAndDate()
   return ss.str();
 }
 
-/*!
- * Todo: do something better to keep track of where we are relative to the
- * config directory
- */
-std::string getConfigDirectoryPath() { return (THIS_COM "config/"); }
-
-/*!
- * Get the LCM URL with desired TTL.
- */
-std::string getLcmUrl(s64 ttl)
-{
-  assert(ttl >= 0 && ttl <= 255);
-  return "udpm://239.255.76.67:7667?ttl=" + std::to_string(ttl);
-}
-
 geometry_msgs::Point ros::toMsg(const Vec3<float>& data)
 {
   geometry_msgs::Point out;
   out.x = data(0);
   out.y = data(1);
   out.z = data(2);
+  return out;
+}
+
+Vec3<float> ros::fromMsg(const geometry_msgs::Point& data)
+{
+  Vec3<float> out;
+  out(0) = data.x;
+  out(1) = data.y;
+  out(2) = data.z;
   return out;
 }

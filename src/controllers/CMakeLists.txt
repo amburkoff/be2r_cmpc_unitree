@@ -9,6 +9,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 file(GLOB_RECURSE sources "convexMPC/*.cpp"
                           "CMPC/*.cpp"
                           "BackFlip/*.cpp"
+                          "BalanceController/*.cpp"
                           "VisionMPC/*.cpp")
 
 add_subdirectory(WBC)

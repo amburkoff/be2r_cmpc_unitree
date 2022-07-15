@@ -37,7 +37,7 @@ template<typename T>
 void PositionEstimator<T>::run()
 {
   T dt = 0.002;
-  float filter = 0.5;
+  float filter = 0.001;
   static uint16_t counter = 0;
   static float z = 0.056;
   static Vec3<float> vz_filtered(0, 0, 0);

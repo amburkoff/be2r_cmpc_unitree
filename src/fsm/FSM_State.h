@@ -7,8 +7,6 @@
 #include "Controllers/GaitScheduler.h"
 #include "TransitionData.h"
 
-// #include <BalanceController/BalanceController.hpp>
-
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
 // #include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
@@ -16,6 +14,7 @@
 // Normal robot states
 #define K_PASSIVE 0
 #define K_STAND_UP 1
+#define K_BALANCE_VBL 2
 #define K_LAY_DOWN 7
 #define K_BALANCE_STAND 3
 #define K_LOCOMOTION 4
@@ -52,21 +51,21 @@ enum class FSM_StateName
   VISION,
   BACKFLIP,
   FRONTJUMP,
-  TESTING
+  TESTING,
+  BALANCE_VBL
 };
 
 /**
  *
  */
-template<typename T>
+template <typename T>
 class FSM_State
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Generic constructor for all states
-  FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn,
-            std::string stateStringIn);
+  FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn, std::string stateStringIn);
 
   // Behavior to be carried out when entering a state
   virtual void onEnter() = 0; // {}
@@ -85,8 +84,7 @@ public:
 
   //
   void jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes);
-  void cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes, Vec3<double> kp_cartesian,
-                                 Vec3<double> kd_cartesian);
+  void cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes, Vec3<double> kp_cartesian, Vec3<double> kd_cartesian);
   void footstepHeuristicPlacement(int leg);
 
   Vec3<T> findAngles(uint8_t leg_num, Vec3<T> p_act);
@@ -117,7 +115,7 @@ public:
 
   // Pre controls safety checks
   bool checkSafeOrientation = false; // check roll and pitch
-  bool checkJointLimits = false; // check joint limits
+  bool checkJointLimits = false;     // check joint limits
 
   // Post control safety checks
   bool checkPDesFoot = false;         // do not command footsetps too far

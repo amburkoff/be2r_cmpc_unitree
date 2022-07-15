@@ -12,12 +12,8 @@
  * @param stateNameIn the enumerated state name
  * @param stateStringIn the string name of the current FSM state
  */
-template<typename T>
-FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn,
-                        std::string stateStringIn)
-  : _data(_controlFSMData)
-  , stateName(stateNameIn)
-  , stateString(stateStringIn)
+template <typename T>
+FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateNameIn, std::string stateStringIn) : _data(_controlFSMData), stateName(stateNameIn), stateString(stateStringIn)
 {
   transitionData.zero();
   std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn << std::endl;
@@ -30,7 +26,7 @@ FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateN
  * @param qDes desired joint position
  * @param dqDes desired joint velocity
  */
-template<typename T>
+template <typename T>
 void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
 {
   // MIT old params
@@ -38,11 +34,11 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
   kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
   _data->_legController->commands[leg].kpJoint = Eigen::DiagonalMatrix<T, 3>(
-    _data->userParameters->Kp_joint_0, _data->userParameters->Kp_joint_1,
-    _data->userParameters->Kp_joint_2);
+      _data->userParameters->Kp_joint_0, _data->userParameters->Kp_joint_1,
+      _data->userParameters->Kp_joint_2);
   _data->_legController->commands[leg].kdJoint = Eigen::DiagonalMatrix<T, 3>(
-    _data->userParameters->Kd_joint_0, _data->userParameters->Kd_joint_1,
-    _data->userParameters->Kd_joint_2);
+      _data->userParameters->Kd_joint_0, _data->userParameters->Kd_joint_1,
+      _data->userParameters->Kd_joint_2);
 
   _data->_legController->commands[leg].qDes = qDes;
   _data->_legController->commands[leg].qdDes = qdDes;
@@ -57,7 +53,7 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
  * @param kp_cartesian P gains
  * @param kd_cartesian D gains
  */
-template<typename T>
+template <typename T>
 void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes,
                                              Vec3<double> kp_cartesian, Vec3<double> kd_cartesian)
 {
@@ -135,7 +131,7 @@ void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes
  * Gait independent formulation for choosing appropriate GRF and step locations
  * as well as converting them to leg controller understandable values.
  */
-template<typename T>
+template <typename T>
 void FSM_State<T>::runControls()
 {
   // This option should be set from the user interface or autonomously
@@ -211,99 +207,96 @@ void FSM_State<T>::runControls()
 // template <typename T>
 // void FSM_State<T>::runBalanceController()
 // {
-//   double minForce = 25;
-//   double maxForce = 500;
-//   double contactStateScheduled[4]; // = {1, 1, 1, 1};
-//   for (int i = 0; i < 4; i++)
-//   {
-//     contactStateScheduled[i] = _data->_gaitScheduler->gaitData.contactStateScheduled(i);
-//   }
+// double minForce = 25;
+// double maxForce = 500;
+// double contactStateScheduled[4]; // = {1, 1, 1, 1};
+// for (int i = 0; i < 4; i++)
+// {
+//   contactStateScheduled[i] = _data->_gaitScheduler->gaitData.contactStateScheduled(i);
+// }
 
-//   double minForces[4]; // = {minForce, minForce, minForce, minForce};
-//   double maxForces[4]; // = {maxForce, maxForce, maxForce, maxForce};
-//   for (int leg = 0; leg < 4; leg++)
-//   {
-//     minForces[leg] = contactStateScheduled[leg] * minForce;
-//     maxForces[leg] = contactStateScheduled[leg] * maxForce;
-//   }
+// double minForces[4]; // = {minForce, minForce, minForce, minForce};
+// double maxForces[4]; // = {maxForce, maxForce, maxForce, maxForce};
+// for (int leg = 0; leg < 4; leg++)
+// {
+//   minForces[leg] = contactStateScheduled[leg] * minForce;
+//   maxForces[leg] = contactStateScheduled[leg] * maxForce;
+// }
 
-//   double COM_weights_stance[3] = {1, 1, 10};
-//   double Base_weights_stance[3] = {20, 10, 10};
-//   double pFeet[12], p_des[3], p_act[3], v_des[3], v_act[3], O_err[3], rpy[3], omegaDes[3];
-//   double se_xfb[13];
-//   double kpCOM[3], kdCOM[3], kpBase[3], kdBase[3];
+// double COM_weights_stance[3] = {1, 1, 10};
+// double Base_weights_stance[3] = {20, 10, 10};
+// double pFeet[12], p_des[3], p_act[3], v_des[3], v_act[3], O_err[3], rpy[3], omegaDes[3];
+// double se_xfb[13];
+// double kpCOM[3], kdCOM[3], kpBase[3], kdBase[3];
 
-//   for (int i = 0; i < 4; i++)
-//   {
-//     se_xfb[i] = (double)_data->_stateEstimator->getResult().orientation(i);
-//   }
-//   // se_xfb[3] = 1.0;
-//   for (int i = 0; i < 3; i++)
-//   {
-//     rpy[i] = 0; //(double)_data->_stateEstimator->getResult().rpy(i);
-//     p_des[i] = (double)_data->_stateEstimator->getResult().position(i);
-//     p_act[i] = (double)_data->_stateEstimator->getResult().position(i);
-//     omegaDes[i] = 0; //(double)_data->_stateEstimator->getResult().omegaBody(i);
-//     v_act[i] = (double)_data->_stateEstimator->getResult().vBody(i);
-//     v_des[i] = (double)_data->_stateEstimator->getResult().vBody(i);
+// for (int i = 0; i < 4; i++)
+// {
+//   se_xfb[i] = (double)_data->_stateEstimator->getResult().orientation(i);
+// }
+// // se_xfb[3] = 1.0;
+// for (int i = 0; i < 3; i++)
+// {
+//   rpy[i] = 0; //(double)_data->_stateEstimator->getResult().rpy(i);
+//   p_des[i] = (double)_data->_stateEstimator->getResult().position(i);
+//   p_act[i] = (double)_data->_stateEstimator->getResult().position(i);
+//   omegaDes[i] = 0; //(double)_data->_stateEstimator->getResult().omegaBody(i);
+//   v_act[i] = (double)_data->_stateEstimator->getResult().vBody(i);
+//   v_des[i] = (double)_data->_stateEstimator->getResult().vBody(i);
 
-//     se_xfb[4 + i] = (double)_data->_stateEstimator->getResult().position(i);
-//     se_xfb[7 + i] = (double)_data->_stateEstimator->getResult().omegaBody(i);
-//     se_xfb[10 + i] = (double)_data->_stateEstimator->getResult().vBody(i);
+//   se_xfb[4 + i] = (double)_data->_stateEstimator->getResult().position(i);
+//   se_xfb[7 + i] = (double)_data->_stateEstimator->getResult().omegaBody(i);
+//   se_xfb[10 + i] = (double)_data->_stateEstimator->getResult().vBody(i);
 
-//     // Set the translational and orientation gains
-//     kpCOM[i] = (double)_data->controlParameters->kpCOM(i);
-//     kdCOM[i] = (double)_data->controlParameters->kdCOM(i);
-//     kpBase[i] = (double)_data->controlParameters->kpBase(i);
-//     kdBase[i] = (double)_data->controlParameters->kdBase(i);
-//   }
+//   // Set the translational and orientation gains
+//   kpCOM[i] = (double)_data->controlParameters->kpCOM(i);
+//   kdCOM[i] = (double)_data->controlParameters->kdCOM(i);
+//   kpBase[i] = (double)_data->controlParameters->kpBase(i);
+//   kdBase[i] = (double)_data->controlParameters->kdBase(i);
+// }
 
-//   Vec3<T> pFeetVec;
-//   Vec3<T> pFeetVecCOM;
-//   // Get the foot locations relative to COM
-//   for (int leg = 0; leg < 4; leg++)
-//   {
-//     computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q,
-//     (Mat3<T>*)nullptr, &pFeetVec, 1);
-//     //pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
-//     //(_data->_quadruped->getHipLocation(leg) + pFeetVec);
+// Vec3<T> pFeetVec;
+// Vec3<T> pFeetVecCOM;
+// // Get the foot locations relative to COM
+// for (int leg = 0; leg < 4; leg++)
+// {
+//   computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, 1);
+//   //pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
+//   //(_data->_quadruped->getHipLocation(leg) + pFeetVec);
 
-//     pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
-//     (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
+//   pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() * (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
 
-//     pFeet[leg * 3] = (double)pFeetVecCOM[0];
-//     pFeet[leg * 3 + 1] = (double)pFeetVecCOM[1];
-//     pFeet[leg * 3 + 2] = (double)pFeetVecCOM[2];
-//   }
+//   pFeet[leg * 3] = (double)pFeetVecCOM[0];
+//   pFeet[leg * 3 + 1] = (double)pFeetVecCOM[1];
+//   pFeet[leg * 3 + 2] = (double)pFeetVecCOM[2];
+// }
 
-//   balanceController.set_alpha_control(0.01);
-//   balanceController.set_friction(0.5);
-//   balanceController.set_mass(46.0);
-//   balanceController.set_wrench_weights(COM_weights_stance, Base_weights_stance);
-//   balanceController.set_PDgains(kpCOM, kdCOM, kpBase, kdBase);
-//   balanceController.set_desiredTrajectoryData(rpy, p_des, omegaDes, v_des);
-//   balanceController.SetContactData(contactStateScheduled, minForces, maxForces);
-//   balanceController.updateProblemData(se_xfb, pFeet, p_des, p_act, v_des, v_act, O_err, 0.0);
+// balanceController.set_alpha_control(0.01);
+// balanceController.set_friction(0.5);
+// balanceController.set_mass(46.0);
+// balanceController.set_wrench_weights(COM_weights_stance, Base_weights_stance);
+// balanceController.set_PDgains(kpCOM, kdCOM, kpBase, kdBase);
+// balanceController.set_desiredTrajectoryData(rpy, p_des, omegaDes, v_des);
+// balanceController.SetContactData(contactStateScheduled, minForces, maxForces);
+// balanceController.updateProblemData(se_xfb, pFeet, p_des, p_act, v_des, v_act, O_err, 0.0);
 
-//   double fOpt[12];
-//   balanceController.solveQP_nonThreaded(fOpt);
+// double fOpt[12];
+// balanceController.solveQP_nonThreaded(fOpt);
 
-//   // Publish the results over LCM
-//   balanceController.publish_data_lcm();
+// // Publish the results over LCM
+// // balanceController.publish_data_lcm();
 
-//   // Copy the results to the feed forward forces
-//   for (int leg = 0; leg < 4; leg++)
-//   {
-//     footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 +
-//     2];
-//   }
+// // Copy the results to the feed forward forces
+// for (int leg = 0; leg < 4; leg++)
+// {
+//   footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
+// }
 // }
 
 /**
  * Gait independent formulation for choosing appropriate GRF and step locations
  * as well as converting them to leg controller understandable values.
  */
-template<typename T>
+template <typename T>
 void FSM_State<T>::turnOnAllSafetyChecks()
 {
   // Pre controls safety checks
@@ -319,7 +312,7 @@ void FSM_State<T>::turnOnAllSafetyChecks()
 /**
  *
  */
-template<typename T>
+template <typename T>
 void FSM_State<T>::turnOffAllSafetyChecks()
 {
   // Pre controls safety checks
@@ -332,7 +325,7 @@ void FSM_State<T>::turnOffAllSafetyChecks()
   checkJointLimits = false;
 }
 
-template<typename T>
+template <typename T>
 Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
 {
   Vec3<T> q_eval;
@@ -384,8 +377,8 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
     q_eval(1) = Arad - a1_rad;
     q_eval(2) = -(M_PI - a_rad);
 
-    q_eval(1) = - q_eval(1);
-    q_eval(2) = - q_eval(2);
+    q_eval(1) = -q_eval(1);
+    q_eval(2) = -q_eval(2);
     break;
 
   // Front Left

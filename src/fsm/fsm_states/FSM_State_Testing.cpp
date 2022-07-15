@@ -353,21 +353,26 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
   // Switch FSM control mode
   switch ((int)this->_data->userParameters->FSM_State)
   {
-    case K_TESTING:
-      break;
+  case K_TESTING:
+    break;
 
-    case K_STAND_UP:
-      // Requested switch to Stand Up
-      this->nextStateName = FSM_StateName::STAND_UP;
-      break;
+  case K_STAND_UP:
+    // Requested switch to Stand Up
+    this->nextStateName = FSM_StateName::STAND_UP;
+    break;
 
-    case K_PASSIVE: // normal c
-      this->nextStateName = FSM_StateName::PASSIVE;
-      break;
+  case K_PASSIVE: // normal c
+    this->nextStateName = FSM_StateName::PASSIVE;
+    break;
 
-    default:
-      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
-                << this->_data->userParameters->FSM_State << std::endl;
+  case K_BALANCE_STAND: 
+    this->nextStateName = FSM_StateName::BALANCE_STAND;
+    break;
+
+  default:
+    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
+              << K_TESTING << " to "
+              << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -394,8 +399,12 @@ TransitionData<T> FSM_State_Testing<T>::transition()
       this->transitionData.done = true;
       break;
 
-    default:
-      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
+  case FSM_StateName::BALANCE_STAND:
+    this->transitionData.done = true;
+    break;
+
+  default:
+    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM

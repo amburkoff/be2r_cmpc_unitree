@@ -16,9 +16,8 @@ using namespace std;
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template<typename T>
-FSM_State_BalanceStand<T>::FSM_State_BalanceStand(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::BALANCE_STAND, "BALANCE_STAND")
+template <typename T>
+FSM_State_BalanceStand<T>::FSM_State_BalanceStand(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::BALANCE_STAND, "BALANCE_STAND")
 {
   // Set the pre controls safety checks
   this->turnOnAllSafetyChecks();
@@ -87,76 +86,87 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
   // Switch FSM control mode
   switch ((int)this->_data->userParameters->FSM_State)
   {
-    case K_BALANCE_STAND:
-      // Normal operation for state based transitions
+  case K_BALANCE_STAND:
+    // Normal operation for state based transitions
 
-      // Need a working state estimator for this
-      /*if (velocity > v_max) {
-          // Notify the State of the upcoming next state
-          this->nextStateName = FSM_StateName::LOCOMOTION;
+    // Need a working state estimator for this
+    /*if (velocity > v_max) {
+        // Notify the State of the upcoming next state
+        this->nextStateName = FSM_StateName::LOCOMOTION;
 
-          // Transition instantaneously to locomotion state on request
-          this->transitionDuration = 0.0;
+        // Transition instantaneously to locomotion state on request
+        this->transitionDuration = 0.0;
 
-          // Set the next gait in the scheduler to
-          this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+        // Set the next gait in the scheduler to
+        this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
 
-        }*/
+      }*/
 
-      // TEST: in place to show automatic non user requested transitions
-      /*if (_iter >= 5458) {
-          this->nextStateName = FSM_StateName::LOCOMOTION;
-          this->_data->userParameters->FSM_State = K_LOCOMOTION;
-          this->transitionDuration = 0.0;
-          this->_data->_gaitScheduler->gaitData._nextGait =
-              GaitType::AMBLE;  // TROT; // Or get whatever is in
-                                // main_control_settings
-          _iter = 0;
-        }*/
-      break;
+    // TEST: in place to show automatic non user requested transitions
+    /*if (_iter >= 5458) {
+        this->nextStateName = FSM_StateName::LOCOMOTION;
+        this->_data->userParameters->FSM_State = K_LOCOMOTION;
+        this->transitionDuration = 0.0;
+        this->_data->_gaitScheduler->gaitData._nextGait =
+            GaitType::AMBLE;  // TROT; // Or get whatever is in
+                              // main_control_settings
+        _iter = 0;
+      }*/
+    break;
 
-    case K_LOCOMOTION:
-      // Requested change to balance stand
-      this->nextStateName = FSM_StateName::LOCOMOTION;
+  case K_LOCOMOTION:
+    // Requested change to balance stand
+    this->nextStateName = FSM_StateName::LOCOMOTION;
 
-      // Transition instantaneously to locomotion state on request
-      this->transitionDuration = 0.0;
+    // Transition instantaneously to locomotion state on request
+    this->transitionDuration = 0.0;
 
-      // Set the next gait in the scheduler to
-      this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
-      break;
+    // Set the next gait in the scheduler to
+    this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+    break;
 
-    case K_PASSIVE:
-      this->nextStateName = FSM_StateName::PASSIVE;
-      // Transition time is immediate
-      this->transitionDuration = 0.0;
+  case K_PASSIVE:
+    this->nextStateName = FSM_StateName::PASSIVE;
+    // Transition time is immediate
+    this->transitionDuration = 0.0;
+    break;
 
-      break;
+  case K_STAND_UP:
+    this->nextStateName = FSM_StateName::STAND_UP;
+    // Transition time is immediate
+    this->transitionDuration = 0.0;
+    break;
 
-    case K_VISION:
-      this->nextStateName = FSM_StateName::VISION;
-      // Transition time is immediate
-      this->transitionDuration = 0.0;
-      break;
+  case K_VISION:
+    this->nextStateName = FSM_StateName::VISION;
+    // Transition time is immediate
+    this->transitionDuration = 0.0;
+    break;
 
-    case K_RECOVERY_STAND:
-      this->nextStateName = FSM_StateName::RECOVERY_STAND;
-      // Transition time is immediate
-      this->transitionDuration = 0.0;
-      break;
+  case K_RECOVERY_STAND:
+    this->nextStateName = FSM_StateName::RECOVERY_STAND;
+    // Transition time is immediate
+    this->transitionDuration = 0.0;
+    break;
 
-    case K_BACKFLIP:
-      this->nextStateName = FSM_StateName::BACKFLIP;
-      this->transitionDuration = 0.;
-      break;
+  case K_BACKFLIP:
+    this->nextStateName = FSM_StateName::BACKFLIP;
+    this->transitionDuration = 0.;
+    break;
 
-    case K_LAY_DOWN:
-      this->nextStateName = FSM_StateName::LAYDOWN;
-      break;
+  case K_TESTING:
+    this->nextStateName = FSM_StateName::TESTING;
+    this->transitionDuration = 0.;
+    break;
 
-    default:
-      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_BALANCE_STAND << " to "
-                << this->_data->userParameters->FSM_State << std::endl;
+  case K_LAY_DOWN:
+    this->nextStateName = FSM_StateName::LAYDOWN;
+    break;
+
+  default:
+    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
+              << K_BALANCE_STAND << " to "
+              << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Return the next state name to the FSM
@@ -205,13 +215,21 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
       this->transitionData.done = true;
       break;
 
-    case FSM_StateName::VISION:
-      this->transitionData.done = true;
-      break;
+  case FSM_StateName::STAND_UP:
+    this->transitionData.done = true;
+    break;
 
-    case FSM_StateName::LAYDOWN:
-      this->transitionData.done = true;
-      break;
+  case FSM_StateName::VISION:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::TESTING:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::LAYDOWN:
+    this->transitionData.done = true;
+    break;
 
     default:
       std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
@@ -240,10 +258,10 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   _wbc_data->vBody_des.setZero();
   _wbc_data->aBody_des.setZero();
 
+  _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; //original
   _wbc_data->pBody_RPY_des[0] = 0;
   _wbc_data->pBody_RPY_des[1] = 0;
-  _wbc_data->pBody_RPY_des[2] = 0;
-  // _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; //original
+  // _wbc_data->pBody_RPY_des[2] = 0;
 
   // cout << "init rpy: " << _ini_body_ori_rpy << endl;
 

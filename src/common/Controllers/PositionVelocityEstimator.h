@@ -39,6 +39,8 @@ private:
   Eigen::Matrix<T, 6, 3> _B2;
   Eigen::Matrix<T, 28, 18> _C;
   Eigen::Matrix<T, 24, 6> _C_2;
+
+  float _getLocalBodyHeight();
 };
 
 /*!

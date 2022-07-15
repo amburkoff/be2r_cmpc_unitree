@@ -12,7 +12,7 @@
 // #define GAIT_PERIOD 14
 #define HORIZON 14
 
-#define GAIT_PERIOD 16
+#define GAIT_PERIOD 18
 // #define GAIT_PERIOD 22
 // #define GAIT_PERIOD 34 //1000 Hz
 
@@ -217,13 +217,9 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   {
     des_pitch = 0;
   }
-  // else if ((p_fm(2) - p_bm(2)) < 0.005)
-  // {
-  //   des_pitch = 0;
-  //   ROS_INFO("TOO LITTLE DIFF");
-  // }
   else
   {
+    //TODO адекватную оценку наклона корпуса
     des_pitch = des_pitch * (1 - 0.7) - 1.2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
   }
 
@@ -245,7 +241,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
   //put to target
   _pitch_des = des_pitch;
-  data.debug->all_legs_info.leg[0].force_raw = des_pitch;
 
   // Integral-esque pitche and roll compensation
   if (fabs(v_robot[0]) > .2) // avoid dividing by zero
@@ -348,7 +343,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-    // Pf[2] = 0.0;
     Pf[2] = z_des[i];
 
     footSwingTrajectories[i].setFinalPosition(Pf);
@@ -395,10 +389,11 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       is_stance[foot] = 1;
 
       //foot position in world frame at contanct
-      // pDesFootWorldStance[foot] = pFoot[foot] + footSwingTrajectories[foot].getPosition();
       pDesFootWorldStance[foot] = pFoot[foot];
       // pDesFootWorldStance[foot] = data._legController->datas[foot].p;
       // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
+      data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
+      data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p);
     }
 
     // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]
@@ -433,6 +428,22 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
         z_des[foot] = pFoot[foot][2];
       }
 
+      //for visual
+      geometry_msgs::PoseStamped pose_traj;
+      Vec3<float> p_des_traj(0, 0, 0);
+      data.debug->leg_traj_des[foot].poses.clear();
+      data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
+
+      for (size_t i = 0; i < 11; i++)
+      {
+        footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + ((1.0 - swingState) / 11.0 * (float)i), swingTimes[foot]);
+        p_des_traj = footSwingTrajectories[foot].getPosition();
+
+        pose_traj.pose.position = ros::toMsg(p_des_traj);
+
+        data.debug->leg_traj_des[foot].poses.push_back(pose_traj);
+      }
+
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
       // footSwingTrajectories[foot].computeStairsSwingTrajectoryBezier(swingState, swingTimes[foot]);
 
@@ -448,32 +459,12 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       vFoot_des[foot] = vDesFootWorld;
       aFoot_des[foot] = footSwingTrajectories[foot].getAcceleration();
 
-      data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
-      data.debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
-      data.debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
-
-      data.debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
-      data.debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
-      data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
-
-      data.debug->all_legs_info.leg[foot].p_w_act.x = pFoot[foot][0];
-      data.debug->all_legs_info.leg[foot].p_w_act.y = pFoot[foot][1];
-      data.debug->all_legs_info.leg[foot].p_w_act.z = pFoot[foot][2];
-      // data.debug->all_legs_info.leg[foot].p_w_act.x = pActFootWorld[0];
-      // data.debug->all_legs_info.leg[foot].p_w_act.y = pActFootWorld[1];
-      // data.debug->all_legs_info.leg[foot].p_w_act.z = pActFootWorld[2];
-
-      data.debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
-      data.debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
-      data.debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
-
-      data.debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorld[0];
-      data.debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorld[1];
-      data.debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorld[2];
-
-      data.debug->all_legs_info.leg[foot].v_w_des.x = vDesFootWorld[0];
-      data.debug->all_legs_info.leg[foot].v_w_des.y = vDesFootWorld[1];
-      data.debug->all_legs_info.leg[foot].v_w_des.z = vDesFootWorld[2];
+      data.debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesLeg);
+      data.debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesLeg);
+      data.debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(pFoot[foot]);
+      data.debug->all_legs_info.leg.at(foot).v_w_act = ros::toMsg(vActFootWorld);
+      data.debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(pDesFootWorld);
+      data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
 
       if (!data.userParameters->use_wbc)
       {
@@ -488,13 +479,15 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     {
       firstSwing[foot] = true;
 
+      data.debug->leg_traj_des[foot].poses.clear();
+      data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
+
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> vDesFootWorld(0, 0, 0);
       // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorldStance[foot] - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].p + data._quadruped->getHipLocation(foot)) + seResult.position;
       Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].v) + seResult.vWorld;
 
       if (!data.userParameters->use_wbc) // wbc off
@@ -517,32 +510,18 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
       se_contactState[foot] = contactState;
 
-      data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
-      data.debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
-      data.debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
-
-      data.debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
-      data.debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
-      data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
-
-      data.debug->all_legs_info.leg[foot].p_w_act.x = pFoot[foot][0];
-      data.debug->all_legs_info.leg[foot].p_w_act.y = pFoot[foot][1];
-      data.debug->all_legs_info.leg[foot].p_w_act.z = pFoot[foot][2];
-
-      data.debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
-      data.debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
-      data.debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
+      data.debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesLeg);
+      data.debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesLeg);
+      data.debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(pFoot[foot]);
+      data.debug->all_legs_info.leg.at(foot).v_w_act = ros::toMsg(vActFootWorld);
+      data.debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(pDesFootWorld);
+      data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
 
       // data.debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorldStance[foot][0];
       // data.debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorldStance[foot][1];
       // data.debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorldStance[foot][2];
-      data.debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorld[0];
-      data.debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorld[1];
-      data.debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorld[2];
 
-      data.debug->all_legs_info.leg[foot].v_w_des.x = vDesFootWorld[0];
-      data.debug->all_legs_info.leg[foot].v_w_des.y = vDesFootWorld[1];
-      data.debug->all_legs_info.leg[foot].v_w_des.z = vDesFootWorld[2];
+      data.debug->leg_force[foot] = ros::toMsg(f_ff[foot]);
     }
   }
 
@@ -561,7 +540,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.;
-  // pBody_RPY_des[1] = 0.;
   pBody_RPY_des[1] = _pitch_des;
   pBody_RPY_des[2] = _yaw_des;
 

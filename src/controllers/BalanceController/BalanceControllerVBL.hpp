@@ -44,27 +44,22 @@ public:
   ~BalanceControllerVBL(){};
 
   // use new kinematics measurements to update QP
-  void updateProblemData(double* xfb_in, double* p_feet_in, double* p_feet_desired_in,
-                         double* rpy_des_in, double* rpy_act_in);
+  void updateProblemData(double* xfb_in, double* p_feet_in, double* p_feet_desired_in, double* rpy_des_in, double* rpy_act_in);
 
-  void SetContactData(double* contact_state_in, double* min_forces_in, double* max_forces_in,
-                      double threshold, int stance_legs_in);
+  void SetContactData(double* contact_state_in, double* min_forces_in, double* max_forces_in, double threshold, int stance_legs_in);
 
   // calculate the QP, return solution
   void solveQP(double* xOpt);
   void solveQP_nonThreaded(double* xOpt);
 
   // update desired COM and orientation setpoints
-  void set_desiredTrajectoryData(double* rpy_des_in, double* p_des_in, double* omegab_des_in,
-                                 double* v_des_in);
+  void set_desiredTrajectoryData(double* rpy_des_in, double* p_des_in, double* omegab_des_in, double* v_des_in);
   void set_reference_GRF(double* f_ref_in);
 
   // configure gains, QP weights, force limits, world parameters
   void set_RobotLimits();
   void set_worldData();
-  void set_LQR_weights(double* x_weights_in, double* xdot_weights_in, double* R_weights_in,
-                       double* omega_weights_in, double alpha_control_in,
-                       double beta_control_in); // new
+  void set_LQR_weights(double* x_weights_in, double* xdot_weights_in, double* R_weights_in, double* omega_weights_in, double alpha_control_in, double beta_control_in); // new
   void set_friction(double mu_in);
   void set_mass(double mass_in);
   void set_inertia(double Ixx, double Iyy, double Izz);

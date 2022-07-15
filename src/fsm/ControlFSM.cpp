@@ -47,10 +47,11 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
   statesList.vision = new FSM_State_Vision<T>(&data);
   statesList.testing = new FSM_State_Testing<T>(&data);
   statesList.recoveryStand = new FSM_State_RecoveryStand<T>(&data);
+  statesList.backflip = new FSM_State_BackFlip<T>(&data);
+  statesList.balance_vbl = new FSM_State_BalanceVBL<T>(&data);
 
   // statesList.jointPD = new FSM_State_JointPD<T>(&data);
   // statesList.impedanceControl = new FSM_State_ImpedanceControl<T>(&data);
-  // statesList.backflip = new FSM_State_BackFlip<T>(&data);
   // statesList.frontJump = new FSM_State_FrontJump<T>(&data);
 
   safetyChecker = new SafetyChecker<T>(&data);
@@ -261,6 +262,9 @@ FSM_State<T>* ControlFSM<T>::getNextState(FSM_StateName stateName)
     case FSM_StateName::BALANCE_STAND:
       return statesList.balanceStand;
 
+    case FSM_StateName::BALANCE_VBL:
+      return statesList.balance_vbl;
+
     case FSM_StateName::LAYDOWN:
       return statesList.laydown;
 
@@ -276,8 +280,8 @@ FSM_State<T>* ControlFSM<T>::getNextState(FSM_StateName stateName)
     case FSM_StateName::VISION:
       return statesList.vision;
 
-      // case FSM_StateName::BACKFLIP:
-      //   return statesList.backflip;
+  case FSM_StateName::BACKFLIP:
+    return statesList.backflip;
 
       // case FSM_StateName::FRONTJUMP:
       //   return statesList.frontJump;

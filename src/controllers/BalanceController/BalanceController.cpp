@@ -21,8 +21,7 @@ Cheetah-3-Documentation-Control:
 
 using namespace std;
 
-BalanceController::BalanceController()
-  : QProblemObj_qpOASES(NUM_VARIABLES_QP, NUM_CONSTRAINTS_QP)
+BalanceController::BalanceController() : QProblemObj_qpOASES(NUM_VARIABLES_QP, NUM_CONSTRAINTS_QP)
 {
   // *!! It seems like this next block of 5 lines does not actually do anything,
   // I had to set print level in the OptimizationThread class
@@ -162,7 +161,10 @@ BalanceController::BalanceController()
   qp_not_init = 1.0;
 }
 
-void BalanceController::testFunction() { printf("testfun "); }
+void BalanceController::testFunction()
+{
+  printf("testfun ");
+}
 
 /*
 void BalanceController::set_base_support_flag(double sflag)
@@ -188,6 +190,8 @@ void BalanceController::updateProblemData(double* xfb_in, double* p_feet_in, dou
   copy_Array_to_Eigen(omega_b_world, xfb_in, 3, 7);
   copy_Array_to_Eigen(xdot_COM_world, xfb_in, 3, 10);
   copy_Array_to_Eigen(p_feet, p_feet_in, 12, 0);
+
+  // cout << "quat: " <<  quat_b_world << endl;
 
   yaw_act = yaw_act_in;
 
@@ -252,9 +256,7 @@ void BalanceController::solveQP_nonThreaded(double* xOpt)
   // &cpu_time
   if (qp_not_init == 1.0)
   {
-    qp_exit_flag =
-      QProblemObj_qpOASES.init(H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES,
-                               ubA_qpOASES, nWSR_qpOASES, &cpu_time, xOpt_initialGuess);
+    qp_exit_flag = QProblemObj_qpOASES.init(H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES, ubA_qpOASES, nWSR_qpOASES, &cpu_time, xOpt_initialGuess);
     qp_not_init = 0.0;
 
     nWSR_initial = nWSR_qpOASES;
@@ -262,9 +264,7 @@ void BalanceController::solveQP_nonThreaded(double* xOpt)
   }
   else
   {
-    qp_exit_flag = QProblemObj_qpOASES.init(
-      H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES, ubA_qpOASES,
-      nWSR_qpOASES, &cpu_time, xOpt_qpOASES, yOpt_qpOASES, &guessedBounds, &guessedConstraints);
+    qp_exit_flag = QProblemObj_qpOASES.init(H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES, ubA_qpOASES, nWSR_qpOASES, &cpu_time, xOpt_qpOASES, yOpt_qpOASES, &guessedBounds, &guessedConstraints);
   }
 
   QProblemObj_qpOASES.getPrimalSolution(xOpt_qpOASES);
@@ -338,20 +338,16 @@ void BalanceController::calc_PDcontrol()
   // calculate error in yaw rotated coordinates
   error_x_rotated = R_yaw_act.transpose() * (x_COM_world_desired - x_COM_world);
   error_dx_rotated = R_yaw_act.transpose() * (xdot_COM_world_desired - xdot_COM_world);
-  matrixLogRot(R_yaw_act.transpose() * R_b_world_desired * R_b_world.transpose() * R_yaw_act,
-               orientation_error);
+  matrixLogRot(R_yaw_act.transpose() * R_b_world_desired * R_b_world.transpose() * R_yaw_act, orientation_error);
   error_dtheta_rotated = R_yaw_act.transpose() * (omega_b_world_desired - omega_b_world);
 
   xddot_COM_world_desired(0) += Kp_COMx * error_x_rotated(0) + Kd_COMx * error_dx_rotated(0);
   xddot_COM_world_desired(1) += Kp_COMy * error_x_rotated(1) + Kd_COMy * error_dx_rotated(1);
   xddot_COM_world_desired(2) += Kp_COMz * error_x_rotated(2) + Kd_COMz * error_dx_rotated(2);
 
-  omegadot_b_world_desired(0) =
-    Kp_Base_roll * orientation_error(0) + Kd_Base_roll * error_dtheta_rotated(0);
-  omegadot_b_world_desired(1) =
-    Kp_Base_pitch * orientation_error(1) + Kd_Base_pitch * error_dtheta_rotated(1);
-  omegadot_b_world_desired(2) =
-    Kp_Base_yaw * orientation_error(2) + Kd_Base_yaw * error_dtheta_rotated(2);
+  omegadot_b_world_desired(0) = Kp_Base_roll * orientation_error(0) + Kd_Base_roll * error_dtheta_rotated(0);
+  omegadot_b_world_desired(1) = Kp_Base_pitch * orientation_error(1) + Kd_Base_pitch * error_dtheta_rotated(1);
+  omegadot_b_world_desired(2) = Kp_Base_yaw * orientation_error(2) + Kd_Base_yaw * error_dtheta_rotated(2);
 
   // Compute orientation error using (4) of [R1] and Proposition 2.5 of [R2]
 
@@ -362,7 +358,9 @@ void BalanceController::calc_PDcontrol()
   // See RHS of Equation (5), [R1]
   b_control << mass * (xddot_COM_world_desired + gravity), II * omegadot_b_world_desired;
 
-  // std::cout << "orientation_error = " << orientation_error << "\n";
+  std::cout << "orientation_error = " << orientation_error << "\n";
+
+  std::cout << "error_x_rot: " << error_x_rotated << std::endl;
 }
 
 void BalanceController::calc_constraint_check()
@@ -406,7 +404,7 @@ void BalanceController::calc_H_qpOASES()
 {
   // Use the A matrix to compute the QP cost matrix H
   H_eigen =
-    2 * (A_control.transpose() * S_control * A_control + (alpha_control + 1e-3) * W_control);
+      2 * (A_control.transpose() * S_control * A_control + (alpha_control + 1e-3) * W_control);
 
   // Copy to real_t array (qpOASES data type)
   copy_Eigen_to_real_t(H_qpOASES, H_eigen, NUM_VARIABLES_QP, NUM_VARIABLES_QP);
@@ -422,13 +420,13 @@ void BalanceController::calc_A_qpOASES()
   for (int i = 0; i < NUM_CONTACT_POINTS; i++)
   {
     C_control.block<1, 3>(5 * i + 0, 3 * i)
-      << -mu_friction * direction_normal_flatGround.transpose() + t1x.transpose();
+        << -mu_friction * direction_normal_flatGround.transpose() + t1x.transpose();
     C_control.block<1, 3>(5 * i + 1, 3 * i)
-      << -mu_friction * direction_normal_flatGround.transpose() + t2y.transpose();
+        << -mu_friction * direction_normal_flatGround.transpose() + t2y.transpose();
     C_control.block<1, 3>(5 * i + 2, 3 * i)
-      << mu_friction * direction_normal_flatGround.transpose() + t2y.transpose();
+        << mu_friction * direction_normal_flatGround.transpose() + t2y.transpose();
     C_control.block<1, 3>(5 * i + 3, 3 * i)
-      << mu_friction * direction_normal_flatGround.transpose() + t1x.transpose();
+        << mu_friction * direction_normal_flatGround.transpose() + t1x.transpose();
     C_control.block<1, 3>(5 * i + 4, 3 * i) << direction_normal_flatGround.transpose();
   }
 
@@ -597,14 +595,20 @@ void BalanceController::set_worldData()
   mu_friction = 0.05;
 }
 
-void BalanceController::set_friction(double mu_in) { mu_friction = mu_in; }
+void BalanceController::set_friction(double mu_in)
+{
+  mu_friction = mu_in;
+}
 
 void BalanceController::set_alpha_control(double alpha_control_in)
 {
   alpha_control = alpha_control_in;
 }
 
-void BalanceController::set_mass(double mass_in) { mass = mass_in; }
+void BalanceController::set_mass(double mass_in)
+{
+  mass = mass_in;
+}
 
 void BalanceController::set_RobotLimits()
 {
@@ -614,7 +618,10 @@ void BalanceController::set_RobotLimits()
 
 /* ------------ Utilities -------------- */
 
-bool BalanceController::getQPFinished() { return QPFinished; }
+bool BalanceController::getQPFinished()
+{
+  return QPFinished;
+}
 
 void BalanceController::print_QPData()
 {
