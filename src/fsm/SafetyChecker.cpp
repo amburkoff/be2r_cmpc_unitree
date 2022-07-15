@@ -15,13 +15,12 @@ using namespace std;
 /**
  * @return safePDesFoot true if safe desired foot placements
  */
-template<typename T>
+template <typename T>
 bool SafetyChecker<T>::checkSafeOrientation()
 {
   // cout << "[SafetyChecker] checkSafeOrientation func start" << endl;
 
-  if (abs(data->_stateEstimator->getResult().rpy(0)) >= 1.0 ||
-      abs(data->_stateEstimator->getResult().rpy(1)) >= 1.0)
+  if (abs(data->_stateEstimator->getResult().rpy(0)) >= 1.0 || abs(data->_stateEstimator->getResult().rpy(1)) >= 1.0)
   {
     cout << "[SafetyChecker] Roll is " << abs(data->_stateEstimator->getResult().rpy(0)) << endl;
     cout << "[SafetyChecker] Pitch is " << abs(data->_stateEstimator->getResult().rpy(1)) << endl;
@@ -38,14 +37,14 @@ bool SafetyChecker<T>::checkSafeOrientation()
 /**
  * @return safePDesFoot true if safe desired foot placements
  */
-template<typename T>
+template <typename T>
 bool SafetyChecker<T>::checkPDesFoot()
 {
   // Assumed safe to start
   bool safePDesFoot = true;
 
   // Safety parameters
-  T maxAngle = 1.0472; // 60 degrees (should be changed)
+  T maxAngle = 1.0472;  // 60 degrees (should be changed)
   T maxPDes = data->_quadruped->_maxLegLength * sin(maxAngle);
 
   // Check all of the legs
@@ -55,8 +54,8 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(0) > maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0)
-                << " | modified: " << maxPDes << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << maxPDes
+                << std::endl;
       data->_legController->commands[leg].pDes(0) = maxPDes;
       safePDesFoot = false;
     }
@@ -65,8 +64,8 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(0) < -maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0)
-                << " | modified: " << -maxPDes << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << -maxPDes
+                << std::endl;
       data->_legController->commands[leg].pDes(0) = -maxPDes;
       safePDesFoot = false;
     }
@@ -75,8 +74,8 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(1) > maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1)
-                << " | modified: " << maxPDes << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << maxPDes
+                << std::endl;
       data->_legController->commands[leg].pDes(1) = maxPDes;
       safePDesFoot = false;
     }
@@ -85,8 +84,8 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(1) < -maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1)
-                << " | modified: " << -maxPDes << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << -maxPDes
+                << std::endl;
       data->_legController->commands[leg].pDes(1) = -maxPDes;
       safePDesFoot = false;
     }
@@ -120,7 +119,7 @@ bool SafetyChecker<T>::checkPDesFoot()
 /**
  * @return safePDesFoot true if safe desired foot placements
  */
-template<typename T>
+template <typename T>
 bool SafetyChecker<T>::checkForceFeedForward()
 {
   // Assumed safe to start
@@ -213,65 +212,71 @@ bool SafetyChecker<T>::checkForceFeedForward()
 template <typename T>
 bool SafetyChecker<T>::checkJointLimits()
 {
-  //from software guide unitree a1
-  //hip -46 ~ 46 deg (-0.8 ~ 0.8 rad)
-  //thigh -60 ~ 240 deg (-1.04 ~ 4.18 rad)
-  //calf -154.5 ~ -52.5 deg (-2.68 ~ -0.907 rad)
-  //from urdf
+  // from software guide unitree a1
+  // hip -46 ~ 46 deg (-0.8 ~ 0.8 rad)
+  // thigh -60 ~ 240 deg (-1.04 ~ 4.18 rad)
+  // calf -154.5 ~ -52.5 deg (-2.68 ~ -0.907 rad)
+  // from urdf
   // lower="-0.802851455917" upper="0.802851455917" hip
   // lower="-1.0471975512" upper="4.18879020479" thigh
   // lower="-2.69653369433" upper="-0.916297857297" calf
 
-  //real
-  //hip -0.876 ~ 0.896 rad
-  //thigh -1.092 ~ 4.142 rad
-  //calf -2.677 ~ -0.854 rad
+  // real
+  // hip -0.876 ~ 0.896 rad
+  // thigh -1.092 ~ 4.142 rad
+  // calf -2.677 ~ -0.854 rad
 
-  //changed sighs for MiniCheetah
-  static const float limit_joint0[2] = {-46 * M_PI / 180, 46 * M_PI / 180};
-  static const float limit_joint1[2] = {-240 * M_PI / 180, 60 * M_PI / 180};
-  static const float limit_joint2[2] = {52.5 * M_PI / 180, 154.5 * M_PI / 180};
+  // changed sighs for MiniCheetah
+  static const float limit_joint0[2] = { -46 * M_PI / 180, 46 * M_PI / 180 };
+  static const float limit_joint1[2] = { -240 * M_PI / 180, 60 * M_PI / 180 };
+  static const float limit_joint2[2] = { 52.5 * M_PI / 180, 154.5 * M_PI / 180 };
 
   static const float safety_spread = 1.0;
 
   for (size_t i = 0; i < 4; i++)
   {
-    //joint 0 min
+    // joint 0 min
     if (data->_legController->datas[i].q(0) < limit_joint0[0] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 min limit exceeded! Act: " << data->_legController->datas[i].q(0) << " Limit: " << limit_joint0[0] * safety_spread);
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 min limit exceeded! Act: " << data->_legController->datas[i].q(0)
+                                    << " Limit: " << limit_joint0[0] * safety_spread);
       return false;
     }
-    //joint 0 max
+    // joint 0 max
     if (data->_legController->datas[i].q(0) > limit_joint0[1] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 max limit exceeded! Act: " << data->_legController->datas[i].q(0) << " Limit: " << limit_joint0[1] * safety_spread);
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 max limit exceeded! Act: " << data->_legController->datas[i].q(0)
+                                    << " Limit: " << limit_joint0[1] * safety_spread);
       return false;
     }
 
-    //joint 1 min
+    // joint 1 min
     if (data->_legController->datas[i].q(1) < limit_joint1[0] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 min limit exceeded! Act: " << data->_legController->datas[i].q(1) << " Limit: " << limit_joint1[0] * safety_spread);
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 min limit exceeded! Act: " << data->_legController->datas[i].q(1)
+                                    << " Limit: " << limit_joint1[0] * safety_spread);
       return false;
     }
-    //joint 1 max
+    // joint 1 max
     if (data->_legController->datas[i].q(1) > limit_joint1[1] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 max limit exceeded! Act: " << data->_legController->datas[i].q(1) << " Limit: " << limit_joint1[1] * safety_spread);
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 max limit exceeded! Act: " << data->_legController->datas[i].q(1)
+                                    << " Limit: " << limit_joint1[1] * safety_spread);
       return false;
     }
 
-    //joint 2 min
+    // joint 2 min
     if (data->_legController->datas[i].q(2) < limit_joint2[0] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 min limit exceeded! Act: " << data->_legController->datas[i].q(2) << " Limit: " << limit_joint2[0] * safety_spread);
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 min limit exceeded! Act: " << data->_legController->datas[i].q(2)
+                                    << " Limit: " << limit_joint2[0] * safety_spread);
       return false;
     }
-    //joint 2 max
+    // joint 2 max
     if (data->_legController->datas[i].q(2) > limit_joint2[1] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 max limit exceeded! Act: " << data->_legController->datas[i].q(2) << " Limit: " << limit_joint2[1] * safety_spread);
+      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 max limit exceeded! Act: " << data->_legController->datas[i].q(2)
+                                    << " Limit: " << limit_joint2[1] * safety_spread);
       return false;
     }
   }

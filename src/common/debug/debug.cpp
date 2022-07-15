@@ -4,8 +4,6 @@ Debug::Debug(ros::Time time_start) : _zero_time(0), _time_start(time_start)
 {
   z_offset = 0.f;
   _init();
-  _sub_ground_truth = _nh.subscribe("/raisim_unitree_ros_driver/ground_truth_pose", 1, &Debug::_ground_truth_callback, this,
-                                    ros::TransportHints().tcpNoDelay(true));
 }
 
 void Debug::_init()
@@ -15,12 +13,6 @@ void Debug::_init()
   body_info.quat_act.w = 1.0;
 }
 
-void Debug::_ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
-{
-  ROS_INFO_ONCE("Get ground truth pose");
-  _ground_trurh_pose = *msg;
-}
-
 void Debug::_initPublishers()
 {
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
@@ -28,6 +20,7 @@ void Debug::_initPublishers()
   _pub_body_info = _nh.advertise<unitree_legged_msgs::BodyInfo>("/body_info", 1);
 
   _pub_vis_last_p_stance = _nh.advertise<visualization_msgs::Marker>("/visual/last_p_stance", 1);
+  _pub_vis_swing_pf = _nh.advertise<visualization_msgs::Marker>("/visual/swing_pf", 1);
   _pub_vis_estimated_stance_plane = _nh.advertise<visualization_msgs::Marker>("/visual/estimated_stance_plane", 1);
   _pub_vis_leg_des_traj[0] = _nh.advertise<nav_msgs::Path>("/visual/leg0/des_traj", 1);
   _pub_vis_leg_des_traj[1] = _nh.advertise<nav_msgs::Path>("/visual/leg1/des_traj", 1);
@@ -49,7 +42,7 @@ void Debug::updatePlot()
   ros::Duration delta_t = ros::Time::now() - _time_start;
 
   // all_legs_info.header.stamp = _zero_time + delta_t;
-  // body_info.header.stamp = _zero_time + delta_t;
+  // body_info.header.stamp = _zero_time + delta_t
   all_legs_info.header.stamp = ros::Time::now();
   body_info.header.stamp = ros::Time::now();
 
@@ -145,6 +138,7 @@ void Debug::updateVisualization()
   _pub_joint_states.publish(msg);
 
   _drawLastStancePoints();
+  _drawSwingFinalPoints();
   _drawEstimatedStancePLane();
   _drawLegsDesiredTrajectory();
   _drawLegsForce();
@@ -250,17 +244,57 @@ void Debug::_drawLastStancePoints()
   marker.color.b = 1.0;
 
   geometry_msgs::Point p0, p1, p2, p3;
-  p0 = last_p_stance[0]; // FL point
-  p1 = last_p_stance[1]; // FR point
-  p2 = last_p_stance[2]; // BR point
-  p3 = last_p_stance[3]; // BL point
   marker.points.clear();
+
+  p0 = last_p_stance[0]; // FL last stance point
+  p1 = last_p_stance[1]; // FR last stance point
+  p2 = last_p_stance[2]; // BR last stance point
+  p3 = last_p_stance[3]; // BL last stance point
   marker.points.push_back(p0);
   marker.points.push_back(p1);
   marker.points.push_back(p3);
   marker.points.push_back(p2);
 
   _pub_vis_last_p_stance.publish(marker);
+}
+
+void Debug::_drawSwingFinalPoints()
+{
+  visualization_msgs::Marker marker;
+
+  std::string name = "odom";
+
+  marker.header.frame_id = name;
+  marker.header.stamp = ros::Time::now();
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::SPHERE_LIST;
+  marker.action = visualization_msgs::Marker::ADD;
+  // pose and orientation must be zero, except orientation.w = 1
+  marker.pose.position.x = 0;
+  marker.pose.position.y = 0;
+  marker.pose.position.z = 0;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.025;
+  marker.scale.y = 0.025;
+  marker.scale.z = 0.025;
+  marker.color.a = 1.0;
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+
+  geometry_msgs::Point pf[4];
+  marker.points.clear();
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    pf[i] = all_legs_info.leg[i].swing_pf;
+    marker.points.push_back(pf[i]);
+  }
+
+  _pub_vis_swing_pf.publish(marker);
 }
 
 void Debug::_drawEstimatedStancePLane()

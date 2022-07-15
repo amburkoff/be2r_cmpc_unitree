@@ -35,7 +35,6 @@ public:
   sensor_msgs::Imu imu;
   geometry_msgs::Point last_p_stance[4] = {};
   geometry_msgs::Point last_p_local_stance[4] = {};
-  geometry_msgs::PoseWithCovarianceStamped _ground_trurh_pose;
 
   nav_msgs::Path leg_traj_des[4];
   geometry_msgs::Point leg_force[4];
@@ -43,9 +42,9 @@ public:
 private:
   void _init();
   void _initPublishers();
-  void _ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
   Vec3<float> _getHipLocation(uint8_t leg_num);
   void _drawLastStancePoints();
+  void _drawSwingFinalPoints();
   void _drawEstimatedStancePLane();
   void _drawLegsDesiredTrajectory();
   void _drawLegsForce();
@@ -62,6 +61,7 @@ private:
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
   ros::Publisher _pub_vis_last_p_stance;
+  ros::Publisher _pub_vis_swing_pf;
   ros::Publisher _pub_vis_estimated_stance_plane;
   ros::Publisher _pub_vis_leg_des_traj[4];
   ros::Publisher _pub_vis_leg_force[4];
