@@ -1,13 +1,11 @@
 #include "debug.hpp"
 
-Debug::Debug(ros::Time time_start)
-    : _zero_time(0), _time_start(time_start)
+Debug::Debug(ros::Time time_start) : _zero_time(0), _time_start(time_start)
 {
   z_offset = 0.f;
   _init();
-  _sub_ground_truth =
-    _nh.subscribe("/raisim_unitree_ros_driver/ground_truth_pose", 1, &Debug::_ground_truth_callback,
-                  this, ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth = _nh.subscribe("/raisim_unitree_ros_driver/ground_truth_pose", 1, &Debug::_ground_truth_callback, this,
+                                    ros::TransportHints().tcpNoDelay(true));
 }
 
 void Debug::_init()
@@ -57,19 +55,13 @@ void Debug::updatePlot()
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    all_legs_info.leg.at(leg_num).p_error.x =
-        all_legs_info.leg.at(leg_num).p_des.x - all_legs_info.leg.at(leg_num).p_act.x;
-    all_legs_info.leg.at(leg_num).p_error.y =
-        all_legs_info.leg.at(leg_num).p_des.y - all_legs_info.leg.at(leg_num).p_act.y;
-    all_legs_info.leg.at(leg_num).p_error.z =
-        all_legs_info.leg.at(leg_num).p_des.z - all_legs_info.leg.at(leg_num).p_act.z;
+    all_legs_info.leg.at(leg_num).p_error.x = all_legs_info.leg.at(leg_num).p_des.x - all_legs_info.leg.at(leg_num).p_act.x;
+    all_legs_info.leg.at(leg_num).p_error.y = all_legs_info.leg.at(leg_num).p_des.y - all_legs_info.leg.at(leg_num).p_act.y;
+    all_legs_info.leg.at(leg_num).p_error.z = all_legs_info.leg.at(leg_num).p_des.z - all_legs_info.leg.at(leg_num).p_act.z;
 
-    all_legs_info.leg.at(leg_num).v_error.x =
-        all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
-    all_legs_info.leg.at(leg_num).v_error.y =
-        all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
-    all_legs_info.leg.at(leg_num).v_error.z =
-        all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
+    all_legs_info.leg.at(leg_num).v_error.x = all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
+    all_legs_info.leg.at(leg_num).v_error.y = all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
+    all_legs_info.leg.at(leg_num).v_error.z = all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
   }
 
   body_info.state_error.p.x = body_info.pos_des.x - body_info.pos_act.x;
@@ -202,29 +194,29 @@ Vec3<float> Debug::_getHipLocation(uint8_t leg_num)
 
   switch (leg_num)
   {
-    // FR
-  case 0:
-    result(0) = x;
-    result(1) = -y;
-    break;
+      // FR
+    case 0:
+      result(0) = x;
+      result(1) = -y;
+      break;
 
-    // FL
-  case 1:
-    result(0) = x;
-    result(1) = y;
-    break;
+      // FL
+    case 1:
+      result(0) = x;
+      result(1) = y;
+      break;
 
-    // BR
-  case 2:
-    result(0) = -x;
-    result(1) = -y;
-    break;
+      // BR
+    case 2:
+      result(0) = -x;
+      result(1) = -y;
+      break;
 
-    //BL
-  case 3:
-    result(0) = -x;
-    result(1) = y;
-    break;
+      // BL
+    case 3:
+      result(0) = -x;
+      result(1) = y;
+      break;
   }
 
   return result;
@@ -315,7 +307,7 @@ void Debug::_drawLegsDesiredTrajectory()
 void Debug::_drawLegsForce()
 {
   visualization_msgs::Marker marker;
-  std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
+  std::string names[4] = { "FR_hip", "FL_hip", "RR_hip", "RL_hip" };
   float koef = 500;
 
   for (size_t i = 0; i < 4; i++)

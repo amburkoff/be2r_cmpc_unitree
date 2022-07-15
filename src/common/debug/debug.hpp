@@ -35,6 +35,7 @@ public:
   sensor_msgs::Imu imu;
   geometry_msgs::Point last_p_stance[4] = {};
   geometry_msgs::Point last_p_local_stance[4] = {};
+  geometry_msgs::PoseWithCovarianceStamped _ground_trurh_pose;
 
   nav_msgs::Path leg_traj_des[4];
   geometry_msgs::Point leg_force[4];
@@ -52,6 +53,8 @@ private:
   ros::NodeHandle _nh;
   const ros::Time _zero_time;
   ros::Time _time_start;
+
+  ros::Subscriber _sub_ground_truth;
 
   ros::Publisher _pub_joint_states;
   ros::Publisher _pub_imu;
