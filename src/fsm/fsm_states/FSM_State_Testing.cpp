@@ -15,8 +15,7 @@ using namespace std;
  */
 template<typename T>
 FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING, "TESTING")
-  , _ini_foot_pos(4)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING, "TESTING"), _ini_foot_pos(4)
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -26,8 +25,8 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
 
-  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC,
-                            _controlFSMData->userParameters);
+  CMPC =
+    new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
 
   this->turnOnAllSafetyChecks();
 
@@ -115,12 +114,12 @@ void FSM_State_Testing<T>::test1()
   // qDes[1] = sin_mid_q[1] + sin_joint1;
   // qDes[2] = sin_mid_q[2] + sin_joint2;
 
-  tau[0] = Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) +
-           Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
-  tau[1] = Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) +
-           Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
-  tau[2] = Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) +
-           Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
+  tau[0] =
+    Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
+  tau[1] =
+    Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
+  tau[2] =
+    Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
 
   // this->_data->_legController->commands[0].kpJoint(0, 0) = Kp[0];
   // this->_data->_legController->commands[0].kpJoint(1, 1) = Kp[1];
@@ -152,6 +151,13 @@ void FSM_State_Testing<T>::run()
 {
   // test1();
   LocomotionControlStep();
+  // safeJointTest();
+}
+
+template<typename T>
+void FSM_State_Testing<T>::safeJointTest()
+{
+
 }
 
 template<typename T>
@@ -353,26 +359,25 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
   // Switch FSM control mode
   switch ((int)this->_data->userParameters->FSM_State)
   {
-  case K_TESTING:
-    break;
+    case K_TESTING:
+      break;
 
-  case K_STAND_UP:
-    // Requested switch to Stand Up
-    this->nextStateName = FSM_StateName::STAND_UP;
-    break;
+    case K_STAND_UP:
+      // Requested switch to Stand Up
+      this->nextStateName = FSM_StateName::STAND_UP;
+      break;
 
-  case K_PASSIVE: // normal c
-    this->nextStateName = FSM_StateName::PASSIVE;
-    break;
+    case K_PASSIVE: // normal c
+      this->nextStateName = FSM_StateName::PASSIVE;
+      break;
 
-  case K_BALANCE_STAND: 
-    this->nextStateName = FSM_StateName::BALANCE_STAND;
-    break;
+    case K_BALANCE_STAND:
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
-              << K_TESTING << " to "
-              << this->_data->userParameters->FSM_State << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -399,12 +404,12 @@ TransitionData<T> FSM_State_Testing<T>::transition()
       this->transitionData.done = true;
       break;
 
-  case FSM_StateName::BALANCE_STAND:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::BALANCE_STAND:
+      this->transitionData.done = true;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM
@@ -485,15 +490,13 @@ bool FSM_State_Testing<T>::locomotionSafe()
 
   if (std::fabs(seResult.rpy[0]) > ori::deg2rad(max_roll))
   {
-    printf("Unsafe locomotion: roll is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[0]),
-           max_roll);
+    printf("Unsafe locomotion: roll is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[0]), max_roll);
     return false;
   }
 
   if (std::fabs(seResult.rpy[1]) > ori::deg2rad(max_pitch))
   {
-    printf("Unsafe locomotion: pitch is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[1]),
-           max_pitch);
+    printf("Unsafe locomotion: pitch is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[1]), max_pitch);
     return false;
   }
 

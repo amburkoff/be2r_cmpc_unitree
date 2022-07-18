@@ -26,6 +26,7 @@ public:
 
   void test1();
   void test2();
+  void safeJointTest();
 
   // Checks for any transition triggers
   FSM_StateName checkTransition();

@@ -157,6 +157,7 @@ void ControlFSM<T>::runFSM()
     currentState = statesList.passive;
     currentState->onEnter();
     nextStateName = currentState->stateName;
+    // data._legController->edampCommand(3.0);
   }
 
   // Print the current state of the FSM
@@ -182,22 +183,18 @@ FSM_OperatingMode ControlFSM<T>::safetyPreCheck()
     if (!safetyChecker->checkSafeOrientation())
     {
       operatingMode = FSM_OperatingMode::ESTOP;
-      // std::cout << "broken: Orientation Safety Check FAIL" << std::endl;
       ROS_ERROR_STREAM("Broken: Orientation Safety Check FAIL!");
     }
   }
 
-  if (data.userParameters->joint_limits && data.userParameters->FSM_State != K_RECOVERY_STAND)
+  if (data.userParameters->joint_limits && currentState->checkJointLimits && data.userParameters->FSM_State != K_RECOVERY_STAND)
   {
     if (!safetyChecker->checkJointLimits())
     {
       operatingMode = FSM_OperatingMode::ESTOP;
-      // std::cout << "broken: Orientation Safety Check FAIL" << std::endl;
       ROS_ERROR_STREAM("Broken: Joint limits check FAIL!");
     }
   }
-
-  // cout << "[safetyPreCheck] checkSafeOrientation done" << endl;
 
   // Default is to return the current operating mode
   return operatingMode;
