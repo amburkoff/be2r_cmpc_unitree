@@ -7,22 +7,25 @@
 #include "cppTypes.h"
 #include <cmath>
 #include <ControlFSMData.h>
+#include "Dynamics/SpatialInertia.h"
 // #include "LegController.h"
 
-template <typename T>
+// template <typename T>
 class Metric
 {
 public:
   virtual ~Metric() = default;
-  virtual Vec4<T> getContactState() = 0;
-  virtual Vec4<T> getSwingState() = 0;
-  virtual Vec4<T> getFinalLegCost() = 0;
-  void setRobotData(ControlFSMData<T>& data);
-  virtual void debugPrint();
+  virtual Vec4<float> getContactState() = 0; 
+  virtual Vec4<float> getSwingState() = 0;
+  virtual Vec4<float> getFinalLegCost() = 0; //0 - means 'have to be specified', {} -- means 'if not specified will be {}'
+  void setRobotData(ControlFSMData<float>& data);
+  void computeCenterLegVelAndPos(Quadruped<float>& quad, Vec3<float>& q, Vec3<float>& dq, Mat3<float>* J, Vec3<float>* p, int leg);
+
+  virtual void debugPrint() {};
 //   virtual void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
 //   virtual void restoreDefaults(){}
   
-  ControlFSMData<T>* _data;
+  ControlFSMData<float>* _data;
 protected:
   std::string _name;
   
@@ -31,29 +34,32 @@ protected:
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-template <typename T>
-class SystemEnergy : public Metric<T> 
+// template <typename T>
+class SystemEnergy : public Metric 
 {
 public:
   SystemEnergy();
-  ~SystemEnergy()= default;
+  ~SystemEnergy() = default;
 
-  Vec4<T> getContactState();
-  Vec4<T> getSwingState();
-  Vec4<T> getFinalLegCost();
+  Vec4<float> getContactState();
+  Vec4<float> getSwingState();
+  Vec4<float> getFinalLegCost();
 
-  void setRobotData(ControlFSMData<T>& data);
+  // void setRobotData(ControlFSMData<T>& data);
   void debugPrint();
 //   void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
 //   void restoreDefaults(){}
 
 private:
-  Vec4<T> _test;
-  Vec3<T> _vBody;
-  Vec3<T> _position;
-  Vec3<T> _state_coord;
-  LegControllerData<T> datas[4];
-  T _KinEnergy;
+  Vec4<float> _test;
+  Vec3<float> _vBody;
+  Vec3<float> _position;
+  Vec3<float> _state_coord;
+  LegControllerData<float> datas[4];
+  float _KinEnergy;
+  Vec4<float> _KinEnergyLeg;
+  float _PotEnergy;
+  Vec4<float> _PotEnergyLeg;
 };
 //   float _E = 0;
 //   Vec3<float> _pBody_des;

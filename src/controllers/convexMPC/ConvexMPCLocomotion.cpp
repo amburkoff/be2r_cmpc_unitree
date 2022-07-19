@@ -145,14 +145,14 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
            .asDiagonal();
   Kd_stance = Kd;
 
+}
+
   // for real
   //  Kp << 150, 0, 0, 0, 150, 0, 0, 0, 150;
   //  Kp_stance = 0 * Kp;
 
   //  Kd << 3, 0, 0, 0, 3, 0, 0, 0, 3;
   //  Kd_stance = Kd;
-}
-
 template <>
 void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 {

@@ -17,17 +17,17 @@ void KFPositionVelocityEstimator<T>::setup()
 {
   T dt = 0.002;
   // T dt = this->_stateEstimatorData.parameters->controller_dt;
-  _xhat.setZero();
+  _myxhat.setZero();
   _ps.setZero();
   _vs.setZero();
   _A.setZero();
   _A.block(0, 0, 3, 3) = Eigen::Matrix<T, 3, 3>::Identity();
-  _A.block(0, 3, 3, 3) = dt * Eigen::Matrix<T, 3, 3>::Identity();
+  _A.block(0, 3, 3, 3) =  dt *Eigen::Matrix<T, 3, 3>::Identity();//
   _A.block(3, 3, 3, 3) = Eigen::Matrix<T, 3, 3>::Identity();
   _A.block(6, 6, 12, 12) = Eigen::Matrix<T, 12, 12>::Identity();
   _B.setZero();
   _B.block(0, 0, 3, 3) = dt * dt * Eigen::Matrix<T, 3, 3>::Identity()/2;
-  _B.block(3, 0, 3, 3) = dt * Eigen::Matrix<T, 3, 3>::Identity();
+  _B.block(3, 0, 3, 3) =  Eigen::Matrix<T, 3, 3>::Identity();//dt *
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> C1(3, 6);
   C1 << Eigen::Matrix<T, 3, 3>::Identity(), Eigen::Matrix<T, 3, 3>::Zero();
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> C2(3, 6);
@@ -57,8 +57,37 @@ void KFPositionVelocityEstimator<T>::setup()
   a_old = this->_stateEstimatorData.result->aWorld;
   a_filt <<0,0,0;
   da_filt <<0,0,0;
-  a_world <<0,0,0;
+  _a_world <<0,0,0;
+  _a_worldx <<0,0;
+  _a_worldy <<0,0;
+  _a_worldz <<0,0;
   da_filt_prev << 0,0,0;
+  _Af.setZero();
+  _Af(0,0) = 0;
+  _Af(0,1) = 1;
+  _w = 1000.5;
+  _Af(1,0) = -_w*_w;
+  _Af(1,1) = -sqrt(2)*_w;
+  _Bf.setZero();
+  _Bf(1,0) = _w*_w;
+  _Cf.setZero();
+  _Cf(0,0)=1;
+  _Afd.setZero();
+  _Bfd.setZero();
+  _Ad.setZero();
+  _dAd.setZero();
+  // _dAd.block(0,0,18,18) = _A;
+  // _dAd.block(0,18,18,3) = dt*_B;
+  // _dAd.block(18,18,3,3) = Eigen::Matrix<T, 3, 3>::Identity();
+  for (int i=10;i>=1;i--)
+  {
+    _Afd = Eigen::Matrix<T, 2, 2>::Identity() + _Afd*_Af*dt/i;
+    // _Ad = Eigen::Matrix<T, 21, 21>::Identity() + _Ad*_dAd*dt/i;
+  }
+  _Bfd = _Af.lu().solve(Eigen::Matrix<T, 2, 2>::Identity())*(_Afd - Eigen::Matrix<T, 2, 2>::Identity())*_Bf;
+  // _B = _Ad.block(0,18,18,3);
+  // _A = _Ad.block(0,0,18,18);
+
 }
 
 template <typename T>
@@ -71,7 +100,7 @@ template <typename T>
 void KFPositionVelocityEstimator<T>::run()
 {
   static uint16_t counter = 0;
-    if (counter <= 2000)
+    if (counter <= 1000)
   {
     counter++;
     a_old = this->_stateEstimatorData.result->aWorld;
@@ -105,24 +134,28 @@ void KFPositionVelocityEstimator<T>::run()
     Mat3<T> Rbod = this->_stateEstimatorData.result->rBody.transpose();
     // in old code, Rbod * se_acc + g
     
-    Vec3<T> a = this->_stateEstimatorData.result->aWorld;
-    Vec3<T> w1(T(0.0001),T(0.0001),T(0.0001));
-    Vec3<T> w2(T(0.00001),T(0.00001),T(0.00001));
-    a_world += Vec3<T> (w1[0]*(a[0]-a_old[0])/(w1[0]+(a[0]-a_old[0])*(a[0]-a_old[0])),//(a[0]-a_old[0])*(a[0]-a_old[0])
-                      w1[1]*(a[1]-a_old[1])/(w1[1]+(a[1]-a_old[1])*(a[1]-a_old[1])),//(a[1]-a_old[1])*(a[1]-a_old[1])
-                      w1[2]*(a[2]-a_old[2])/(w1[2]+(a[2]-a_old[2])*(a[2]-a_old[2])));//(a[2]-a_old[2])*(a[2]-a_old[2])
-    da_filt <<  T(1.0)*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])/(w2[0] +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),
-                T(1.0)*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])/(w2[1] +(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])),
-                T(1.0)*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])/(w2[2] +(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2]));
-    a_old = a;
-    a_filt = a_filt + 0.0*da_filt_prev + 1*da_filt;
-    this->_stateEstimatorData.debug->body_info.test.x = a_filt[0];
-    this->_stateEstimatorData.debug->body_info.test.y = a_filt[1];
-    this->_stateEstimatorData.debug->body_info.test.z = a_filt[2];
-    this->_stateEstimatorData.debug->body_info.test1.x = a_world[0];
-    this->_stateEstimatorData.debug->body_info.test1.y = a_world[1];
-    this->_stateEstimatorData.debug->body_info.test1.z = a_world[2];
-    da_filt_prev = da_filt;
+    Vec3<T> a = this->_stateEstimatorData.result->aWorld+g;
+    // Vec3<T> w1(T(0.0001),T(0.0001),T(0.0001));
+    // Vec3<T> w2(T(0.00001),T(0.00001),T(0.00001));
+    //a_world += Vec3<T> (w1[0]*(a[0]-a_old[0])/(w1[0]+(a[0]-a_old[0])*(a[0]-a_old[0])),//(a[0]-a_old[0])*(a[0]-a_old[0])
+    //                   w1[1]*(a[1]-a_old[1])/(w1[1]+(a[1]-a_old[1])*(a[1]-a_old[1])),//(a[1]-a_old[1])*(a[1]-a_old[1])
+    //                   w1[2]*(a[2]-a_old[2])/(w1[2]+(a[2]-a_old[2])*(a[2]-a_old[2])));//(a[2]-a_old[2])*(a[2]-a_old[2])
+    // da_filt <<  T(1.0)*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])/(w2[0] +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),
+    //             T(1.0)*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])/(w2[1] +(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])),
+    //             T(1.0)*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])/(w2[2] +(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2]));
+    // a_old = a;
+    // a_filt = a_filt + 0.0*da_filt_prev + 1*da_filt;
+    _a_worldx = _Afd*_a_worldx+_Bfd*a[0];
+    _a_worldy = _Afd*_a_worldx+_Bfd*a[1];
+    _a_worldz = _Afd*_a_worldx+_Bfd*a[2];
+    _a_world[0] = _Cf*_a_worldx;
+    _a_world[1] = _Cf*_a_worldy;
+    _a_world[2] = _Cf*_a_worldz;
+
+    this->_stateEstimatorData.debug->body_info.test1.x = _a_world[0];
+    this->_stateEstimatorData.debug->body_info.test1.y = _a_world[1];
+    this->_stateEstimatorData.debug->body_info.test1.z = _a_world[2];
+    // da_filt_prev = da_filt;
     
     // std::cout << "Error WORLD\n" << a[0] - a_filt[0] <<" " << a[1] - a_filt[1] <<" " << a[2] - a_filt[2] <<"\n";
     // std::cout << "A WORLD\n" << a[0] <<" " << a[1]  <<" " << a[2] <<"\n";
@@ -131,9 +164,9 @@ void KFPositionVelocityEstimator<T>::run()
     Vec4<T> trusts = Vec4<T>::Zero();
     Vec3<T> p0, v0;
     Vec4<T> pzs0;
-    p0 << _xhat[0], _xhat[1], _xhat[2];
-    v0 << _xhat[3], _xhat[4], _xhat[5];
-    pzs0 <<  _xhat[8], _xhat[11], _xhat[14], _xhat[17];
+    p0 << _myxhat[0], _myxhat[1], _myxhat[2];
+    v0 << _myxhat[3], _myxhat[4], _myxhat[5];
+    pzs0 <<  _myxhat[8], _myxhat[11], _myxhat[14], _myxhat[17];
 
     for (int i = 0; i < 4; i++)
     {
@@ -158,9 +191,9 @@ void KFPositionVelocityEstimator<T>::run()
       rindex1 = i1;
       rindex2 = 12 + i1;
       rindex3 = 24 + i;
-      T k = 0;
-      uint8_t a = (*this->_stateEstimatorData.contactSensor)[0];
-      if (a) 
+      T k = 1;
+      uint8_t contact = (*this->_stateEstimatorData.contactSensor)[0];
+      if (contact) 
       {
         k=1;
       }
@@ -193,21 +226,21 @@ void KFPositionVelocityEstimator<T>::run()
     
       _ps.segment(i1, 3) = -p_f;
       _vs.segment(i1, 3) =  (1.0f - trust) *v0 + trust * (-dp_f);//
-      pzs(i) = trust*pzs0(i)+ (1.0f - trust) *(p0(2) + p_f(2)) ;//
-      std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
-      std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
-      std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
+      pzs(i) = trust*pzs0(i)*0 + (1.0f - trust) *(p0(2) + p_f(2)) ;//
+      // std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
+      // std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
+      // std::cout <<"pzs("<< i << ") " <<pzs(i)<<" "<<"p0z "<< p0(2)<<" " << "phase " << phase << std::endl;
 
     }
     //std::cout <<"Trusts"<< " " << trusts(0)<< " "<< trusts(1)<< " "<< trusts(2)<< " "<< trusts(3)<< " "<< std::endl;
     
     Eigen::Matrix<T, 28, 1> y;
     y << _ps, _vs, pzs;
-    _xhat = _A * _xhat + _B * a_filt;
+    _myxhat = _A * _myxhat + _B * a;//_a_world;
     Eigen::Matrix<T, 18, 18> At = _A.transpose();
     Eigen::Matrix<T, 18, 18> Pm = _A * _P * At + Q;
     Eigen::Matrix<T, 18, 28> Ct = _C.transpose();
-    Eigen::Matrix<T, 28, 1> yModel = _C * _xhat;
+    Eigen::Matrix<T, 28, 1> yModel = _C * _myxhat;
     Eigen::Matrix<T, 28, 1> ey = y - yModel;
     // std::cout << yModel[0] << " " << yModel[1] << " " << yModel[2] << std::endl; 
     Eigen::Matrix<T, 28, 28> S = _C * Pm * Ct + R;
@@ -226,10 +259,13 @@ void KFPositionVelocityEstimator<T>::run()
 
     // A has to be invertiable.
     Eigen::Matrix<T, 28, 1> S_ey = S.lu().solve(ey);
-    _xhat += Pm * Ct * S_ey;
-    // std::cout << _xhat[2] << " ______________ "<<_xhat[2] << std::endl;
-    // std::cout << _xhat[2] << " ______________ "<<_xhat[2] << std::endl;
-    // std::cout << _xhat[2] << " ______________ "<<_xhat[2] << std::endl;
+    _myxhat += Pm * Ct * S_ey;
+    this->_stateEstimatorData.debug->body_info.test.x = _myxhat[0];
+    this->_stateEstimatorData.debug->body_info.test.y = _myxhat[1];
+    this->_stateEstimatorData.debug->body_info.test.z = _myxhat[2];
+    // std::cout << _myxhat[2] << " ______________ "<<_myxhat[2] << std::endl;
+    // std::cout << _myxhat[2] << " ______________ "<<_myxhat[2] << std::endl;
+    // std::cout << _myxhat[2] << " ______________ "<<_myxhat[2] << std::endl;
     Eigen::Matrix<T, 28, 18> S_C = S.lu().solve(_C);
     _P = (Eigen::Matrix<T, 18, 18>::Identity() - Pm * Ct * S_C) * Pm;
 
@@ -242,9 +278,9 @@ void KFPositionVelocityEstimator<T>::run()
       _P.block(2, 0, 16, 2).setZero();
       _P.block(0, 0, 2, 2) /= T(10);
     }
-    // std::cout << _xhat[2] << std::endl;
-    //this->_stateEstimatorData.result->position = _xhat.block(0, 0, 3, 1);
-    //this->_stateEstimatorData.result->vWorld = _xhat.block(3, 0, 3, 1);
+    // std::cout << _myxhat[2] << std::endl;
+    //this->_stateEstimatorData.result->position = _myxhat.block(0, 0, 3, 1);
+    //this->_stateEstimatorData.result->vWorld = _myxhat.block(3, 0, 3, 1);
     //this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
   }
 }

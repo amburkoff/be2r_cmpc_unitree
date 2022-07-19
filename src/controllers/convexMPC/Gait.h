@@ -18,7 +18,8 @@ public:
   virtual float getCurrentStanceTime(float dtMPC, int leg) = 0;
   virtual float getCurrentSwingTime(float dtMPC, int leg) = 0;
   virtual int getCurrentGaitPhase() = 0;
-  virtual void debugPrint() {}
+  virtual void debugPrint() 
+  {}
   virtual void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
   virtual void restoreDefaults(){}
 

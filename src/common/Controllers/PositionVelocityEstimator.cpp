@@ -105,16 +105,16 @@ void LinearKFPositionVelocityEstimator<T>::run()
     // in old code, Rbod * se_acc + g
     
     Vec3<T> a = this->_stateEstimatorData.result->aWorld + g;//
-    a_world += Vec3<T>((a[0]-a_old[0])/(T(0.0001)+(a[0]-a_old[0])*(a[0]-a_old[0])),//*(a[0]-a_old[0])*(a[0]-a_old[0])
-                      (a[1]-a_old[1])/(T(0.0001)+(a[1]-a_old[1])*(a[1]-a_old[1])),//*(a[1]-a_old[1])*(a[1]-a_old[1])
-                      (a[2]-a_old[2])/(T(0.0001)+(a[2]-a_old[2])*(a[2]-a_old[2])));//*(a[2]-a_old[2])*(a[2]-a_old[2])
+    // a_world += Vec3<T>((a[0]-a_old[0])/(T(0.0001)+(a[0]-a_old[0])*(a[0]-a_old[0])),//*(a[0]-a_old[0])*(a[0]-a_old[0])
+    //                   (a[1]-a_old[1])/(T(0.0001)+(a[1]-a_old[1])*(a[1]-a_old[1])),//*(a[1]-a_old[1])*(a[1]-a_old[1])
+    //                   (a[2]-a_old[2])/(T(0.0001)+(a[2]-a_old[2])*(a[2]-a_old[2])));//*(a[2]-a_old[2])*(a[2]-a_old[2])
     
-    da_filt <<  T(1.0)*(a_world[0]-a_filt[0])/(T(0.0001) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),//(T(100.01) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),//*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])
-                T(1.0)*(a_world[1]-a_filt[1])/(T(0.0001) +(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])),//(T(100.01) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])
-                T(1.0)*(a_world[2]-a_filt[2])/(T(0.0001) +(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2]));//(T(100.01) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0]));*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])
-    a = a_world + da_filt;//0.5*da_filt_prev + 0.5*
-    a_filt = a_world;
-    da_filt_prev = da_filt;
+    // da_filt <<  T(1.0)*(a_world[0]-a_filt[0])/(T(0.0001) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),//(T(100.01) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),//*(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])
+    //             T(1.0)*(a_world[1]-a_filt[1])/(T(0.0001) +(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])),//(T(100.01) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0])),*(a_world[1]-a_filt[1])*(a_world[1]-a_filt[1])
+    //             T(1.0)*(a_world[2]-a_filt[2])/(T(0.0001) +(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2]));//(T(100.01) +(a_world[0]-a_filt[0])*(a_world[0]-a_filt[0]));*(a_world[2]-a_filt[2])*(a_world[2]-a_filt[2])
+    // a = a_world + da_filt;//0.5*da_filt_prev + 0.5*
+    // a_filt = a_world;
+    // da_filt_prev = da_filt;
     // std::cout << "Error WORLD\n" << a[0] - a_filt[0] <<" " << a[1] - a_filt[1] <<" " << a[2] - a_filt[2] <<"\n";
     // std::cout << "A WORLD\n" << a[0] <<" " << a[1]  <<" " << a[2] <<"\n";
     // std::cout << "A filt WORLD\n" << a_filt[0] <<" " << a_filt[1] <<" " << a_filt[2] <<"\n";
@@ -186,7 +186,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
     
     Eigen::Matrix<T, 28, 1> y;
     y << _ps, _vs, pzs;
-    _xhat = _A * _xhat + _B * a_filt;//
+    _xhat = _A * _xhat + _B * a;//
     Eigen::Matrix<T, 18, 18> At = _A.transpose();
     Eigen::Matrix<T, 18, 18> Pm = _A * _P * At + Q;
     Eigen::Matrix<T, 18, 28> Ct = _C.transpose();
