@@ -19,7 +19,7 @@ public:
   virtual Vec4<float> getSwingState() = 0;
   virtual Vec4<float> getFinalLegCost() = 0; //0 - means 'have to be specified', {} -- means 'if not specified will be {}'
   void setRobotData(ControlFSMData<float>& data);
-  void computeCenterLegVelAndPos(Quadruped<float>& quad, Vec3<float>& q, Vec3<float>& dq, Mat3<float>* J, Vec3<float>* p, int leg);
+  void computeCenterLegVelAndPos(Quadruped<float>& quad, Vec3<float>& q, Vec3<float>& dq, Mat3<float>* J, Mat3<float>* leg_p, Mat3<float>* Leg_v, Mat3<float>* Leg_w, int leg);
 
   virtual void debugPrint() {};
 //   virtual void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
