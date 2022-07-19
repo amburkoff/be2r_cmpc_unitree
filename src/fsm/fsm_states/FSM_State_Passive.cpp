@@ -24,6 +24,7 @@ FSM_State_Passive<T>::FSM_State_Passive(ControlFSMData<T>* _controlFSMData) : FS
   // this->checkForceFeedForward = false;
 
   this->turnOffAllSafetyChecks();
+  // this->checkJointLimits = true;
 
   this->_control_fsm_data = _controlFSMData;
 }
@@ -66,32 +67,8 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
 
   Mat3<float> Kd;
 
-  //for sim
-  // Kd << 1, 0, 0,
-  //     0, 4, 0,
-  //     0, 0, 4;
-
-  //for real
-  // Kd << 0.65, 0, 0,
-  //     0, 0.65, 0,
-  //     0, 0, 0.65;
-
-  // float threshold = 5;
-
   for (size_t i = 0; i < 4; i++)
   {
-    // if (counter < 1500)
-    // {
-    //   this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 2;
-    //   ROS_INFO("THRESHOLD");
-
-    //   counter++;
-    // }
-    // else
-    // {
-    // this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 0;
-    // }
-
     this->_control_fsm_data->_legController->commands[i].kpJoint = Mat3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].kdJoint = Mat3<T>::Zero();
 
@@ -101,9 +78,9 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
     this->_control_fsm_data->_legController->commands[i].qDes = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].qdDes = Vec3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].forceFeedForward = Vec3<T>::Zero();
-    // this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();
+    this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();
 
-    // this->_control_fsm_data->_legController->setEnabled(false);
+    this->_control_fsm_data->_legController->setEnabled(false);
   }
 
   return this->transitionData;

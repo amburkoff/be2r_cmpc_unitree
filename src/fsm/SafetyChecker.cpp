@@ -222,7 +222,7 @@ bool SafetyChecker<T>::checkJointLimits()
   static const float limit_joint0[2] = { -46 * M_PI / 180, 46 * M_PI / 180 };
   static const float limit_joint1[2] = { -60 * M_PI / 180, 240 * M_PI / 180 };
   static const float limit_joint2[2] = { -154.5 * M_PI / 180, -52.5 * M_PI / 180 };
-  static const float safety_spread = 0.95;
+  static const float safety_spread = 0.99;
 
   static const float tau_safety_spread[3] = { 10 * M_PI / 180, 20 * M_PI / 180, 20 * M_PI / 180 };
   static const float tau_limit_joint0[2] = { limit_joint0[0] * safety_spread + tau_safety_spread[0], limit_joint0[1] * safety_spread - tau_safety_spread[0] };
@@ -247,7 +247,15 @@ bool SafetyChecker<T>::checkJointLimits()
   //   ROS_INFO_STREAM("leg: " << i << " j2 safe min: " << limit_joint2[0] << " act: " << -data->_legController->datas[i].q(2) << " max: " << limit_joint2[1]);
   // }
 
-  const float Kp_exp[3] = { 11, 6, 5 };
+  // const float Kp_exp[3] = { 11, 6, 5 };
+  float Kp_exp[3] = { 0 };
+
+  float tau_max[3] = { 20, 20, 20 };
+  float e_max[3] = { 5 * M_PI / 180, 5 * M_PI / 180, 5 * M_PI / 180 };
+
+  Kp_exp[0] = log((2 * tau_max[0]) / 5 + 1) / e_max[0];
+  Kp_exp[1] = log((2 * tau_max[1]) / 5 + 1) / e_max[1];
+  Kp_exp[2] = log((2 * tau_max[2]) / 5 + 1) / e_max[2];
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -257,7 +265,7 @@ bool SafetyChecker<T>::checkJointLimits()
       float delta_q = tau_limit_joint0[0] - leg[i].q[0] * sign[i];
       data->_legController->_legEnabled[i] = true;
 
-      float tau = delta_q / abs(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
+      float tau = sgn(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j0 dq safe min: " << delta_q << " tau: " << tau);
 
       data->_legController->commands[i].tauSafe(0) = tau * sign[i];
@@ -268,7 +276,7 @@ bool SafetyChecker<T>::checkJointLimits()
       float delta_q = tau_limit_joint0[1] - leg[i].q[0] * sign[i];
       data->_legController->_legEnabled[i] = true;
 
-      float tau = delta_q / abs(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
+      float tau = sgn(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j0 dq safe min: " << delta_q << " tau: " << tau);
 
       data->_legController->commands[i].tauSafe(0) = tau * sign[i];
@@ -281,7 +289,7 @@ bool SafetyChecker<T>::checkJointLimits()
       data->_legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
-      float tau = delta_q / abs(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
+      float tau = sgn(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j1 dq safe min: " << delta_q << " tau: " << tau);
 
       data->_legController->commands[i].tauSafe(1) = -tau;
@@ -293,7 +301,7 @@ bool SafetyChecker<T>::checkJointLimits()
       data->_legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
-      float tau = delta_q / abs(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
+      float tau = sgn(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j1 dq safe max: " << delta_q << " tau: " << tau);
 
       data->_legController->commands[i].tauSafe(1) = -tau;
@@ -306,7 +314,7 @@ bool SafetyChecker<T>::checkJointLimits()
       data->_legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
-      float tau = delta_q / abs(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
+      float tau = sgn(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j2 dq safe min: " << delta_q << " tau: " << tau);
 
       data->_legController->commands[i].tauSafe(2) = -tau;
@@ -318,7 +326,7 @@ bool SafetyChecker<T>::checkJointLimits()
       data->_legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
-      float tau = delta_q / abs(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
+      float tau = sgn(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j2 dq safe max: " << delta_q << " tau: " << tau);
 
       data->_legController->commands[i].tauSafe(2) = -tau;

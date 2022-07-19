@@ -94,6 +94,33 @@ void ControlFSM<T>::runFSM()
   // Run the robot control code if operating mode is not unsafe
   if (operatingMode != FSM_OperatingMode::ESTOP)
   {
+    if (operatingMode == FSM_OperatingMode::EDAMP)
+    {
+      //we do this only once, because we dont change operation mode from estop/edamp to normal
+      static bool flag = true;
+      static unsigned long iter_start = 0;
+      static const unsigned long iter_duration = 1000;
+
+      if (flag)
+      {
+        flag = false;
+        iter_start = iter;
+        currentState = statesList.passive;
+        currentState->onEnter();
+        nextStateName = currentState->stateName;
+      }
+
+      // ROS_INFO_ONCE("start");
+
+      if (iter > (iter_start + iter_duration))
+      {
+        operatingMode = FSM_OperatingMode::ESTOP;
+        // ROS_INFO("STOP!");
+      }
+
+      data._legController->edampCommand(3.0);
+    }
+
     // Run normal controls if no transition is detected
     if (operatingMode == FSM_OperatingMode::NORMAL)
     {
@@ -157,7 +184,7 @@ void ControlFSM<T>::runFSM()
     currentState = statesList.passive;
     currentState->onEnter();
     nextStateName = currentState->stateName;
-    // data._legController->edampCommand(3.0);
+    data._legController->zeroCommand();
   }
 
   // Print the current state of the FSM
@@ -182,7 +209,8 @@ FSM_OperatingMode ControlFSM<T>::safetyPreCheck()
   {
     if (!safetyChecker->checkSafeOrientation())
     {
-      operatingMode = FSM_OperatingMode::ESTOP;
+      // operatingMode = FSM_OperatingMode::ESTOP;
+      operatingMode = FSM_OperatingMode::EDAMP;
       ROS_ERROR_STREAM("Broken: Orientation Safety Check FAIL!");
     }
   }
@@ -191,7 +219,8 @@ FSM_OperatingMode ControlFSM<T>::safetyPreCheck()
   {
     if (!safetyChecker->checkJointLimits())
     {
-      operatingMode = FSM_OperatingMode::ESTOP;
+      // operatingMode = FSM_OperatingMode::ESTOP;
+      operatingMode = FSM_OperatingMode::EDAMP;
       ROS_ERROR_STREAM("Broken: Joint limits check FAIL!");
     }
   }
@@ -277,8 +306,8 @@ FSM_State<T>* ControlFSM<T>::getNextState(FSM_StateName stateName)
     case FSM_StateName::VISION:
       return statesList.vision;
 
-  case FSM_StateName::BACKFLIP:
-    return statesList.backflip;
+    case FSM_StateName::BACKFLIP:
+      return statesList.backflip;
 
       // case FSM_StateName::FRONTJUMP:
       //   return statesList.frontJump;

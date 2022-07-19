@@ -83,6 +83,8 @@ void LegController<T>::edampCommand(T gain)
     {
       commands[leg].kdJoint(axis, axis) = gain;
     }
+
+    _legEnabled[leg] = true;
   }
 }
 
