@@ -10,9 +10,9 @@
 
 //оригинальные параметры MPC+WBC
 // #define GAIT_PERIOD 14
-#define HORIZON 14
+#define HORIZON 16
 
-#define GAIT_PERIOD 18
+#define GAIT_PERIOD 14
 // #define GAIT_PERIOD 22
 // #define GAIT_PERIOD 34 //1000 Hz
 
