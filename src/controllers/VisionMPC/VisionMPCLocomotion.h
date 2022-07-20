@@ -50,7 +50,7 @@ public:
 private:
   void _SetupCommand(ControlFSMData<float>& data);
   float _updateTrajHeight(size_t foot);
-  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos, const grid_map::GridMap& height_map,
+  void _updateFoothold(Vec3<float>& pf, const Vec3<float>& body_pos, const grid_map::GridMap& height_map,
                        const grid_map::GridMap& height_map_raw, int leg);
 
   void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,

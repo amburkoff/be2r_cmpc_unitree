@@ -19,7 +19,7 @@
 /*!
  * Generate a Quadruped model of Mini Cheetah
  */
-template <typename T>
+template<typename T>
 Quadruped<T> buildMiniCheetah()
 {
   Quadruped<T> cheetah;
@@ -137,10 +137,8 @@ Quadruped<T> buildMiniCheetah()
 
   Mat3<T> RY = coordinateRotation<T>(CoordinateAxis::Y, M_PI / 2);
   Mat3<T> RX = coordinateRotation<T>(CoordinateAxis::X, M_PI / 2);
-  Mat3<T> rotorRotationalInertiaX =
-      RY * rotorRotationalInertiaZ * RY.transpose();
-  Mat3<T> rotorRotationalInertiaY =
-      RX * rotorRotationalInertiaZ * RX.transpose();
+  Mat3<T> rotorRotationalInertiaX = RY * rotorRotationalInertiaZ * RY.transpose();
+  Mat3<T> rotorRotationalInertiaY = RX * rotorRotationalInertiaZ * RX.transpose();
 
   // spatial inertias
   Mat3<T> abadRotationalInertia;
@@ -170,8 +168,7 @@ Quadruped<T> buildMiniCheetah()
   bodyRotationalInertia << 11253, 0, 0, 0, 36203, 0, 0, 0, 42673;
   bodyRotationalInertia = bodyRotationalInertia * 1e-6;
   Vec3<T> bodyCOM(0, 0, 0);
-  SpatialInertia<T> bodyInertia(cheetah._bodyMass, bodyCOM,
-                                bodyRotationalInertia);
+  SpatialInertia<T> bodyInertia(cheetah._bodyMass, bodyCOM, bodyRotationalInertia);
 
   cheetah._abadInertia = abadInertia;
   cheetah._hipInertia = hipInertia;
