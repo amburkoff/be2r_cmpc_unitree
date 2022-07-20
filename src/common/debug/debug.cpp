@@ -303,8 +303,18 @@ void Debug::_drawEstimatedStancePLane()
 
   std::string name = "odom";
 
+  float A = mnk_plane.x;
+  float B = mnk_plane.y;
+  float C = mnk_plane.z;
+
+  float del = sqrt(A * A + B * B + C * C);
+  float roll = -acos(B / del) + M_PI / 2.0;
+  float pitch = acos(A / del) - M_PI / 2.0;
+
   tf::Quaternion quat;
-  quat.setRPY(body_info.euler_act.x, body_info.euler_act.y, body_info.euler_act.z);
+  // quat.setRPY(body_info.euler_act.x, body_info.euler_act.y, body_info.euler_act.z);
+  // quat.setRPY(roll, pitch, 0.0);
+  quat.setRPY(roll, pitch, 0.0);
 
   marker.header.frame_id = name;
   marker.header.stamp = ros::Time::now();

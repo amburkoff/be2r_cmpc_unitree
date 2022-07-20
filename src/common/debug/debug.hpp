@@ -35,6 +35,7 @@ public:
   sensor_msgs::Imu imu;
   geometry_msgs::Point last_p_stance[4] = {};
   geometry_msgs::Point last_p_local_stance[4] = {};
+  geometry_msgs::Point mnk_plane = {};
 
   nav_msgs::Path leg_traj_des[4];
   geometry_msgs::Point leg_force[4];
