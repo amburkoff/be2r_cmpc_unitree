@@ -54,20 +54,15 @@ FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData
 template<typename T>
 void FSM_State_Locomotion<T>::onEnter()
 {
-  cout << "[FSM_State_Locomotion] onEnter start" << endl;
-
   // Default is to not transition
   this->nextStateName = this->stateName;
 
   // Reset the transition data
   this->transitionData.zero();
-  cout << "[FSM_State_Locomotion] transitionData zero done" << endl;
 
   cMPCOld->initialize();
-  cout << "[FSM_State_Locomotion] cMPCOld initialize done" << endl;
 
   this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
-  printf("[FSM LOCOMOTION] On Enter\n");
 }
 
 /**

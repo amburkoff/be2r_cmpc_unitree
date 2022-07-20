@@ -221,7 +221,8 @@ bool SafetyChecker<T>::checkJointLimits()
   // changed signs as they are in software guide
   static const float limit_joint0[2] = { -46 * M_PI / 180, 46 * M_PI / 180 };
   static const float limit_joint1[2] = { -60 * M_PI / 180, 240 * M_PI / 180 };
-  static const float limit_joint2[2] = { -154.5 * M_PI / 180, -52.5 * M_PI / 180 };
+  // static const float limit_joint2[2] = { -154.5 * M_PI / 180, -52.5 * M_PI / 180 };
+  static const float limit_joint2[2] = { -156 * M_PI / 180, -54 * M_PI / 180 };
   static const float safety_spread = 0.99;
 
   static const float tau_safety_spread[3] = { 10 * M_PI / 180, 20 * M_PI / 180, 20 * M_PI / 180 };
@@ -250,8 +251,10 @@ bool SafetyChecker<T>::checkJointLimits()
   // const float Kp_exp[3] = { 11, 6, 5 };
   float Kp_exp[3] = { 0 };
 
-  float tau_max[3] = { 20, 20, 20 };
-  float e_max[3] = { 5 * M_PI / 180, 5 * M_PI / 180, 5 * M_PI / 180 };
+  // float tau_max[3] = { 20, 20, 20 };
+  float tau_max[3] = { 33, 33, 33 };
+  // float e_max[3] = { 6 * M_PI / 180, 6 * M_PI / 180, 6 * M_PI / 180 };
+  float e_max[3] = { 10 * M_PI / 180, 10 * M_PI / 180, 10 * M_PI / 180 };
 
   Kp_exp[0] = log((2 * tau_max[0]) / 5 + 1) / e_max[0];
   Kp_exp[1] = log((2 * tau_max[1]) / 5 + 1) / e_max[1];

@@ -31,9 +31,8 @@ using namespace std;
 // Controller
 ////////////////////
 
-ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
-                                         be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
-  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(20), horizonLength(16), dt(_dt),
+ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
+  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(_parameters->gait_period), horizonLength(16), dt(_dt),
     trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
              Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
     trotting_copy(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
@@ -42,13 +41,11 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
     pronking(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(8, 8, 8, 8), "Pronking"),
     jumping(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping"),
     galloping(_gait_period, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping"),
-    standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing")
+    standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
     // galloping(_gait_period,
     // Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
     // galloping(_gait_period,
     // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
-
-    ,
     trotRunning(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running"),
     walking(_gait_period, Vec4<int>(2 * _gait_period / 4., 0, _gait_period / 4., 3 * _gait_period / 4.),
             Vec4<int>(0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period), "Walking"),

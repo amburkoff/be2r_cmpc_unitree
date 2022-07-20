@@ -149,8 +149,8 @@ template<typename T>
 void FSM_State_Testing<T>::run()
 {
   // test1();
-  // LocomotionControlStep();
-  safeJointTest();
+  LocomotionControlStep();
+  // safeJointTest();
 }
 
 template<typename T>

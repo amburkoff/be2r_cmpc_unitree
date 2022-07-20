@@ -16,7 +16,8 @@
 // #define GAIT_PERIOD 22
 // #define GAIT_PERIOD 34 //1000 Hz
 
-#define GAIT_PERIOD_WALKING 26
+// #define GAIT_PERIOD_WALKING 26
+#define GAIT_PERIOD_WALKING 32
 
 //лучшие параметры для только MPC
 // #define GAIT_PERIOD 18
@@ -34,21 +35,21 @@ using namespace std;
 ////////////////////
 
 CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
-  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(_parameters->gait_period),
+  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters),
+    _gait_period(_parameters->gait_period),
     horizonLength(HORIZON), dt(_dt),
     trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
              Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
     // trotting(GAIT_PERIOD, Vec4<int>(0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, 0), Vec4<int>(GAIT_PERIOD / 2.0,
     // GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0), "Trotting"),
-    trot_contact(GAIT_PERIOD, Vec4<int>(0, GAIT_PERIOD / 2.0, GAIT_PERIOD / 2.0, 0),
-                 Vec4<int>(GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25, GAIT_PERIOD * 0.25), "Trot contact"),
-    standing(GAIT_PERIOD, Vec4<int>(0, 0, 0, 0), Vec4<int>(GAIT_PERIOD, GAIT_PERIOD, GAIT_PERIOD, GAIT_PERIOD), "Standing"),
+    trot_contact(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+                 Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25), "Trot contact"),
+    standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
     // walking(30, Vec4<int>(2 * 30 / 4., 0, 30 / 4., 3 * 30 / 4.), Vec4<int>(0.75 * 30, 0.75 * 30, 0.75 * 30, 0.75 * 30),
     // "Walking"), //for sim
-    walking(
-      GAIT_PERIOD_WALKING, Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
-      Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING),
-      "Walking"), // for real
+    walking(GAIT_PERIOD_WALKING, Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
+            Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING),
+            "Walking"), // for real
     two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, 0, _gait_period, 0), "Two legs balance")
 
 {
