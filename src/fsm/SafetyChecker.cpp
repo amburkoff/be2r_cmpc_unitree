@@ -15,7 +15,7 @@ using namespace std;
 /**
  * @return safePDesFoot true if safe desired foot placements
  */
-template <typename T>
+template<typename T>
 bool SafetyChecker<T>::checkSafeOrientation()
 {
   // cout << "[SafetyChecker] checkSafeOrientation func start" << endl;
@@ -37,14 +37,14 @@ bool SafetyChecker<T>::checkSafeOrientation()
 /**
  * @return safePDesFoot true if safe desired foot placements
  */
-template <typename T>
+template<typename T>
 bool SafetyChecker<T>::checkPDesFoot()
 {
   // Assumed safe to start
   bool safePDesFoot = true;
 
   // Safety parameters
-  T maxAngle = 1.0472;  // 60 degrees (should be changed)
+  T maxAngle = 1.0472; // 60 degrees (should be changed)
   T maxPDes = data->_quadruped->_maxLegLength * sin(maxAngle);
 
   // Check all of the legs
@@ -54,8 +54,7 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(0) > maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << maxPDes
-                << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << maxPDes << std::endl;
       data->_legController->commands[leg].pDes(0) = maxPDes;
       safePDesFoot = false;
     }
@@ -64,8 +63,7 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(0) < -maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << -maxPDes
-                << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << -maxPDes << std::endl;
       data->_legController->commands[leg].pDes(0) = -maxPDes;
       safePDesFoot = false;
     }
@@ -74,8 +72,7 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(1) > maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << maxPDes
-                << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << maxPDes << std::endl;
       data->_legController->commands[leg].pDes(1) = maxPDes;
       safePDesFoot = false;
     }
@@ -84,8 +81,7 @@ bool SafetyChecker<T>::checkPDesFoot()
     if (data->_legController->commands[leg].pDes(1) < -maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << -maxPDes
-                << std::endl;
+      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << -maxPDes << std::endl;
       data->_legController->commands[leg].pDes(1) = -maxPDes;
       safePDesFoot = false;
     }
@@ -119,7 +115,7 @@ bool SafetyChecker<T>::checkPDesFoot()
 /**
  * @return safePDesFoot true if safe desired foot placements
  */
-template <typename T>
+template<typename T>
 bool SafetyChecker<T>::checkForceFeedForward()
 {
   // Assumed safe to start
@@ -129,17 +125,8 @@ bool SafetyChecker<T>::checkForceFeedForward()
   T maxLateralForce = 0;
   T maxVerticalForce = 0;
 
-  // Maximum force limits for each robot
-  if (data->_quadruped->_robotType == RobotType::CHEETAH_3)
-  {
-    maxLateralForce = 1800;
-    maxVerticalForce = 1800;
-  }
-  else if (data->_quadruped->_robotType == RobotType::MINI_CHEETAH)
-  {
-    maxLateralForce = 350;
-    maxVerticalForce = 350;
-  }
+  maxLateralForce = 350;
+  maxVerticalForce = 350;
 
   // Check all of the legs
   for (int leg = 0; leg < 4; leg++)
@@ -209,7 +196,12 @@ bool SafetyChecker<T>::checkForceFeedForward()
   return safeForceFeedForward;
 }
 
-template <typename T>
+struct Leg
+{
+  float q[3];
+};
+
+template<typename T>
 bool SafetyChecker<T>::checkJointLimits()
 {
   // from software guide unitree a1
@@ -221,62 +213,170 @@ bool SafetyChecker<T>::checkJointLimits()
   // lower="-1.0471975512" upper="4.18879020479" thigh
   // lower="-2.69653369433" upper="-0.916297857297" calf
 
-  // real
+  // real leg0 (plotjuggler)
   // hip -0.876 ~ 0.896 rad
   // thigh -1.092 ~ 4.142 rad
   // calf -2.677 ~ -0.854 rad
 
-  // changed sighs for MiniCheetah
+  // changed signs as they are in software guide
   static const float limit_joint0[2] = { -46 * M_PI / 180, 46 * M_PI / 180 };
-  static const float limit_joint1[2] = { -240 * M_PI / 180, 60 * M_PI / 180 };
-  static const float limit_joint2[2] = { 52.5 * M_PI / 180, 154.5 * M_PI / 180 };
+  static const float limit_joint1[2] = { -60 * M_PI / 180, 240 * M_PI / 180 };
+  static const float limit_joint2[2] = { -154.5 * M_PI / 180, -52.5 * M_PI / 180 };
+  static const float safety_spread = 0.99;
 
-  static const float safety_spread = 1.0;
+  static const float tau_safety_spread[3] = { 10 * M_PI / 180, 20 * M_PI / 180, 20 * M_PI / 180 };
+  static const float tau_limit_joint0[2] = { limit_joint0[0] * safety_spread + tau_safety_spread[0], limit_joint0[1] * safety_spread - tau_safety_spread[0] };
+  static const float tau_limit_joint1[2] = { limit_joint1[0] * safety_spread + tau_safety_spread[1], limit_joint1[1] * safety_spread - tau_safety_spread[1] };
+  static const float tau_limit_joint2[2] = { limit_joint2[0] * safety_spread + tau_safety_spread[2], limit_joint2[1] * safety_spread - tau_safety_spread[2] };
+  static const int8_t sign[4] = { 1, -1, 1, -1 };
+
+  Leg leg[4] = { 0 };
+
+  //change signs back to Unitree
+  for (size_t i = 0; i < 4; i++)
+  {
+    leg[i].q[0] = data->_legController->datas[i].q(0);
+    leg[i].q[1] = -data->_legController->datas[i].q(1);
+    leg[i].q[2] = -data->_legController->datas[i].q(2);
+  }
+
+  // for (size_t i = 0; i < 1; i++)
+  // {
+  //   ROS_INFO_STREAM("leg: " << i << " j0 safe min: " << limit_joint0[0] << " act: " << data->_legController->datas[i].q(0) * sign[i] << " max: " << limit_joint0[1]);
+  //   ROS_INFO_STREAM("leg: " << i << " j1 safe min: " << limit_joint1[0] << " act: " << -data->_legController->datas[i].q(1) << " max: " << limit_joint1[1]);
+  //   ROS_INFO_STREAM("leg: " << i << " j2 safe min: " << limit_joint2[0] << " act: " << -data->_legController->datas[i].q(2) << " max: " << limit_joint2[1]);
+  // }
+
+  // const float Kp_exp[3] = { 11, 6, 5 };
+  float Kp_exp[3] = { 0 };
+
+  float tau_max[3] = { 20, 20, 20 };
+  float e_max[3] = { 5 * M_PI / 180, 5 * M_PI / 180, 5 * M_PI / 180 };
+
+  Kp_exp[0] = log((2 * tau_max[0]) / 5 + 1) / e_max[0];
+  Kp_exp[1] = log((2 * tau_max[1]) / 5 + 1) / e_max[1];
+  Kp_exp[2] = log((2 * tau_max[2]) / 5 + 1) / e_max[2];
 
   for (size_t i = 0; i < 4; i++)
   {
     // joint 0 min
-    if (data->_legController->datas[i].q(0) < limit_joint0[0] * safety_spread)
+    if ((leg[i].q[0] * sign[i]) < tau_limit_joint0[0])
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 min limit exceeded! Act: " << data->_legController->datas[i].q(0)
-                                    << " Limit: " << limit_joint0[0] * safety_spread);
+      float delta_q = tau_limit_joint0[0] - leg[i].q[0] * sign[i];
+      data->_legController->_legEnabled[i] = true;
+
+      float tau = sgn(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
+      // ROS_INFO_STREAM("leg: " << i << " j0 dq safe min: " << delta_q << " tau: " << tau);
+
+      data->_legController->commands[i].tauSafe(0) = tau * sign[i];
+    }
+    // joint 0 max
+    if (leg[i].q[0] * sign[i] > tau_limit_joint0[1])
+    {
+      float delta_q = tau_limit_joint0[1] - leg[i].q[0] * sign[i];
+      data->_legController->_legEnabled[i] = true;
+
+      float tau = sgn(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
+      // ROS_INFO_STREAM("leg: " << i << " j0 dq safe min: " << delta_q << " tau: " << tau);
+
+      data->_legController->commands[i].tauSafe(0) = tau * sign[i];
+    }
+
+    // joint 1 min
+    if (leg[i].q[1] < tau_limit_joint1[0])
+    {
+      float delta_q = tau_limit_joint1[0] - leg[i].q[1];
+      data->_legController->_legEnabled[i] = true;
+
+      // float tau = Kp_safe * delta_q;
+      float tau = sgn(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
+      // ROS_INFO_STREAM("leg: " << i << " j1 dq safe min: " << delta_q << " tau: " << tau);
+
+      data->_legController->commands[i].tauSafe(1) = -tau;
+    }
+    // joint 1 max
+    if (leg[i].q[1] > tau_limit_joint1[1])
+    {
+      float delta_q = tau_limit_joint1[1] - leg[i].q[1];
+      data->_legController->_legEnabled[i] = true;
+
+      // float tau = Kp_safe * delta_q;
+      float tau = sgn(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
+      // ROS_INFO_STREAM("leg: " << i << " j1 dq safe max: " << delta_q << " tau: " << tau);
+
+      data->_legController->commands[i].tauSafe(1) = -tau;
+    }
+
+    // joint 2 min
+    if (leg[i].q[2] < tau_limit_joint2[0])
+    {
+      float delta_q = tau_limit_joint2[0] - leg[i].q[2];
+      data->_legController->_legEnabled[i] = true;
+
+      // float tau = Kp_safe * delta_q;
+      float tau = sgn(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
+      // ROS_INFO_STREAM("leg: " << i << " j2 dq safe min: " << delta_q << " tau: " << tau);
+
+      data->_legController->commands[i].tauSafe(2) = -tau;
+    }
+    // joint 2 max
+    if (leg[i].q[2] > tau_limit_joint2[1])
+    {
+      float delta_q = tau_limit_joint2[1] - leg[i].q[2];
+      data->_legController->_legEnabled[i] = true;
+
+      // float tau = Kp_safe * delta_q;
+      float tau = sgn(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
+      // ROS_INFO_STREAM("leg: " << i << " j2 dq safe max: " << delta_q << " tau: " << tau);
+
+      data->_legController->commands[i].tauSafe(2) = -tau;
+    }
+  }
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    // joint 0 min
+    if (leg[i].q[0] * sign[i] < limit_joint0[0] * safety_spread)
+    {
+      ROS_ERROR_STREAM("Leg: " << i << " joint: 0 min limit exceeded! Act: " << leg[i].q[0]
+                               << " Min Limit: " << limit_joint0[0] * safety_spread);
       return false;
     }
     // joint 0 max
-    if (data->_legController->datas[i].q(0) > limit_joint0[1] * safety_spread)
+    if (leg[i].q[0] * sign[i] > limit_joint0[1] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 0 max limit exceeded! Act: " << data->_legController->datas[i].q(0)
-                                    << " Limit: " << limit_joint0[1] * safety_spread);
+      ROS_ERROR_STREAM("Leg: " << i << " joint: 0 max limit exceeded! Act: " << leg[i].q[0]
+                               << " Max limit: " << limit_joint0[1] * safety_spread);
       return false;
     }
 
     // joint 1 min
-    if (data->_legController->datas[i].q(1) < limit_joint1[0] * safety_spread)
+    if (leg[i].q[1] < limit_joint1[0] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 min limit exceeded! Act: " << data->_legController->datas[i].q(1)
-                                    << " Limit: " << limit_joint1[0] * safety_spread);
+      ROS_ERROR_STREAM("Leg: " << i << " joint: 1 min limit exceeded! Act: " << leg[i].q[1]
+                               << " Min Limit: " << limit_joint1[0] * safety_spread);
       return false;
     }
     // joint 1 max
-    if (data->_legController->datas[i].q(1) > limit_joint1[1] * safety_spread)
+    if (leg[i].q[1] > limit_joint1[1] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 1 max limit exceeded! Act: " << data->_legController->datas[i].q(1)
-                                    << " Limit: " << limit_joint1[1] * safety_spread);
+      ROS_ERROR_STREAM("Leg: " << i << " joint: 1 max limit exceeded! Act: " << leg[i].q[1]
+                               << " Max Limit: " << limit_joint1[1] * safety_spread);
       return false;
     }
 
     // joint 2 min
-    if (data->_legController->datas[i].q(2) < limit_joint2[0] * safety_spread)
+    if (leg[i].q[2] < limit_joint2[0] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 min limit exceeded! Act: " << data->_legController->datas[i].q(2)
-                                    << " Limit: " << limit_joint2[0] * safety_spread);
+      ROS_ERROR_STREAM("Leg: " << i << " joint: 2 min limit exceeded! Act: " << leg[i].q[2]
+                               << " Min Limit: " << limit_joint2[0] * safety_spread);
       return false;
     }
     // joint 2 max
-    if (data->_legController->datas[i].q(2) > limit_joint2[1] * safety_spread)
+    if (leg[i].q[2] > limit_joint2[1] * safety_spread)
     {
-      ROS_ERROR_STREAM_ONCE("Leg: " << i << " joint: 2 max limit exceeded! Act: " << data->_legController->datas[i].q(2)
-                                    << " Limit: " << limit_joint2[1] * safety_spread);
+      ROS_ERROR_STREAM("Leg: " << i << " joint: 2 max limit exceeded! Act: " << leg[i].q[2]
+                               << " Max Limit: " << limit_joint2[1] * safety_spread);
       return false;
     }
   }

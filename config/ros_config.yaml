@@ -50,7 +50,7 @@ dynamic_loader:
 
 
   # safety
-  joint_limits: 0
+  joint_limits: 1
 
   Swing_traj_height  : 0.09   # Set swing traj top point
 

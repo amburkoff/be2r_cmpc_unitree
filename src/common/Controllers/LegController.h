@@ -28,7 +28,7 @@ struct LegControllerCommand
 
   void zero();
 
-  Vec3<T> tauFeedForward, forceFeedForward, qDes, qdDes, pDes, vDes, integral;
+  Vec3<T> tauFeedForward, forceFeedForward, qDes, qdDes, pDes, vDes, integral, tauSafe;
   Mat3<T> kpCartesian, kdCartesian, kiCartesian, kpJoint, kdJoint;
   float i_saturation;
 };
@@ -66,7 +66,7 @@ public:
   }
 
   void zeroCommand();
-  void edampCommand(RobotType robot, T gain);
+  void edampCommand(T gain);
   void updateData(const SpiData* spiData);
   void updateCommand(SpiCommand* spiCommand);
   void setEnabled(bool enabled)

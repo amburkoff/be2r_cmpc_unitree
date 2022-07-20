@@ -25,8 +25,7 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
 
-  CMPC =
-    new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
 
   this->turnOnAllSafetyChecks();
 
@@ -150,7 +149,29 @@ template<typename T>
 void FSM_State_Testing<T>::run()
 {
   // test1();
-  LocomotionControlStep();
+  // LocomotionControlStep();
+  safeJointTest();
+}
+
+template<typename T>
+void FSM_State_Testing<T>::safeJointTest()
+{
+  for (size_t i = 0; i < 4; i++)
+  {
+    this->_data->_legController->commands[i].kpJoint(0, 0) = 0;
+    this->_data->_legController->commands[i].kpJoint(1, 1) = 0;
+    this->_data->_legController->commands[i].kpJoint(2, 2) = 0;
+
+    this->_data->_legController->commands[i].kdJoint(0, 0) = 3;
+    this->_data->_legController->commands[i].kdJoint(1, 1) = 3;
+    this->_data->_legController->commands[i].kdJoint(2, 2) = 3;
+
+    this->_data->_legController->commands[i].qdDes(0) = 0;
+    this->_data->_legController->commands[i].qdDes(1) = 0;
+    this->_data->_legController->commands[i].qdDes(2) = 0;
+  }
+
+  // this->_data->_legController->edampCommand(4);
 }
 
 template<typename T>
