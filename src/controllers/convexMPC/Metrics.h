@@ -15,12 +15,12 @@ class Metric
 {
 public:
   virtual ~Metric() = default;
-  virtual Vec4<float> getContactState() = 0; 
-  virtual Vec4<float> getSwingState() = 0;
+  virtual Vec4<float> getFinalBodyCost() = 0; 
+  virtual Vec4<float> getFinalCost() = 0;
   virtual Vec4<float> getFinalLegCost() = 0; //0 - means 'have to be specified', {} -- means 'if not specified will be {}'
   void setRobotData(ControlFSMData<float>& data);
   void computeCenterLegVelAndPos(Quadruped<float>& quad, Vec3<float>& q, Vec3<float>& dq, Mat3<float>* J, Mat3<float>* leg_p, Mat3<float>* Leg_v, Mat3<float>* Leg_w, int leg);
-
+  
   virtual void debugPrint() {};
 //   virtual void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
 //   virtual void restoreDefaults(){}
@@ -41,8 +41,8 @@ public:
   SystemEnergy();
   ~SystemEnergy() = default;
 
-  Vec4<float> getContactState();
-  Vec4<float> getSwingState();
+  Vec4<float> getFinalBodyCost();
+  Vec4<float> getFinalCost();
   Vec4<float> getFinalLegCost();
 
   // void setRobotData(ControlFSMData<T>& data);
@@ -56,7 +56,8 @@ private:
   Vec3<float> _position;
   Vec3<float> _state_coord;
   LegControllerData<float> datas[4];
-  float _KinEnergy;
+  float _KinLinEnergy;
+  float _KinRotEnergy;
   Vec4<float> _KinEnergyLeg;
   float _PotEnergy;
   Vec4<float> _PotEnergyLeg;

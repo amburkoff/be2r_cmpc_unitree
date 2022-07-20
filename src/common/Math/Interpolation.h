@@ -176,7 +176,7 @@ y_t ShiftedSineFirstDerivative(y_t y0, y_t yf, y_t h, x_t t) {
   assert(t >= 0 && t <= 1);
   static_assert(std::is_floating_point<y_t>::value,
                 "must specify input h>0 and yf-y0>=0");
-  assert(h > 0 );//&& yf-y0 >= 0
+  assert(h > 0);//&& yf-y0 >= 0
   y0 = x_t(0.5)*(yf+y0-abs(yf-y0)); // if yf-y0 < 0 then we mirrored our interpolate function: y0=yf, yf = y0,h = h+abs(yf-y0)
   yf = x_t(0.5)*(yf+y0+abs(yf-y0));
   h = h + x_t(0.5)*(abs(yf-y0)-(yf-y0));
