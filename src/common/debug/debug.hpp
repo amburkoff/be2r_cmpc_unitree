@@ -10,11 +10,21 @@
 #include <unitree_legged_msgs/StateError.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
+#include <cppTypes.h>
+
+// #include <controllers/convexMPC/Metrics.h>
 
 using std::cout;
 using std::endl;
 
 // #define PUB_IMU_AND_ODOM
+
+struct MetricData
+{
+  Vec4<float> final_body_cost; 
+  Vec4<float> final_cost;
+  Vec4<float> final_leg_cost;
+};
 
 class Debug
 {
@@ -29,6 +39,7 @@ public:
   unitree_legged_msgs::BodyInfo body_info = {};
   nav_msgs::Odometry ground_truth_odom = {};
   sensor_msgs::Imu imu;
+  MetricData metric_data = {};
 
 private:
   void _init();

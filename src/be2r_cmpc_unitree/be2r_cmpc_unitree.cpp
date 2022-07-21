@@ -147,6 +147,7 @@ void Body_Manager::init()
                                       _desiredStateCommand, &controlParameters, &_rosParameters, _debug);
 
   controlParameters.control_mode = 0;
+  _metric = new SystemEnergy();
 }
 
 void Body_Manager::_readRobotData()
@@ -292,7 +293,7 @@ void Body_Manager::run()
     controlParameters.control_mode = FSM;
   }
 #endif
-
+  // _metric.setRobotData()
   _debug->updateVisualization();
   _debug->updatePlot();
   _debug->tfPublish();

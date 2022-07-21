@@ -87,8 +87,13 @@ add_subdirectory(src/fsm)
 add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
 target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} controllers_lib fsm_lib Eigen3::Eigen)
 
+
+add_executable(test1 src/test.cpp)
+target_link_libraries(test1 ${catkin_LIBRARIES} ${EXTRA_LIBS} Eigen3::Eigen)
+
 #бинарник ноды
 add_executable(unitree_ctrl src/be2r_cmpc_unitree_node.cpp)
+
 
 #зависимости ноды
 add_dependencies(unitree_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
