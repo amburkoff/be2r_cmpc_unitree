@@ -61,20 +61,26 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   //find 1 with most difference
   //get average of 3 others and return
   float z = 0;
+  static float z_prev = 0;
 
   float z_cost[4] = { 0, 0, 0, 0 };
 
   Vec3<float> p[4];
+  Vec3<float> p_local[4];
 
   p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[0]);
   p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[1]);
   p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[2]);
   p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[3]);
 
-  // p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[0]);
-  // p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[1]);
-  // p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[2]);
-  // p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[3]);
+  p_local[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[0]);
+  p_local[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[1]);
+  p_local[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[2]);
+  p_local[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[3]);
+
+  float z_new = (p_local[0](2) + p_local[1](2) + p_local[2](2) + p_local[3](2)) / 4;
+  float k = 1.0;
+  z = z_prev * (1.0 - k) + z_new * k;
 
   // for (size_t i = 0; i < 4; i++)
   // {
@@ -90,10 +96,14 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   // std::cout << "p3z: " << p[3](2) << std::endl;
 
   Eigen::Matrix<float, 4, 3> P = Eigen::Matrix<float, 4, 3>::Zero(4, 3);
-  P.block(0, 0, 1, 3) = p[0].transpose();
-  P.block(1, 0, 1, 3) = p[1].transpose();
-  P.block(2, 0, 1, 3) = p[2].transpose();
-  P.block(3, 0, 1, 3) = p[3].transpose();
+  // P.block(0, 0, 1, 3) = p[0].transpose();
+  // P.block(1, 0, 1, 3) = p[1].transpose();
+  // P.block(2, 0, 1, 3) = p[2].transpose();
+  // P.block(3, 0, 1, 3) = p[3].transpose();
+  P.block(0, 0, 1, 3) = p_local[0].transpose();
+  P.block(1, 0, 1, 3) = p_local[1].transpose();
+  P.block(2, 0, 1, 3) = p_local[2].transpose();
+  P.block(3, 0, 1, 3) = p_local[3].transpose();
 
   // cout << P << endl;
 
@@ -200,6 +210,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
     _ps.segment(i1, 3) = -p_f;
     _vs.segment(i1, 3) = (1.0f - trust) * v0 + trust * (-dp_f);
     pzs(i) = (1.0f - trust) * (p0(2) + p_f(2));
+
     // std::cout << pzs(0) << std::endl;
   }
 
@@ -231,11 +242,14 @@ void LinearKFPositionVelocityEstimator<T>::run()
     _P.block(0, 0, 2, 2) /= T(10);
   }
 
-  _getLocalBodyHeight();
+  float my_z = 0;
+  my_z = _getLocalBodyHeight();
 
   this->_stateEstimatorData.result->position = _xhat.block(0, 0, 3, 1);
   this->_stateEstimatorData.result->vWorld = _xhat.block(3, 0, 3, 1);
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
+
+  // this->_stateEstimatorData.result->position(2) = -my_z;
 }
 
 template class LinearKFPositionVelocityEstimator<float>;

@@ -385,6 +385,12 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   // ROS_INFO_STREAM("is contact: " << se_contactState(0));
 
   static bool is_stance[4] = { 0, 0, 0, 0 };
+  static Vec3<float> p_fw[4] = {};
+  static Vec3<float> p_fl[4] = {};
+  static Vec3<float> p_bw[4] = {};
+  static float yaw_last[4] = {};
+  float delta_yaw[4] = {};
+  static Vec3<float> delta_p_bw[4] = {};
 
   for (int foot = 0; foot < 4; foot++)
   {
@@ -402,8 +408,18 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       // pDesFootWorldStance[foot] = data._legController->datas[foot].p;
       // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
       data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
-      data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p);
+      // data.debug->last_p_stance[foot].z = data._legController->datas[foot].p(2);
+      // data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
+      // p_fw[foot] = pFoot[foot];
+      p_fl[foot] = data._legController->datas[foot].p + data._quadruped->getHipLocation(foot);
+      p_bw[foot] = seResult.position;
+      yaw_last[foot] = seResult.rpy(2);
+      data.debug->hip_location[foot] = data._quadruped->getHipLocation(foot);
     }
+
+    delta_p_bw[foot] = seResult.rBody * (seResult.position - p_bw[foot]);
+    delta_yaw[foot] = seResult.rpy(2) - yaw_last[foot];
+    data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]
     // == 0)) if ((se_contactState(foot) == 2) && (swingState > 0))

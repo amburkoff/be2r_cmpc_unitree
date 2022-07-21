@@ -220,7 +220,8 @@ void Debug::_drawLastStancePoints()
 {
   visualization_msgs::Marker marker;
 
-  std::string name = "odom";
+  // std::string name = "odom";
+  std::string name = "base";
 
   marker.header.frame_id = name;
   marker.header.stamp = ros::Time::now();
@@ -246,10 +247,14 @@ void Debug::_drawLastStancePoints()
   geometry_msgs::Point p0, p1, p2, p3;
   marker.points.clear();
 
-  p0 = last_p_stance[0]; // FL last stance point
-  p1 = last_p_stance[1]; // FR last stance point
-  p2 = last_p_stance[2]; // BR last stance point
-  p3 = last_p_stance[3]; // BL last stance point
+  // p0 = last_p_stance[0]; // FL last stance point
+  // p1 = last_p_stance[1]; // FR last stance point
+  // p2 = last_p_stance[2]; // BR last stance point
+  // p3 = last_p_stance[3]; // BL last stance point
+  p0 = last_p_local_stance[0]; // FL last stance local point
+  p1 = last_p_local_stance[1]; // FR last stance local point
+  p2 = last_p_local_stance[2]; // BR last stance local point
+  p3 = last_p_local_stance[3]; // BL last stance local point
   marker.points.push_back(p0);
   marker.points.push_back(p1);
   marker.points.push_back(p3);
@@ -302,12 +307,15 @@ void Debug::_drawEstimatedStancePLane()
   visualization_msgs::Marker marker;
 
   std::string name = "odom";
+  // std::string name = "base";
 
   float A = mnk_plane.x;
   float B = mnk_plane.y;
   float C = mnk_plane.z;
 
   float del = sqrt(A * A + B * B + C * C);
+  // float roll = -acos(B / del) + M_PI / 2.0;
+  // float pitch = acos(A / del) - M_PI / 2.0;
   float roll = -acos(B / del) + M_PI / 2.0;
   float pitch = acos(A / del) - M_PI / 2.0;
 
