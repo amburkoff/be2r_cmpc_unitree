@@ -35,8 +35,7 @@ using namespace std;
 ////////////////////
 
 CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
-  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters),
-    _gait_period(_parameters->gait_period),
+  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(_parameters->gait_period),
     horizonLength(HORIZON), dt(_dt),
     trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
              Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
@@ -47,9 +46,10 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc
     standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
     // walking(30, Vec4<int>(2 * 30 / 4., 0, 30 / 4., 3 * 30 / 4.), Vec4<int>(0.75 * 30, 0.75 * 30, 0.75 * 30, 0.75 * 30),
     // "Walking"), //for sim
-    walking(GAIT_PERIOD_WALKING, Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
-            Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING),
-            "Walking"), // for real
+    walking(
+      GAIT_PERIOD_WALKING, Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
+      Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING),
+      "Walking"), // for real
     two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, 0, _gait_period, 0), "Two legs balance")
 
 {
@@ -257,7 +257,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
   for (int i = 0; i < 4; i++)
   {
-    pFoot[i] = seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
+    pFoot[i] =
+      seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
   }
 
   world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
@@ -381,7 +382,7 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   static Vec3<float> p_fl[4] = {};
   static Vec3<float> p_bw[4] = {};
   static float yaw_last[4] = {};
-  float delta_yaw[4] = {};
+  static float delta_yaw[4] = {};
   static Vec3<float> delta_p_bw[4] = {};
 
   for (int foot = 0; foot < 4; foot++)
@@ -401,17 +402,27 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
       data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
       // data.debug->last_p_stance[foot].z = data._legController->datas[foot].p(2);
-      // data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
-      // p_fw[foot] = pFoot[foot];
+      // data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p +
+      // data._quadruped->getHipLocation(foot)); p_fw[foot] = pFoot[foot];
+
       p_fl[foot] = data._legController->datas[foot].p + data._quadruped->getHipLocation(foot);
-      p_bw[foot] = seResult.position;
-      yaw_last[foot] = seResult.rpy(2);
-      data.debug->hip_location[foot] = data._quadruped->getHipLocation(foot);
+      delta_p_bw[foot] << 0, 0, 0;
+      delta_yaw[foot] = 0;
+      // p_bw[foot] = seResult.position;
+      // p_bw[foot] = seResult.position;
+      // yaw_last[foot] = seResult.rpy(2);
+      // data.debug->hip_location[foot] = data._quadruped->getHipLocation(foot);
     }
 
-    delta_p_bw[foot] = seResult.rBody * (seResult.position - p_bw[foot]);
-    delta_yaw[foot] = seResult.rpy(2) - yaw_last[foot];
-    data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
+    // delta_p_bw[foot] = seResult.rBody * (seResult.position - p_bw[foot]);
+    // delta_yaw[foot] = seResult.rpy(2) - yaw_last[foot];
+    // data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] -
+    // delta_p_bw[foot]));
+
+    delta_p_bw[foot] += seResult.vBody * dt;
+    delta_yaw[foot] += seResult.omegaBody(2) * dt;
+    data.debug->last_p_local_stance[foot] =
+      ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]
     // == 0)) if ((se_contactState(foot) == 2) && (swingState > 0))

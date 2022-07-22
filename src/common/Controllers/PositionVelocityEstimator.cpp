@@ -58,8 +58,8 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
 {
   // std::cout << "yo " << this->_stateEstimatorData.debug->last_p_stance[0].x << std::endl;
 
-  //find 1 with most difference
-  //get average of 3 others and return
+  // find 1 with most difference
+  // get average of 3 others and return
   float z = 0;
   static float z_prev = 0;
 
@@ -78,9 +78,9 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   p_local[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[2]);
   p_local[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[3]);
 
-  float z_new = (p_local[0](2) + p_local[1](2) + p_local[2](2) + p_local[3](2)) / 4;
-  float k = 1.0;
-  z = z_prev * (1.0 - k) + z_new * k;
+  // float z_new = (p_local[0](2) + p_local[1](2) + p_local[2](2) + p_local[3](2)) / 4;
+  // float k = 1.0;
+  // z = z_prev * (1.0 - k) + z_new * k;
 
   // for (size_t i = 0; i < 4; i++)
   // {
@@ -113,9 +113,21 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   this->_stateEstimatorData.debug->mnk_plane.y = K_solution(1);
   this->_stateEstimatorData.debug->mnk_plane.z = K_solution(2);
 
+  float A = K_solution(0);
+  float B = K_solution(1);
+  float C = K_solution(2);
+  float D1 = Vec3<float>(A, B, C).transpose() * p_local[0];
+  float D2 = Vec3<float>(A, B, C).transpose() * p_local[1];
+  float D3 = Vec3<float>(A, B, C).transpose() * p_local[2];
+  float D4 = Vec3<float>(A, B, C).transpose() * p_local[3];
+  float De = (D1 + D2 + D3 + D4) / 4;
+  this->_stateEstimatorData.debug->De = De;
+
   // cout << K_solution << endl;
 
-  this->_stateEstimatorData.debug->body_info.pos_z_global = -z;
+  z = abs(De) / sqrt(A * A + B * B + C * C);
+  // this->_stateEstimatorData.debug->body_info.pos_z_global = -z;
+  this->_stateEstimatorData.debug->body_info.pos_z_global = z;
 
   // std::cout << "phase0: " << this->_stateEstimatorData.result->contactEstimate(0) << std::endl;
   // std::cout << "new z: " << z << " unnec: " << (int)num_p_unnecessary << std::endl
@@ -244,12 +256,19 @@ void LinearKFPositionVelocityEstimator<T>::run()
 
   float my_z = 0;
   my_z = _getLocalBodyHeight();
+  static unsigned long iterations = 0;
+  iterations++;
 
   this->_stateEstimatorData.result->position = _xhat.block(0, 0, 3, 1);
   this->_stateEstimatorData.result->vWorld = _xhat.block(3, 0, 3, 1);
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
 
-  // this->_stateEstimatorData.result->position(2) = -my_z;
+  if (iterations > 5000)
+  {
+    ROS_INFO_ONCE("MY HEIGHT!");
+    this->_stateEstimatorData.debug->body_info.pos_z_global = this->_stateEstimatorData.result->position(2);
+    this->_stateEstimatorData.result->position(2) = my_z;
+  }
 }
 
 template class LinearKFPositionVelocityEstimator<float>;
@@ -261,13 +280,10 @@ template class LinearKFPositionVelocityEstimator<double>;
 template<typename T>
 void CheaterPositionVelocityEstimator<T>::run()
 {
-  this->_stateEstimatorData.result->position =
-    this->_stateEstimatorData.cheaterState->position.template cast<T>();
-  this->_stateEstimatorData.result->vWorld =
-    this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
-    this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
-  this->_stateEstimatorData.result->vBody =
-    this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+  this->_stateEstimatorData.result->position = this->_stateEstimatorData.cheaterState->position.template cast<T>();
+  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
+                                             this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+  this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
 }
 
 template class CheaterPositionVelocityEstimator<float>;

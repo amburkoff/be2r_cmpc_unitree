@@ -149,7 +149,7 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
 
     // Torque
     legTorque += datas[leg].J.transpose() * footForce;
-    legTorque += commands[leg].tauSafe;
+    // legTorque += commands[leg].tauSafe;
 
     // set command:
     spiCommand->tau_abad_ff[leg] = legTorque(0);

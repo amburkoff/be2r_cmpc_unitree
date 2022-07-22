@@ -111,7 +111,7 @@ void Body_Manager::init()
 
   _debug = new Debug(_time_start);
 
-  // Always initialize the leg controller and state entimator
+  // Always initialize the leg controller and state estimator
   _legController = new LegController<float>(_quadruped);
   _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate,
                                                        &_cheater_state, &_rosStaticParams, _debug);

@@ -306,8 +306,8 @@ void Debug::_drawEstimatedStancePLane()
 {
   visualization_msgs::Marker marker;
 
-  std::string name = "odom";
-  // std::string name = "base";
+  // std::string name = "odom";
+  std::string name = "base";
 
   float A = mnk_plane.x;
   float B = mnk_plane.y;
@@ -318,6 +318,8 @@ void Debug::_drawEstimatedStancePLane()
   // float pitch = acos(A / del) - M_PI / 2.0;
   float roll = -acos(B / del) + M_PI / 2.0;
   float pitch = acos(A / del) - M_PI / 2.0;
+
+  // body_info.pos_z_global = abs(De) / sqrt(A * A + B * B + C * C);
 
   tf::Quaternion quat;
   // quat.setRPY(body_info.euler_act.x, body_info.euler_act.y, body_info.euler_act.z);
@@ -330,8 +332,12 @@ void Debug::_drawEstimatedStancePLane()
   marker.type = visualization_msgs::Marker::CUBE;
   marker.action = visualization_msgs::Marker::ADD;
   // pose and orientation must be zero, except orientation.w = 1
-  marker.pose.position = body_info.pos_act;
-  marker.pose.position.z = 0;
+  // marker.pose.position = body_info.pos_act;
+  // marker.pose.position.z = 0;
+  marker.pose.position.x = 0;
+  marker.pose.position.y = 0;
+  // marker.pose.position.z = -body_info.pos_act.z;
+  marker.pose.position.z = De / C;
   marker.pose.orientation.x = quat.x();
   marker.pose.orientation.y = quat.y();
   marker.pose.orientation.z = quat.z();
