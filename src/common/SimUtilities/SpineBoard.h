@@ -34,6 +34,10 @@ struct SpiCommand
   float tau_hip_ff[4];
   float tau_knee_ff[4];
 
+  float tau_abad_safe[4];
+  float tau_hip_safe[4];
+  float tau_knee_safe[4];
+
   int32_t flags[4];
 };
 

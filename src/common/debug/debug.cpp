@@ -1,7 +1,6 @@
 #include "debug.hpp"
 
-Debug::Debug(ros::Time time_start)
-    : _zero_time(0), _time_start(time_start)
+Debug::Debug(ros::Time time_start) : _zero_time(0), _time_start(time_start)
 {
   z_offset = 0.f;
   _init();
@@ -21,6 +20,7 @@ void Debug::_initPublishers()
   _pub_body_info = _nh.advertise<unitree_legged_msgs::BodyInfo>("/body_info", 1);
 
   _pub_vis_last_p_stance = _nh.advertise<visualization_msgs::Marker>("/visual/last_p_stance", 1);
+  _pub_vis_swing_pf = _nh.advertise<visualization_msgs::Marker>("/visual/swing_pf", 1);
   _pub_vis_estimated_stance_plane = _nh.advertise<visualization_msgs::Marker>("/visual/estimated_stance_plane", 1);
   _pub_vis_leg_des_traj[0] = _nh.advertise<nav_msgs::Path>("/visual/leg0/des_traj", 1);
   _pub_vis_leg_des_traj[1] = _nh.advertise<nav_msgs::Path>("/visual/leg1/des_traj", 1);
@@ -42,25 +42,19 @@ void Debug::updatePlot()
   ros::Duration delta_t = ros::Time::now() - _time_start;
 
   // all_legs_info.header.stamp = _zero_time + delta_t;
-  // body_info.header.stamp = _zero_time + delta_t;
+  // body_info.header.stamp = _zero_time + delta_t
   all_legs_info.header.stamp = ros::Time::now();
   body_info.header.stamp = ros::Time::now();
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    all_legs_info.leg.at(leg_num).p_error.x =
-        all_legs_info.leg.at(leg_num).p_des.x - all_legs_info.leg.at(leg_num).p_act.x;
-    all_legs_info.leg.at(leg_num).p_error.y =
-        all_legs_info.leg.at(leg_num).p_des.y - all_legs_info.leg.at(leg_num).p_act.y;
-    all_legs_info.leg.at(leg_num).p_error.z =
-        all_legs_info.leg.at(leg_num).p_des.z - all_legs_info.leg.at(leg_num).p_act.z;
+    all_legs_info.leg.at(leg_num).p_error.x = all_legs_info.leg.at(leg_num).p_des.x - all_legs_info.leg.at(leg_num).p_act.x;
+    all_legs_info.leg.at(leg_num).p_error.y = all_legs_info.leg.at(leg_num).p_des.y - all_legs_info.leg.at(leg_num).p_act.y;
+    all_legs_info.leg.at(leg_num).p_error.z = all_legs_info.leg.at(leg_num).p_des.z - all_legs_info.leg.at(leg_num).p_act.z;
 
-    all_legs_info.leg.at(leg_num).v_error.x =
-        all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
-    all_legs_info.leg.at(leg_num).v_error.y =
-        all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
-    all_legs_info.leg.at(leg_num).v_error.z =
-        all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
+    all_legs_info.leg.at(leg_num).v_error.x = all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
+    all_legs_info.leg.at(leg_num).v_error.y = all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
+    all_legs_info.leg.at(leg_num).v_error.z = all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
   }
 
   body_info.state_error.p.x = body_info.pos_des.x - body_info.pos_act.x;
@@ -144,6 +138,7 @@ void Debug::updateVisualization()
   _pub_joint_states.publish(msg);
 
   _drawLastStancePoints();
+  _drawSwingFinalPoints();
   _drawEstimatedStancePLane();
   _drawLegsDesiredTrajectory();
   _drawLegsForce();
@@ -177,7 +172,7 @@ void Debug::tfPublish()
   odom_trans_world.header.frame_id = "world";
   odom_trans_world.child_frame_id = "odom";
 
-  z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
+  //  z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
   odom_trans_world.transform.translation.z = z_offset;
   odom_trans_world.transform.rotation.w = 1.;
 
@@ -193,29 +188,29 @@ Vec3<float> Debug::_getHipLocation(uint8_t leg_num)
 
   switch (leg_num)
   {
-    // FR
-  case 0:
-    result(0) = x;
-    result(1) = -y;
-    break;
+      // FR
+    case 0:
+      result(0) = x;
+      result(1) = -y;
+      break;
 
-    // FL
-  case 1:
-    result(0) = x;
-    result(1) = y;
-    break;
+      // FL
+    case 1:
+      result(0) = x;
+      result(1) = y;
+      break;
 
-    // BR
-  case 2:
-    result(0) = -x;
-    result(1) = -y;
-    break;
+      // BR
+    case 2:
+      result(0) = -x;
+      result(1) = -y;
+      break;
 
-    //BL
-  case 3:
-    result(0) = -x;
-    result(1) = y;
-    break;
+      // BL
+    case 3:
+      result(0) = -x;
+      result(1) = y;
+      break;
   }
 
   return result;
@@ -225,7 +220,8 @@ void Debug::_drawLastStancePoints()
 {
   visualization_msgs::Marker marker;
 
-  std::string name = "odom";
+  // std::string name = "odom";
+  std::string name = "base";
 
   marker.header.frame_id = name;
   marker.header.stamp = ros::Time::now();
@@ -249,11 +245,16 @@ void Debug::_drawLastStancePoints()
   marker.color.b = 1.0;
 
   geometry_msgs::Point p0, p1, p2, p3;
-  p0 = last_p_stance[0]; // FL point
-  p1 = last_p_stance[1]; // FR point
-  p2 = last_p_stance[2]; // BR point
-  p3 = last_p_stance[3]; // BL point
   marker.points.clear();
+
+  // p0 = last_p_stance[0]; // FL last stance point
+  // p1 = last_p_stance[1]; // FR last stance point
+  // p2 = last_p_stance[2]; // BR last stance point
+  // p3 = last_p_stance[3]; // BL last stance point
+  p0 = last_p_local_stance[0]; // FL last stance local point
+  p1 = last_p_local_stance[1]; // FR last stance local point
+  p2 = last_p_local_stance[2]; // BR last stance local point
+  p3 = last_p_local_stance[3]; // BL last stance local point
   marker.points.push_back(p0);
   marker.points.push_back(p1);
   marker.points.push_back(p3);
@@ -262,14 +263,66 @@ void Debug::_drawLastStancePoints()
   _pub_vis_last_p_stance.publish(marker);
 }
 
-void Debug::_drawEstimatedStancePLane()
+void Debug::_drawSwingFinalPoints()
 {
   visualization_msgs::Marker marker;
 
   std::string name = "odom";
 
+  marker.header.frame_id = name;
+  marker.header.stamp = ros::Time::now();
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::SPHERE_LIST;
+  marker.action = visualization_msgs::Marker::ADD;
+  // pose and orientation must be zero, except orientation.w = 1
+  marker.pose.position.x = 0;
+  marker.pose.position.y = 0;
+  marker.pose.position.z = 0;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.025;
+  marker.scale.y = 0.025;
+  marker.scale.z = 0.025;
+  marker.color.a = 1.0;
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+
+  geometry_msgs::Point pf[4];
+  marker.points.clear();
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    pf[i] = all_legs_info.leg[i].swing_pf;
+    marker.points.push_back(pf[i]);
+  }
+
+  _pub_vis_swing_pf.publish(marker);
+}
+
+void Debug::_drawEstimatedStancePLane()
+{
+  visualization_msgs::Marker marker;
+
+  std::string name = "odom";
+  // std::string name = "base";
+
+  float A = mnk_plane.x;
+  float B = mnk_plane.y;
+  float C = mnk_plane.z;
+
+  float del = sqrt(A * A + B * B + C * C);
+  // float roll = -acos(B / del) + M_PI / 2.0;
+  // float pitch = acos(A / del) - M_PI / 2.0;
+  float roll = -acos(B / del) + M_PI / 2.0;
+  float pitch = acos(A / del) - M_PI / 2.0;
+
   tf::Quaternion quat;
-  quat.setRPY(body_info.euler_act.x, body_info.euler_act.y, body_info.euler_act.z);
+  // quat.setRPY(body_info.euler_act.x, body_info.euler_act.y, body_info.euler_act.z);
+  // quat.setRPY(roll, pitch, 0.0);
+  quat.setRPY(roll, pitch, 0.0);
 
   marker.header.frame_id = name;
   marker.header.stamp = ros::Time::now();
@@ -306,7 +359,7 @@ void Debug::_drawLegsDesiredTrajectory()
 void Debug::_drawLegsForce()
 {
   visualization_msgs::Marker marker;
-  std::string names[4] = {"FR_hip", "FL_hip", "RR_hip", "RL_hip"};
+  std::string names[4] = { "FR_hip", "FL_hip", "RR_hip", "RL_hip" };
   float koef = 500;
 
   for (size_t i = 0; i < 4; i++)

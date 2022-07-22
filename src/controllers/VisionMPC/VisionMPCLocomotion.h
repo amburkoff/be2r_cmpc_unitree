@@ -1,53 +1,36 @@
-#ifndef CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
-#define CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
+#pragma once
 
+#include "Controllers/DesiredStateCommand.h"
+#include "controllers/CMPC/Gait_contact.h"
 #include "cppTypes.h"
 #include <ControlFSMData.h>
-#include <Controllers/FootSwingTrajectory.h>
+#include <FootSwingTrajectory.h>
+#include <SparseCMPC/SparseCMPC.h>
 #include <Utilities/SpiralIterator.hpp>
+#include <geometry_msgs/PoseStamped.h>
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <nav_msgs/Path.h>
+#include <ros/ros.h>
+#include <visualization_msgs/Marker.h>
+
+#include <cstdio>
+
+#define MAX_STEP_HEIGHT 0.18
 
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-// Step height maximum [m]
-#define MAX_STEP_HEIGHT 0.18
-
-class VisionGait
-{
-public:
-  VisionGait(int nMPC_segments, Vec4<int> offsets, Vec4<int> durations,
-             const std::string& name = "");
-  ~VisionGait();
-  Vec4<float> getContactState();
-  Vec4<float> getSwingState();
-  int* mpc_gait();
-  void setIterations(int iterationsPerMPC, int currentIteration);
-  int getCurrentGaitPhase() { return _iteration; }
-  int _stance;
-  int _swing;
-
-private:
-  int _nMPC_segments;
-  int* _mpc_table;
-  Array4i _offsets;        // offset in mpc segments
-  Array4i _durations;      // duration of step in mpc segments
-  Array4f _offsetsFloat;   // offsets in phase (0 to 1)
-  Array4f _durationsFloat; // durations in phase (0 to 1)
-  int _iteration;
-  int _nIterations;
-  float _phase;
-};
-
 class VisionMPCLocomotion
 {
 public:
-  VisionMPCLocomotion(float _dt, int _iterations_between_mpc,
-                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  VisionMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd,
-           const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd, const grid_map::GridMap& height_map,
+           const grid_map::GridMap& height_map_raw);
+  bool currently_jumping = false;
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -65,36 +48,48 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _updateFoothold(Vec3<float>& foot, const Vec3<float>& body_pos,
-                       const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw,
-                       int leg);
-  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected,
-                       int& y_idx_selected, const grid_map::GridMap& height_map, int leg);
-  void _updateParams(ControlFSMData<float>& data);
+  void _SetupCommand(ControlFSMData<float>& data);
   float _updateTrajHeight(size_t foot);
+  void _updateFoothold(Vec3<float>& pf, const Vec3<float>& body_pos, const grid_map::GridMap& height_map,
+                       const grid_map::GridMap& height_map_raw, int leg);
 
-  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
+  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
+                       const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw, int leg);
 
-  Vec3<float> _fin_foot_loc[4];
-  float grid_size = 0.02;
+  ControlFSMData<float>* _data;
 
-  Vec3<float> v_des_world;
-  Vec3<float> rpy_des;
-  Vec3<float> v_rpy_des;
+  float _yaw_turn_rate;
+  float _yaw_des = 0;
 
-  void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data);
+  float _roll_des;
+  float _pitch_des;
+
+  float _x_vel_des = 0.;
+  float _y_vel_des = 0.;
+
+  // High speed running
+  float _body_height = 0.29;
+
+  float _body_height_running = 0.29;
+  float _body_height_jumping = 0.36;
+
+  void recompute_timing(int iterations_per_mpc);
+  void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
+  void solveSparseMPC(int* mpcTable, ControlFSMData<float>& data);
+  void initSparseMPC();
   int iterationsBetweenMPC;
-  float _body_height;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
   int _gait_period;
   int horizonLength;
+  int default_iterations_between_mpc;
   float dt;
   float dtMPC;
   int iterationCounter = 0;
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  VisionGait trotting, bounding, pronking, galloping, standing, trotRunning, walking;
+  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -106,9 +101,15 @@ private:
   Vec3<float> world_position_desired;
   Vec3<float> rpy_int;
   Vec3<float> rpy_comp;
+  float x_comp_integral = 0;
   Vec3<float> pFoot[4];
   float trajAll[12 * 36];
-  ControlFSMData<float>* _data;
-};
+  ros::Publisher _pub_des_traj[4];
+  ros::NodeHandle _nh;
+  visualization_msgs::Marker marker[4];
+  ros::Publisher _vis_pub[4];
 
-#endif // CHEETAH_SOFTWARE_VISION_MPCLOCOMOTION_H
+  vectorAligned<Vec12<double>> _sparseTrajectory;
+
+  SparseCMPC _sparseCMPC;
+};

@@ -2,8 +2,7 @@
 
 using namespace std;
 
-Body_Manager::Body_Manager()
-    : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+Body_Manager::Body_Manager() : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
@@ -114,19 +113,20 @@ void Body_Manager::init()
 
   // Always initialize the leg controller and state entimator
   _legController = new LegController<float>(_quadruped);
-  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState,
-                                                       &_stateEstimate, &_cheater_state, &_rosStaticParams, _debug);
+  _stateEstimator = new StateEstimatorContainer<float>(&vectorNavData, _legController->datas, &footContactState, &_stateEstimate,
+                                                       &_cheater_state, &_rosStaticParams, _debug);
   initializeStateEstimator();
 
   // Initialize the DesiredStateCommand object
-  _desiredStateCommand = new DesiredStateCommand<float>(&driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
+  _desiredStateCommand =
+    new DesiredStateCommand<float>(&driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, _rosStaticParams.controller_dt);
 
   // Initializes the Control FSM with all the required data
-  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
-                                      _desiredStateCommand, &_rosStaticParams, &_rosParameters, _debug);
+  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler, _desiredStateCommand,
+                                      &_rosStaticParams, &_rosParameters, _debug);
 
   _rosParameters.FSM_State = 0;
 }
@@ -208,15 +208,13 @@ void Body_Manager::_readRobotData()
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    _debug->all_legs_info.leg[leg_num].is_contact =
-        _stateEstimator->getContactSensorData()(leg_num);
+    _debug->all_legs_info.leg[leg_num].is_contact = _stateEstimator->getContactSensorData()(leg_num);
   }
 }
 
 void Body_Manager::run()
 {
-  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1],
-                             _low_state.footForce[2], _low_state.footForce[3]);
+  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
 
   if (is_udp_connection)
   {
@@ -377,7 +375,7 @@ void Body_Manager::finalizeStep()
     _torqueCalculator(&spiCommand, &spiData, i);
   }
 
-  uint8_t mode[4] = {MOTOR_BREAK};
+  uint8_t mode[4] = { MOTOR_BREAK };
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -469,23 +467,20 @@ void Body_Manager::initializeStateEstimator()
   {
     _stateEstimator->addEstimator<VectorNavOrientationEstimator<float>>();
     _stateEstimator->addEstimator<LinearKFPositionVelocityEstimator<float>>();
-    // _stateEstimator->addEstimator<PositionEstimator<float>>();
+    // _stateEstimator->addEstimator<PositionEstimator<float>>);
   }
 }
 
 void Body_Manager::_initSubscribers()
 {
-  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this,
-                                 ros::TransportHints().tcpNoDelay(true));
-  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this,
-                               ros::TransportHints().tcpNoDelay(true));
-  _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback,
-                                    this, ros::TransportHints().tcpNoDelay(true));
+  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth =
+    _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
   _srv_do_step = _nh.advertiseService("/do_step", &Body_Manager::_srvDoStep, this);
 }
 
-bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest,
-                              std_srvs::Trigger::Response& response)
+bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response)
 {
   ROS_INFO("DO STEP!");
 
@@ -597,32 +592,27 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num
 {
   if (_legController->is_low_level == false)
   {
-    _low_cmd.motorCmd[leg_num * 3 + 0].tau =
-        cmd->kp_abad[leg_num] * (cmd->q_des_abad[leg_num] - data->q_abad[leg_num]) +
-        cmd->kd_abad[leg_num] * (cmd->qd_des_abad[leg_num] - data->qd_abad[leg_num]) +
-        cmd->tau_abad_ff[leg_num];
+    _low_cmd.motorCmd[leg_num * 3 + 0].tau = cmd->kp_abad[leg_num] * (cmd->q_des_abad[leg_num] - data->q_abad[leg_num]) +
+                                             cmd->kd_abad[leg_num] * (cmd->qd_des_abad[leg_num] - data->qd_abad[leg_num]) +
+                                             cmd->tau_abad_ff[leg_num];
 
-    _low_cmd.motorCmd[leg_num * 3 + 1].tau =
-        cmd->kp_hip[leg_num] * (cmd->q_des_hip[leg_num] - data->q_hip[leg_num]) +
-        cmd->kd_hip[leg_num] * (cmd->qd_des_hip[leg_num] - data->qd_hip[leg_num]) +
-        cmd->tau_hip_ff[leg_num];
+    _low_cmd.motorCmd[leg_num * 3 + 1].tau = cmd->kp_hip[leg_num] * (cmd->q_des_hip[leg_num] - data->q_hip[leg_num]) +
+                                             cmd->kd_hip[leg_num] * (cmd->qd_des_hip[leg_num] - data->qd_hip[leg_num]) +
+                                             cmd->tau_hip_ff[leg_num];
 
-    _low_cmd.motorCmd[leg_num * 3 + 2].tau =
-        cmd->kp_knee[leg_num] * (cmd->q_des_knee[leg_num] - data->q_knee[leg_num]) +
-        cmd->kd_knee[leg_num] * (cmd->qd_des_knee[leg_num] - data->qd_knee[leg_num]) +
-        cmd->tau_knee_ff[leg_num];
+    _low_cmd.motorCmd[leg_num * 3 + 2].tau = cmd->kp_knee[leg_num] * (cmd->q_des_knee[leg_num] - data->q_knee[leg_num]) +
+                                             cmd->kd_knee[leg_num] * (cmd->qd_des_knee[leg_num] - data->qd_knee[leg_num]) +
+                                             cmd->tau_knee_ff[leg_num];
   }
   else
   {
     _low_cmd.motorCmd[leg_num * 3 + 0].tau = cmd->tau_abad_ff[leg_num];
-
     _low_cmd.motorCmd[leg_num * 3 + 1].tau = cmd->tau_hip_ff[leg_num];
-
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = cmd->tau_knee_ff[leg_num];
   }
 
-  const float safe_torque[3] = {4.f, 4.f, 4.f};
-  const float max_torque[3] = {17.f, 17.f, 26.f};
+  const float safe_torque[3] = { 4.f, 4.f, 4.f };
+  const float max_torque[3] = { 17.f, 17.f, 26.f };
   const float* torque_limits;
 
   if (_is_torque_safe)

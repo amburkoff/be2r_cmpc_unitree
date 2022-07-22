@@ -9,6 +9,10 @@ OffsetDurationGaitContact::OffsetDurationGaitContact(int nSegment, Vec4<int> off
   // allocate memory for MPC gait table
   _mpc_table = new int[nSegment * 4];
 
+  // ROS_INFO_STREAM(nSegment << " gait period");
+  std::cout << name << " gait period: " << nSegment << std::endl;
+  
+
   // nSegment - количество сегментов мпс = gait period
 
   // offset и duration stance в диапазоне (0 -- 1)

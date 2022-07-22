@@ -17,7 +17,7 @@
 using std::cout;
 using std::endl;
 
-// #define PUB_IMU_AND_ODOM
+#define PUB_IMU_AND_ODOM
 
 class Debug
 {
@@ -35,6 +35,9 @@ public:
   sensor_msgs::Imu imu;
   geometry_msgs::Point last_p_stance[4] = {};
   geometry_msgs::Point last_p_local_stance[4] = {};
+  geometry_msgs::Point mnk_plane = {};
+  Vec3<float> hip_location[4] = {};
+  Mat3<float> Rbody = {};
 
   nav_msgs::Path leg_traj_des[4];
   geometry_msgs::Point leg_force[4];
@@ -42,9 +45,9 @@ public:
 private:
   void _init();
   void _initPublishers();
-  void _ground_truth_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
   Vec3<float> _getHipLocation(uint8_t leg_num);
   void _drawLastStancePoints();
+  void _drawSwingFinalPoints();
   void _drawEstimatedStancePLane();
   void _drawLegsDesiredTrajectory();
   void _drawLegsForce();
@@ -53,12 +56,15 @@ private:
   const ros::Time _zero_time;
   ros::Time _time_start;
 
+  ros::Subscriber _sub_ground_truth;
+
   ros::Publisher _pub_joint_states;
   ros::Publisher _pub_imu;
   ros::Publisher _pub_all_legs_info;
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
   ros::Publisher _pub_vis_last_p_stance;
+  ros::Publisher _pub_vis_swing_pf;
   ros::Publisher _pub_vis_estimated_stance_plane;
   ros::Publisher _pub_vis_leg_des_traj[4];
   ros::Publisher _pub_vis_leg_force[4];

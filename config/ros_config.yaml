@@ -50,7 +50,7 @@ dynamic_loader:
 
 
   # safety
-  joint_limits: 0
+  joint_limits: 1
 
   Swing_traj_height  : 0.09   # Set swing traj top point
 
@@ -71,7 +71,7 @@ dynamic_loader:
 
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
-  gait_period           : 16
+  gait_period           : 18
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4
