@@ -263,12 +263,12 @@ void LinearKFPositionVelocityEstimator<T>::run()
   this->_stateEstimatorData.result->vWorld = _xhat.block(3, 0, 3, 1);
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
 
-  if (iterations > 5000)
-  {
-    ROS_INFO_ONCE("MY HEIGHT!");
-    this->_stateEstimatorData.debug->body_info.pos_z_global = this->_stateEstimatorData.result->position(2);
-    this->_stateEstimatorData.result->position(2) = my_z;
-  }
+  // if (iterations > 5000)
+  // {
+  //   ROS_INFO_ONCE("MY HEIGHT!");
+  //   this->_stateEstimatorData.debug->body_info.pos_z_global = this->_stateEstimatorData.result->position(2);
+  this->_stateEstimatorData.result->position(2) = my_z;
+  // }
 }
 
 template class LinearKFPositionVelocityEstimator<float>;

@@ -398,31 +398,17 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
       // foot position in world frame at contanct
       pDesFootWorldStance[foot] = pFoot[foot];
-      // pDesFootWorldStance[foot] = data._legController->datas[foot].p;
-      // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
       data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
-      // data.debug->last_p_stance[foot].z = data._legController->datas[foot].p(2);
-      // data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p +
-      // data._quadruped->getHipLocation(foot)); p_fw[foot] = pFoot[foot];
+      p_fw[foot] = pFoot[foot];
 
       p_fl[foot] = data._legController->datas[foot].p + data._quadruped->getHipLocation(foot);
       delta_p_bw[foot] << 0, 0, 0;
       delta_yaw[foot] = 0;
-      // p_bw[foot] = seResult.position;
-      // p_bw[foot] = seResult.position;
-      // yaw_last[foot] = seResult.rpy(2);
-      // data.debug->hip_location[foot] = data._quadruped->getHipLocation(foot);
     }
-
-    // delta_p_bw[foot] = seResult.rBody * (seResult.position - p_bw[foot]);
-    // delta_yaw[foot] = seResult.rpy(2) - yaw_last[foot];
-    // data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] -
-    // delta_p_bw[foot]));
 
     delta_p_bw[foot] += seResult.vBody * dt;
     delta_yaw[foot] += seResult.omegaBody(2) * dt;
-    data.debug->last_p_local_stance[foot] =
-      ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
+    data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]
     // == 0)) if ((se_contactState(foot) == 2) && (swingState > 0))
@@ -464,8 +450,7 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
       for (size_t i = 0; i < 11; i++)
       {
-        footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + ((1.0 - swingState) / 11.0 * (float)i),
-                                                                 swingTimes[foot]);
+        footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + ((1.0 - swingState) / 11.0 * (float)i), swingTimes[foot]);
         p_des_traj = footSwingTrajectories[foot].getPosition();
 
         pose_traj.pose.position = ros::toMsg(p_des_traj);

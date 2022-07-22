@@ -14,9 +14,9 @@ using namespace std;
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template <typename T>
+template<typename T>
 FSM_State_StandUp<T>::FSM_State_StandUp(ControlFSMData<T>* _controlFSMData)
-    : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP"), _ini_foot_pos(4)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP"), _ini_foot_pos(4)
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -32,7 +32,7 @@ FSM_State_StandUp<T>::FSM_State_StandUp(ControlFSMData<T>* _controlFSMData)
   // ROS_INFO("START SERVER");
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_StandUp<T>::onEnter()
 {
   // Default is to not transition
@@ -53,7 +53,7 @@ void FSM_State_StandUp<T>::onEnter()
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
-template <typename T>
+template<typename T>
 void FSM_State_StandUp<T>::run()
 {
   T hMax = 0.25;
@@ -92,8 +92,9 @@ void FSM_State_StandUp<T>::run()
     this->_data->_legController->commands[i].kdCartesian = Vec3<T>(15, 15, 15).asDiagonal();
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
-    this->_data->_legController->commands[i].pDes[2] =
-        progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
+    this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
+
+    this->_data->debug->last_p_local_stance[i] = ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
 
     this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
@@ -105,7 +106,7 @@ void FSM_State_StandUp<T>::run()
  *
  * @return the enumerated FSM state name to transition into
  */
-template <typename T>
+template<typename T>
 FSM_StateName FSM_State_StandUp<T>::checkTransition()
 {
   this->nextStateName = this->stateName;
@@ -114,40 +115,40 @@ FSM_StateName FSM_State_StandUp<T>::checkTransition()
   // Switch FSM control mode
   switch ((int)this->_data->userParameters->FSM_State)
   {
-  case K_STAND_UP:
-    break;
+    case K_STAND_UP:
+      break;
 
-  case K_BALANCE_STAND:
-    this->nextStateName = FSM_StateName::BALANCE_STAND;
-    break;
+    case K_BALANCE_STAND:
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
+      break;
 
-  case K_BALANCE_VBL:
-    this->nextStateName = FSM_StateName::BALANCE_VBL;
-    break;
+    case K_BALANCE_VBL:
+      this->nextStateName = FSM_StateName::BALANCE_VBL;
+      break;
 
-  case K_LOCOMOTION:
-    this->nextStateName = FSM_StateName::LOCOMOTION;
-    break;
+    case K_LOCOMOTION:
+      this->nextStateName = FSM_StateName::LOCOMOTION;
+      break;
 
-  case K_VISION:
-    this->nextStateName = FSM_StateName::VISION;
-    break;
+    case K_VISION:
+      this->nextStateName = FSM_StateName::VISION;
+      break;
 
-  case K_PASSIVE: // normal c
-    this->nextStateName = FSM_StateName::PASSIVE;
-    break;
+    case K_PASSIVE: // normal c
+      this->nextStateName = FSM_StateName::PASSIVE;
+      break;
 
-  case K_LAY_DOWN:
-    this->nextStateName = FSM_StateName::LAYDOWN;
-    break;
+    case K_LAY_DOWN:
+      this->nextStateName = FSM_StateName::LAYDOWN;
+      break;
 
-  case K_TESTING:
-    this->nextStateName = FSM_StateName::TESTING;
-    break;
+    case K_TESTING:
+      this->nextStateName = FSM_StateName::TESTING;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_STAND_UP << " to "
-              << this->_data->userParameters->FSM_State << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_STAND_UP << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -160,42 +161,42 @@ FSM_StateName FSM_State_StandUp<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_StandUp<T>::transition()
 {
   // Finish Transition
   switch (this->nextStateName)
   {
-  case FSM_StateName::PASSIVE: // normal
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::PASSIVE: // normal
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::BALANCE_STAND:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::BALANCE_STAND:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::BALANCE_VBL:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::BALANCE_VBL:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::LOCOMOTION:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::LOCOMOTION:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::VISION:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::VISION:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::LAYDOWN:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::LAYDOWN:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::TESTING:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::TESTING:
+      this->transitionData.done = true;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM
@@ -205,7 +206,7 @@ TransitionData<T> FSM_State_StandUp<T>::transition()
 /**
  * Cleans up the state information on exiting the state.
  */
-template <typename T>
+template<typename T>
 void FSM_State_StandUp<T>::onExit()
 {
   // Nothing to clean up when exiting
