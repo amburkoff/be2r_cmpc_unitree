@@ -32,7 +32,6 @@ static const int NUM_CONTACT_POINTS = 4;
 static const int NUM_VARIABLES_PER_FOOT = 3;
 static const int NUM_CONSTRAINTS_PER_FOOT = 5;
 
-// static const double PI_CONST = 3.1415;
 static const double NEGATIVE_NUMBER = -1000000.0;
 static const double POSITIVE_NUMBER = 1000000.0;
 
@@ -44,8 +43,6 @@ class BalanceController
 public:
   BalanceController();
   ~BalanceController(){};
-
-  void testFunction();
 
   // use new kinematics measurements to update QP
   void updateProblemData(double* xfb_in, double* p_feet_in, double* p_des, double* p_act,
@@ -66,7 +63,6 @@ public:
   // configure gains, QP weights, force limits, world parameters
   void set_RobotLimits();
   void set_worldData();
-  void set_PDgains();
   void set_wrench_weights(double* COM_weights_in, double* Base_weights_in);
   void set_QPWeights();
   void set_friction(double mu_in);

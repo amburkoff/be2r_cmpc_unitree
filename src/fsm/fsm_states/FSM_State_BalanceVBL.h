@@ -1,6 +1,8 @@
 #pragma once
 
 #include "BalanceController/BalanceController.hpp"
+#include "BalanceController/BalanceControllerVBL.hpp"
+#include "BalanceController/ReferenceGRF.hpp"
 #include "FSM_State.h"
 #include <Utilities/Timer.h>
 
@@ -17,6 +19,8 @@ public:
   void onEnter();
 
   // Run the normal behavior for the state
+  void runBalanceController();
+  void runBalanceControllerVBL();
   void run();
 
   // Checks for any transition triggers
@@ -34,4 +38,6 @@ private:
   Mat34<T> footFeedForwardForces; // feedforward forces at the feet
   int iter = 0;
   BalanceController* balanceController;
+  BalanceControllerVBL* balance_controller_vbl;
+  ReferenceGRF* reference_grf;
 };

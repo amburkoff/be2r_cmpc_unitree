@@ -131,7 +131,8 @@ BalanceController::BalanceController() : QProblemObj_qpOASES(NUM_VARIABLES_QP, N
   set_RobotLimits();
   set_worldData();
 
-  x_COM_world_desired << -0.14, 0.0, 0.57;
+  // x_COM_world_desired << -0.14, 0.0, 0.57;
+  x_COM_world_desired << 0.0, 0.0, 0.25;
   xdot_COM_world_desired << 0, 0, 0;
   omega_b_world_desired << 0, 0, 0;
   R_b_world_desired.setIdentity();
@@ -159,11 +160,6 @@ BalanceController::BalanceController() : QProblemObj_qpOASES(NUM_VARIABLES_QP, N
   qp_exit_flag = -1.0;
 
   qp_not_init = 1.0;
-}
-
-void BalanceController::testFunction()
-{
-  printf("testfun ");
 }
 
 /*

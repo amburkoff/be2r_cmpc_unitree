@@ -27,7 +27,6 @@ static const int NUM_CONTACT_POINTS_DES = 4;
 static const int NUM_VARIABLES_PER_FOOT_DES = 1;
 static const int NUM_CONSTRAINTS_PER_FOOT_DES = 1;
 
-// static const double PI_CONST = 3.1415;
 static const double NEGATIVE_NUMBER_DES = -1000000.0;
 static const double POSITIVE_NUMBER_DES = 1000000.0;
 

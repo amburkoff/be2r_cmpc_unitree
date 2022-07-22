@@ -24,19 +24,12 @@ using namespace std;
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template<typename T>
+template <typename T>
 FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::LOCOMOTION, "LOCOMOTION")
+    : FSM_State<T>(_controlFSMData, FSM_StateName::LOCOMOTION, "LOCOMOTION")
 {
   cMPCOld = new ConvexMPCLocomotion(_controlFSMData->staticParams->controller_dt,
                                     ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
-  // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
-  //                                   //30 / (1000. *
-  //                                   _controlFSMData->controlParameters->controller_dt),
-  //                                   //22 / (1000. *
-  //                                   _controlFSMData->controlParameters->controller_dt), 27 /
-  //                                   (1000. * _controlFSMData->controlParameters->controller_dt),
-  //                                   _controlFSMData->userParameters);
 
   this->turnOnAllSafetyChecks();
   // this->turnOffAllSafetyChecks();
@@ -51,29 +44,24 @@ FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData
   _wbc_data = new LocomotionCtrlData<T>();
 }
 
-template<typename T>
+template <typename T>
 void FSM_State_Locomotion<T>::onEnter()
 {
-  cout << "[FSM_State_Locomotion] onEnter start" << endl;
-
   // Default is to not transition
   this->nextStateName = this->stateName;
 
   // Reset the transition data
   this->transitionData.zero();
-  cout << "[FSM_State_Locomotion] transitionData zero done" << endl;
 
   cMPCOld->initialize();
-  cout << "[FSM_State_Locomotion] cMPCOld initialize done" << endl;
 
   this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
-  printf("[FSM LOCOMOTION] On Enter\n");
 }
 
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
-template<typename T>
+template <typename T>
 void FSM_State_Locomotion<T>::run()
 {
   // Call the locomotion control logic for this iteration
@@ -88,7 +76,7 @@ void FSM_State_Locomotion<T>::run()
  *
  * @return the enumerated FSM state name to transition into
  */
-template<typename T>
+template <typename T>
 FSM_StateName FSM_State_Locomotion<T>::checkTransition()
 {
   // Get the next state
@@ -99,50 +87,50 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
   {
     switch ((int)this->_data->userParameters->FSM_State)
     {
-      case K_LOCOMOTION:
-        break;
+    case K_LOCOMOTION:
+      break;
 
-      case K_BALANCE_STAND:
-        // Requested change to BALANCE_STAND
-        this->nextStateName = FSM_StateName::BALANCE_STAND;
+    case K_BALANCE_STAND:
+      // Requested change to BALANCE_STAND
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
 
-        // Transition time is immediate
-        this->transitionDuration = 0.0;
+      // Transition time is immediate
+      this->transitionDuration = 0.0;
 
-        break;
+      break;
 
-      case K_PASSIVE:
-        // Requested change to BALANCE_STAND
-        this->nextStateName = FSM_StateName::PASSIVE;
+    case K_PASSIVE:
+      // Requested change to BALANCE_STAND
+      this->nextStateName = FSM_StateName::PASSIVE;
 
-        // Transition time is immediate
-        this->transitionDuration = 0.0;
+      // Transition time is immediate
+      this->transitionDuration = 0.0;
 
-        break;
+      break;
 
-      case K_STAND_UP:
-        this->nextStateName = FSM_StateName::STAND_UP;
-        this->transitionDuration = 0.;
-        break;
+    case K_STAND_UP:
+      this->nextStateName = FSM_StateName::STAND_UP;
+      this->transitionDuration = 0.;
+      break;
 
-      case K_RECOVERY_STAND:
-        this->nextStateName = FSM_StateName::RECOVERY_STAND;
-        this->transitionDuration = 0.;
-        break;
+    case K_RECOVERY_STAND:
+      this->nextStateName = FSM_StateName::RECOVERY_STAND;
+      this->transitionDuration = 0.;
+      break;
 
-      case K_VISION:
-        this->nextStateName = FSM_StateName::VISION;
-        this->transitionDuration = 0.;
-        break;
+    case K_VISION:
+      this->nextStateName = FSM_StateName::VISION;
+      this->transitionDuration = 0.;
+      break;
 
-      case K_LAY_DOWN:
-        this->nextStateName = FSM_StateName::LAYDOWN;
-        this->transitionDuration = 0.;
-        break;
+    case K_LAY_DOWN:
+      this->nextStateName = FSM_StateName::LAYDOWN;
+      this->transitionDuration = 0.;
+      break;
 
-      default:
-        std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_LOCOMOTION << " to "
-                  << this->_data->userParameters->FSM_State << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_LOCOMOTION << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
     }
   }
   else
@@ -162,60 +150,60 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template<typename T>
+template <typename T>
 TransitionData<T> FSM_State_Locomotion<T>::transition()
 {
   // Switch FSM control mode
   switch (this->nextStateName)
   {
-    case FSM_StateName::BALANCE_STAND:
-      LocomotionControlStep();
+  case FSM_StateName::BALANCE_STAND:
+    LocomotionControlStep();
 
-      iter++;
-      if (iter >= this->transitionDuration * 1000)
-      {
-        this->transitionData.done = true;
-      }
-      else
-      {
-        this->transitionData.done = false;
-      }
-
-      break;
-
-    case FSM_StateName::PASSIVE:
-      this->turnOffAllSafetyChecks();
-
+    iter++;
+    if (iter >= this->transitionDuration * 1000)
+    {
       this->transitionData.done = true;
+    }
+    else
+    {
+      this->transitionData.done = false;
+    }
 
-      break;
+    break;
 
-    case FSM_StateName::STAND_UP:
-      this->transitionData.done = true;
-      break;
+  case FSM_StateName::PASSIVE:
+    this->turnOffAllSafetyChecks();
 
-    case FSM_StateName::RECOVERY_STAND:
-      this->transitionData.done = true;
-      break;
+    this->transitionData.done = true;
 
-    case FSM_StateName::VISION:
-      this->transitionData.done = true;
-      break;
+    break;
 
-    case FSM_StateName::LAYDOWN:
-      this->transitionData.done = true;
-      // this->_data->_legController->is_low_level = true;
-      break;
+  case FSM_StateName::STAND_UP:
+    this->transitionData.done = true;
+    break;
 
-    default:
-      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
+  case FSM_StateName::RECOVERY_STAND:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::VISION:
+    this->transitionData.done = true;
+    break;
+
+  case FSM_StateName::LAYDOWN:
+    this->transitionData.done = true;
+    // this->_data->_legController->is_low_level = true;
+    break;
+
+  default:
+    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM
   return this->transitionData;
 }
 
-template<typename T>
+template <typename T>
 bool FSM_State_Locomotion<T>::locomotionSafe()
 {
   auto& seResult = this->_data->_stateEstimator->getResult();
@@ -266,7 +254,7 @@ bool FSM_State_Locomotion<T>::locomotionSafe()
 /**
  * Cleans up the state information on exiting the state.
  */
-template<typename T>
+template <typename T>
 void FSM_State_Locomotion<T>::onExit()
 {
   // Nothing to clean up when exiting
@@ -278,7 +266,7 @@ void FSM_State_Locomotion<T>::onExit()
  * calling the appropriate balance controller and parsing the results for
  * each stance or swing leg.
  */
-template<typename T>
+template <typename T>
 void FSM_State_Locomotion<T>::LocomotionControlStep()
 {
   // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
@@ -339,7 +327,7 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
  * Stance leg logic for impedance control. Prevent leg slipping and
  * bouncing, as well as tracking the foot velocity during high speeds.
  */
-template<typename T>
+template <typename T>
 void FSM_State_Locomotion<T>::StanceLegImpedanceControl(int leg)
 {
   Vec3<double> stand_kp_cartesian(50, 50, 50);

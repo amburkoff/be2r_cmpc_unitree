@@ -106,19 +106,11 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _pitch_des = 0.;
 
   // Update PD coefs
-  // for sim
   Kp = Vec3<float>(_parameters->Kp_cartesian_0, _parameters->Kp_cartesian_1, _parameters->Kp_cartesian_2).asDiagonal();
   Kp_stance = Kp;
 
   Kd = Vec3<float>(_parameters->Kd_cartesian_0, _parameters->Kd_cartesian_1, _parameters->Kd_cartesian_2).asDiagonal();
   Kd_stance = Kd;
-
-  // for real
-  //  Kp << 150, 0, 0, 0, 150, 0, 0, 0, 150;
-  //  Kp_stance = 0 * Kp;
-
-  //  Kd << 3, 0, 0, 0, 3, 0, 0, 0, 3;
-  //  Kd_stance = Kd;
 }
 
 template <>
@@ -547,9 +539,7 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   vBody_Ori_des[1] = 0.;
   vBody_Ori_des[2] = _yaw_turn_rate;
 
-  data.debug->body_info.pos_des.x = pBody_des[0];
-  data.debug->body_info.pos_des.y = pBody_des[1];
-  data.debug->body_info.pos_des.z = pBody_des[2];
+  data.debug->body_info.pos_des = ros::toMsg(pBody_des);
 
   data.debug->body_info.vel_des.linear.x = vBody_des[0];
   data.debug->body_info.vel_des.linear.y = vBody_des[1];

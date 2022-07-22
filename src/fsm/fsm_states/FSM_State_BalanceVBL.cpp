@@ -20,6 +20,8 @@ FSM_State_BalanceVBL<T>::FSM_State_BalanceVBL(ControlFSMData<T>* _controlFSMData
 {
   _data = _controlFSMData;
   balanceController = new BalanceController();
+  balance_controller_vbl = new BalanceControllerVBL();
+  reference_grf = new ReferenceGRF();
 }
 
 template <typename T>
@@ -35,11 +37,8 @@ void FSM_State_BalanceVBL<T>::onEnter()
   iter = 0;
 }
 
-/**
- * Calls the functions to be executed on each control loop iteration.
- */
 template <typename T>
-void FSM_State_BalanceVBL<T>::run()
+void FSM_State_BalanceVBL<T>::runBalanceController()
 {
   double minForce = 25;
   double maxForce = 500;
@@ -69,15 +68,13 @@ void FSM_State_BalanceVBL<T>::run()
   {
     se_xfb[i] = (double)_data->_stateEstimator->getResult().orientation(i);
   }
-  // se_xfb[3] = 1.0;
+
   for (int i = 0; i < 3; i++)
   {
-    rpy[i] = 0.0; //(double)_data->_stateEstimator->getResult().rpy(i);
-    // p_des[i] = (double)_data->_stateEstimator->getResult().position(i);
+    rpy[i] = 0.0;
     p_act[i] = (double)_data->_stateEstimator->getResult().position(i);
-    omegaDes[i] = 0.0; //(double)_data->_stateEstimator->getResult().omegaBody(i);
+    omegaDes[i] = 0.0;
     v_act[i] = (double)_data->_stateEstimator->getResult().vBody(i);
-    // v_des[i] = (double)_data->_stateEstimator->getResult().vBody(i);
     v_des[i] = 0.0;
 
     se_xfb[4 + i] = (double)_data->_stateEstimator->getResult().position(i);
@@ -101,9 +98,6 @@ void FSM_State_BalanceVBL<T>::run()
   for (int leg = 0; leg < 4; leg++)
   {
     computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, leg);
-    //pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
-    //(_data->_quadruped->getHipLocation(leg) + pFeetVec);
-
     pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() * (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
 
     pFeet[leg * 3] = (double)pFeetVecCOM[0];
@@ -131,14 +125,117 @@ void FSM_State_BalanceVBL<T>::run()
     footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
 
     Vec3<float> f_ff;
-    // f_ff << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
-    f_ff << 0.0, 0.0, (T)fOpt[leg * 3 + 2];
+    f_ff << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
 
     _data->_legController->commands[leg].forceFeedForward = f_ff;
   }
+}
 
-  cout << footFeedForwardForces << endl;
+template <typename T>
+void FSM_State_BalanceVBL<T>::runBalanceControllerVBL()
+{
+  double minForce = 25;
+  double maxForce = 500;
+  double contactStateScheduled[4];
+  float mass = 12.0;
+
+  for (int i = 0; i < 4; i++)
+  {
+    contactStateScheduled[i] = _data->_gaitScheduler->gaitData.contactStateScheduled(i);
+  }
+
+  double minForces[4]; // = {minForce, minForce, minForce, minForce};
+  double maxForces[4]; // = {maxForce, maxForce, maxForce, maxForce};
+  for (int leg = 0; leg < 4; leg++)
+  {
+    minForces[leg] = contactStateScheduled[leg] * minForce;
+    maxForces[leg] = contactStateScheduled[leg] * maxForce;
+  }
+
+  double COM_weights_stance[3] = {1, 1, 10};
+  double Base_weights_stance[3] = {20, 10, 10};
+  double pFeet[12], p_des[3], p_act[3], v_des[3], v_act[3], O_err[3], rpy[3], omegaDes[3];
+  double se_xfb[13];
+  double kpCOM[3], kdCOM[3], kpBase[3], kdBase[3];
+
+  for (int i = 0; i < 4; i++)
+  {
+    se_xfb[i] = (double)_data->_stateEstimator->getResult().orientation(i);
+  }
+
+  for (int i = 0; i < 3; i++)
+  {
+    rpy[i] = 0.0;
+    p_act[i] = (double)_data->_stateEstimator->getResult().position(i);
+    omegaDes[i] = 0.0;
+    v_act[i] = (double)_data->_stateEstimator->getResult().vBody(i);
+    v_des[i] = 0.0;
+
+    se_xfb[4 + i] = (double)_data->_stateEstimator->getResult().position(i);
+    se_xfb[7 + i] = (double)_data->_stateEstimator->getResult().omegaBody(i);
+    se_xfb[10 + i] = (double)_data->_stateEstimator->getResult().vBody(i);
+
+    // Set the translational and orientation gains
+    kpCOM[i] = 50.0;
+    kdCOM[i] = 10.0;
+    kpBase[i] = 200;
+    kdBase[i] = 20;
+  }
+
+  p_des[0] = 0.0;
+  p_des[1] = 0.0;
+  p_des[2] = 0.25;
+
+  Vec3<T> pFeetVec;
+  Vec3<T> pFeetVecCOM;
+  // Get the foot locations relative to COM
+  for (int leg = 0; leg < 4; leg++)
+  {
+    computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, leg);
+    pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() * (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
+
+    pFeet[leg * 3] = (double)pFeetVecCOM[0];
+    pFeet[leg * 3 + 1] = (double)pFeetVecCOM[1];
+    pFeet[leg * 3 + 2] = (double)pFeetVecCOM[2];
+  }
+
+  reference_grf->set_alpha_control(0.01);
+  reference_grf->set_mass(mass);
+
+  // balance_controller_vbl->set_desiredTrajectoryData(rpy, p_des, omegaDes, v_des);
+  // balance_controller_vbl->SetContactData(contactStateScheduled, minForces, maxForces);
+  // balance_controller_vbl->updateProblemData(se_xfb, pFeet, p_des, p_act, v_des, v_act, O_err, 0.0);
+
+  double fOpt[4];
+  reference_grf->solveQP_nonThreaded(fOpt);
+
+  footFeedForwardForces = Mat34<T>::Zero();
+
+  // Copy the results to the feed forward forces
+  // for (int leg = 0; leg < 4; leg++)
+  // {
+  //   footFeedForwardForces.col(leg) << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
+
+  //   Vec3<float> f_ff;
+  //   f_ff << (T)fOpt[leg * 3], (T)fOpt[leg * 3 + 1], (T)fOpt[leg * 3 + 2];
+
+  //   _data->_legController->commands[leg].forceFeedForward = f_ff;
+  // }
+  cout << fOpt[0] << endl;
+  cout << fOpt[1] << endl;
+  cout << fOpt[2] << endl;
+  cout << fOpt[3] << endl;
   cout << endl;
+}
+
+/**
+ * Calls the functions to be executed on each control loop iteration.
+ */
+template <typename T>
+void FSM_State_BalanceVBL<T>::run()
+{
+  // runBalanceController();
+  runBalanceControllerVBL();
 }
 
 /**
