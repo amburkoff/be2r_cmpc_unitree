@@ -17,13 +17,33 @@ void Debug::_initPublishers()
   _pub_joint_states = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
   _pub_all_legs_info = _nh.advertise<unitree_legged_msgs::AllLegsInfo>("/all_legs_info", 1);
   _pub_body_info = _nh.advertise<unitree_legged_msgs::BodyInfo>("/body_info", 1);
-
+  _pub_metric_info = _nh.advertise<unitree_legged_msgs::MetricInfo>("/metric_info", 1);
 #ifdef PUB_IMU_AND_ODOM
   _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
   _pub_imu = _nh.advertise<sensor_msgs::Imu>("/imu", 1);
 #endif
 }
 
+void Debug::updateMetrics()
+{
+  unitree_legged_msgs::MetricInfo data_metric;
+  data_metric.final_leg_cost.w = metric_data.final_leg_cost.operator()(0);
+  data_metric.final_leg_cost.x = metric_data.final_leg_cost.operator()(1);
+  data_metric.final_leg_cost.y = metric_data.final_leg_cost.operator()(2);
+  data_metric.final_leg_cost.z = metric_data.final_leg_cost.operator()(3);
+  
+  data_metric.final_body_cost.w = metric_data.final_body_cost.operator()(0);
+  data_metric.final_body_cost.x = metric_data.final_body_cost.operator()(1);
+  data_metric.final_body_cost.y = metric_data.final_body_cost.operator()(2);
+  data_metric.final_body_cost.z = metric_data.final_body_cost.operator()(3);
+  
+  data_metric.final_cost.w = metric_data.final_cost.operator()(0);
+  data_metric.final_cost.x = metric_data.final_cost.operator()(1);
+  data_metric.final_cost.y = metric_data.final_cost.operator()(2);
+  data_metric.final_cost.z = metric_data.final_cost.operator()(3);
+  _pub_metric_info.publish(data_metric);
+
+}
 void Debug::updatePlot()
 {
   ros::Duration delta_t = ros::Time::now() - _time_start;
@@ -62,7 +82,7 @@ void Debug::updatePlot()
 
   _pub_all_legs_info.publish(all_legs_info);
   _pub_body_info.publish(body_info);
-
+  
 #ifdef PUB_IMU_AND_ODOM
   nav_msgs::Odometry odom;
 

@@ -74,6 +74,7 @@ void FSM_State_Locomotion<T>::run()
 {
   // Call the locomotion control logic for this iteration
   LocomotionControlStep();
+  this->_metric->debugPrint();
 }
 
 // extern rc_control_settings rc_control;

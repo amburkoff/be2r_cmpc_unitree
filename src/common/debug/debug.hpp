@@ -8,6 +8,7 @@
 #include <unitree_legged_msgs/AllLegsInfo.h>
 #include <unitree_legged_msgs/BodyInfo.h>
 #include <unitree_legged_msgs/StateError.h>
+#include <unitree_legged_msgs/MetricInfo.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <cppTypes.h>
@@ -34,6 +35,7 @@ public:
   void updatePlot();
   void updateVisualization();
   void tfPublish();
+  void updateMetrics();
 
   unitree_legged_msgs::AllLegsInfo all_legs_info = {};
   unitree_legged_msgs::BodyInfo body_info = {};
@@ -54,6 +56,7 @@ private:
   ros::Publisher _pub_all_legs_info;
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
+  ros::Publisher _pub_metric_info;
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster world_broadcaster;
 };

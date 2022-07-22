@@ -72,6 +72,10 @@ void FSM_State_Stairs<T>::run()
 {
   // Call the locomotion control logic for this iteration
   LocomotionControlStep();
+  // this->_metric->getFinalCost();
+  // this->_metric->getFinalCost();
+  // this->_metric->getFinalCost();
+  this->_metric->debugPrint();
 }
 
 /**

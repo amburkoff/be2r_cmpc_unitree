@@ -140,14 +140,13 @@ void Body_Manager::init()
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, controlParameters.controller_dt);
-
+  
   // Initializes the Control FSM with all the
   // required data
   _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
                                       _desiredStateCommand, &controlParameters, &_rosParameters, _debug);
-
+  
   controlParameters.control_mode = 0;
-  _metric = new SystemEnergy();
 }
 
 void Body_Manager::_readRobotData()
@@ -297,6 +296,7 @@ void Body_Manager::run()
   _debug->updateVisualization();
   _debug->updatePlot();
   _debug->tfPublish();
+  _debug->updateMetrics();
 }
 
 void Body_Manager::setupStep()

@@ -6,6 +6,8 @@
 #include "ControlFSMData.h"
 #include "Controllers/GaitScheduler.h"
 #include "TransitionData.h"
+#include "controllers/convexMPC/Metrics.h"
+
 
 // #include <BalanceController/BalanceController.hpp>
 
@@ -106,6 +108,7 @@ public:
 
   // Holds all of the relevant control data
   ControlFSMData<T>* _data;
+  SystemEnergy* _metric;
 
   // FSM State info
   FSM_StateName stateName;     // enumerated name of the current state

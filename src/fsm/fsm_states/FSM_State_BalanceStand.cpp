@@ -69,6 +69,7 @@ void FSM_State_BalanceStand<T>::run()
   this->_data->_stateEstimator->setContactPhase(contactState);
 
   BalanceStandStep();
+  this->_metric->debugPrint();
 }
 
 /**

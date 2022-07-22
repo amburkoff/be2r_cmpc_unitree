@@ -40,7 +40,6 @@
 #include "debug.hpp"
 #include "Controllers/be2rPositionVelocityEstimator.h"
 #include "Controllers/MyPositionVelocityEstimator.h"
-#include "controllers/convexMPC/Metrics.h"
 // Unitree sdk
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
 
@@ -137,7 +136,7 @@ private:
   DesiredStateCommand<float>* _desiredStateCommand;
   CheaterState<float> _cheater_state;
   Debug* _debug;
-  SystemEnergy* _metric;
+  
   GamepadCommand driverCommand;
   unitree_legged_msgs::LowState _low_state;
   unitree_legged_msgs::LowCmd _low_cmd;

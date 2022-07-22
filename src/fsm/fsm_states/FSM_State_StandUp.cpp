@@ -95,6 +95,7 @@ void FSM_State_StandUp<T>::run()
 
     this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
+  this->_metric->debugPrint();
 }
 
 /**

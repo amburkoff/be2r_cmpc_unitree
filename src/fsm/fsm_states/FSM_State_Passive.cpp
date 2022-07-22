@@ -49,6 +49,7 @@ void FSM_State_Passive<T>::run()
 {
   // Do nothing, all commands should begin as zeros
   testTransition();
+  this->_metric->debugPrint();
 }
 
 /**
@@ -140,7 +141,7 @@ FSM_StateName FSM_State_Passive<T>::checkTransition()
     // Requested switch to joint PD control
     this->nextStateName = FSM_StateName::STAND_UP;
     break;
-
+  
   case K_TESTING:
     // Requested switch to joint PD control
     this->nextStateName = FSM_StateName::TESTING;
