@@ -403,6 +403,11 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   //  StateEstimator* se = hw_i->state_estimator;
   Vec4<float> se_contactState(0, 0, 0, 0);
+  static bool is_stance[4] = { 0, 0, 0, 0 };
+  static Vec3<float> p_fw[4] = {};
+  static Vec3<float> p_fl[4] = {};
+  static float delta_yaw[4] = {};
+  static Vec3<float> delta_p_bw[4] = {};
 
   // ROS_INFO_STREAM("is contact: " << se_contactState(0));
 
@@ -413,29 +418,30 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     float contactState = contactStates[foot];
     float swingState = swingStates[foot];
 
-    // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]
-    // == 0)) if ((se_contactState(foot) == 2) && (swingState > 0))
-    // {
-    //   swingState = 1;
-    //   is_stance[foot] = 2;
-    //   ROS_INFO_STREAM("Foot " << foot << " in contact early: " <<
-    //   swingState);
-    // }
+    if ((is_stance[foot] == 0) && !(swingState > 0))
+    {
+      is_stance[foot] = 1;
 
-    // if(foot == 1)
-    // {
-    //   ROS_INFO_STREAM("contact: " << contactState);
-    //   ROS_INFO_STREAM("swing: " << swingState);
-    // }
+      // foot position in world frame at contanct
+      pDesFootWorldStance[foot] = pFoot[foot];
+      data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
+      p_fw[foot] = pFoot[foot];
 
-    // contactState = data._stateEstimator->getResult().contactEstimate[foot];
-    // swingState = 1 - data._stateEstimator->getResult().contactEstimate[foot];
+      p_fl[foot] = data._legController->datas[foot].p + data._quadruped->getHipLocation(foot);
+      delta_p_bw[foot] << 0, 0, 0;
+      delta_yaw[foot] = 0;
+    }
+
+    delta_p_bw[foot] += seResult.vBody * dt;
+    delta_yaw[foot] += seResult.omegaBody(2) * dt;
+    data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     if (swingState > 0) // foot is in swing
     {
       if (firstSwing[foot])
       {
         firstSwing[foot] = false;
+        is_stance[foot] = 0;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
       }
 

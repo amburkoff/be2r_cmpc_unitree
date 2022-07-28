@@ -380,8 +380,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   static bool is_stance[4] = { 0, 0, 0, 0 };
   static Vec3<float> p_fw[4] = {};
   static Vec3<float> p_fl[4] = {};
-  static Vec3<float> p_bw[4] = {};
-  static float yaw_last[4] = {};
   static float delta_yaw[4] = {};
   static Vec3<float> delta_p_bw[4] = {};
 
@@ -390,8 +388,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     float contactState = contactStates[foot];
     float swingState = swingStates[foot];
 
-    // if first stance
-    // if ((is_stance[foot] == 0) && (se_contactState[foot] == 1) && (swingState > 0.65))
     if ((is_stance[foot] == 0) && !(swingState > 0))
     {
       is_stance[foot] = 1;

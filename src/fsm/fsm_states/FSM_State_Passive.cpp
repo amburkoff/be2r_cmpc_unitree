@@ -51,6 +51,12 @@ template<typename T>
 void FSM_State_Passive<T>::run()
 {
   // Do nothing, all commands should begin as zeros
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    this->_control_fsm_data->debug->last_p_local_stance[i] = ros::toMsg(this->_control_fsm_data->_legController->datas[i].p + this->_control_fsm_data->_quadruped->getHipLocation(i));
+  }
+
   testTransition();
 }
 

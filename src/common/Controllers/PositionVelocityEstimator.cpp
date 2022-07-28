@@ -56,10 +56,6 @@ void LinearKFPositionVelocityEstimator<T>::setup()
 template<typename T>
 float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
 {
-  // std::cout << "yo " << this->_stateEstimatorData.debug->last_p_stance[0].x << std::endl;
-
-  // find 1 with most difference
-  // get average of 3 others and return
   float z = 0;
   static float z_prev = 0;
 

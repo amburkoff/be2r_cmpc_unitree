@@ -25,6 +25,7 @@ FSM_State_StandUp<T>::FSM_State_StandUp(ControlFSMData<T>* _controlFSMData)
   // Post control safety checks
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
+  this->checkJointLimits = true;
 
   // f = boost::bind(&callbackROSros, _1, _2);
   // server.setCallback(f);
@@ -71,22 +72,8 @@ void FSM_State_StandUp<T>::run()
   float force = -mass * 9.81 / 4;
   leg_force = seResult.rBody * Vec3<float>(0, 0, force);
 
-  float Kp = 100;
-  float Kd = 5;
-
   for (int i = 0; i < 4; i++)
   {
-    // for sim
-    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(600, 600, 600).asDiagonal();
-    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
-    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(Kp, Kp, Kp).asDiagonal();
-    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(Kd, Kd, Kd).asDiagonal();
-
-    // for real
-    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1200, 1200,
-    // 1200).asDiagonal(); this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10,
-    // 10).asDiagonal();
-
     // for real with gravity compensation
     this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1000, 1000, 1000).asDiagonal();
     this->_data->_legController->commands[i].kdCartesian = Vec3<T>(15, 15, 15).asDiagonal();
