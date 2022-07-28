@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <cstdint>
 #include <iostream>
 
 // ROS
@@ -133,6 +134,7 @@ private:
   unitree_legged_msgs::LowState _low_state;
   unitree_legged_msgs::LowCmd _low_cmd;
   bool _is_low_level = false;
+  int _power_limit = 0;
   bool _is_torque_safe = true;
 
   ControlFSM<float>* _controlFSM;

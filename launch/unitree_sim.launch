@@ -3,10 +3,12 @@
   <arg name="is_low_level" default="0"/>
   <arg name="torque_safe_limit" default="0"/>
   <arg name="udp_connection" default="0"/>
+  <arg name="power_limit" default="4"/>
 
   <include file="$(find be2r_cmpc_unitree)/launch/set_dyn_params.launch" />
 
-  <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find raisim_unitree_ros_driver)/description/urdf/a1_edited.urdf' " />
+  <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/a1_edited.urdf' " />
+  <!-- <param name = "robot_description" command = "$(find xacro)/xacro -inorder '$(find go1_description)/urdf/go1.urdf' " /> -->
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
@@ -19,6 +21,7 @@
     <param name="is_low_level" type="bool" value="$(arg is_low_level)" />
     <param name="torque_safe_limit" type="bool" value="$(arg torque_safe_limit)" />
     <param name="udp_connection" type="bool" value="$(arg udp_connection)" />
+    <param name="power_limit" type="int" value="$(arg power_limit)" />
   </node>
 
 </launch> 

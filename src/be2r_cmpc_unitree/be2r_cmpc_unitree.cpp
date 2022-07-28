@@ -658,6 +658,8 @@ void Body_Manager::_initParameters()
   readRosParam(ros::this_node::getName() + "/is_low_level", _is_low_level);
   readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
   readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
+  readRosParam(ros::this_node::getName() + "/power_limit", _power_limit);
+  ROS_WARN_STREAM("Power limit is set to: " << _power_limit);
   _rosStaticParams.read();
 }
 
