@@ -48,19 +48,19 @@ void FSM_State_Testing<T>::onEnter()
   // Reset the transition data
   this->transitionData.zero();
 
-  CMPC->initialize();
+  // CMPC->initialize();
 
-  this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+  // this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
 
-  // Reset iteration counter
-  iter = 0;
+  // // Reset iteration counter
+  // iter = 0;
 
-  for (size_t leg(0); leg < 4; ++leg)
-  {
-    _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
+  // for (size_t leg(0); leg < 4; ++leg)
+  // {
+  //   _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
 
-    firstSwing[leg] = true;
-  }
+  //   firstSwing[leg] = true;
+  // }
 }
 
 template<typename T>
@@ -91,9 +91,12 @@ void FSM_State_Testing<T>::test1()
   }
 
   float rate = iter / 200.0; // needs count to 200
-  Kp[0] = 5.0;
-  Kp[1] = 5.0;
-  Kp[2] = 5.0;
+  // Kp[0] = 5.0;
+  // Kp[1] = 5.0;
+  // Kp[2] = 5.0;
+  Kp[0] = 2.0;
+  Kp[1] = 2.0;
+  Kp[2] = 2.0;
   Kd[0] = 1.0;
   Kd[1] = 1.0;
   Kd[2] = 1.0;
@@ -105,41 +108,42 @@ void FSM_State_Testing<T>::test1()
   float sin_joint1, sin_joint2;
 
   sin_count++;
-  sin_joint1 = 0.6 * sin(3 * M_PI * sin_count / 1000.0);
-  sin_joint2 = -0.6 * sin(1.8 * M_PI * sin_count / 1000.0);
+  sin_joint1 = 0.5 * sin(3 * M_PI * sin_count / 3000.0);
+  sin_joint2 = -0.5 * sin(1.8 * M_PI * sin_count / 3000.0);
   qDes[0] = sin_mid_q[0];
-  qDes[1] = -sin_mid_q[1] - sin_joint1;
+  // qDes[1] = -sin_mid_q[1] - sin_joint1;
+  qDes[1] = -sin_mid_q[1];
   qDes[2] = -sin_mid_q[2] - sin_joint2;
   // qDes[1] = sin_mid_q[1] + sin_joint1;
   // qDes[2] = sin_mid_q[2] + sin_joint2;
 
-  tau[0] =
-    Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
-  tau[1] =
-    Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
-  tau[2] =
-    Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
+  // tau[0] =
+  //   Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
+  // tau[1] =
+  //   Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
+  // tau[2] =
+  //   Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
 
-  // this->_data->_legController->commands[0].kpJoint(0, 0) = Kp[0];
-  // this->_data->_legController->commands[0].kpJoint(1, 1) = Kp[1];
-  // this->_data->_legController->commands[0].kpJoint(2, 2) = Kp[2];
-  // this->_data->_legController->commands[0].kdJoint(0, 0) = Kd[0];
-  // this->_data->_legController->commands[0].kdJoint(1, 1) = Kd[1];
-  // this->_data->_legController->commands[0].kdJoint(2, 2) = Kd[2];
+  this->_data->_legController->commands[0].kpJoint(0, 0) = Kp[0];
+  this->_data->_legController->commands[0].kpJoint(1, 1) = Kp[1];
+  this->_data->_legController->commands[0].kpJoint(2, 2) = Kp[2];
+  this->_data->_legController->commands[0].kdJoint(0, 0) = Kd[0];
+  this->_data->_legController->commands[0].kdJoint(1, 1) = Kd[1];
+  this->_data->_legController->commands[0].kdJoint(2, 2) = Kd[2];
 
   this->_data->_legController->commands[0].qDes = qDes;
   this->_data->_legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
 
-  this->_data->_legController->commands[0].kpJoint(0, 0) = 0;
-  this->_data->_legController->commands[0].kpJoint(1, 1) = 0;
-  this->_data->_legController->commands[0].kpJoint(2, 2) = 0;
-  this->_data->_legController->commands[0].kdJoint(0, 0) = 0;
-  this->_data->_legController->commands[0].kdJoint(1, 1) = 0;
-  this->_data->_legController->commands[0].kdJoint(2, 2) = 0;
+  // this->_data->_legController->commands[0].kpJoint(0, 0) = 0;
+  // this->_data->_legController->commands[0].kpJoint(1, 1) = 0;
+  // this->_data->_legController->commands[0].kpJoint(2, 2) = 0;
+  // this->_data->_legController->commands[0].kdJoint(0, 0) = 0;
+  // this->_data->_legController->commands[0].kdJoint(1, 1) = 0;
+  // this->_data->_legController->commands[0].kdJoint(2, 2) = 0;
   // this->_data->_legController->commands[0].qDes = Vec3<T>(0, 0, 0);
   // this->_data->_legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
 
-  this->_data->_legController->commands[0].tauFeedForward = tau;
+  // this->_data->_legController->commands[0].tauFeedForward = tau;
 }
 
 /**
@@ -148,8 +152,8 @@ void FSM_State_Testing<T>::test1()
 template<typename T>
 void FSM_State_Testing<T>::run()
 {
-  // test1();
-  LocomotionControlStep();
+  test1();
+  // LocomotionControlStep();
   // safeJointTest();
 }
 
