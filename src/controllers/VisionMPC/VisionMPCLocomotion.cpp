@@ -140,6 +140,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
   gaitNumber = data.userParameters->cmpc_gait;
 
   auto& seResult = data._stateEstimator->getResult();
+  Vec3<float> v_robot = seResult.vWorld;
 
   // cout << "vx: " << _x_vel_des << " vy: " << _y_vel_des << " yaw: " << _yaw_turn_rate << endl;
   // static bool is_stand_switch = false;
