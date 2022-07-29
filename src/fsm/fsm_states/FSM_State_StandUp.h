@@ -18,6 +18,9 @@ public:
   // Run the normal behavior for the state
   void run();
 
+  void standUpImpedance();
+  void standUpJointPD();
+
   // Checks for any transition triggers
   FSM_StateName checkTransition();
 
@@ -33,7 +36,10 @@ public:
 private:
   // Keep track of the control iterations
   int iter = 0;
-  std::vector<Vec3<T>> _ini_foot_pos;
+  std::vector<Vec3<T>> _ini_foot_pos = {};
+  std::vector<Vec3<T>> _init_joint_q = {};
+  std::vector<Vec3<T>> _stand_joint_q = {};
+
 };
 
 #endif // FSM_STATE_STANDUP_H

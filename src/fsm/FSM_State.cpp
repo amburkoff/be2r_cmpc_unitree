@@ -374,9 +374,6 @@ Vec3<T> FSM_State<T>::findAngles(uint8_t leg_num, Vec3<T> p_act)
       q_eval(0) = -(Qrad - Q0rad);
       q_eval(1) = Arad - a1_rad;
       q_eval(2) = -(M_PI - a_rad);
-
-      q_eval(1) = -q_eval(1);
-      q_eval(2) = -q_eval(2);
       break;
 
     // Front Left

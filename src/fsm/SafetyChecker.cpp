@@ -342,14 +342,14 @@ bool SafetyChecker<T>::checkJointLimits()
     if (leg[i].q[0] * sign[i] < limit_joint0[0] * safety_spread)
     {
       ROS_ERROR_STREAM("Leg: " << i << " joint: 0 min limit exceeded! Act: " << leg[i].q[0]
-                               << " Min Limit: " << limit_joint0[0] * safety_spread);
+                               << " Min Limit: " << limit_joint0[0] * safety_spread * sign[i]);
       return false;
     }
     // joint 0 max
     if (leg[i].q[0] * sign[i] > limit_joint0[1] * safety_spread)
     {
       ROS_ERROR_STREAM("Leg: " << i << " joint: 0 max limit exceeded! Act: " << leg[i].q[0]
-                               << " Max limit: " << limit_joint0[1] * safety_spread);
+                               << " Max limit: " << limit_joint0[1] * safety_spread * sign[i]);
       return false;
     }
 

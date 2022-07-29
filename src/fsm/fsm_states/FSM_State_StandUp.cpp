@@ -5,6 +5,9 @@
  */
 
 #include "FSM_State_StandUp.h"
+#include "cppTypes.h"
+#include <iostream>
+#include <ostream>
 
 using namespace std;
 
@@ -16,7 +19,7 @@ using namespace std;
  */
 template<typename T>
 FSM_State_StandUp<T>::FSM_State_StandUp(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP"), _ini_foot_pos(4)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP"), _ini_foot_pos(4), _init_joint_q(4), _stand_joint_q(4)
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -26,11 +29,6 @@ FSM_State_StandUp<T>::FSM_State_StandUp(ControlFSMData<T>* _controlFSMData)
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
   this->checkJointLimits = true;
-
-  // f = boost::bind(&callbackROSros, _1, _2);
-  // server.setCallback(f);
-
-  // ROS_INFO("START SERVER");
 }
 
 template<typename T>
@@ -48,6 +46,10 @@ void FSM_State_StandUp<T>::onEnter()
   for (size_t leg(0); leg < 4; ++leg)
   {
     _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
+    _init_joint_q[leg] = this->_data->_legController->datas[leg].q;
+    _stand_joint_q[leg](0) = 0.0;
+    _stand_joint_q[leg](1) = -1.05;
+    _stand_joint_q[leg](2) = 2.1;
   }
 }
 
@@ -56,6 +58,13 @@ void FSM_State_StandUp<T>::onEnter()
  */
 template<typename T>
 void FSM_State_StandUp<T>::run()
+{
+  standUpImpedance();
+  // standUpJointPD();
+}
+
+template<typename T>
+void FSM_State_StandUp<T>::standUpImpedance()
 {
   T hMax = 0.25;
   T progress = 0.5 * iter * this->_data->staticParams->controller_dt;
@@ -84,6 +93,55 @@ void FSM_State_StandUp<T>::run()
     this->_data->debug->last_p_local_stance[i] = ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
 
     this->_data->_legController->commands[i].forceFeedForward = leg_force;
+  }
+}
+
+template<typename T>
+void FSM_State_StandUp<T>::standUpJointPD()
+{
+  T hMax = 0.25;
+  T progress = 0.5 * iter * this->_data->staticParams->controller_dt;
+
+  if (progress > 1.)
+  {
+    progress = 1.;
+  }
+
+  auto& seResult = this->_data->_stateEstimator->getResult();
+  float mass = 8;
+  Vec3<float> leg_force;
+  leg_force << 0, 0, 0;
+  float force = -mass * 9.81 / 4;
+  leg_force = seResult.rBody * Vec3<float>(0, 0, force);
+
+  Vec3<float> pDes[4];
+  Vec3<float> q_des[4];
+
+  for (int i = 0; i < 4; i++)
+  {
+    pDes[i] = _ini_foot_pos[i];
+    pDes[i][2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
+
+    q_des[i] = this->findAngles(i, pDes[i]);
+    q_des[i](1) *= -1;
+    q_des[i](2) *= -1;
+
+    // if (i == 1)
+    // {
+    //   cout << q_des << endl << endl;
+    // }
+
+    // for real with gravity compensation
+    this->_data->_legController->commands[i].kpJoint = Vec3<T>(80, 50, 50).asDiagonal();
+    this->_data->_legController->commands[i].kdJoint = Vec3<T>(3, 3, 3).asDiagonal();
+
+    // this->_data->_legController->commands[i].qDes = _stand_joint_q[i] * progress + (1.0 - progress) * _init_joint_q[i];
+    this->_data->_legController->commands[i].qDes = q_des[i];
+    this->_data->_legController->commands[i].qdDes = Vec3<float>::Zero();
+
+    this->_data->debug->last_p_local_stance[i] = ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
+
+    // this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
 }
 
