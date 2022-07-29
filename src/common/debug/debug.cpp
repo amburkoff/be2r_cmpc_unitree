@@ -172,8 +172,8 @@ void Debug::tfPublish()
   odom_trans_world.header.frame_id = "world";
   odom_trans_world.child_frame_id = "odom";
 
-  //  z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
-  odom_trans_world.transform.translation.z = z_offset;
+  // z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
+  odom_trans_world.transform.translation.z = 0;
   odom_trans_world.transform.rotation.w = 1.;
 
   world_odom_broadcaster.sendTransform(odom_trans_world);

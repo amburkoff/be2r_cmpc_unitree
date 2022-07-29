@@ -16,7 +16,7 @@
 // #define GAIT_PERIOD 22
 // #define GAIT_PERIOD 34 //1000 Hz
 
-#define GAIT_PERIOD_WALKING 26
+#define GAIT_PERIOD_WALKING 22
 
 //лучшие параметры для только MPC
 // #define GAIT_PERIOD 18
@@ -140,6 +140,7 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
   gaitNumber = data.userParameters->cmpc_gait;
 
   auto& seResult = data._stateEstimator->getResult();
+  Vec3<float> v_robot = seResult.vWorld;
 
   // cout << "vx: " << _x_vel_des << " vy: " << _y_vel_des << " yaw: " << _yaw_turn_rate << endl;
   // static bool is_stand_switch = false;
@@ -206,7 +207,6 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
   // integrate position setpoint
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
   Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
-  Vec3<float> v_robot = seResult.vWorld;
 
   // std::cout << "sensor data: " << data._stateEstimator->getContactSensorData()(0) << std::endl;
   static Vec3<float> pDesFootWorldStance[4] = { pFoot[0], pFoot[1], pFoot[2], pFoot[3] };
@@ -215,43 +215,17 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
   Vec3<float> p_fm = (pDesFootWorldStance[0] + pDesFootWorldStance[1]) / 2;
   Vec3<float> p_bm = (pDesFootWorldStance[2] + pDesFootWorldStance[3]) / 2;
   float des_pitch = 0;
-  float des_roll = 0;
 
-  // XZ plane
-  // float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (p_fm(0) - p_bm(0)) * (p_fm(0) -
-  // p_bm(0)));
   float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (0.1805 * 2) * (0.1805 * 2));
 
   if (abs(L_xz) < 0.0001)
   {
     des_pitch = 0;
   }
-  // else if ((p_fm(2) - p_bm(2)) < 0.005)
-  // {
-  //   des_pitch = 0;
-  //   ROS_INFO("TOO LITTLE DIFF");
-  // }
   else
   {
     des_pitch = des_pitch * (1 - 0.7) - 1.2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
   }
-
-  // cout << "pfm z: " << p_fm(2) << " pbm z: " << p_bm(2) << endl;
-
-  // //YZ plane
-  // float L_yz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (p_fm(1) - p_bm(1)) * (p_fm(1) -
-  // p_bm(1)));
-
-  // if (abs(L_yz) < 0.0001)
-  // {
-  //   des_roll = 0;
-  // }
-  // else
-  // {
-  //   des_roll = asin((p_fm(2) - p_bm(2)) / (L_yz));
-  // }
-
-  // cout << "des pitch correction: " << des_pitch << endl;
 
   // put to target
   _pitch_des = des_pitch;
@@ -392,10 +366,13 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
 
   Vec4<float> se_contactState(0, 0, 0, 0);
   se_contactState = data._stateEstimator->getContactSensorData().cast<float>();
+  static bool is_stance[4] = { 0, 0, 0, 0 };
+  static Vec3<float> p_fw[4] = {};
+  static Vec3<float> p_fl[4] = {};
+  static float delta_yaw[4] = {};
+  static Vec3<float> delta_p_bw[4] = {};
 
   // ROS_INFO_STREAM("is contact: " << se_contactState(0));
-
-  static bool is_stance[4] = { 0, 0, 0, 0 };
 
   for (int foot = 0; foot < 4; foot++)
   {
@@ -408,30 +385,18 @@ void VisionMPCLocomotion::run(ControlFSMData<float>& data, const Vec3<float>& ve
     {
       is_stance[foot] = 1;
 
-      // foot position in world frame at contanct
-      // pDesFootWorldStance[foot] = pFoot[foot] + footSwingTrajectories[foot].getPosition();
       pDesFootWorldStance[foot] = pFoot[foot];
-      // pDesFootWorldStance[foot] = data._legController->datas[foot].p;
-      // pDesFootWorldStance[foot] = footSwingTrajectories[foot].getPosition();
+      data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
+      p_fw[foot] = pFoot[foot];
+      p_fl[foot] = data._legController->datas[foot].p + data._quadruped->getHipLocation(foot);
+      delta_p_bw[foot] << 0, 0, 0;
+      delta_yaw[foot] = 0;
     }
 
-    // if ((se_contactState(foot) == 1) && (swingState > 0) && (is_stance[foot]
-    // == 0)) if ((se_contactState(foot) == 2) && (swingState > 0))
-    // {
-    //   swingState = 1;
-    //   is_stance[foot] = 2;
-    //   ROS_INFO_STREAM("Foot " << foot << " in contact early: " <<
-    //   swingState);
-    // }
-
-    // if(foot == 1)
-    // {
-    //   ROS_INFO_STREAM("contact: " << contactState);
-    //   ROS_INFO_STREAM("swing: " << swingState);
-    // }
-
-    // contactState = data._stateEstimator->getResult().contactEstimate[foot];
-    // swingState = 1 - data._stateEstimator->getResult().contactEstimate[foot];
+    delta_p_bw[foot] += seResult.vBody * dt;
+    delta_yaw[foot] += seResult.omegaBody(2) * dt;
+    data.debug->last_p_local_stance[foot] =
+      ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     if (swingState > 0) // foot is in swing
     {
@@ -667,20 +632,20 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf, const Vec3<float>& bo
   //    double x = _data->_stateEstimator->getResult().position(0) - 0.6;
   //    _data->debug->z_offset = x * 0.42;
   //  }
-  //  pf_h -= _data->debug->z_offset;
-  double mean_p0_h = 0;
-  for (size_t leg = 0; leg < 4; leg++)
-  {
-    Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
-    Vec3<float> local_p0 = p0 - body_pos;
-    int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map.getResolution());
-    int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map.getResolution());
-    auto p0_h = height_map.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
-    p0_h = (std::isnan(p0_h)) ? 0. : p0_h;
-    mean_p0_h += p0_h;
-  }
-  mean_p0_h = mean_p0_h / 4.;
-  _data->debug->z_offset = mean_p0_h;
+  // pf_h -= _data->debug->z_offset;
+  // double mean_p0_h = 0;
+  // for (size_t leg = 0; leg < 4; leg++)
+  // {
+  //   Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
+  //   Vec3<float> local_p0 = p0 - body_pos;
+  //   int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map.getResolution());
+  //   int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map.getResolution());
+  //   auto p0_h = height_map.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
+  //   p0_h = (std::isnan(p0_h)) ? 0. : p0_h;
+  //   mean_p0_h += p0_h;
+  // }
+  // mean_p0_h = mean_p0_h / 4.;
+  // _data->debug->z_offset = mean_p0_h;
   //  if (counter >= 2)
 
   //  pf_h -= step_height;
@@ -688,11 +653,11 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf, const Vec3<float>& bo
   //  std::cout << "z_offset = " << _data->debug->z_offset << " pf_0 = " << p0_h << std::endl;
   //  pf_h -= p0_h;
   //  h =
-  pf_h = p0(2) + (pf_h - p0_h);
+  // pf_h = p0(2) + (pf_h - p0_h);
   //  std::cout << "After " << pf_h << std::endl;
   pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
   //  if (leg == 3 || leg == 2)
-  //    std::cout << "Foot z PF = " << foot[2] << std::endl;
+  std::cout << "Foot z PF = " << pf[2] << std::endl;
 }
 
 void VisionMPCLocomotion::_IdxMapChecking(Vec3<float>& pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
@@ -712,9 +677,9 @@ void VisionMPCLocomotion::_IdxMapChecking(Vec3<float>& pf, int x_idx, int y_idx,
     {
       x_idx_selected = (*iterator)(0);
       y_idx_selected = (*iterator)(1);
-      if ((x_idx != x_idx_selected) && (y_idx != y_idx_selected))
-        std::cout << "Edit footstep from ( " << x_idx << " " << y_idx << ") to ( " << x_idx_selected << " " << y_idx_selected
-                  << " )" << std::endl;
+      // if ((x_idx != x_idx_selected) && (y_idx != y_idx_selected))
+      //   std::cout << "Edit footstep from ( " << x_idx << " " << y_idx << ") to ( " << x_idx_selected << " " << y_idx_selected
+      //             << " )" << std::endl;
       return;
     }
   }
