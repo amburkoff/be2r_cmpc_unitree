@@ -632,7 +632,7 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf, const Vec3<float>& bo
   //    double x = _data->_stateEstimator->getResult().position(0) - 0.6;
   //    _data->debug->z_offset = x * 0.42;
   //  }
-  // pf_h -= _data->debug->z_offset;
+
   // double mean_p0_h = 0;
   // for (size_t leg = 0; leg < 4; leg++)
   // {
@@ -651,7 +651,11 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf, const Vec3<float>& bo
   //  pf_h -= step_height;
 
   //  std::cout << "z_offset = " << _data->debug->z_offset << " pf_0 = " << p0_h << std::endl;
-  //  pf_h -= p0_h;
+  // In ODOM frame
+  // pf_h -= p0_h;
+
+  // in WORLD frame
+  pf_h -= _data->debug->z_offset;
   //  h =
   // pf_h = p0(2) + (pf_h - p0_h);
   //  std::cout << "After " << pf_h << std::endl;
