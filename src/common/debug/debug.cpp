@@ -318,6 +318,7 @@ void Debug::_drawEstimatedStancePLane()
 
   tf::Quaternion quat;
   quat.setRPY(roll, pitch, 0.0);
+  quat.normalize();
 
   marker.header.frame_id = name;
   marker.header.stamp = ros::Time::now();
@@ -327,7 +328,7 @@ void Debug::_drawEstimatedStancePLane()
   // pose and orientation must be zero, except orientation.w = 1
   marker.pose.position.x = 0;
   marker.pose.position.y = 0;
-  marker.pose.position.z = De / C;
+  marker.pose.position.z = 1.0 / C;
   marker.pose.orientation.x = quat.x();
   marker.pose.orientation.y = quat.y();
   marker.pose.orientation.z = quat.z();
