@@ -10,8 +10,8 @@ standup:
 
   Kp_cartesian_x: 1000
   Kp_cartesian_y: 1000
-  Kp_cartesian_z: 1000
+  Kp_cartesian_z: 1200
 
-  Kd_cartesian_x: 15
-  Kd_cartesian_y: 15
-  Kd_cartesian_z: 15
+  Kd_cartesian_x: 35
+  Kd_cartesian_y: 35
+  Kd_cartesian_z: 55

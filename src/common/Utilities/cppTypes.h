@@ -119,7 +119,9 @@ using vectorAligned = typename std::vector<T, Eigen::aligned_allocator<T>>;
 enum class RobotType
 {
   CHEETAH_3,
-  MINI_CHEETAH
+  MINI_CHEETAH,
+  A1,
+  GO1
 };
 
 #endif // PROJECT_CPPTYPES_H

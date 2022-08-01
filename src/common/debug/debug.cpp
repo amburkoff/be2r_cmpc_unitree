@@ -39,10 +39,6 @@ void Debug::_initPublishers()
 
 void Debug::updatePlot()
 {
-  ros::Duration delta_t = ros::Time::now() - _time_start;
-
-  // all_legs_info.header.stamp = _zero_time + delta_t;
-  // body_info.header.stamp = _zero_time + delta_t
   all_legs_info.header.stamp = ros::Time::now();
   body_info.header.stamp = ros::Time::now();
 

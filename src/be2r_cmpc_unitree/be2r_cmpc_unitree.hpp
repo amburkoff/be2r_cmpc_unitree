@@ -17,6 +17,7 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 #include <std_srvs/Trigger.h>
+#include <string>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
 
@@ -136,6 +137,7 @@ private:
   bool _is_low_level = false;
   int _power_limit = 0;
   bool _is_torque_safe = true;
+  string _robot_type = "a1";
 
   ControlFSM<float>* _controlFSM;
 

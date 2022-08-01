@@ -1,4 +1,6 @@
 #include "be2r_cmpc_unitree.hpp"
+#include "cppTypes.h"
+#include "ros/time.h"
 
 using namespace std;
 
@@ -101,7 +103,16 @@ void Body_Manager::init()
     ROS_WARN_STREAM("[Body_Manager] No dynamic config data");
   }
 
-  _quadruped = buildMiniCheetah<float>();
+  if (_robot_type == "a1")
+  {
+    ROS_INFO("[Body_Manager] Build A1 model");
+    _quadruped = buildMiniCheetah<float>(RobotType::A1);
+  }
+  else if (_robot_type == "go1")
+  {
+    ROS_INFO("[Body_Manager] Build GO1 model");
+    _quadruped = buildMiniCheetah<float>(RobotType::GO1);
+  }
 
   _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
   cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << endl;
@@ -141,8 +152,7 @@ void Body_Manager::_readRobotData()
 
   _low_state = _udpStateToRos(_udp_low_state);
 
-  ros::Duration delta_t = ros::Time::now() - _time_start;
-  _low_state.header.stamp = _zero_time + delta_t;
+  _low_state.header.stamp = ros::Time::now();
   _pub_low_state.publish(_low_state);
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
@@ -659,6 +669,7 @@ void Body_Manager::_initParameters()
   readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
   readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
   readRosParam(ros::this_node::getName() + "/power_limit", _power_limit);
+  readRosParam(ros::this_node::getName() + "/robot_type", _robot_type);
   ROS_WARN_STREAM("Power limit is set to: " << _power_limit);
   _rosStaticParams.read();
 }
