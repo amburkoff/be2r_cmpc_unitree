@@ -16,7 +16,7 @@
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-template <typename T>
+template<typename T>
 struct CMPC_result
 {
   LegControllerCommand<T> commands[4];
@@ -97,10 +97,13 @@ class CMPCLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  CMPCLocomotion(float _dt,
+                 int _iterations_between_mpc,
+                 StaticParams* static_parameters,
+                 be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  template <typename T>
+  template<typename T>
   void run(ControlFSMData<T>& data);
   bool currently_jumping = false;
 

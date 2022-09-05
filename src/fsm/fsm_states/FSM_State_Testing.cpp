@@ -25,7 +25,7 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
 
-  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->staticParams, _controlFSMData->userParameters);
 
   this->turnOnAllSafetyChecks();
 
@@ -48,19 +48,19 @@ void FSM_State_Testing<T>::onEnter()
   // Reset the transition data
   this->transitionData.zero();
 
-  // CMPC->initialize();
+  CMPC->initialize();
 
-  // this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+  this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
 
-  // // Reset iteration counter
-  // iter = 0;
+  // Reset iteration counter
+  iter = 0;
 
-  // for (size_t leg(0); leg < 4; ++leg)
-  // {
-  //   _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
+  for (size_t leg(0); leg < 4; ++leg)
+  {
+    _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
 
-  //   firstSwing[leg] = true;
-  // }
+    firstSwing[leg] = true;
+  }
 }
 
 template<typename T>
@@ -152,8 +152,8 @@ void FSM_State_Testing<T>::test1()
 template<typename T>
 void FSM_State_Testing<T>::run()
 {
-  test1();
-  // LocomotionControlStep();
+  // test1();
+  LocomotionControlStep();
   // safeJointTest();
 }
 

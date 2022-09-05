@@ -32,8 +32,9 @@ using namespace std;
 ////////////////////
 
 ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
+                                         StaticParams* static_parameters,
                                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
-  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(16), horizonLength(16), dt(_dt),
+  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(parameters->gait_period), horizonLength(static_parameters->horizon), dt(_dt),
     trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
              Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
     trotting_copy(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),

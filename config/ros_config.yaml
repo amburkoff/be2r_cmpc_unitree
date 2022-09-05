@@ -39,6 +39,13 @@ dynamic_loader:
 
   # Swing leg parameters
   # work when WBC turned off
+  # Kp_cartesian_0: 150
+  # Kp_cartesian_1: 150
+  # Kp_cartesian_2: 150
+  # Kd_cartesian_0: 2.5
+  # Kd_cartesian_1: 2.5
+  # Kd_cartesian_2: 2.5
+
   Kp_cartesian_0: 150
   Kp_cartesian_1: 150
   Kp_cartesian_2: 150
@@ -71,7 +78,7 @@ dynamic_loader:
 
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
-  gait_period           : 18
+  gait_period           : 14
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4
@@ -79,6 +86,7 @@ dynamic_loader:
 static_params:
   controller_dt     : 0.002
   cheater_mode      : false
+  horizon           : 16
   # Estimators
   foot_height_sensor_noise      :  0.001
   foot_process_noise_position   :  0.002

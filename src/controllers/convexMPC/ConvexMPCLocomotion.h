@@ -99,6 +99,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
+                      StaticParams* static_parameters,
                       be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
