@@ -98,8 +98,7 @@ class ConvexMPCLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
-                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
   template<typename T>
@@ -156,8 +155,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGait trotting, trotting_copy, bounding, pronking, jumping, galloping, standing,
-    trotRunning, walking, walking2, pacing;
+  OffsetDurationGait trotting, bounding, pronking, jumping, galloping, standing, trotRunning, walking, walking2, pacing;
   MixedFrequncyGait random, random2;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;

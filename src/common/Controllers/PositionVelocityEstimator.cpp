@@ -263,7 +263,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   // {
   //   ROS_INFO_ONCE("MY HEIGHT!");
   //   this->_stateEstimatorData.debug->body_info.pos_z_global = this->_stateEstimatorData.result->position(2);
-  this->_stateEstimatorData.result->position(2) = my_z;
+  // this->_stateEstimatorData.result->position(2) = my_z;
   // }
 }
 

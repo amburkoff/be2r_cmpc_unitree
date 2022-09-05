@@ -1,10 +1,10 @@
 #ifndef PROJECT_GAIT_H
 #define PROJECT_GAIT_H
 
+#include "cppTypes.h"
+#include <iostream>
 #include <queue>
 #include <string>
-#include <iostream>
-#include "cppTypes.h"
 
 class Gait
 {
@@ -19,8 +19,9 @@ public:
   virtual float getCurrentSwingTime(float dtMPC, int leg) = 0;
   virtual int getCurrentGaitPhase() = 0;
   virtual void debugPrint() {}
-  virtual void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
-  virtual void restoreDefaults(){}
+  virtual void earlyContactHandle(Vec4<uint8_t>, int, int) {}
+  virtual void restoreDefaults() {}
+  virtual void updatePeriod(int) {}
 
 protected:
   std::string _name;
@@ -42,9 +43,9 @@ public:
   float getCurrentSwingTime(float dtMPC, int leg);
   int getCurrentGaitPhase();
   void debugPrint();
-  void earlyContactHandle(Vec4<uint8_t> footSensorState, int iterationsBetweenMPC,
-                          int currentIteration);
+  void earlyContactHandle(Vec4<uint8_t> footSensorState, int iterationsBetweenMPC, int currentIteration);
   void restoreDefaults();
+  void updatePeriod(int);
 
 private:
   int* _mpc_table;
@@ -86,4 +87,4 @@ private:
   int _nIterations;
 };
 
-#endif //PROJECT_GAIT_H
+#endif // PROJECT_GAIT_H
