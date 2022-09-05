@@ -3,6 +3,7 @@
 #include "ros/time.h"
 
 using namespace std;
+// using namespace USDK;
 
 Body_Manager::Body_Manager() : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
@@ -115,10 +116,7 @@ void Body_Manager::init()
   }
 
   _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
-  cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << endl;
-
-  // Initialize the model and robot data
-  _model = _quadruped.buildModel();
+  cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << " (" << MAIN_LOOP_RATE << " Hz)" << endl;
 
   _debug = new Debug(_time_start);
 
@@ -485,8 +483,7 @@ void Body_Manager::_initSubscribers()
 {
   _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
   _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
-  _sub_ground_truth =
-    _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
   _srv_do_step = _nh.advertiseService("/do_step", &Body_Manager::_srvDoStep, this);
 }
 

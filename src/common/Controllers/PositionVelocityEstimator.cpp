@@ -111,6 +111,10 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   this->_stateEstimatorData.debug->mnk_plane.y = B_res;
   this->_stateEstimatorData.debug->mnk_plane.z = C_res;
 
+  float del = sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
+  float pitch = acos(A / del) - M_PI / 2.0;
+  this->_stateEstimatorData.result->est_pitch_plane = pitch;
+
   // z = 1 / sqrt(A * A + B * B + C * C);
   z = 1 / sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
   this->_stateEstimatorData.debug->body_info.pos_z_global = z;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Controllers/DesiredStateCommand.h"
+#include "FloatingBaseModel.h"
 #include "Gait_contact.h"
 #include "cppTypes.h"
 #include <ControlFSMData.h>
@@ -16,7 +17,7 @@
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-template <typename T>
+template<typename T>
 struct CMPC_result
 {
   LegControllerCommand<T> commands[4];
@@ -97,11 +98,12 @@ class CMPCLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  template <typename T>
-  void run(ControlFSMData<T>& data);
+  void run(ControlFSMData<float>& data);
+  void original(ControlFSMData<float>& data);
+  void myVersion(ControlFSMData<float>& data);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -131,17 +133,25 @@ private:
   float _x_vel_des = 0.;
   float _y_vel_des = 0.;
 
-  // High speed running
   float _body_height = 0.29;
 
   float _body_height_running = 0.29;
   float _body_height_jumping = 0.36;
+
+  FloatingBaseModel<float> _model;
+  FBModelState<float> _state;
+  DMat<float> _A;
+  DMat<float> _Ainv;
+  DVec<float> _grav;
+  DVec<float> _coriolis;
+  ControlFSMData<float>* _data;
 
   void recompute_timing(int iterations_per_mpc);
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
   void solveSparseMPC(int* mpcTable, ControlFSMData<float>& data);
   void initSparseMPC();
+  void _updateModel(const StateEstimate<float>& state_est, const LegControllerData<float>* leg_data);
   int iterationsBetweenMPC;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
   int _gait_period;

@@ -84,7 +84,9 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   Adt = expmm.block(0, 0, 13, 13);
   Bdt = expmm.block(0, 13, 13, 12);
 #ifdef K_PRINT_EVERYTHING
-  cout << "Adt: \n" << Adt << "\nBdt:\n" << Bdt << endl;
+  cout << "Adt: \n"
+       << Adt << "\nBdt:\n"
+       << Bdt << endl;
 #endif
   if (horizon > 19)
   {
@@ -112,7 +114,9 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   }
 
 #ifdef K_PRINT_EVERYTHING
-  cout << "AQP:\n" << A_qp << "\nBQP:\n" << B_qp << endl;
+  cout << "AQP:\n"
+       << A_qp << "\nBQP:\n"
+       << B_qp << endl;
 #endif
 }
 
@@ -309,18 +313,25 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   ct_ss_mats(I_world, rs.m, rs.r_feet, rs.R_yaw, A_ct, B_ct_r, update->x_drag);
 
 #ifdef K_PRINT_EVERYTHING
-  cout << "Initial state: \n" << x_0 << endl;
-  cout << "World Inertia: \n" << I_world << endl;
-  cout << "A CT: \n" << A_ct << endl;
-  cout << "B CT (simplified): \n" << B_ct_r << endl;
+  cout << "Initial state: \n"
+       << x_0 << endl;
+  cout << "World Inertia: \n"
+       << I_world << endl;
+  cout << "A CT: \n"
+       << A_ct << endl;
+  cout << "B CT (simplified): \n"
+       << B_ct_r << endl;
 #endif
+
   // QP matrices
   c2qp(A_ct, B_ct_r, setup->dt, setup->horizon);
 
   // weights
   Matrix<fpt, 13, 1> full_weight;
   for (u8 i = 0; i < 12; i++)
+  {
     full_weight(i) = update->weights[i];
+  }
   full_weight(12) = 0.f;
   S.diagonal() = full_weight.replicate(setup->horizon, 1);
 
@@ -328,7 +339,9 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   for (s16 i = 0; i < setup->horizon; i++)
   {
     for (s16 j = 0; j < 12; j++)
+    {
       X_d(13 * i + j, 0) = update->traj[12 * i + j];
+    }
   }
   // cout<<"XD:\n"<<X_d<<endl;
 
@@ -361,6 +374,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   qg = 2 * B_qp.transpose() * S * (A_qp * x_0 - X_d);
 
   QpProblem<double> jcqp(setup->horizon * 12, setup->horizon * 20);
+  // use jcqp = 0
   if (update->use_jcqp == 1)
   {
     jcqp.A = fmat.cast<double>();
@@ -379,14 +393,15 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   }
   else
   {
-
     matrix_to_real(H_qpoases, qH, setup->horizon * 12, setup->horizon * 12);
     matrix_to_real(g_qpoases, qg, setup->horizon * 12, 1);
     matrix_to_real(A_qpoases, fmat, setup->horizon * 20, setup->horizon * 12);
     matrix_to_real(ub_qpoases, U_b, setup->horizon * 20, 1);
 
     for (s16 i = 0; i < 20 * setup->horizon; i++)
+    {
       lb_qpoases[i] = 0.0f;
+    }
 
     s16 num_constraints = 20 * setup->horizon;
     s16 num_variables = 12 * setup->horizon;
@@ -397,15 +412,22 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
     int new_cons = num_constraints;
 
     for (int i = 0; i < num_constraints; i++)
+    {
       con_elim[i] = 0;
+    }
 
     for (int i = 0; i < num_variables; i++)
+    {
       var_elim[i] = 0;
+    }
 
     for (int i = 0; i < num_constraints; i++)
     {
       if (!(near_zero(lb_qpoases[i]) && near_zero(ub_qpoases[i])))
+      {
         continue;
+      }
+
       double* c_row = &A_qpoases[i * num_variables];
       for (int j = 0; j < num_variables; j++)
       {

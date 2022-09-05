@@ -12,7 +12,7 @@
 /**
  *
  */
-template <typename T>
+template<typename T>
 class FSM_State_Testing : public FSM_State<T>
 {
 public:
@@ -42,6 +42,7 @@ public:
   CMPCLocomotion* CMPC;
   WBC_Ctrl<T>* _wbc_ctrl;
   LocomotionCtrlData<T>* _wbc_data;
+  FloatingBaseModel<T> _model;
   void LocomotionControlStep();
 
   bool locomotionSafe();

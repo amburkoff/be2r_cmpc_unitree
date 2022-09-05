@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 # Eigen find
 find_package (Eigen3 REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
 set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk")
+# set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk-3.4.2")
 set(UNITREE_PLATFORM "amd64")
 
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)

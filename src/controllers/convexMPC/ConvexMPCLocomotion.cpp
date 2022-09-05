@@ -11,7 +11,7 @@
 
 //оригинальные параметры MPC+WBC
 // #define GAIT_PERIOD 14
-#define HORIZON 14
+#define HORIZON 16
 
 #define GAIT_PERIOD 20
 // #define GAIT_PERIOD 34 //1000 Hz
@@ -33,7 +33,7 @@ using namespace std;
 
 ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
                                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
-  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(16), horizonLength(16), dt(_dt),
+  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(_parameters->gait_period), horizonLength(HORIZON), dt(_dt),
     trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
              Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
     trotting_copy(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
@@ -116,8 +116,7 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
 
-  //  _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
-  _yaw_des += dt * _yaw_turn_rate;
+   _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   _roll_des = 0.;
   _pitch_des = 0.;
 
@@ -385,6 +384,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     Pf[1] += pfy_rel;
     // Pf[2] = -0.003; //original
     Pf[2] = 0.0;
+
     footSwingTrajectories[i].setFinalPosition(Pf);
     data.debug->all_legs_info.leg[i].swing_pf.x = Pf(0);
     data.debug->all_legs_info.leg[i].swing_pf.y = Pf(1);

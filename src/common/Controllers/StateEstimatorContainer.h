@@ -19,7 +19,7 @@
 /*!
  * Result of state estimation
  */
-template <typename T>
+template<typename T>
 struct StateEstimate
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -32,6 +32,7 @@ struct StateEstimate
   Vec3<T> omegaBody;
   RotMat<T> rBody;
   Vec3<T> rpy;
+  float est_pitch_plane;
 
   Vec3<T> omegaWorld;
   Vec3<T> vWorld;
@@ -45,7 +46,7 @@ struct StateEstimate
  * it should be added here. (You should also a setter method to
  * StateEstimatorContainer)
  */
-template <typename T>
+template<typename T>
 struct StateEstimatorData
 {
   StateEstimate<T>* result; // where to write the output to
@@ -61,7 +62,7 @@ struct StateEstimatorData
 /*!
  * All Estimators should inherit from this class
  */
-template <typename T>
+template<typename T>
 class GenericEstimator
 {
 public:
@@ -82,7 +83,7 @@ public:
  * Contains all GenericEstimators, and can run them
  * Also updates visualizations
  */
-template <typename T>
+template<typename T>
 class StateEstimatorContainer
 {
 public:
@@ -163,7 +164,7 @@ public:
    * Add an estimator of the given type
    * @tparam EstimatorToAdd
    */
-  template <typename EstimatorToAdd>
+  template<typename EstimatorToAdd>
   void addEstimator()
   {
     auto* estimator = new EstimatorToAdd();
@@ -176,7 +177,7 @@ public:
    * Remove all estimators of a given type
    * @tparam EstimatorToRemove
    */
-  template <typename EstimatorToRemove>
+  template<typename EstimatorToRemove>
   void removeEstimator()
   {
     int nRemoved = 0;

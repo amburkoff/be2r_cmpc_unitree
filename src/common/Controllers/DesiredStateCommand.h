@@ -77,13 +77,12 @@ public:
   T minRoll = -0.8;
   T maxPitch = 0.4;
   T minPitch = -0.4;
-  T maxVelX = 3.0;
-  T minVelX = -3.0;
+  T maxVelX = 1.0;
+  T minVelX = -1.0;
   T maxVelY = 0.5;
   T minVelY = -0.5;
-  T maxTurnRate = 4.5;
-  T minTurnRate = -4.5;
-
+  T maxTurnRate = 2.5;
+  T minTurnRate = -2.5;
 
   Vec2<float> leftAnalogStick;
   Vec2<float> rightAnalogStick;
