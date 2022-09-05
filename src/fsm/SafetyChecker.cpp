@@ -9,6 +9,8 @@
 
 #include "SafetyChecker.h"
 #include "iostream"
+#include "ros_read_param.h"
+#include <ostream>
 
 using namespace std;
 
@@ -204,26 +206,31 @@ struct Leg
 template<typename T>
 bool SafetyChecker<T>::checkJointLimits()
 {
-  // from software guide unitree a1
-  // hip -46 ~ 46 deg (-0.8 ~ 0.8 rad)
-  // thigh -60 ~ 240 deg (-1.04 ~ 4.18 rad)
-  // calf -154.5 ~ -52.5 deg (-2.68 ~ -0.907 rad)
-  // from urdf
-  // lower="-0.802851455917" upper="0.802851455917" hip
-  // lower="-1.0471975512" upper="4.18879020479" thigh
-  // lower="-2.69653369433" upper="-0.916297857297" calf
+  static bool is_init = true;
 
-  // real leg0 (plotjuggler)
-  // hip -0.876 ~ 0.896 rad
-  // thigh -1.092 ~ 4.142 rad
-  // calf -2.677 ~ -0.854 rad
+  static float param_limit_joint0[2] = { 0, 0 };
+  static float param_limit_joint1[2] = { 0, 0 };
+  static float param_limit_joint2[2] = { 0, 0 };
+  static float safety_spread = 0.99;
+
+  if (is_init)
+  {
+    readRosParam("safety_spread", safety_spread);
+    readRosParam("joint0_min_limit", param_limit_joint0[0]);
+    readRosParam("joint0_max_limit", param_limit_joint0[1]);
+    readRosParam("joint1_min_limit", param_limit_joint1[0]);
+    readRosParam("joint1_max_limit", param_limit_joint1[1]);
+    readRosParam("joint2_min_limit", param_limit_joint2[0]);
+    readRosParam("joint2_max_limit", param_limit_joint2[1]);
+
+    is_init = false;
+  }
 
   // changed signs as they are in software guide
-  static const float limit_joint0[2] = { -46 * M_PI / 180, 46 * M_PI / 180 };
-  static const float limit_joint1[2] = { -60 * M_PI / 180, 240 * M_PI / 180 };
-  // static const float limit_joint2[2] = { -154.5 * M_PI / 180, -52.5 * M_PI / 180 };
-  static const float limit_joint2[2] = { -156 * M_PI / 180, -54 * M_PI / 180 };
-  static const float safety_spread = 0.99;
+  //initial params for a1
+  static const float limit_joint0[2] = { static_cast<float>(param_limit_joint0[0] * M_PI / 180), static_cast<float>(param_limit_joint0[1] * M_PI / 180) };
+  static const float limit_joint1[2] = { static_cast<float>(param_limit_joint1[0] * M_PI / 180), static_cast<float>(param_limit_joint1[1] * M_PI / 180) };
+  static const float limit_joint2[2] = { static_cast<float>(param_limit_joint2[0] * M_PI / 180), static_cast<float>(param_limit_joint2[1] * M_PI / 180) };
 
   static const float tau_safety_spread[3] = { 10 * M_PI / 180, 20 * M_PI / 180, 20 * M_PI / 180 };
   static const float tau_limit_joint0[2] = { limit_joint0[0] * safety_spread + tau_safety_spread[0], limit_joint0[1] * safety_spread - tau_safety_spread[0] };
@@ -231,7 +238,7 @@ bool SafetyChecker<T>::checkJointLimits()
   static const float tau_limit_joint2[2] = { limit_joint2[0] * safety_spread + tau_safety_spread[2], limit_joint2[1] * safety_spread - tau_safety_spread[2] };
   static const int8_t sign[4] = { 1, -1, 1, -1 };
 
-  Leg leg[4] = { 0 };
+  Leg leg[4] = { { 0 } };
 
   //change signs back to Unitree
   for (size_t i = 0; i < 4; i++)
@@ -376,7 +383,7 @@ bool SafetyChecker<T>::checkJointLimits()
       return false;
     }
     // joint 2 max
-    if (leg[i].q[2] > limit_joint2[1] * safety_spread)
+    if (leg[i].q[2] > limit_joint2[1] * (2 - safety_spread))
     {
       ROS_ERROR_STREAM("Leg: " << i << " joint: 2 max limit exceeded! Act: " << leg[i].q[2]
                                << " Max Limit: " << limit_joint2[1] * safety_spread);

@@ -1,12 +1,12 @@
-#ifndef FSM_STATE_STANDUP_H
-#define FSM_STATE_STANDUP_H
+#pragma once
 
 #include "FSM_State.h"
+#include "cppTypes.h"
 
 /**
  *
  */
-template <typename T>
+template<typename T>
 class FSM_State_StandUp : public FSM_State<T>
 {
 public:
@@ -32,7 +32,6 @@ public:
 
   TransitionData<T> testTransition();
 
-
 private:
   // Keep track of the control iterations
   int iter = 0;
@@ -41,6 +40,9 @@ private:
   std::vector<Vec3<T>> _stand_joint_q = {};
   float progress = 0;
 
-};
+  Mat3<T> Kp_joint = {};
+  Mat3<T> Kd_joint = {};
 
-#endif // FSM_STATE_STANDUP_H
+  Mat3<T> Kp_cartesian = {};
+  Mat3<T> Kd_cartesian = {};
+};

@@ -8,8 +8,6 @@
 
 #define K_NUM_LEGS 4
 
-#define K_NUM_LEGS 4
-
 problem_setup problem_configuration;
 u8 gait_data[K_MAX_GAIT_SEGMENTS];
 pthread_mutex_t problem_cfg_mt;
@@ -116,12 +114,19 @@ void update_solver_settings(int max_iter, double rho, double sigma, double solve
   update.sigma = sigma;
   update.solver_alpha = solver_alpha;
   update.terminate = terminate;
+
   if (use_jcqp > 1.5)
+  {
     update.use_jcqp = 2;
+  }
   else if (use_jcqp > 0.5)
+  {
     update.use_jcqp = 1;
+  }
   else
+  {
     update.use_jcqp = 0;
+  }
 }
 
 void update_problem_data_floats(float* p, float* v, float* q, float* w, float* r, float yaw, float* weights,

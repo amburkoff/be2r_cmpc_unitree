@@ -1,6 +1,7 @@
 #include "be2r_cmpc_unitree.hpp"
 
 using namespace std;
+// using namespace USDK;
 
 int main(int argc, char* argv[])
 {
@@ -21,6 +22,7 @@ int main(int argc, char* argv[])
     rate.sleep();
     ros::spinOnce();
   }
+
   unitree.init();
 
   UNITREE_LEGGED_SDK::LoopFunc loop_udpSend("udp_send", 0.002, 3, boost::bind(&Body_Manager::UDPSend, &unitree));

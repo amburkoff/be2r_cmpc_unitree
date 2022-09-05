@@ -1,6 +1,9 @@
 #include "be2r_cmpc_unitree.hpp"
+#include "cppTypes.h"
+#include "ros/time.h"
 
 using namespace std;
+// using namespace USDK;
 
 Body_Manager::Body_Manager() : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
@@ -101,13 +104,19 @@ void Body_Manager::init()
     ROS_WARN_STREAM("[Body_Manager] No dynamic config data");
   }
 
-  _quadruped = buildMiniCheetah<float>();
+  if (_robot_type == "a1")
+  {
+    ROS_INFO("[Body_Manager] Build A1 model");
+    _quadruped = buildMiniCheetah<float>(RobotType::A1);
+  }
+  else if (_robot_type == "go1")
+  {
+    ROS_INFO("[Body_Manager] Build GO1 model");
+    _quadruped = buildMiniCheetah<float>(RobotType::GO1);
+  }
 
   _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
-  cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << endl;
-
-  // Initialize the model and robot data
-  _model = _quadruped.buildModel();
+  cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << " (" << MAIN_LOOP_RATE << " Hz)" << endl;
 
   _debug = new Debug(_time_start);
 
@@ -141,8 +150,7 @@ void Body_Manager::_readRobotData()
 
   _low_state = _udpStateToRos(_udp_low_state);
 
-  ros::Duration delta_t = ros::Time::now() - _time_start;
-  _low_state.header.stamp = _zero_time + delta_t;
+  _low_state.header.stamp = ros::Time::now();
   _pub_low_state.publish(_low_state);
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
@@ -475,8 +483,7 @@ void Body_Manager::_initSubscribers()
 {
   _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
   _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
-  _sub_ground_truth =
-    _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
   _srv_do_step = _nh.advertiseService("/do_step", &Body_Manager::_srvDoStep, this);
 }
 
@@ -659,6 +666,7 @@ void Body_Manager::_initParameters()
   readRosParam(ros::this_node::getName() + "/torque_safe_limit", _is_torque_safe);
   readRosParam(ros::this_node::getName() + "/udp_connection", is_udp_connection);
   readRosParam(ros::this_node::getName() + "/power_limit", _power_limit);
+  readRosParam(ros::this_node::getName() + "/robot_type", _robot_type);
   ROS_WARN_STREAM("Power limit is set to: " << _power_limit);
   _rosStaticParams.read();
 }

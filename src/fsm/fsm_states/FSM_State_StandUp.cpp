@@ -6,7 +6,9 @@
 
 #include "FSM_State_StandUp.h"
 #include "cppTypes.h"
+#include "ros_read_param.h"
 #include <iostream>
+#include <iterator>
 #include <ostream>
 
 using namespace std;
@@ -29,6 +31,22 @@ FSM_State_StandUp<T>::FSM_State_StandUp(ControlFSMData<T>* _controlFSMData)
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
   this->checkJointLimits = true;
+
+  readRosParam("standup/Kp_joint0", Kp_joint(0, 0));
+  readRosParam("standup/Kp_joint1", Kp_joint(1, 1));
+  readRosParam("standup/Kp_joint2", Kp_joint(2, 2));
+
+  readRosParam("standup/Kd_joint0", Kd_joint(0, 0));
+  readRosParam("standup/Kd_joint1", Kd_joint(1, 1));
+  readRosParam("standup/Kd_joint2", Kd_joint(2, 2));
+
+  readRosParam("standup/Kp_cartesian_x", Kp_cartesian(0, 0));
+  readRosParam("standup/Kp_cartesian_y", Kp_cartesian(1, 1));
+  readRosParam("standup/Kp_cartesian_z", Kp_cartesian(2, 2));
+
+  readRosParam("standup/Kd_cartesian_x", Kd_cartesian(0, 0));
+  readRosParam("standup/Kd_cartesian_y", Kd_cartesian(1, 1));
+  readRosParam("standup/Kd_cartesian_z", Kd_cartesian(2, 2));
 }
 
 template<typename T>
@@ -77,7 +95,7 @@ void FSM_State_StandUp<T>::standUpImpedance()
   }
 
   auto& seResult = this->_data->_stateEstimator->getResult();
-  float mass = 9;
+  float mass = this->_data->_quadruped->_bodyMass;
   Vec3<float> leg_force;
   leg_force << 0, 0, 0;
   float force = -mass * 9.81 / 4;
@@ -86,8 +104,8 @@ void FSM_State_StandUp<T>::standUpImpedance()
   for (int i = 0; i < 4; i++)
   {
     // for real with gravity compensation
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1000, 1000, 1000).asDiagonal();
-    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(15, 15, 15).asDiagonal();
+    this->_data->_legController->commands[i].kpCartesian = Kp_cartesian;
+    this->_data->_legController->commands[i].kdCartesian = Kd_cartesian;
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
@@ -110,7 +128,7 @@ void FSM_State_StandUp<T>::standUpJointPD()
   }
 
   auto& seResult = this->_data->_stateEstimator->getResult();
-  float mass = 8;
+  float mass = this->_data->_quadruped->_bodyMass;
   Vec3<float> leg_force;
   leg_force << 0, 0, 0;
   float force = -mass * 9.81 / 4;
@@ -128,14 +146,9 @@ void FSM_State_StandUp<T>::standUpJointPD()
     q_des[i](1) *= -1;
     q_des[i](2) *= -1;
 
-    // if (i == 1)
-    // {
-    //   cout << q_des << endl << endl;
-    // }
-
     // for real with gravity compensation
-    this->_data->_legController->commands[i].kpJoint = Vec3<T>(80, 50, 50).asDiagonal();
-    this->_data->_legController->commands[i].kdJoint = Vec3<T>(3, 3, 3).asDiagonal();
+    this->_data->_legController->commands[i].kpJoint = Kp_joint;
+    this->_data->_legController->commands[i].kdJoint = Kd_joint;
 
     // this->_data->_legController->commands[i].qDes = _stand_joint_q[i] * progress + (1.0 - progress) * _init_joint_q[i];
     this->_data->_legController->commands[i].qDes = q_des[i];
@@ -143,7 +156,7 @@ void FSM_State_StandUp<T>::standUpJointPD()
 
     this->_data->debug->last_p_local_stance[i] = ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
 
-    // this->_data->_legController->commands[i].forceFeedForward = leg_force;
+    this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
 }
 

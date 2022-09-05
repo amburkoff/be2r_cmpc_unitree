@@ -38,7 +38,6 @@ public:
   geometry_msgs::Point mnk_plane = {};
   Vec3<float> hip_location[4] = {};
   Mat3<float> Rbody = {};
-  float De = 0;
 
   nav_msgs::Path leg_traj_des[4];
   geometry_msgs::Point leg_force[4];

@@ -1,7 +1,7 @@
 #include "SparseCMPC/SparseCMPC.h"
+#include "JCQP/QpProblem.h"
 #include "Math/orientation_tools.h"
 #include <Utilities/Timer.h>
-#include "JCQP/QpProblem.h"
 
 // X0 != x[0]
 // X0 uses u[0] and dt[0] to get to x[0]
@@ -123,7 +123,7 @@ void SparseCMPC::buildCT()
       if (contactState.contact[foot])
       { // if foot is touching ground, add it.
         _bBlocks.emplace_back();
-        _bBlockIds.push_back({foot, i});
+        _bBlockIds.push_back({ foot, i });
         auto& B = _bBlocks.back();
         Vec3<double> pFoot = _pFeet.block(foot * 3, 0, 3, 1);
 
@@ -184,7 +184,7 @@ void SparseCMPC::addConstraintTriple(double value, u32 row, u32 col)
   assert(row < _constraintCount);
   if (value != 0)
   {
-    _constraintTriples.push_back({value, row, col});
+    _constraintTriples.push_back({ value, row, col });
   }
 }
 
@@ -198,7 +198,7 @@ void SparseCMPC::addX0Constraint()
   u32 constraint_idx = addConstraint(12);
   for (u32 i = 0; i < 12; i++)
   { // diagonal of the identity
-    _constraintTriples.push_back({1, constraint_idx + i, state_idx + i});
+    _constraintTriples.push_back({ 1, constraint_idx + i, state_idx + i });
   }
 
   if (_runningContactCounts[0])
@@ -207,7 +207,8 @@ void SparseCMPC::addX0Constraint()
   u32 ctrl_cnt = _contactCounts[0];
 
   for (u32 i = 0; i < ctrl_cnt; i++)
-  { // Bblocks within this b (contact feet)
+  {
+    // Bblocks within this b (contact feet)
     // select -B[0]*u[0]
     u32 bbIdx = _runningContactCounts[0] + i;
     for (u32 ax = 0; ax < 3; ax++)
@@ -235,7 +236,6 @@ void SparseCMPC::addX0Constraint()
 
 void SparseCMPC::addDynamicsConstraints()
 {
-
   // x[n] = A[n] * x[n-1] + B[n] * u[n] + g * dt[n]
   for (u32 i = 1; i < _trajectoryLength; i++)
   {
@@ -246,7 +246,7 @@ void SparseCMPC::addDynamicsConstraints()
     // get I * x[n]
     for (u32 j = 0; j < 12; j++)
     {
-      _constraintTriples.push_back({1, constraint_idx + j, next_state_idx + j});
+      _constraintTriples.push_back({ 1, constraint_idx + j, next_state_idx + j });
     }
 
     // get -A[n] * x[n-1]
@@ -343,7 +343,7 @@ void SparseCMPC::addQuadraticStateCost()
     u32 idx = getStateIndex(i);
     for (u32 j = 0; j < 12; j++)
     {
-      _costTriples.push_back({_weights[j], idx + j, idx + j});
+      _costTriples.push_back({ _weights[j], idx + j, idx + j });
     }
   }
 }
@@ -355,7 +355,7 @@ void SparseCMPC::addQuadraticControlCost()
     u32 idx = getControlIndex(i);
     for (u32 j = 0; j < 3; j++)
     {
-      _costTriples.push_back({_alpha, idx + j, idx + j});
+      _costTriples.push_back({ _alpha, idx + j, idx + j });
     }
   }
 }

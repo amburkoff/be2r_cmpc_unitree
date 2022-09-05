@@ -8,6 +8,10 @@
  */
 
 #include "Controllers/PositionVelocityEstimator.h"
+#include <cmath>
+#include <iostream>
+#include <iterator>
+#include <ostream>
 
 /*!
  * Initialize the state estimator
@@ -59,7 +63,9 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   float z = 0;
   static float z_prev = 0;
 
-  float z_cost[4] = { 0, 0, 0, 0 };
+  static float A_res = 0.0;
+  static float B_res = 0.0;
+  static float C_res = 0.0;
 
   Vec3<float> p[4];
   Vec3<float> p_local[4];
@@ -74,28 +80,8 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   p_local[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[2]);
   p_local[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[3]);
 
-  // float z_new = (p_local[0](2) + p_local[1](2) + p_local[2](2) + p_local[3](2)) / 4;
-  // float k = 1.0;
-  // z = z_prev * (1.0 - k) + z_new * k;
-
-  // for (size_t i = 0; i < 4; i++)
-  // {
-  //   if (this->_stateEstimatorData.result->contactEstimate(i) > 0.0)
-  //   {
-  //     p[i] = ros::fromMsg(this->_stateEstimatorData.debug->all_legs_info.leg[i].p_act);
-  //   }
-  // }
-
-  // std::cout << "p0z: " << p[0](2) << std::endl;
-  // std::cout << "p1z: " << p[1](2) << std::endl;
-  // std::cout << "p2z: " << p[2](2) << std::endl;
-  // std::cout << "p3z: " << p[3](2) << std::endl;
-
   Eigen::Matrix<float, 4, 3> P = Eigen::Matrix<float, 4, 3>::Zero(4, 3);
-  // P.block(0, 0, 1, 3) = p[0].transpose();
-  // P.block(1, 0, 1, 3) = p[1].transpose();
-  // P.block(2, 0, 1, 3) = p[2].transpose();
-  // P.block(3, 0, 1, 3) = p[3].transpose();
+
   P.block(0, 0, 1, 3) = p_local[0].transpose();
   P.block(1, 0, 1, 3) = p_local[1].transpose();
   P.block(2, 0, 1, 3) = p_local[2].transpose();
@@ -103,31 +89,35 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
 
   // cout << P << endl;
 
-  Vec3<float> K_solution = (P.transpose() * P).inverse() * P.transpose() * Vec4<float>(1, 1, 1, 1);
+  Vec3<float> K_solution = Vec3<float>::Zero();
 
-  this->_stateEstimatorData.debug->mnk_plane.x = K_solution(0);
-  this->_stateEstimatorData.debug->mnk_plane.y = K_solution(1);
-  this->_stateEstimatorData.debug->mnk_plane.z = K_solution(2);
+  if (P != Eigen::Matrix<float, 4, 3>::Zero(4, 3))
+  {
+    K_solution = (P.transpose() * P).inverse() * P.transpose() * Vec4<float>(1, 1, 1, 1);
+  }
 
+  static float filter = 0.7;
   float A = K_solution(0);
   float B = K_solution(1);
   float C = K_solution(2);
-  float D1 = Vec3<float>(A, B, C).transpose() * p_local[0];
-  float D2 = Vec3<float>(A, B, C).transpose() * p_local[1];
-  float D3 = Vec3<float>(A, B, C).transpose() * p_local[2];
-  float D4 = Vec3<float>(A, B, C).transpose() * p_local[3];
-  float De = (D1 + D2 + D3 + D4) / 4;
-  this->_stateEstimatorData.debug->De = De;
+  A_res = A_res * (1.0 - filter) + A * filter;
+  B_res = B_res * (1.0 - filter) + B * filter;
+  C_res = C_res * (1.0 - filter) + C * filter;
 
-  // cout << K_solution << endl;
+  // std::cout << K_solution << std::endl;
+  // std::cout << A_res << " " << B_res << " " << C_res << " " << std::endl;
 
-  z = abs(De) / sqrt(A * A + B * B + C * C);
-  // this->_stateEstimatorData.debug->body_info.pos_z_global = -z;
+  this->_stateEstimatorData.debug->mnk_plane.x = A_res;
+  this->_stateEstimatorData.debug->mnk_plane.y = B_res;
+  this->_stateEstimatorData.debug->mnk_plane.z = C_res;
+
+  float del = sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
+  float pitch = acos(A / del) - M_PI / 2.0;
+  this->_stateEstimatorData.result->est_pitch_plane = pitch;
+
+  // z = 1 / sqrt(A * A + B * B + C * C);
+  z = 1 / sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
   this->_stateEstimatorData.debug->body_info.pos_z_global = z;
-
-  // std::cout << "phase0: " << this->_stateEstimatorData.result->contactEstimate(0) << std::endl;
-  // std::cout << "new z: " << z << " unnec: " << (int)num_p_unnecessary << std::endl
-  //           << std::endl;
 
   return z;
 }

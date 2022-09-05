@@ -17,6 +17,7 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 #include <std_srvs/Trigger.h>
+#include <string>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
 
@@ -38,7 +39,11 @@
 #include "debug.hpp"
 
 // Unitree sdk
+// namespace USDK
+// {
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
+// }
+// using namespace USDK;
 
 #define MAIN_LOOP_RATE 500
 
@@ -123,7 +128,6 @@ private:
   unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
 
   Quadruped<float> _quadruped;
-  FloatingBaseModel<float> _model;
   LegController<float>* _legController = nullptr;
   StateEstimatorContainer<float>* _stateEstimator;
   StateEstimate<float> _stateEstimate;
@@ -136,6 +140,7 @@ private:
   bool _is_low_level = false;
   int _power_limit = 0;
   bool _is_torque_safe = true;
+  string _robot_type = "a1";
 
   ControlFSM<float>* _controlFSM;
 
