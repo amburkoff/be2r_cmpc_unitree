@@ -51,8 +51,10 @@ void Metric::computeCenterLegVelAndPos(Quadruped<float> &quad, Vec3<float> &q, V
     leg_v->block(0,2,3,1) = w1*R1*(Vec3<float>(0,-sideSign*(l1+l4),0) + R2*(Vec3<float>(0,0,-l2) + R3*_kneeCOM)) + R1*w2*R2*(Vec3<float>(0,0,-l2) + R3*_kneeCOM)+ R1*R2*w3*R3*_kneeCOM;
 
     leg_w->block(0,0,3,1) = matToSkewVec(w1);
-    leg_w->block(0,1,3,1) = matToSkewVec(w1) + R1*matToSkewVec(w2);
-    leg_w->block(0,2,3,1) = matToSkewVec(w1) + R1*(matToSkewVec(w2)+matToSkewVec(w3));
+    leg_w->block(0,1,3,1) = matToSkewVec(w1) + R1*matToSkewVec(w2)*R1.transpose();
+    leg_w->block(0,2,3,1) = matToSkewVec(w1) + R1*(matToSkewVec(w2)*R1.transpose() + R1*matToSkewVec(w3))*R1.transpose(); 
+    // The second rotation doesn't affect on the third axis of rotation 
+    //so that's why [w1] + R1[w2]R1^T + R1[w3]R1^T
   }
   
   float s1 = std::sin(q(0));
