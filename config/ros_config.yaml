@@ -3,7 +3,9 @@
 dynamic_loader:
   FSM_State: 0
   use_wbc: true
-  cmpc_gait: 9
+  # use_wbc: false
+  cmpc_gait: 9 # trot
+  # cmpc_gait: 4 # stand
 
   Kp_joint_0: 3.0
   Kp_joint_1: 3.0
@@ -39,18 +41,19 @@ dynamic_loader:
 
   # Swing leg parameters
   # work when WBC turned off
-  Kp_cartesian_0: 150
-  Kp_cartesian_1: 150
-  Kp_cartesian_2: 150
-  Kd_cartesian_0: 2.5
-  Kd_cartesian_1: 2.5
-  Kd_cartesian_2: 2.5
+  Kp_cartesian_0: 700
+  Kp_cartesian_1: 700
+  Kp_cartesian_2: 700
+  Kd_cartesian_0: 7
+  Kd_cartesian_1: 7
+  Kd_cartesian_2: 7
 
   body_height: 0.3
 
 
   # safety
   joint_limits: 1
+  # joint_limits: 0
 
   Swing_traj_height  : 0.09   # Set swing traj top point
 
