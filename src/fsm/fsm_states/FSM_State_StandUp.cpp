@@ -69,6 +69,8 @@ void FSM_State_StandUp<T>::onEnter()
     _stand_joint_q[leg](1) = -1.05;
     _stand_joint_q[leg](2) = 2.1;
   }
+
+  progress = 0;
 }
 
 /**
@@ -85,7 +87,7 @@ template<typename T>
 void FSM_State_StandUp<T>::standUpImpedance()
 {
   T hMax = 0.25;
-  T progress = 0.5 * iter * this->_data->staticParams->controller_dt;
+  progress = 0.5 * iter * this->_data->staticParams->controller_dt;
 
   if (progress > 1.)
   {

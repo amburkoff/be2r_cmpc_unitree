@@ -38,6 +38,7 @@ private:
   std::vector<Vec3<T>> _ini_foot_pos = {};
   std::vector<Vec3<T>> _init_joint_q = {};
   std::vector<Vec3<T>> _stand_joint_q = {};
+  float progress = 0;
 
   Mat3<T> Kp_joint = {};
   Mat3<T> Kd_joint = {};

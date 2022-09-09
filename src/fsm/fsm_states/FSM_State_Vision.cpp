@@ -15,9 +15,7 @@
  */
 template<typename T>
 FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::VISION, "VISION")
-  , vision_MPC(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters)
-  , cMPCOld(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::VISION, "VISION"), vision_MPC(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters), cMPCOld(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->staticParams, _controlFSMData->userParameters)
 {
   // Set the safety checks
   this->turnOnAllSafetyChecks();

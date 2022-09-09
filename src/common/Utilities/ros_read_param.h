@@ -33,6 +33,7 @@ struct StaticParams
   void read()
   {
     readRosParam("/static_params/controller_dt", controller_dt);
+    readRosParam("/static_params/horizon", horizon);
     readRosParam("/static_params/foot_height_sensor_noise", foot_height_sensor_noise);
     readRosParam("/static_params/foot_process_noise_position", foot_process_noise_position);
     readRosParam("/static_params/foot_sensor_noise_position", foot_sensor_noise_position);
@@ -49,6 +50,7 @@ struct StaticParams
   double foot_sensor_noise_velocity;
   double imu_process_noise_position;
   double imu_process_noise_velocity;
+  int horizon;
 };
 
 #endif // ROS_READ_PARAM_H
