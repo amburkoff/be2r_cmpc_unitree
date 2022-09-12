@@ -2,9 +2,22 @@
 <!--Parameters-->
   <arg name="sim" default="true" />
   <arg name="rqt_reconfigure" default="true" />
+  <arg name="robot_type" default="a1"/>
   <arg name="rviz" default="false" />
   <arg name="torque_safe_limit" default="0"/>
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find a1_description)/xacro/robot.xacro DEBUG:=false"/>
+
+  <!-- Choose robot type -->
+  <group if="$(eval arg('robot_type') == 'a1')">
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find a1_description)/xacro/robot.xacro DEBUG:=false"/>
+    <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_a1.yaml"/>
+    <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_a1_sim.yaml"/>
+  </group>
+
+  <group if="$(eval arg('robot_type') == 'go1')">
+    <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find go1_description)/urdf/go1.urdf' " />
+    <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_go1.yaml"/>
+    <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_go1_sim.yaml"/>
+  </group>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 

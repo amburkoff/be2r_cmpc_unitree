@@ -15,7 +15,9 @@
  */
 template<typename T>
 FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::VISION, "VISION"), vision_MPC(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters), cMPCOld(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->staticParams, _controlFSMData->userParameters)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::VISION, "VISION"),
+    vision_MPC(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters),
+    cMPCOld(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData)
 {
   // Set the safety checks
   this->turnOnAllSafetyChecks();
@@ -33,10 +35,9 @@ FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
 
   ros::readParam("~map_topic", map_topic, std::string("elevation_map"));
   ros::readParam("~localization_topic", robot_pose_topic, std::string("/base_pose"));
-  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic, 1,
-                                                   &FSM_State_Vision<T>::_elevMapCallback, this);
-  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>(
-    "/elevation_mapping/elevation_map_raw", 1, &FSM_State_Vision<T>::_elevMapRawCallback, this);
+  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic, 1, &FSM_State_Vision<T>::_elevMapCallback, this);
+  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>("/elevation_mapping/elevation_map_raw", 1,
+                                                       &FSM_State_Vision<T>::_elevMapRawCallback, this);
   //  _robot_pose_sub = _nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>(
   //    robot_pose_topic, 1, &FSM_State_Vision<T>::_robotPoseCallback, this);
 }
@@ -58,8 +59,7 @@ void FSM_State_Vision<T>::_elevMapRawCallback(const grid_map_msgs::GridMapConstP
 }
 
 template<typename T>
-void FSM_State_Vision<T>::_robotPoseCallback(
-  const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+void FSM_State_Vision<T>::_robotPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
   _robot_pose = *msg;
   tf2::Quaternion quat;
@@ -374,9 +374,8 @@ void FSM_State_Vision<T>::_UpdateObstacle()
           // check distance with already added obstacle
           for (size_t idx_obs(0); idx_obs < _obs_list.size(); ++idx_obs)
           {
-            dist = sqrt(
-              (obs_loc333[0] - _obs_list[idx_obs][0]) * (obs_loc333[0] - _obs_list[idx_obs][0]) +
-              (obs_loc333[1] - _obs_list[idx_obs][1]) * (obs_loc333[1] - _obs_list[idx_obs][1]));
+            dist = sqrt((obs_loc333[0] - _obs_list[idx_obs][0]) * (obs_loc333[0] - _obs_list[idx_obs][0]) +
+                        (obs_loc333[1] - _obs_list[idx_obs][1]) * (obs_loc333[1] - _obs_list[idx_obs][1]));
             if (dist < threshold_gap)
             {
               add_obs = false;

@@ -28,10 +28,7 @@ template<typename T>
 FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData)
   : FSM_State<T>(_controlFSMData, FSM_StateName::LOCOMOTION, "LOCOMOTION")
 {
-  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->staticParams->controller_dt,
-                                    ITERATIONS_BETWEEN_MPC,
-                                    _controlFSMData->staticParams,
-                                    _controlFSMData->userParameters);
+  cMPCOld = new ConvexMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData);
 
   this->turnOnAllSafetyChecks();
   // this->turnOffAllSafetyChecks();
@@ -215,15 +212,13 @@ bool FSM_State_Locomotion<T>::locomotionSafe()
 
   if (std::fabs(seResult.rpy[0]) > ori::deg2rad(max_roll))
   {
-    printf("Unsafe locomotion: roll is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[0]),
-           max_roll);
+    printf("Unsafe locomotion: roll is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[0]), max_roll);
     return false;
   }
 
   if (std::fabs(seResult.rpy[1]) > ori::deg2rad(max_pitch))
   {
-    printf("Unsafe locomotion: pitch is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[1]),
-           max_pitch);
+    printf("Unsafe locomotion: pitch is %.3f degrees (max %.3f)\n", ori::rad2deg(seResult.rpy[1]), max_pitch);
     return false;
   }
 
@@ -335,8 +330,7 @@ void FSM_State_Locomotion<T>::StanceLegImpedanceControl(int leg)
   Vec3<double> stand_kp_cartesian(50, 50, 50);
   Vec3<double> stand_kd_cartesian(2.5, 2.5, 2.5);
   // Impedance control for the stance leg
-  this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(),
-                                  stand_kp_cartesian, stand_kd_cartesian);
+  this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(), stand_kp_cartesian, stand_kd_cartesian);
 }
 
 // template class FSM_State_Locomotion<double>;
