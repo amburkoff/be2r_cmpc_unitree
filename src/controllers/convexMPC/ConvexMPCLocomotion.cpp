@@ -31,37 +31,38 @@ using namespace std;
 // Controller
 ////////////////////
 
-ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
-                                         StaticParams* static_parameters,
+ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt,
+                                         int _iterations_between_mpc,
                                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters)
-  : iterationsBetweenMPC(_iterations_between_mpc), _parameters(parameters), _gait_period(parameters->gait_period), horizonLength(static_parameters->horizon), dt(_dt),
-    trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
-             Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
-    trotting_copy(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
-                  Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting_copy"),
+  : iterationsBetweenMPC(_iterations_between_mpc),
+    _parameters(parameters),
+    _gait_period(parameters->gait_period),
+    horizonLength(16),
+    dt(_dt),
+    trotting(_gait_period,
+             Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+             Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
+             "Trotting"),
     bounding(_gait_period, Vec4<int>(5, 5, 0, 0), Vec4<int>(4, 4, 4, 4), "Bounding"),
     pronking(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(8, 8, 8, 8), "Pronking"),
     jumping(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(2, 2, 2, 2), "Jumping"),
     galloping(_gait_period, Vec4<int>(0, 2, 7, 9), Vec4<int>(4, 4, 4, 4), "Galloping"),
     standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
-    // galloping(_gait_period,
-    // Vec4<int>(0,2,7,9),Vec4<int>(6,6,6,6),"Galloping"),
-    // galloping(_gait_period,
-    // Vec4<int>(0,2,7,9),Vec4<int>(3,3,3,3),"Galloping"),
     trotRunning(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(4, 4, 4, 4), "Trot Running"),
-    walking(_gait_period, Vec4<int>(2 * _gait_period / 4., 0, _gait_period / 4., 3 * _gait_period / 4.),
-            Vec4<int>(0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period), "Walking"),
+    walking(_gait_period,
+            Vec4<int>(2 * _gait_period / 4., 0, _gait_period / 4., 3 * _gait_period / 4.),
+            Vec4<int>(0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period, 0.75 * _gait_period),
+            "Walking"),
     walking2(_gait_period, Vec4<int>(0, 5, 5, 0), Vec4<int>(7, 7, 7, 7), "Walking2"),
     pacing(_gait_period, Vec4<int>(5, 0, 5, 0), Vec4<int>(5, 5, 5, 5), "Pacing"),
     random(_gait_period, Vec4<int>(9, 13, 13, 9), 0.4, "Flying nine thirteenths trot"),
     random2(_gait_period, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
 {
+  ROS_WARN_STREAM("Current gait period " << _parameters->gait_period);
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
-  // setup_problem(dtMPC, horizonLength, 0.4, 1200);
-  setup_problem(dtMPC, horizonLength, 0.4, 120); // original
-  // setup_problem(dtMPC, horizonLength, 0.4, 650); // DH
+  setup_problem(dtMPC, horizonLength, 0.4, 120); // original (3d arg prev: 1200, 650)
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -117,7 +118,7 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
 
-   _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   _roll_des = 0.;
   _pitch_des = 0.;
 
@@ -186,10 +187,10 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   {
     gait = &galloping;
   }
-  else if (gaitNumber == 7)
-  {
-    gait = &random2;
-  }
+  // else if (gaitNumber == 7)
+  // {
+  //   gait = &random2;
+  // }
   else if (gaitNumber == 8)
   {
     gait = &pacing;
@@ -203,8 +204,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     gait = &walking2;
   }
   current_gait = gaitNumber;
-  *gait = trotting_copy;
 
+  gait->updatePeriod(_parameters->gait_period);
   //  gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
   //  gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
@@ -435,7 +436,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
     delta_p_bw[foot] += seResult.vBody * dt;
     delta_yaw[foot] += seResult.omegaBody(2) * dt;
-    data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
+    data.debug->last_p_local_stance[foot] =
+      ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     if (swingState > 0) // foot is in swing
     {
