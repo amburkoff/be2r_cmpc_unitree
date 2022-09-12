@@ -6,7 +6,7 @@
 #include "ControlFSMData.h"
 #include "Controllers/GaitScheduler.h"
 #include "TransitionData.h"
-#include "common/metrics/Metric.h"
+#include "common/metrics/SystemEnergy.h"
 
 
 // #include <BalanceController/BalanceController.hpp>
