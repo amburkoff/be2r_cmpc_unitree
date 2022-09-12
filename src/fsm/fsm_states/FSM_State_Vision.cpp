@@ -16,7 +16,7 @@
 template<typename T>
 FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
   : FSM_State<T>(_controlFSMData, FSM_StateName::VISION, "VISION"),
-    vision_MPC(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData->userParameters),
+    vision_MPC(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData),
     cMPCOld(_controlFSMData->staticParams->controller_dt, 13, _controlFSMData)
 {
   // Set the safety checks
@@ -669,7 +669,7 @@ void FSM_State_Vision<T>::onExit()
 template<typename T>
 void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
 {
-  vision_MPC.run(*this->_data, des_vel, _grid_map, _grid_map_raw);
+  vision_MPC.run(des_vel, _grid_map, _grid_map_raw);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];
