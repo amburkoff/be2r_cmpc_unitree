@@ -111,7 +111,7 @@ void VisionMPCLocomotion::_setupCommand(ControlFSMData<float>& data)
 }
 
 void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
-                              const grid_map::GridMap& height_map,
+                              const grid_map::GridMap& height_map_filter,
                               const grid_map::GridMap& height_map_raw)
 {
   bool omniMode = false;
@@ -226,7 +226,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   for (int i = 0; i < 4; i++)
   {
     pFoot[i] =
-      seResult.position + seResult.rBody.transpose() * (_data._quadruped->getHipLocation(i) + _data._legController->_datas[i].p);
+      seResult.position + seResult.rBody.transpose() * (_data->_quadruped->getHipLocation(i) + _data->_legController->datas[i].p);
   }
 
   world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
@@ -314,12 +314,12 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     pf[0] += pfx_rel;
     pf[1] += pfy_rel;
     pf[2] = z_des[i];
-    _updateFoothold(pf, seResult.position, height_map, height_map_raw, i);
+    _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, i);
 
     footSwingTrajectories[i].setFinalPosition(pf);
-    _data.debug->all_legs_info.leg[i].swing_pf.x = pf(0);
-    _data.debug->all_legs_info.leg[i].swing_pf.y = pf(1);
-    _data.debug->all_legs_info.leg[i].swing_pf.z = pf(2);
+    _data->debug->all_legs_info.leg[i].swing_pf.x = pf(0);
+    _data->debug->all_legs_info.leg[i].swing_pf.y = pf(1);
+    _data->debug->all_legs_info.leg[i].swing_pf.z = pf(2);
   }
 
   // calc gait
@@ -333,16 +333,16 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
-    _data.debug->all_legs_info.leg[leg_num].stance_time = contactStates[leg_num];
-    _data.debug->all_legs_info.leg[leg_num].swing_time = swingStates[leg_num];
-    _data.debug->all_legs_info.leg[leg_num].phase = gait->getCurrentGaitPhase();
-    _data.debug->all_legs_info.leg[leg_num].is_contact = _data._stateEstimator->getContactSensorData()(leg_num);
+    _data->debug->all_legs_info.leg[leg_num].stance_time = contactStates[leg_num];
+    _data->debug->all_legs_info.leg[leg_num].swing_time = swingStates[leg_num];
+    _data->debug->all_legs_info.leg[leg_num].phase = gait->getCurrentGaitPhase();
+    _data->debug->all_legs_info.leg[leg_num].is_contact = _data->_stateEstimator->getContactSensorData()(leg_num);
   }
 
-  updateMPCIfNeeded(mpcTable, _data, omniMode);
+  updateMPCIfNeeded(mpcTable, *_data, omniMode);
 
   Vec4<float> se_contactState(0, 0, 0, 0);
-  se_contactState = _data._stateEstimator->getContactSensorData().cast<float>();
+  se_contactState = _data->_stateEstimator->getContactSensorData().cast<float>();
   static bool is_stance[4] = { 0, 0, 0, 0 };
   static Vec3<float> p_fw[4] = {};
   static Vec3<float> p_fl[4] = {};
@@ -363,16 +363,16 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       is_stance[foot] = 1;
 
       pDesFootWorldStance[foot] = pFoot[foot];
-      _data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
+      _data->debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
       p_fw[foot] = pFoot[foot];
-      p_fl[foot] = _data._legController->_datas[foot].p + _data._quadruped->getHipLocation(foot);
+      p_fl[foot] = _data->_legController->datas[foot].p + _data->_quadruped->getHipLocation(foot);
       delta_p_bw[foot] << 0, 0, 0;
       delta_yaw[foot] = 0;
     }
 
     delta_p_bw[foot] += seResult.vBody * dt;
     delta_yaw[foot] += seResult.omegaBody(2) * dt;
-    _data.debug->last_p_local_stance[foot] =
+    _data->debug->last_p_local_stance[foot] =
       ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     if (swingState > 0) // foot is in swing
@@ -382,9 +382,9 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
         firstSwing[foot] = false;
         is_stance[foot] = 0;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
-        _data.debug->all_legs_info.leg[foot].swing_ps.x = pFoot[foot](0);
-        _data.debug->all_legs_info.leg[foot].swing_ps.y = pFoot[foot](1);
-        _data.debug->all_legs_info.leg[foot].swing_ps.z = pFoot[foot](2);
+        _data->debug->all_legs_info.leg[foot].swing_ps.x = pFoot[foot](0);
+        _data->debug->all_legs_info.leg[foot].swing_ps.y = pFoot[foot](1);
+        _data->debug->all_legs_info.leg[foot].swing_ps.z = pFoot[foot](2);
 
         z_des[foot] = pFoot[foot][2];
       }
@@ -396,51 +396,51 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
-      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data._quadruped->getHipLocation(foot);
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data->_quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data._legController->_datas[foot].p
-      // + _data._quadruped->getHipLocation(foot)) + seResult.position;
-      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data._legController->_datas[foot].v) + seResult.vWorld;
+      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data->_legController->_datas[foot].p
+      // + _data->_quadruped->getHipLocation(foot)) + seResult.position;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data->_legController->datas[foot].v) + seResult.vWorld;
 
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;
       vFoot_des[foot] = vDesFootWorld;
       aFoot_des[foot] = footSwingTrajectories[foot].getAcceleration();
 
-      _data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
-      _data.debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
-      _data.debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
+      _data->debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
+      _data->debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
+      _data->debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
 
-      _data.debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
-      _data.debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
-      _data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
+      _data->debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
+      _data->debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
+      _data->debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
 
-      _data.debug->all_legs_info.leg[foot].p_w_act.x = pFoot[foot][0];
-      _data.debug->all_legs_info.leg[foot].p_w_act.y = pFoot[foot][1];
-      _data.debug->all_legs_info.leg[foot].p_w_act.z = pFoot[foot][2];
-      // _data.debug->all_legs_info.leg[foot].p_w_act.x = pActFootWorld[0];
-      // _data.debug->all_legs_info.leg[foot].p_w_act.y = pActFootWorld[1];
-      // _data.debug->all_legs_info.leg[foot].p_w_act.z = pActFootWorld[2];
+      _data->debug->all_legs_info.leg[foot].p_w_act.x = pFoot[foot][0];
+      _data->debug->all_legs_info.leg[foot].p_w_act.y = pFoot[foot][1];
+      _data->debug->all_legs_info.leg[foot].p_w_act.z = pFoot[foot][2];
+      // _data->debug->all_legs_info.leg[foot].p_w_act.x = pActFootWorld[0];
+      // _data->debug->all_legs_info.leg[foot].p_w_act.y = pActFootWorld[1];
+      // _data->debug->all_legs_info.leg[foot].p_w_act.z = pActFootWorld[2];
 
-      _data.debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
-      _data.debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
-      _data.debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
+      _data->debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
+      _data->debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
+      _data->debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
 
-      _data.debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorld[0];
-      _data.debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorld[1];
-      _data.debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorld[2];
+      _data->debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorld[0];
+      _data->debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorld[1];
+      _data->debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorld[2];
 
-      _data.debug->all_legs_info.leg[foot].v_w_des.x = vDesFootWorld[0];
-      _data.debug->all_legs_info.leg[foot].v_w_des.y = vDesFootWorld[1];
-      _data.debug->all_legs_info.leg[foot].v_w_des.z = vDesFootWorld[2];
+      _data->debug->all_legs_info.leg[foot].v_w_des.x = vDesFootWorld[0];
+      _data->debug->all_legs_info.leg[foot].v_w_des.y = vDesFootWorld[1];
+      _data->debug->all_legs_info.leg[foot].v_w_des.z = vDesFootWorld[2];
 
-      if (!_data.userParameters->use_wbc)
+      if (!_data->userParameters->use_wbc)
       {
         // Update leg control command regardless of the usage of WBIC
-        _data._legController->commands[foot].pDes = pDesLeg;
-        _data._legController->commands[foot].vDes = vDesLeg;
-        _data._legController->commands[foot].kpCartesian = Kp;
-        _data._legController->commands[foot].kdCartesian = Kd;
+        _data->_legController->commands[foot].pDes = pDesLeg;
+        _data->_legController->commands[foot].vDes = vDesLeg;
+        _data->_legController->commands[foot].kpCartesian = Kp;
+        _data->_legController->commands[foot].kdCartesian = Kd;
       }
     }
     else // foot is in stance
@@ -451,65 +451,65 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> vDesFootWorld(0, 0, 0);
       // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorldStance[foot] - seResult.position) -
-      // _data._quadruped->getHipLocation(foot);
-      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data._quadruped->getHipLocation(foot);
+      // _data->_quadruped->getHipLocation(foot);
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data->_quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data._legController->_datas[foot].p
-      // + _data._quadruped->getHipLocation(foot)) + seResult.position;
-      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data._legController->_datas[foot].v) + seResult.vWorld;
+      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data->_legController->_datas[foot].p
+      // + _data->_quadruped->getHipLocation(foot)) + seResult.position;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data->_legController->datas[foot].v) + seResult.vWorld;
 
-      if (!_data.userParameters->use_wbc) // wbc off
+      if (!_data->userParameters->use_wbc) // wbc off
       {
-        _data._legController->commands[foot].pDes = pDesLeg;
-        _data._legController->commands[foot].vDes = vDesLeg;
-        _data._legController->commands[foot].kpCartesian = Kp_stance;
-        _data._legController->commands[foot].kdCartesian = Kd_stance;
+        _data->_legController->commands[foot].pDes = pDesLeg;
+        _data->_legController->commands[foot].vDes = vDesLeg;
+        _data->_legController->commands[foot].kpCartesian = Kp_stance;
+        _data->_legController->commands[foot].kdCartesian = Kd_stance;
 
-        _data._legController->commands[foot].forceFeedForward = f_ff[foot];
-        _data._legController->commands[foot].kdJoint =
+        _data->_legController->commands[foot].forceFeedForward = f_ff[foot];
+        _data->_legController->commands[foot].kdJoint =
           Vec3<float>(_dyn_params->Kd_joint_0, _dyn_params->Kd_joint_1, _dyn_params->Kd_joint_2).asDiagonal();
       }
       else
       { // Stance foot damping
-        _data._legController->commands[foot].pDes = pDesLeg;
-        _data._legController->commands[foot].vDes = vDesLeg;
-        _data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
-        _data._legController->commands[foot].kdCartesian = Kd_stance;
+        _data->_legController->commands[foot].pDes = pDesLeg;
+        _data->_legController->commands[foot].vDes = vDesLeg;
+        _data->_legController->commands[foot].kpCartesian = 0. * Kp_stance;
+        _data->_legController->commands[foot].kdCartesian = Kd_stance;
       }
 
       se_contactState[foot] = contactState;
 
-      _data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
-      _data.debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
-      _data.debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
+      _data->debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
+      _data->debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
+      _data->debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
 
-      _data.debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
-      _data.debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
-      _data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
+      _data->debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
+      _data->debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
+      _data->debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
 
-      _data.debug->all_legs_info.leg[foot].p_w_act.x = pFoot[foot][0];
-      _data.debug->all_legs_info.leg[foot].p_w_act.y = pFoot[foot][1];
-      _data.debug->all_legs_info.leg[foot].p_w_act.z = pFoot[foot][2];
+      _data->debug->all_legs_info.leg[foot].p_w_act.x = pFoot[foot][0];
+      _data->debug->all_legs_info.leg[foot].p_w_act.y = pFoot[foot][1];
+      _data->debug->all_legs_info.leg[foot].p_w_act.z = pFoot[foot][2];
 
-      _data.debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
-      _data.debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
-      _data.debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
+      _data->debug->all_legs_info.leg[foot].v_w_act.x = vActFootWorld[0];
+      _data->debug->all_legs_info.leg[foot].v_w_act.y = vActFootWorld[1];
+      _data->debug->all_legs_info.leg[foot].v_w_act.z = vActFootWorld[2];
 
-      // _data.debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorldStance[foot][0];
-      // _data.debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorldStance[foot][1];
-      // _data.debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorldStance[foot][2];
-      _data.debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorld[0];
-      _data.debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorld[1];
-      _data.debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorld[2];
+      // _data->debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorldStance[foot][0];
+      // _data->debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorldStance[foot][1];
+      // _data->debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorldStance[foot][2];
+      _data->debug->all_legs_info.leg[foot].p_w_des.x = pDesFootWorld[0];
+      _data->debug->all_legs_info.leg[foot].p_w_des.y = pDesFootWorld[1];
+      _data->debug->all_legs_info.leg[foot].p_w_des.z = pDesFootWorld[2];
 
-      _data.debug->all_legs_info.leg[foot].v_w_des.x = vDesFootWorld[0];
-      _data.debug->all_legs_info.leg[foot].v_w_des.y = vDesFootWorld[1];
-      _data.debug->all_legs_info.leg[foot].v_w_des.z = vDesFootWorld[2];
+      _data->debug->all_legs_info.leg[foot].v_w_des.x = vDesFootWorld[0];
+      _data->debug->all_legs_info.leg[foot].v_w_des.y = vDesFootWorld[1];
+      _data->debug->all_legs_info.leg[foot].v_w_des.z = vDesFootWorld[2];
     }
   }
 
-  _data._stateEstimator->setContactPhase(se_contactState);
-  _data._stateEstimator->setSwingPhase(gait->getSwingState());
+  _data->_stateEstimator->setContactPhase(se_contactState);
+  _data->_stateEstimator->setSwingPhase(gait->getSwingState());
 
   // Update For WBC
   pBody_des[0] = world_position_desired[0];
@@ -531,28 +531,28 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   vBody_Ori_des[1] = 0.;
   vBody_Ori_des[2] = _yaw_turn_rate;
 
-  _data.debug->body_info.pos_des.x = pBody_des[0];
-  _data.debug->body_info.pos_des.y = pBody_des[1];
-  _data.debug->body_info.pos_des.z = pBody_des[2];
+  _data->debug->body_info.pos_des.x = pBody_des[0];
+  _data->debug->body_info.pos_des.y = pBody_des[1];
+  _data->debug->body_info.pos_des.z = pBody_des[2];
 
-  _data.debug->body_info.vel_des.linear.x = vBody_des[0];
-  _data.debug->body_info.vel_des.linear.y = vBody_des[1];
-  _data.debug->body_info.vel_des.linear.z = vBody_des[2];
+  _data->debug->body_info.vel_des.linear.x = vBody_des[0];
+  _data->debug->body_info.vel_des.linear.y = vBody_des[1];
+  _data->debug->body_info.vel_des.linear.z = vBody_des[2];
 
-  _data.debug->body_info.euler_des.x = pBody_RPY_des[0];
-  _data.debug->body_info.euler_des.y = pBody_RPY_des[1];
-  _data.debug->body_info.euler_des.z = pBody_RPY_des[2];
+  _data->debug->body_info.euler_des.x = pBody_RPY_des[0];
+  _data->debug->body_info.euler_des.y = pBody_RPY_des[1];
+  _data->debug->body_info.euler_des.z = pBody_RPY_des[2];
 
-  _data.debug->body_info.vel_des.angular.x = vBody_Ori_des[0];
-  _data.debug->body_info.vel_des.angular.y = vBody_Ori_des[1];
-  _data.debug->body_info.vel_des.angular.z = vBody_Ori_des[2];
+  _data->debug->body_info.vel_des.angular.x = vBody_Ori_des[0];
+  _data->debug->body_info.vel_des.angular.y = vBody_Ori_des[1];
+  _data->debug->body_info.vel_des.angular.z = vBody_Ori_des[2];
 
   contact_state = gait->getContactState();
 }
 
 void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
                                           const Vec3<float>& body_pos,
-                                          const grid_map::GridMap& height_map,
+                                          const grid_map::GridMap& height_map_filter,
                                           const grid_map::GridMap& height_map_raw,
                                           int leg)
 {
@@ -563,28 +563,28 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  std::cout << "pf in base frame: " << std::endl << local_pf << std::endl;
 
   // Координаты центра карты
-  int row_idx_half = height_map.getSize()(0) / 2;
-  int col_idx_half = height_map.getSize()(1) / 2;
-  //  std::cout << "Heightmap resolution : " << height_map.getResolution() << std::endl;
+  int row_idx_half = height_map_filter.getSize()(0) / 2;
+  int col_idx_half = height_map_filter.getSize()(1) / 2;
+  //  std::cout << "Heightmap resolution : " << height_map_filter.getResolution() << std::endl;
 
   // Минус для преобразования координат
-  int x_idx = col_idx_half - floor(local_pf[0] / height_map.getResolution());
-  int y_idx = row_idx_half - floor(local_pf[1] / height_map.getResolution());
+  int x_idx = col_idx_half - floor(local_pf[0] / height_map_filter.getResolution());
+  int y_idx = row_idx_half - floor(local_pf[1] / height_map_filter.getResolution());
 
   int x_idx_selected = x_idx;
   int y_idx_selected = y_idx;
 
-  _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, height_map, height_map_raw, leg);
+  _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, height_map_filter, height_map_raw, leg);
 
   // Минус для преобразования координат
-  pf[0] = -(x_idx_selected - row_idx_half) * height_map.getResolution() + body_pos[0];
-  pf[1] = -(y_idx_selected - col_idx_half) * height_map.getResolution() + body_pos[1];
-  auto pf_h = height_map.at("elevation", Eigen::Array2i(x_idx_selected, y_idx_selected));
+  pf[0] = -(x_idx_selected - row_idx_half) * height_map_filter.getResolution() + body_pos[0];
+  pf[1] = -(y_idx_selected - col_idx_half) * height_map_filter.getResolution() + body_pos[1];
+  auto pf_h = height_map_raw.at("elevation", Eigen::Array2i(x_idx_selected, y_idx_selected));
   Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
   Vec3<float> local_p0 = p0 - body_pos;
-  int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map.getResolution());
-  int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map.getResolution());
-  auto p0_h = height_map.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
+  int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map_filter.getResolution());
+  int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map_filter.getResolution());
+  auto p0_h = height_map_raw.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
 
   //  int counter = 0;
   //  static double step_threshold = 0.07;
@@ -593,9 +593,9 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  {
   //    Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
   //    Vec3<float> local_p0 = p0 - body_pos;
-  //    int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map.getResolution());
-  //    int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map.getResolution());
-  //    auto p0_h = height_map.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
+  //    int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map_filter.getResolution());
+  //    int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map_filter.getResolution());
+  //    auto p0_h = height_map_filter.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
 
   //    if (p0_h >= step_threshold)
   //    {
@@ -618,24 +618,24 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   // {
   //   Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
   //   Vec3<float> local_p0 = p0 - body_pos;
-  //   int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map.getResolution());
-  //   int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map.getResolution());
-  //   auto p0_h = height_map.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
+  //   int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map_filter.getResolution());
+  //   int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map_filter.getResolution());
+  //   auto p0_h = height_map_filter.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
   //   p0_h = (std::isnan(p0_h)) ? 0. : p0_h;
   //   mean_p0_h += p0_h;
   // }
   // mean_p0_h = mean_p0_h / 4.;
-  // _data->debug->z_offset = mean_p0_h;
+  _data->debug->z_offset = height_map_raw.at("elevation", Eigen::Array2i(0, 0));
   //  if (counter >= 2)
 
   //  pf_h -= step_height;
 
-  //  std::cout << "z_offset = " << _data->debug->z_offset << " pf_0 = " << p0_h << std::endl;
+  //  std::cout << "z_offset = " << _data->debug->z_offset << std::endl;
   // In ODOM frame
   // pf_h -= p0_h;
 
   // in WORLD frame
-  pf_h -= _data->debug->z_offset;
+  // pf_h -= com_height - _data->debug->body_info.pos_act.z;
   //  h =
   // pf_h = p0(2) + (pf_h - p0_h);
   //  std::cout << "After " << pf_h << std::endl;
@@ -649,21 +649,21 @@ void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
                                           int y_idx,
                                           int& x_idx_selected,
                                           int& y_idx_selected,
-                                          const grid_map::GridMap& height_map,
+                                          const grid_map::GridMap& height_map_filter,
                                           const grid_map::GridMap& height_map_raw,
                                           int leg)
 {
   grid_map::Index center(x_idx, y_idx);
   // std::cout << " Leg position (x,y) " << pf[0] << " " << pf[1] << std::endl;
   double radius = 0.09;
-  // std::cout << "Normal is " << height_map_raw.at("normal_vectors_z", Eigen::Array2i(x_idx, y_idx)) <<
+  // std::cout << "Normal is " << height_map_raw.at("normal_z", Eigen::Array2i(x_idx, y_idx)) <<
   // std::endl;
   for (grid_map_utils::SpiralIterator iterator(height_map_raw, center, radius); !iterator.isPastEnd(); ++iterator)
   {
-    auto norm_z = height_map_raw.at("normal_vectors_z", *iterator);
-    auto uncertainty_r = height_map.at("uncertainty_range", *iterator);
+    auto norm_z = height_map_raw.at("normal_z", *iterator);
+    // auto uncertainty_r = height_map_filter.at("uncertainty_range", *iterator);
     // If cell is flat
-    if (!std::isnan(norm_z) && norm_z > 0.99 && !std::isnan(uncertainty_r) && uncertainty_r < 0.7)
+    if (!std::isnan(norm_z) && norm_z > 0.99 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
     {
       x_idx_selected = (*iterator)(0);
       y_idx_selected = (*iterator)(1);

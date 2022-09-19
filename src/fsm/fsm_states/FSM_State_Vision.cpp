@@ -33,13 +33,10 @@ FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
   _global_robot_loc.setZero();
   _robot_rpy.setZero();
 
-  ros::readParam("~map_topic", map_topic, std::string("elevation_map"));
-  ros::readParam("~localization_topic", robot_pose_topic, std::string("/base_pose"));
-  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic, 1, &FSM_State_Vision<T>::_elevMapCallback, this);
-  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>("/elevation_mapping/elevation_map_raw", 1,
-                                                       &FSM_State_Vision<T>::_elevMapRawCallback, this);
-  //  _robot_pose_sub = _nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>(
-  //    robot_pose_topic, 1, &FSM_State_Vision<T>::_robotPoseCallback, this);
+  ros::readParam("~map_topic_filter", map_topic_filter, std::string("elevation_map_raw"));
+  ros::readParam("~map_topic_raw", map_topic_raw, std::string("elevation_map_raw"));
+  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_filter, 1, &FSM_State_Vision<T>::_elevMapCallback, this);
+  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_raw, 1, &FSM_State_Vision<T>::_elevMapRawCallback, this);
 }
 
 template<typename T>
