@@ -201,12 +201,14 @@ bool SafetyChecker<T>::checkForceFeedForward()
 struct Leg
 {
   float q[3];
+  float dq[3];
 };
 
 template<typename T>
 bool SafetyChecker<T>::checkJointLimits()
 {
   static bool is_init = true;
+  static float dq_limit = 50;
 
   static float param_limit_joint0[2] = { 0, 0 };
   static float param_limit_joint1[2] = { 0, 0 };
@@ -246,6 +248,10 @@ bool SafetyChecker<T>::checkJointLimits()
     leg[i].q[0] = data->_legController->datas[i].q(0);
     leg[i].q[1] = -data->_legController->datas[i].q(1);
     leg[i].q[2] = -data->_legController->datas[i].q(2);
+
+    leg[i].dq[0] = data->_legController->datas[i].qd(0);
+    leg[i].dq[1] = -data->_legController->datas[i].qd(1);
+    leg[i].dq[2] = -data->_legController->datas[i].qd(2);
   }
 
   // for (size_t i = 0; i < 1; i++)
@@ -340,6 +346,18 @@ bool SafetyChecker<T>::checkJointLimits()
       // ROS_INFO_STREAM("leg: " << i << " j2 dq safe max: " << delta_q << " tau: " << tau);
 
       data->_legController->commands[i].tauSafe(2) = -tau;
+    }
+  }
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    for (size_t j = 0; j < 3; j++)
+    {
+      if (abs(leg[i].dq[j]) > dq_limit)
+      {
+        ROS_ERROR_STREAM("Leg: " << i << " joint: " << j << " dq limit " << dq_limit << " exceeded");
+        return false;
+      }
     }
   }
 

@@ -40,7 +40,7 @@ using namespace std;
 
 CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data)
   : _data(data), iterationsBetweenMPC(_iterations_between_mpc), _parameters(_data->userParameters), _gait_period(_parameters->gait_period),
-    horizonLength(HORIZON), dt(_dt),
+    horizonLength(_data->staticParams->horizon), dt(_dt),
     trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
     trot_contact(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25), "Trot contact"),
     standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
@@ -274,6 +274,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
   for (int i = 0; i < 4; i++)
   {
+    //foot pos in world frame
     pFoot[i] = seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
   }
 
