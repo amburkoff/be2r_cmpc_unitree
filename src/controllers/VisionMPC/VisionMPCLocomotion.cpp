@@ -1,12 +1,4 @@
-#include <Utilities/Timer.h>
-#include <Utilities/Utilities_print.h>
-#include <iostream>
-
-#include "GraphSearch.h"
 #include "VisionMPCLocomotion.h"
-#include "convexMPC_interface.h"
-
-#include "Gait.h"
 
 #define HORIZON 14
 
@@ -157,7 +149,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   }
 
   // pick gait
-  Gait_contact* gait = &trotting;
+  Gait* gait = &trotting;
   current_gait = gaitNumber;
 
   if (current_gait == 4)
@@ -173,10 +165,11 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     gait = &walking;
   }
 
-  gait->restoreDefaults();
+  gait->updatePeriod(_dyn_params->gait_period);
+  // gait->restoreDefaults();
   gait->setIterations(_iterationsBetweenMPC, iterationCounter);
   // gait->earlyContactHandle(seResult.contactSensor, _iterationsBetweenMPC, iterationCounter);
-  gait->earlyContactHandle(_data->_stateEstimator->getContactSensorData(), _iterationsBetweenMPC, iterationCounter);
+  // gait->earlyContactHandle(_data->_stateEstimator->getContactSensorData(), _iterationsBetweenMPC, iterationCounter);
   //  std::cout << "iterationCounter " << iterationCounter << std::endl;
 
   recompute_timing(default_iterations_between_mpc);

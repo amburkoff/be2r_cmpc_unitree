@@ -24,9 +24,6 @@
   <!-- Update ros params from file -->
   <include file="$(find be2r_cmpc_unitree)/launch/set_dyn_params.launch"/>
 
-  <group if="$(eval arg('rqt_reconfigure') == true)">
-    <node name="be2r_rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" />
-  </group>
 
   <group if="$(eval arg('sim') == true)">
     <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@' ">
@@ -47,6 +44,9 @@
     </node>
   </group>
 
+  <group if="$(eval arg('rqt_reconfigure') == true)">
+    <node name="be2r_rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" launch-prefix="bash -c 'sleep 1.1; $0 $@' "/>
+  </group>
 
   <group if="$(eval arg('rviz') == true)">
     <arg name="rvizconfig" default="$(find unitree_ros_driver)/rviz/unitree.rviz" />

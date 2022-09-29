@@ -1,7 +1,14 @@
 #pragma once
 
+#include <iostream>
+#include <nav_msgs/Path.h>
+#include <ros/ros.h>
+
 #include "Controllers/DesiredStateCommand.h"
+#include "Utilities/Timer.h"
+#include "Utilities/Utilities_print.h"
 #include "controllers/CMPC/Gait_contact.h"
+#include "convexMPC/Gait.h"
 #include "cppTypes.h"
 #include <ControlFSMData.h>
 #include <FootSwingTrajectory.h>
@@ -9,9 +16,10 @@
 #include <Utilities/SpiralIterator.hpp>
 #include <geometry_msgs/PoseStamped.h>
 #include <grid_map_ros/grid_map_ros.hpp>
-#include <nav_msgs/Path.h>
-#include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+
+#include "GraphSearch.h"
+#include "convexMPC_interface.h"
 
 #include <cstdio>
 
@@ -97,7 +105,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGaitContact trotting, standing, walking, two_leg_balance;
+  OffsetDurationGait trotting, standing, walking, two_leg_balance;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
