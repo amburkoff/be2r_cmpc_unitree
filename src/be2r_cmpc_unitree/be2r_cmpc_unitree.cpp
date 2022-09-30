@@ -98,6 +98,7 @@ void Body_Manager::init()
   {
     ROS_INFO_STREAM("[Body_Manager] Get params from dynamic reconfigure");
     ROS_INFO_STREAM("[Body_Manager] Loaded robot parameters\n");
+    _is_param_updated = false;
   }
   else
   {

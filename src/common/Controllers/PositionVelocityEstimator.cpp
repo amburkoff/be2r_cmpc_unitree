@@ -96,7 +96,7 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
     K_solution = (P.transpose() * P).inverse() * P.transpose() * Vec4<float>(1, 1, 1, 1);
   }
 
-  static float filter = 0.7;
+  static float filter = 0.5;
   float A = K_solution(0);
   float B = K_solution(1);
   float C = K_solution(2);
