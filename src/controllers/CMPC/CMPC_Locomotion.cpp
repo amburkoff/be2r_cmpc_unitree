@@ -642,8 +642,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   static float z_des[4] = { 0 };
 
   // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-  _pitch_des =
-    1 * data._stateEstimator->getResult().est_pitch_plane - 0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
+  _pitch_des = data._stateEstimator->getResult().rpy[1] + data._stateEstimator->getResult().est_pitch_plane - 0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
 
   for (int i = 0; i < 4; i++)
   {
