@@ -83,11 +83,13 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   expmm = ABc.exp();
   Adt = expmm.block(0, 0, 13, 13);
   Bdt = expmm.block(0, 13, 13, 12);
+
 #ifdef K_PRINT_EVERYTHING
   cout << "Adt: \n"
        << Adt << "\nBdt:\n"
        << Bdt << endl;
 #endif
+
   if (horizon > 19)
   {
     throw std::runtime_error("horizon is too long!");
@@ -95,6 +97,7 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
 
   Matrix<fpt, 13, 13> powerMats[20];
   powerMats[0].setIdentity();
+
   for (int i = 1; i < horizon + 1; i++)
   {
     powerMats[i] = Adt * powerMats[i - 1];
@@ -103,6 +106,7 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   for (s16 r = 0; r < horizon; r++)
   {
     A_qp.block(13 * r, 0, 13, 13) = powerMats[r + 1]; // Adt.pow(r+1);
+
     for (s16 c = 0; c < horizon; c++)
     {
       if (r >= c)
@@ -223,6 +227,7 @@ inline Matrix<fpt, 3, 3> cross_mat(Matrix<fpt, 3, 3> I_inv, Matrix<fpt, 3, 1> r)
   cm << 0.f, -r(2), r(1), r(2), 0.f, -r(0), -r(1), r(0), 0.f;
   return I_inv * cm;
 }
+
 // continuous time state space matrices.
 void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matrix<fpt, 3, 3> R_yaw,
                 Matrix<fpt, 13, 13>& A, Matrix<fpt, 13, 12>& B, float x_drag)
@@ -258,6 +263,7 @@ void quat_to_rpy(Quaternionf q, Matrix<fpt, 3, 1>& rpy)
   rpy(2) =
     atan2(2.f * (q.y() * q.z() + q.w() * q.x()), sq(q.w()) - sq(q.x()) - sq(q.y()) + sq(q.z()));
 }
+
 void print_problem_setup(problem_setup* setup)
 {
   printf("DT: %.3f\n", setup->dt);
@@ -286,7 +292,8 @@ Matrix<fpt, 13, 12> B_ct_r;
 
 void solve_mpc(update_data_t* update, problem_setup* setup)
 {
-  rs.set(update->p, update->v, update->q, update->w, update->r, update->yaw);
+  rs.set(update->p, update->v, update->q, update->w, update->r, update->roll, update->pitch, update->yaw);
+
 #ifdef K_PRINT_EVERYTHING
 
   printf("-----------------\n");
@@ -381,8 +388,11 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
     jcqp.P = qH.cast<double>();
     jcqp.q = qg.cast<double>();
     jcqp.u = U_b.cast<double>();
+
     for (s16 i = 0; i < 20 * setup->horizon; i++)
+    {
       jcqp.l[i] = 0.;
+    }
 
     jcqp.settings.sigma = update->sigma;
     jcqp.settings.alpha = update->solver_alpha;
@@ -518,7 +528,9 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
         (void)rval;
         int rval2 = problem_red.getPrimalSolution(q_red);
         if (rval2 != qpOASES::SUCCESSFUL_RETURN)
+        {
           printf("failed to solve!\n");
+        }
 
         // printf("solve time: %.3f ms, size %d, %d\n", solve_timer.getMs(), new_vars, new_cons);
 

@@ -821,6 +821,8 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
   // float Q[12] = {2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1};
   float Q[12] = { 2.5, 2.5, 10, 300, 300, 300, 0, 0, 0.5, 1.5, 1.5, 1 };
 
+  float roll = seResult.rpy[0];
+  float pitch = seResult.rpy[1];
   float yaw = seResult.rpy[2];
   float* weights = Q;
   float alpha = 4e-5; // make setting eventually
@@ -872,7 +874,7 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 
   Timer t2;
   // cout << "dtMPC: " << dtMPC << "\n";
-  update_problem_data_floats(p, v, q, w, r, yaw, weights, trajAll, alpha, mpcTable);
+  update_problem_data_floats(p, v, q, w, r, roll, pitch, yaw, weights, trajAll, alpha, mpcTable);
   // t2.stopPrint("Run MPC");
   // printf("MPC Solve time %f ms\n", t2.getMs());
 
