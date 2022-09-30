@@ -6,6 +6,7 @@ dynamic_loader:
   # use_wbc: false
   cmpc_gait: 9 # trot
   # cmpc_gait: 4 # stand
+  test: 0
 
   Kp_joint_0: 3.0
   Kp_joint_1: 3.0
@@ -48,15 +49,15 @@ dynamic_loader:
   # Kd_cartesian_1: 2.5
   # Kd_cartesian_2: 2.5
 
-  Kp_cartesian_0: 150
-  Kp_cartesian_1: 150
-  Kp_cartesian_2: 150
-  Kd_cartesian_0: 2.5
-  Kd_cartesian_1: 2.5
-  Kd_cartesian_2: 2.5
+# best for impedance test
+  Kp_cartesian_0: 900
+  Kp_cartesian_1: 900
+  Kp_cartesian_2: 900
+  Kd_cartesian_0: 15
+  Kd_cartesian_1: 15
+  Kd_cartesian_2: 15
 
   body_height: 0.3
-
 
   # safety
   joint_limits: 1

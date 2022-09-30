@@ -94,6 +94,8 @@ void LegController<T>::edampCommand(T gain)
 template<typename T>
 void LegController<T>::updateData(const SpiData* spiData)
 {
+  static float fc = 0.8;
+
   for (int leg = 0; leg < 4; leg++)
   {
     // q:
@@ -102,9 +104,13 @@ void LegController<T>::updateData(const SpiData* spiData)
     datas[leg].q(2) = spiData->q_knee[leg];
 
     // qd
-    datas[leg].qd(0) = spiData->qd_abad[leg];
-    datas[leg].qd(1) = spiData->qd_hip[leg];
-    datas[leg].qd(2) = spiData->qd_knee[leg];
+    // datas[leg].qd(0) = spiData->qd_abad[leg];
+    // datas[leg].qd(1) = spiData->qd_hip[leg];
+    // datas[leg].qd(2) = spiData->qd_knee[leg];
+
+    datas[leg].qd(0) = datas[leg].qd(0) * (1.0 - fc) + fc * spiData->qd_abad[leg];
+    datas[leg].qd(1) = datas[leg].qd(1) * (1.0 - fc) + fc * spiData->qd_hip[leg];
+    datas[leg].qd(2) = datas[leg].qd(2) * (1.0 - fc) + fc * spiData->qd_knee[leg];
 
     // J and p
     computeLegJacobianAndPosition<T>(_quadruped, datas[leg].q, &(datas[leg].J), &(datas[leg].p), leg);

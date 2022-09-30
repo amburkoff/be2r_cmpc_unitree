@@ -619,7 +619,7 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = cmd->tau_knee_ff[leg_num];
   }
 
-  const float safe_torque[3] = { 4.f, 4.f, 4.f };
+  const float safe_torque[3] = { 3.f, 3.f, 3.f };
   const float max_torque[3] = { 17.f, 17.f, 26.f };
   const float* torque_limits;
 
