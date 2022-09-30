@@ -618,23 +618,25 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //   mean_p0_h += p0_h;
   // }
   // mean_p0_h = mean_p0_h / 4.;
-  _data->debug->z_offset = height_map_raw.at("elevation", Eigen::Array2i(0, 0));
+  // _data->debug->z_offset = height_map_raw.at("elevation", Eigen::Array2i(0, 0));
   //  if (counter >= 2)
 
   //  pf_h -= step_height;
 
   //  std::cout << "z_offset = " << _data->debug->z_offset << std::endl;
   // In ODOM frame
-  // pf_h -= p0_h;
+  auto floor_plane_height = height_map_filter.at("smooth", Eigen::Array2i(col_idx_half, row_idx_half));
+  _data->debug->z_offset = floor_plane_height;
+  pf_h -= floor_plane_height;
 
   // in WORLD frame
-  // pf_h -= com_height - _data->debug->body_info.pos_act.z;
+  // pf_h -= floor_plane_height - _data->debug->body_info.pos_act.z;
   //  h =
   // pf_h = p0(2) + (pf_h - p0_h);
   //  std::cout << "After " << pf_h << std::endl;
   pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
   //  if (leg == 3 || leg == 2)
-  std::cout << "Foot z PF = " << pf[2] << std::endl;
+  // std::cout << "pf_h = " << pf_h << std::endl;
 }
 
 void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
@@ -653,10 +655,10 @@ void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
   // std::endl;
   for (grid_map_utils::SpiralIterator iterator(height_map_raw, center, radius); !iterator.isPastEnd(); ++iterator)
   {
-    auto norm_z = height_map_raw.at("normal_z", *iterator);
+    auto traversability = height_map_raw.at("traversability", *iterator);
     // auto uncertainty_r = height_map_filter.at("uncertainty_range", *iterator);
-    // If cell is flat
-    if (!std::isnan(norm_z) && norm_z > 0.99 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
+    // If can step
+    if (!std::isnan(traversability) && traversability > 0.90 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
     {
       x_idx_selected = (*iterator)(0);
       y_idx_selected = (*iterator)(1);
@@ -665,6 +667,8 @@ void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
       //             << " )" << std::endl;
       return;
     }
+    // else
+    // std::cout << "traversability = " << traversability << std::endl;
   }
   //  std::cout << "Can`t find foothold from map!" << std::endl;
 }
