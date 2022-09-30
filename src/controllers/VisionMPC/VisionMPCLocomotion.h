@@ -1,7 +1,14 @@
 #pragma once
 
+#include <iostream>
+#include <nav_msgs/Path.h>
+#include <ros/ros.h>
+
 #include "Controllers/DesiredStateCommand.h"
+#include "Utilities/Timer.h"
+#include "Utilities/Utilities_print.h"
 #include "controllers/CMPC/Gait_contact.h"
+#include "convexMPC/Gait.h"
 #include "cppTypes.h"
 #include <ControlFSMData.h>
 #include <FootSwingTrajectory.h>
@@ -9,9 +16,10 @@
 #include <Utilities/SpiralIterator.hpp>
 #include <geometry_msgs/PoseStamped.h>
 #include <grid_map_ros/grid_map_ros.hpp>
-#include <nav_msgs/Path.h>
-#include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+
+#include "GraphSearch.h"
+#include "convexMPC_interface.h"
 
 #include <cstdio>
 
@@ -25,11 +33,10 @@ class VisionMPCLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  VisionMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  VisionMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const Vec3<float>& vel_cmd, const grid_map::GridMap& height_map,
-           const grid_map::GridMap& height_map_raw);
+  void run(const Vec3<float>& vel_cmd, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -48,13 +55,22 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _SetupCommand(ControlFSMData<float>& data);
+  void _setupCommand(ControlFSMData<float>& data);
   float _updateTrajHeight(size_t foot);
-  void _updateFoothold(Vec3<float>& pf, const Vec3<float>& body_pos, const grid_map::GridMap& height_map,
-                       const grid_map::GridMap& height_map_raw, int leg);
+  void _updateFoothold(Vec3<float>& pf,
+                       const Vec3<float>& body_pos,
+                       const grid_map::GridMap& height_map,
+                       const grid_map::GridMap& height_map_raw,
+                       int leg);
 
-  void _IdxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected,
-                       const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw, int leg);
+  void _idxMapChecking(Vec3<float>& Pf,
+                       int x_idx,
+                       int y_idx,
+                       int& x_idx_selected,
+                       int& y_idx_selected,
+                       const grid_map::GridMap& height_map,
+                       const grid_map::GridMap& height_map_raw,
+                       int leg);
 
   ControlFSMData<float>* _data;
 
@@ -78,8 +94,8 @@ private:
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
   void solveSparseMPC(int* mpcTable, ControlFSMData<float>& data);
   void initSparseMPC();
-  int iterationsBetweenMPC;
-  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
+  int _iterationsBetweenMPC;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _dyn_params = nullptr;
   int _gait_period;
   int horizonLength;
   int default_iterations_between_mpc;
@@ -89,7 +105,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance;
+  OffsetDurationGait trotting, standing, walking, two_leg_balance;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];

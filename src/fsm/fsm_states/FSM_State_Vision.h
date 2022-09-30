@@ -47,8 +47,8 @@ public:
   // Behavior to be carried out when exiting a state
   void onExit();
 
-  std::string map_topic;
-  std::string robot_pose_topic;
+  std::string map_topic_raw;
+  std::string map_topic_filter;
 
 private:
   //-----ROS-------

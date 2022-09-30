@@ -104,13 +104,9 @@ void LegController<T>::updateData(const SpiData* spiData)
     datas[leg].q(2) = spiData->q_knee[leg];
 
     // qd
-    // datas[leg].qd(0) = spiData->qd_abad[leg];
-    // datas[leg].qd(1) = spiData->qd_hip[leg];
-    // datas[leg].qd(2) = spiData->qd_knee[leg];
-
-    datas[leg].qd(0) = datas[leg].qd(0) * (1.0 - fc) + fc * spiData->qd_abad[leg];
-    datas[leg].qd(1) = datas[leg].qd(1) * (1.0 - fc) + fc * spiData->qd_hip[leg];
-    datas[leg].qd(2) = datas[leg].qd(2) * (1.0 - fc) + fc * spiData->qd_knee[leg];
+    datas[leg].qd(0) = spiData->qd_abad[leg];
+    datas[leg].qd(1) = spiData->qd_hip[leg];
+    datas[leg].qd(2) = spiData->qd_knee[leg];
 
     // J and p
     computeLegJacobianAndPosition<T>(_quadruped, datas[leg].q, &(datas[leg].J), &(datas[leg].p), leg);
@@ -129,7 +125,7 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
   for (int leg = 0; leg < 4; leg++)
   {
     // tauFF
-    Vec3<T> legTorque = commands[leg].tauFeedForward; //vision, wbc, jposinit and control, invdyn,
+    Vec3<T> legTorque = commands[leg].tauFeedForward; // vision, wbc, jposinit and control, invdyn,
 
     // forceFF
     Vec3<T> footForce = commands[leg].forceFeedForward;
@@ -172,7 +168,7 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->kd_hip[leg] = commands[leg].kdJoint(1, 1);
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
 
-    //is low level control -> change signs
+    // is low level control -> change signs
     if (is_low_level)
     {
       spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
@@ -195,7 +191,8 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     }
 
     // estimate torque
-    datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
+    datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) +
+                             commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
 
     spiCommand->flags[leg] = _legEnabled[leg];
 
@@ -270,6 +267,14 @@ void computeLegJacobianAndPosition(Quadruped<T>& quad, Vec3<T>& q, Mat3<T>* J, V
   }
 }
 
-template void computeLegJacobianAndPosition<double>(Quadruped<double>& quad, Vec3<double>& q, Mat3<double>* J, Vec3<double>* p, int leg);
+template void computeLegJacobianAndPosition<double>(Quadruped<double>& quad,
+                                                    Vec3<double>& q,
+                                                    Mat3<double>* J,
+                                                    Vec3<double>* p,
+                                                    int leg);
 
-template void computeLegJacobianAndPosition<float>(Quadruped<float>& quad, Vec3<float>& q, Mat3<float>* J, Vec3<float>* p, int leg);
+template void computeLegJacobianAndPosition<float>(Quadruped<float>& quad,
+                                                   Vec3<float>& q,
+                                                   Mat3<float>* J,
+                                                   Vec3<float>* p,
+                                                   int leg);
