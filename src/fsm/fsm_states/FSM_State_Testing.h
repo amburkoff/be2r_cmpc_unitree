@@ -25,7 +25,8 @@ public:
   void run();
 
   void test1();
-  void test2();
+  void test2(float h);
+  void gravTest();
   void safeJointTest();
 
   // Checks for any transition triggers
