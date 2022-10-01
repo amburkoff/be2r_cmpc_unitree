@@ -13,6 +13,11 @@ Body_Manager::Body_Manager() : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedTyp
   ROS_INFO("START SERVER");
 
   udp.InitCmdData(_udp_low_cmd);
+
+  vectorNavData.quat[0] = 1.0;
+  vectorNavData.quat[1] = 0.0;
+  vectorNavData.quat[2] = 0.0;
+  vectorNavData.quat[3] = 0.0;
 }
 
 Body_Manager::~Body_Manager()
