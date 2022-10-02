@@ -1,27 +1,26 @@
 #pragma once
 
+#include <cstdio>
 #include <iostream>
 #include <nav_msgs/Path.h>
 #include <ros/ros.h>
+#include <string.h>
 
+#include "ControlFSMData.h"
 #include "Controllers/DesiredStateCommand.h"
+#include "FootSwingTrajectory.h"
+#include "GraphSearch.h"
+#include "SparseCMPC/SparseCMPC.h"
+#include "Utilities/SpiralIterator.hpp"
 #include "Utilities/Timer.h"
 #include "Utilities/Utilities_print.h"
 #include "controllers/CMPC/Gait_contact.h"
 #include "convexMPC/Gait.h"
-#include "cppTypes.h"
-#include <ControlFSMData.h>
-#include <FootSwingTrajectory.h>
-#include <SparseCMPC/SparseCMPC.h>
-#include <Utilities/SpiralIterator.hpp>
-#include <geometry_msgs/PoseStamped.h>
-#include <grid_map_ros/grid_map_ros.hpp>
-#include <visualization_msgs/Marker.h>
-
-#include "GraphSearch.h"
 #include "convexMPC_interface.h"
-
-#include <cstdio>
+#include "cppTypes.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "grid_map_ros/grid_map_ros.hpp"
+#include "visualization_msgs/Marker.h"
 
 #define MAX_STEP_HEIGHT 0.18
 
@@ -72,6 +71,8 @@ private:
                        const grid_map::GridMap& height_map_raw,
                        int leg);
 
+  void _locHeightClearance(const grid_map::GridMap& map, std::string layer, grid_map::Index center, double rad, double threshold);
+
   ControlFSMData<float>* _data;
 
   float _yaw_turn_rate;
@@ -89,6 +90,8 @@ private:
   float _body_height_running = 0.29;
   float _body_height_jumping = 0.36;
 
+  double _floor_plane_height;
+
   void recompute_timing(int iterations_per_mpc);
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
@@ -101,7 +104,7 @@ private:
   int default_iterations_between_mpc;
   float dt;
   float dtMPC;
-  int iterationCounter = 0;
+  int _iterationCounter = 0;
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
@@ -124,6 +127,7 @@ private:
   ros::NodeHandle _nh;
   visualization_msgs::Marker marker[4];
   ros::Publisher _vis_pub[4];
+  ros::Timer _timer;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
 
