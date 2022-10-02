@@ -187,12 +187,13 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   }
   else
   {
-    des_pitch = des_pitch * (1 - 0.7) - 1.2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
+    des_pitch = _data->_stateEstimator->getResult().rpy[1] + _data->_stateEstimator->getResult().est_pitch_plane -
+                0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
   }
 
   // put to target
   _pitch_des = des_pitch;
-  _data->debug->all_legs_info.leg[0].force_raw = des_pitch;
+  _data->debug->all_legs_info.leg[0].force_raw = _pitch_des;
 
   // Integral-esque pitche and roll compensation
   if (fabs(v_robot[0]) > .2) // avoid dividing by zero
@@ -617,12 +618,14 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
 
   //  std::cout << "z_offset = " << _data->debug->z_offset << std::endl;
   // In ODOM frame
+
   double _floor_plane_height = height_map_filter.at("smooth_planar", Eigen::Array2i(col_idx_half, row_idx_half));
   // Каждые 0,5 секунды вызываем очистку
   if ((_iterationCounter % 500) == 0)
     _locHeightClearance(height_map_filter, "smooth_planar", grid_map::Index(col_idx_half, row_idx_half), 0.5, 0.1);
-  // TODO: Если меньше половины ячеек плоские ( имеют перепад высот меньше 5 см - очищаем)
+
   _data->debug->z_offset = _floor_plane_height;
+  // std::cout << "pf_h = " << pf_h << std::endl;
   pf_h -= p0_h;
 
   // in WORLD frame
@@ -632,7 +635,6 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  std::cout << "After " << pf_h << std::endl;
   pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
   //  if (leg == 3 || leg == 2)
-  // std::cout << "pf_h = " << pf_h << std::endl;
 }
 
 void VisionMPCLocomotion::_locHeightClearance(const grid_map::GridMap& map,
@@ -645,8 +647,10 @@ void VisionMPCLocomotion::_locHeightClearance(const grid_map::GridMap& map,
   double sum = 0;
   double min = 9999;
   double max = -9999;
+  size_t cntr = 0;
   for (grid_map_utils::SpiralIterator iterator(map, center, rad); !iterator.isPastEnd(); ++iterator)
   {
+    cntr++;
     const grid_map::Index index(*iterator);
     auto cell = data(index(0), index(1));
     cell = (std::isnan(cell)) ? 0. : cell;
@@ -657,14 +661,15 @@ void VisionMPCLocomotion::_locHeightClearance(const grid_map::GridMap& map,
     if (cell >= max)
       max = cell;
   }
-  double mean = sum / (data.size());
-  double variance = std::max((max - mean), (mean - min));
+  double mean = sum / double(cntr);
+  double variance = std::max(std::abs(max - mean), std::abs(mean - min));
   if (std::abs(mean - variance) < threshold)
   {
-    std::cout << "Height estimate CLEAN" << mean << std::endl;
+    // std::cout << "Height estimate CLEAN" << mean << std::endl;
     _floor_plane_height = 0;
   }
   // std::cout << "mean - variance = " << std::abs(mean - variance) << std::endl;
+  std::cout << "mean = " << mean << " variance = " << variance << std::endl;
 }
 
 void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
