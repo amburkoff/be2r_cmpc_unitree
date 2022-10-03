@@ -160,6 +160,7 @@ void ReferenceGRF::solveQP_nonThreaded(double* xOpt)
   // QProblemObj_qpOASES.getConstraints( guessedConstraints );
 
   copy_real_t_to_Eigen(xOpt_eigen, xOpt_qpOASES, 4);
+  // copy_real_t_to_Eigen(xOpt_eigen, xOpt_qpOASES, 12);
 
   xOptPrev = xOpt_eigen;
 
@@ -174,7 +175,6 @@ void ReferenceGRF::solveQP_nonThreaded(double* xOpt)
 /* --------------- QP Matrices and Problem Data ------------ */
 void ReferenceGRF::update_A_control()
 {
-
   // Update the A matrix and b vector in the controller notation A*f = b
   A_control.block<1, 4>(0, 0) << 1, 1, 1, 1;
   A_control.block<1, 4>(1, 0) << p_feet_desired.row(1);

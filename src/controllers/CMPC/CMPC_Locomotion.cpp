@@ -48,7 +48,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
       Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
       Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING),
       "Walking"), // for real
-    two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, 0, _gait_period, 0), "Two legs balance")
+    two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, 0), "Two legs balance")
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
@@ -606,14 +606,27 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     world_position_desired[1] = stand_traj[1];
   }
 
+  // Check if transition to two legs standing
+  if (((gaitNumber == 13) && current_gait != 13) || firstRun)
+  {
+    stand_traj[0] = seResult.position[0];
+    stand_traj[1] = seResult.position[1];
+    stand_traj[2] = seResult.position[2];
+    stand_traj[3] = seResult.rpy[0];
+    stand_traj[4] = seResult.rpy[1];
+    stand_traj[5] = seResult.rpy[2];
+    world_position_desired[0] = stand_traj[0];
+    world_position_desired[1] = stand_traj[1];
+  }
+
   // pick gait
   Gait_contact* gait = &trotting;
   current_gait = gaitNumber;
 
   if (current_gait == 13)
   {
-    // gait = &two_leg_balance;
-    gait = &trot_contact;
+    gait = &two_leg_balance;
+    // gait = &trot_contact;
   }
   else if (current_gait == 4)
   {
@@ -641,8 +654,16 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   Vec3<float> v_robot = seResult.vWorld;
   static float z_des[4] = { 0 };
 
-  // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-  _pitch_des = data._stateEstimator->getResult().rpy[1] + data._stateEstimator->getResult().est_pitch_plane - 0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
+  if (current_gait == 4 || current_gait == 13)
+  {
+    _pitch_des = 0.0;
+  }
+  else
+  {
+    // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
+    _pitch_des = data._stateEstimator->getResult().rpy[1] + data._stateEstimator->getResult().est_pitch_plane - 0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
+    // _pitch_des = data._stateEstimator->getResult().est_pitch_plane;
+  }
 
   for (int i = 0; i < 4; i++)
   {

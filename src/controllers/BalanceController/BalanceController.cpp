@@ -355,7 +355,6 @@ void BalanceController::calc_PDcontrol()
   b_control << mass * (xddot_COM_world_desired + gravity), II * omegadot_b_world_desired;
 
   std::cout << "orientation_error = " << orientation_error << "\n";
-
   std::cout << "error_x_rot: " << error_x_rotated << std::endl;
 }
 
