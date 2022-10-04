@@ -8,7 +8,7 @@
 
   <!-- Choose robot type -->
   <group if="$(eval arg('robot_type') == 'a1')">
-    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find a1_description)/xacro/robot.xacro DEBUG:=false"/>
+    <param name="robot_description" command="$(find xacro)/xacro $(find a1_description)/xacro/robot.xacro DEBUG:=false"/>
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_a1.yaml"/>
     <group if="$(eval arg('sim') == true)">
       <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_a1_sim.yaml"/>
@@ -20,7 +20,7 @@
   </group>
 
   <group if="$(eval arg('robot_type') == 'go1')">
-    <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find go1_description)/urdf/go1.urdf' " />
+    <param name = "robot_description" command = "$(find xacro)/xacro '$(find go1_description)/urdf/go1.urdf' " />
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_go1.yaml"/>
     <group if="$(eval arg('sim') == true)">
       <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_go1_sim.yaml"/>
@@ -38,7 +38,8 @@
 
   <group if="$(eval arg('sim') == true)">
     <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@' ">
-      <param name="map_topic_filter" value="/convex_plane_decomposition_ros/filtered_map"/>
+      <param name="map_plane_seg" value="/convex_plane_decomposition_ros/filtered_map"/>
+      <param name="map_topic_filter" value="/elevation_mapping/elevation_map"/>
       <param name="map_topic_raw" value="/elevation_mapping/elevation_map_raw"/>
       <param name="udp_connection" type="bool" value="0" />
       <param name="is_low_level" type="bool" value="0" />
@@ -48,7 +49,8 @@
 
   <group if="$(eval arg('sim') == false)">
     <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@' ">
-      <param name="map_topic_filter" value="/convex_plane_decomposition_ros/filtered_map"/>
+      <param name="map_plane_seg" value="/convex_plane_decomposition_ros/filtered_map"/>
+      <param name="map_topic_filter" value="/elevation_mapping/elevation_map"/>
       <param name="map_topic_raw" value="/elevation_mapping/elevation_map_raw"/>
       <param name="torque_safe_limit" type="bool" value="0" />
       <param name="udp_connection" type="bool" value="1" />

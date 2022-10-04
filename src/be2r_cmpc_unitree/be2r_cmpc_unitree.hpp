@@ -102,8 +102,6 @@ private:
   const ros::Time _zero_time;
   bool _is_param_updated = false;
   bool _is_do_step = false;
-  bool _is_map_upd_stop = false;
-  bool _is_map_upd_start = false;
   float _do_step_vel = 0;
 
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig> server;

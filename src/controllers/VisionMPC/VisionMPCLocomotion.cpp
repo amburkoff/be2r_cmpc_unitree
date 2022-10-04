@@ -97,7 +97,8 @@ void VisionMPCLocomotion::_setupCommand(ControlFSMData<float>& data)
 
 void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
                               const grid_map::GridMap& height_map_filter,
-                              const grid_map::GridMap& height_map_raw)
+                              const grid_map::GridMap& height_map_raw,
+                              const grid_map::GridMap& map_plane)
 {
   bool omniMode = false;
 
@@ -187,8 +188,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   }
   else
   {
-    des_pitch = _data->_stateEstimator->getResult().rpy[1] + _data->_stateEstimator->getResult().est_pitch_plane -
-                0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
+    des_pitch = des_pitch * (1 - 0.7) - 1.2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
   }
 
   // put to target
@@ -301,7 +301,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     pf[0] += pfx_rel;
     pf[1] += pfy_rel;
     pf[2] = z_des[i];
-    _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, i);
+    _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, map_plane, i);
 
     footSwingTrajectories[i].setFinalPosition(pf);
     _data->debug->all_legs_info.leg[i].swing_pf.x = pf(0);
@@ -538,38 +538,61 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 }
 
 void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
-                                          const Vec3<float>& body_pos,
+                                          const Vec3<float>& body_pos_arg,
                                           const grid_map::GridMap& height_map_filter,
                                           const grid_map::GridMap& height_map_raw,
+                                          const grid_map::GridMap& map_plane,
                                           int leg)
 {
   // Положение лапы в СК тела
   //  Vec3<float> scale(1.2, 1, 1);
   static bool first = true;
   static Vec3<float> freeze_pose;
+  Vec3<float> body_pos;
+  Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
   Vec3<float> local_pf;
-  if (_data->debug->is_map_upd_stop)
-  {
-    if (first)
-    {
-      freeze_pose = body_pos;
-      first = false;
-    }
-    local_pf = (body_pos - freeze_pose) + (pf - freeze_pose); // TODO!!!!
-  }
-  else
-    local_pf = pf - body_pos;
-  ;
+  Vec3<float> local_p0;
+  // if (_data->debug->is_map_upd_stop)
+  // {
+  //   if (first)
+  //   {
+  //     freeze_pose = body_pos_arg;
+  //     first = false;
+  //   }
+  //   body_pos = body_pos_arg;
+  //   local_pf = pf - body_pos;
+  //   local_p0 = p0 - body_pos;
+  // local_pf = pf - freeze_pose; // TODO!!!!
+  // local_p0 = p0 - freeze_pose;
+  // body_pos = body_pos_arg;
+  // }
+  // else
+  // {
+  body_pos = body_pos_arg;
+  local_pf = pf - body_pos;
+  local_p0 = p0 - body_pos;
+  first = true;
+  // }
   //  Vec3<float> local_pf_scaled = foot.cwiseProduct(scale) - body_pos;
   //  std::cout << "pf in base frame: " << std::endl << local_pf << std::endl;
 
-  // Координаты центра карты
-  int row_idx_half = height_map_raw.getSize()(0) / 2;
-  int col_idx_half = height_map_raw.getSize()(1) / 2;
+  // Координаты цм робота на карте (обычно в центре)
+  int row_idx_body_com = height_map_raw.getSize()(0) / 2;
+  int col_idx_body_com = height_map_raw.getSize()(1) / 2;
+  if (_data->debug->is_map_upd_stop)
+  {
+    col_idx_body_com -= floor((body_pos_arg[0] - freeze_pose[0]) / height_map_raw.getResolution());
+    row_idx_body_com += floor((body_pos_arg[1] - freeze_pose[1]) / height_map_raw.getResolution());
+    col_idx_body_com = std::clamp(col_idx_body_com, 0, height_map_raw.getSize()(1) - 1);
+    row_idx_body_com = std::clamp(row_idx_body_com, 0, height_map_raw.getSize()(0) - 1);
+    // TODO:Call enable update service when touch map edge
+  }
 
   // Минус для преобразования координат
-  int x_idx = col_idx_half - floor(local_pf[0] / height_map_raw.getResolution());
-  int y_idx = row_idx_half - floor(local_pf[1] / height_map_raw.getResolution());
+  int x_idx = col_idx_body_com - floor(local_pf[0] / height_map_raw.getResolution());
+  int y_idx = row_idx_body_com - floor(local_pf[1] / height_map_raw.getResolution());
+  x_idx = std::clamp(x_idx, 0, height_map_raw.getSize()(1) - 1);
+  y_idx = std::clamp(y_idx, 0, height_map_raw.getSize()(0) - 1);
 
   int x_idx_selected = x_idx;
   int y_idx_selected = y_idx;
@@ -577,14 +600,12 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, height_map_raw, height_map_raw, leg);
 
   // Минус для преобразования координат
-  pf[0] = -(x_idx_selected - row_idx_half) * height_map_raw.getResolution() + body_pos[0];
-  pf[1] = -(y_idx_selected - col_idx_half) * height_map_raw.getResolution() + body_pos[1];
-  auto pf_h = height_map_raw.at("elevation", Eigen::Array2i(x_idx_selected, y_idx_selected));
-  Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
-  Vec3<float> local_p0 = p0 - body_pos;
-  int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map_raw.getResolution());
-  int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map_raw.getResolution());
-  auto p0_h = height_map_raw.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
+  pf[0] = -(x_idx_selected - col_idx_body_com) * height_map_raw.getResolution() + body_pos[0];
+  pf[1] = -(y_idx_selected - row_idx_body_com) * height_map_raw.getResolution() + body_pos[1];
+  auto pf_h = height_map_filter.at("elevation", checkBoundaries(height_map_raw, x_idx_selected, y_idx_selected));
+  int p0_x_idx = col_idx_body_com - floor(local_p0[0] / height_map_raw.getResolution());
+  int p0_y_idx = row_idx_body_com - floor(local_p0[1] / height_map_raw.getResolution());
+  auto p0_h = height_map_filter.at("elevation", checkBoundaries(height_map_raw, p0_x_idx, p0_y_idx));
 
   //  int counter = 0;
   //  static double step_threshold = 0.07;
@@ -593,8 +614,8 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  {
   //    Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
   //    Vec3<float> local_p0 = p0 - body_pos;
-  //    int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map_filter.getResolution());
-  //    int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map_filter.getResolution());
+  //    int p0_x_idx = col_idx_body_com - floor(local_p0[0] / height_map_filter.getResolution());
+  //    int p0_y_idx = row_idx_body_com - floor(local_p0[1] / height_map_filter.getResolution());
   //    auto p0_h = height_map_filter.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
 
   //    if (p0_h >= step_threshold)
@@ -618,8 +639,8 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   // {
   //   Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
   //   Vec3<float> local_p0 = p0 - body_pos;
-  //   int p0_x_idx = col_idx_half - floor(local_p0[0] / height_map_filter.getResolution());
-  //   int p0_y_idx = row_idx_half - floor(local_p0[1] / height_map_filter.getResolution());
+  //   int p0_x_idx = col_idx_body_com - floor(local_p0[0] / height_map_filter.getResolution());
+  //   int p0_y_idx = row_idx_body_com - floor(local_p0[1] / height_map_filter.getResolution());
   //   auto p0_h = height_map_filter.at("elevation", Eigen::Array2i(p0_x_idx, p0_y_idx));
   //   p0_h = (std::isnan(p0_h)) ? 0. : p0_h;
   //   mean_p0_h += p0_h;
@@ -633,10 +654,10 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  std::cout << "z_offset = " << _data->debug->z_offset << std::endl;
   // In ODOM frame
 
-  double _floor_plane_height = height_map_filter.at("smooth_planar", Eigen::Array2i(col_idx_half, row_idx_half));
+  double _floor_plane_height = map_plane.at("smooth_planar", checkBoundaries(map_plane, col_idx_body_com, row_idx_body_com));
   // Каждые 0,5 секунды вызываем очистку
   if ((_iterationCounter % 500) == 0)
-    _locHeightClearance(height_map_filter, "smooth_planar", grid_map::Index(col_idx_half, row_idx_half), 0.5, 0.1);
+    _locHeightClearance(map_plane, "smooth_planar", checkBoundaries(map_plane, col_idx_body_com, row_idx_body_com), 0.5, 0.1);
 
   _data->debug->z_offset = _floor_plane_height;
   // std::cout << "pf_h = " << pf_h << std::endl;
@@ -649,6 +670,13 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  std::cout << "After " << pf_h << std::endl;
   pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
   //  if (leg == 3 || leg == 2)
+}
+
+Eigen::Array2i checkBoundaries(const grid_map::GridMap& map, int col, int row)
+{
+  col = std::clamp(col, 0, map.getSize()(1));
+  row = std::clamp(row, 0, map.getSize()(0));
+  return Eigen::Array2i(col, row);
 }
 
 void VisionMPCLocomotion::_locHeightClearance(const grid_map::GridMap& map,
@@ -704,10 +732,10 @@ void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
   {
     auto traversability = height_map_filter.at("normal_vectors_z", *iterator);
     // auto uncertainty_r = height_map_filter.at("uncertainty_range", *iterator);
-    if (leg == 0)
-      std::cout << "traversability = " << traversability << std::endl;
+    // if (leg == 0)
+    // std::cout << "traversability = " << traversability << std::endl;
     // If can step
-    if (!std::isnan(traversability) && traversability > 0.90 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
+    if (!std::isnan(traversability) && traversability > 0.98 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
     {
       x_idx_selected = (*iterator)(0);
       y_idx_selected = (*iterator)(1);

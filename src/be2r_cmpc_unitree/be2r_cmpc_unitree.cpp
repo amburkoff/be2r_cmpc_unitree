@@ -513,10 +513,6 @@ bool Body_Manager::_srvStartMap(std_srvs::Empty::Request& reqest, std_srvs::Empt
 
   _debug->is_map_upd_stop = false;
 
-  ros::ServiceClient client = _nh.serviceClient<std_srvs::Empty>("/elevation_mapping/enable_updates");
-  std_srvs::Empty srv;
-  client.call(srv);
-
   return true;
 }
 
@@ -525,10 +521,6 @@ bool Body_Manager::_srvStopMap(std_srvs::Empty::Request& reqest, std_srvs::Empty
   ROS_INFO("Stop map update!");
 
   _debug->is_map_upd_stop = true;
-
-  ros::ServiceClient client = _nh.serviceClient<std_srvs::Empty>("/elevation_mapping/disable_updates");
-  std_srvs::Empty srv;
-  client.call(srv);
 
   return true;
 }
