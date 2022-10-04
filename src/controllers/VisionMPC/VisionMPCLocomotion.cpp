@@ -210,10 +210,11 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   rpy_comp[1] = v_robot[0] * rpy_int[1];
   rpy_comp[0] = v_robot[1] * rpy_int[0] * (gaitNumber != 8); // turn off for pronking
 
-  for (int i = 0; i < 4; i++)
+  for (int foot = 0; foot < 4; foot++)
   {
-    pFoot[i] =
-      seResult.position + seResult.rBody.transpose() * (_data->_quadruped->getHipLocation(i) + _data->_legController->datas[i].p);
+    pFoot[foot] = seResult.position +
+                  seResult.rBody.transpose() * (_data->_quadruped->getHipLocation(foot) + _data->_legController->datas[foot].p);
+    footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
   }
 
   world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
@@ -301,6 +302,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     pf[0] += pfx_rel;
     pf[1] += pfy_rel;
     pf[2] = z_des[i];
+
     _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, map_plane, i);
 
     footSwingTrajectories[i].setFinalPosition(pf);
@@ -368,15 +370,16 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       {
         firstSwing[foot] = false;
         is_stance[foot] = 0;
-        footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
         _data->debug->all_legs_info.leg[foot].swing_ps.x = pFoot[foot](0);
         _data->debug->all_legs_info.leg[foot].swing_ps.y = pFoot[foot](1);
         _data->debug->all_legs_info.leg[foot].swing_ps.z = pFoot[foot](2);
 
         z_des[foot] = pFoot[foot][2];
       }
-      double swing_height = _updateTrajHeight(foot);
-      footSwingTrajectories[foot].setHeight(swing_height);
+      // double swing_height = _updateTrajHeight(foot);
+      // if (foot == 0)
+      // std::cout << "step height = " << swing_height << std::endl;
+      footSwingTrajectories[foot].setHeight(_data->userParameters->Swing_traj_height);
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
       // footSwingTrajectories[foot].computeStairsSwingTrajectoryBezier(swingState,
       // swingTimes[foot]);
@@ -552,20 +555,14 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
   Vec3<float> local_pf;
   Vec3<float> local_p0;
-  // if (_data->debug->is_map_upd_stop)
-  // {
-  //   if (first)
-  //   {
-  //     freeze_pose = body_pos_arg;
-  //     first = false;
-  //   }
-  //   body_pos = body_pos_arg;
-  //   local_pf = pf - body_pos;
-  //   local_p0 = p0 - body_pos;
-  // local_pf = pf - freeze_pose; // TODO!!!!
-  // local_p0 = p0 - freeze_pose;
-  // body_pos = body_pos_arg;
-  // }
+  if (_data->debug->is_map_upd_stop)
+  {
+    if (first)
+    {
+      freeze_pose = body_pos_arg;
+      first = false;
+    }
+  }
   // else
   // {
   body_pos = body_pos_arg;
@@ -602,10 +599,10 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   // Минус для преобразования координат
   pf[0] = -(x_idx_selected - col_idx_body_com) * height_map_raw.getResolution() + body_pos[0];
   pf[1] = -(y_idx_selected - row_idx_body_com) * height_map_raw.getResolution() + body_pos[1];
-  auto pf_h = height_map_filter.at("elevation", checkBoundaries(height_map_raw, x_idx_selected, y_idx_selected));
+  auto pf_h = height_map_filter.at("elevation", checkBoundaries(height_map_filter, x_idx_selected, y_idx_selected));
   int p0_x_idx = col_idx_body_com - floor(local_p0[0] / height_map_raw.getResolution());
   int p0_y_idx = row_idx_body_com - floor(local_p0[1] / height_map_raw.getResolution());
-  auto p0_h = height_map_filter.at("elevation", checkBoundaries(height_map_raw, p0_x_idx, p0_y_idx));
+  auto p0_h = height_map_filter.at("elevation", checkBoundaries(height_map_filter, p0_x_idx, p0_y_idx));
 
   //  int counter = 0;
   //  static double step_threshold = 0.07;
@@ -662,13 +659,16 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   _data->debug->z_offset = _floor_plane_height;
   // std::cout << "pf_h = " << pf_h << std::endl;
   pf_h -= p0_h;
+  // pf_h -= _floor_plane_height;
+  pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
+  if (leg == 0)
+    std::cout << "PF_0 = " << pf[2] << std::endl;
 
   // in WORLD frame
   // pf_h -= floor_plane_height - _data->debug->body_info.pos_act.z;
   //  h =
   // pf_h = p0(2) + (pf_h - p0_h);
   //  std::cout << "After " << pf_h << std::endl;
-  pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
   //  if (leg == 3 || leg == 2)
 }
 
@@ -707,7 +707,7 @@ void VisionMPCLocomotion::_locHeightClearance(const grid_map::GridMap& map,
   double variance = std::min(std::abs(max - mean), std::abs(mean - min));
   if (std::abs(mean - variance) < threshold)
   {
-    std::cout << "Height estimate CLEAN" << mean << std::endl;
+    // std::cout << "Height estimate CLEAN" << mean << std::endl;
     _floor_plane_height = 0;
   }
   // std::cout << "mean - variance = " << std::abs(mean - variance) << std::endl;
