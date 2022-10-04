@@ -545,7 +545,21 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
 {
   // Положение лапы в СК тела
   //  Vec3<float> scale(1.2, 1, 1);
-  Vec3<float> local_pf = pf - body_pos;
+  static bool first = true;
+  static Vec3<float> freeze_pose;
+  Vec3<float> local_pf;
+  if (_data->debug->is_map_upd_stop)
+  {
+    if (first)
+    {
+      freeze_pose = body_pos;
+      first = false;
+    }
+    local_pf = (body_pos - freeze_pose) + (pf - freeze_pose); // TODO!!!!
+  }
+  else
+    local_pf = pf - body_pos;
+  ;
   //  Vec3<float> local_pf_scaled = foot.cwiseProduct(scale) - body_pos;
   //  std::cout << "pf in base frame: " << std::endl << local_pf << std::endl;
 
@@ -662,14 +676,14 @@ void VisionMPCLocomotion::_locHeightClearance(const grid_map::GridMap& map,
       max = cell;
   }
   double mean = sum / double(cntr);
-  double variance = std::max(std::abs(max - mean), std::abs(mean - min));
+  double variance = std::min(std::abs(max - mean), std::abs(mean - min));
   if (std::abs(mean - variance) < threshold)
   {
-    // std::cout << "Height estimate CLEAN" << mean << std::endl;
+    std::cout << "Height estimate CLEAN" << mean << std::endl;
     _floor_plane_height = 0;
   }
   // std::cout << "mean - variance = " << std::abs(mean - variance) << std::endl;
-  std::cout << "mean = " << mean << " variance = " << variance << std::endl;
+  // std::cout << "mean = " << mean << " variance = " << variance << std::endl;
 }
 
 void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
@@ -686,10 +700,12 @@ void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
   double radius = 0.09;
   // std::cout << "Normal is " << height_map_raw.at("normal_z", Eigen::Array2i(x_idx, y_idx)) <<
   // std::endl;
-  for (grid_map_utils::SpiralIterator iterator(height_map_raw, center, radius); !iterator.isPastEnd(); ++iterator)
+  for (grid_map_utils::SpiralIterator iterator(height_map_filter, center, radius); !iterator.isPastEnd(); ++iterator)
   {
-    auto traversability = height_map_raw.at("traversability", *iterator);
+    auto traversability = height_map_filter.at("normal_vectors_z", *iterator);
     // auto uncertainty_r = height_map_filter.at("uncertainty_range", *iterator);
+    if (leg == 0)
+      std::cout << "traversability = " << traversability << std::endl;
     // If can step
     if (!std::isnan(traversability) && traversability > 0.90 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
     {
@@ -700,8 +716,6 @@ void VisionMPCLocomotion::_idxMapChecking(Vec3<float>& pf,
       //             << " )" << std::endl;
       return;
     }
-    // else
-    // std::cout << "traversability = " << traversability << std::endl;
   }
   //  std::cout << "Can`t find foothold from map!" << std::endl;
 }

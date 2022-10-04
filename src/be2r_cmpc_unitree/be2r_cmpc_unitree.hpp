@@ -16,6 +16,7 @@
 #include <ros/transport_hints.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
+#include <std_srvs/Empty.h>
 #include <std_srvs/Trigger.h>
 #include <string>
 #include <unitree_legged_msgs/LowCmd.h>
@@ -95,10 +96,14 @@ private:
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
   ros::ServiceServer _srv_do_step;
+  ros::ServiceServer _srv_stop_map;
+  ros::ServiceServer _srv_start_map;
   ros::Time _time_start;
   const ros::Time _zero_time;
   bool _is_param_updated = false;
   bool _is_do_step = false;
+  bool _is_map_upd_stop = false;
+  bool _is_map_upd_start = false;
   float _do_step_vel = 0;
 
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig> server;
@@ -112,10 +117,11 @@ private:
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num);
-  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config,
-                                uint32_t level);
+  void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
   void _groundTruthCallback(nav_msgs::Odometry ground_truth_msg);
   bool _srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response);
+  bool _srvStopMap(std_srvs::Empty::Request& reqest, std_srvs::Empty::Response& response);
+  bool _srvStartMap(std_srvs::Empty::Request& reqest, std_srvs::Empty::Response& response);
 
   // Unitree sdk
   UNITREE_LEGGED_SDK::Safety safe;
