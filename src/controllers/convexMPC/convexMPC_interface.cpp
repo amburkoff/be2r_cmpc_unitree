@@ -129,10 +129,12 @@ void update_solver_settings(int max_iter, double rho, double sigma, double solve
   }
 }
 
-void update_problem_data_floats(float* p, float* v, float* q, float* w, float* r, float yaw, float* weights,
+void update_problem_data_floats(float* p, float* v, float* q, float* w, float* r, float roll, float pitch, float yaw, float* weights,
                                 float* state_trajectory, float alpha, int* gait)
 {
   update.alpha = alpha;
+  update.roll = roll;
+  update.pitch = pitch;
   update.yaw = yaw;
   mint_to_u8(update.gait, gait, 4 * problem_configuration.horizon);
   memcpy((void*)update.p, (void*)p, sizeof(float) * 3);

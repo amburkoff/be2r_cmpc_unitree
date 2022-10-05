@@ -2,6 +2,7 @@
 
 #include <Utilities/utilities.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <iostream>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
@@ -9,6 +10,7 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 #include <unitree_legged_msgs/AllLegsInfo.h>
 #include <unitree_legged_msgs/BodyInfo.h>
 #include <unitree_legged_msgs/StateError.h>
@@ -42,6 +44,8 @@ public:
   nav_msgs::Path leg_traj_des[4];
   geometry_msgs::Point leg_force[4];
 
+  bool is_map_upd_stop;
+
 private:
   void _init();
   void _initPublishers();
@@ -70,4 +74,6 @@ private:
   ros::Publisher _pub_vis_leg_force[4];
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster world_odom_broadcaster;
+  tf2_ros::Buffer _tf_buffer;
+  tf2_ros::TransformListener _tf_listener;
 };

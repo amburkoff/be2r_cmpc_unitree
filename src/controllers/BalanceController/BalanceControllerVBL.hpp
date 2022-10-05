@@ -65,8 +65,9 @@ public:
   void set_inertia(double Ixx, double Iyy, double Izz);
 
   // Misc
-  void set_base_support_flag(double sflag);
+  // void set_base_support_flag(double sflag);
   Eigen::VectorXd xOpt_combined;
+  Eigen::VectorXd getFunc();
 
 private:
   /* Fixed-Size qpOASES data */

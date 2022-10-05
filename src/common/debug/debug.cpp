@@ -1,6 +1,10 @@
 #include "debug.hpp"
 
-Debug::Debug(ros::Time time_start) : _zero_time(0), _time_start(time_start)
+Debug::Debug(ros::Time time_start)
+  : _zero_time(0),
+    _time_start(time_start),
+    _tf_buffer(),
+    _tf_listener(_tf_buffer)
 {
   z_offset = 0.f;
   _init();
@@ -80,6 +84,7 @@ void Debug::updatePlot()
   odom.child_frame_id = "base";
 
   odom.pose.pose.position = body_info.pos_act;
+  odom.pose.pose.position.z += z_offset;
 
   geometry_msgs::Quaternion odom_quat;
   odom_quat.x = body_info.quat_act.y;
@@ -142,6 +147,19 @@ void Debug::updateVisualization()
 
 void Debug::tfPublish()
 {
+  bool use_map = false;
+  geometry_msgs::TransformStamped odom_corr_transform;
+  if (use_map)
+  {
+    try
+    {
+      odom_corr_transform = _tf_buffer.lookupTransform("corrected_odom", "odom", ros::Time(0));
+    }
+    catch (tf2::TransformException& ex)
+    {
+      ROS_WARN("%s", ex.what());
+    }
+  }
   geometry_msgs::TransformStamped odom_trans;
 
   odom_trans.header.stamp = ros::Time::now();
@@ -150,7 +168,8 @@ void Debug::tfPublish()
 
   odom_trans.transform.translation.x = body_info.pos_act.x;
   odom_trans.transform.translation.y = body_info.pos_act.y;
-  odom_trans.transform.translation.z = body_info.pos_act.z;
+  // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
+  odom_trans.transform.translation.z = body_info.pos_act.z + z_offset;
 
   geometry_msgs::Quaternion odom_quat;
   // TODO почему результаты естиматора приходится менять местами?
@@ -169,7 +188,7 @@ void Debug::tfPublish()
   odom_trans_world.child_frame_id = "odom";
 
   // z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
-  odom_trans_world.transform.translation.z = z_offset;
+  odom_trans_world.transform.translation.z = 0;
   odom_trans_world.transform.rotation.w = 1.;
 
   world_odom_broadcaster.sendTransform(odom_trans_world);

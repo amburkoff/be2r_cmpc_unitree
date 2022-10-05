@@ -81,18 +81,18 @@ void FSM_State_Testing<T>::run()
   switch (this->_data->userParameters->test)
   {
     case 0:
+      // test locomotion with CMPC controller
+      LocomotionControlStep();
+      break;
+
+    case 1:
       //joint test
       test1();
       break;
 
-    case 1:
-      //impedance test
-      test2(0.05);
-      break;
-
     case 2:
       //impedance test
-      test2(0);
+      test2(0.05);
       break;
 
     case 3:
@@ -116,7 +116,6 @@ void FSM_State_Testing<T>::run()
   //   test2(0);
   // }
 
-  // LocomotionControlStep();
   // safeJointTest();
 }
 
@@ -217,6 +216,7 @@ void FSM_State_Testing<T>::safeJointTest()
   // this->_data->_legController->edampCommand(4);
 }
 
+//impedance test
 template<typename T>
 void FSM_State_Testing<T>::test2(float h)
 {
@@ -324,52 +324,51 @@ void FSM_State_Testing<T>::test2(float h)
   this->_data->_legController->setLegEnabled(2, false);
   this->_data->_legController->setLegEnabled(3, false);
 
-  for (int foot = 0; foot < 4; foot++)
+  uint8_t foot = 0;
+
+  if (firstSwing[foot])
   {
-    if (firstSwing[foot])
+    firstSwing[foot] = false;
+    footSwingTrajectories[foot].setHeight(h);
+    footSwingTrajectories[foot].setInitialPosition(_ini_foot_pos[foot]);
+    footSwingTrajectories[foot].setFinalPosition(p0);
+  }
+
+  this->_data->_legController->commands[foot].kpCartesian = Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1, this->_data->userParameters->Kp_cartesian_2).asDiagonal();
+  this->_data->_legController->commands[foot].kdCartesian = Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1, this->_data->userParameters->Kd_cartesian_2).asDiagonal();
+
+  // this->_data->_legController->commands[foot].pDes = pDes;
+  // this->_data->_legController->commands[foot].vDes = Vec3<float>::Constant(0);
+  this->_data->_legController->commands[foot].tauFeedForward = tau;
+
+  if (!is_start)
+  {
+    if (flag == 0)
     {
-      firstSwing[foot] = false;
-      footSwingTrajectories[foot].setHeight(h);
-      footSwingTrajectories[foot].setInitialPosition(_ini_foot_pos[foot]);
+      footSwingTrajectories[foot].setInitialPosition(p1);
       footSwingTrajectories[foot].setFinalPosition(p0);
     }
-
-    this->_data->_legController->commands[foot].kpCartesian = Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1, this->_data->userParameters->Kp_cartesian_2).asDiagonal();
-    this->_data->_legController->commands[foot].kdCartesian = Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1, this->_data->userParameters->Kd_cartesian_2).asDiagonal();
-
-    // this->_data->_legController->commands[foot].pDes = pDes;
-    // this->_data->_legController->commands[foot].vDes = Vec3<float>::Constant(0);
-    this->_data->_legController->commands[foot].tauFeedForward = tau;
-
-    if (!is_start)
+    else if (flag == 1)
     {
-      if (flag == 0)
-      {
-        footSwingTrajectories[foot].setInitialPosition(p1);
-        footSwingTrajectories[foot].setFinalPosition(p0);
-      }
-      else if (flag == 1)
-      {
-        footSwingTrajectories[foot].setInitialPosition(p0);
-        footSwingTrajectories[foot].setFinalPosition(p1);
-      }
+      footSwingTrajectories[foot].setInitialPosition(p0);
+      footSwingTrajectories[foot].setFinalPosition(p1);
     }
-
-    footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 2);
-
-    Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
-    Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
-    // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) -
-    // this->_data->_quadruped->getHipLocation(foot); Vec3<float> vDesLeg = seResult.rBody *
-    // (vDesFootWorld - seResult.vWorld);
-
-    // this->_data->_legController->commands[foot].pDes = pDesLeg;
-    // this->_data->_legController->commands[foot].vDes = vDesLeg;
-    this->_data->_legController->commands[foot].pDes = pDesFootWorld;
-    this->_data->_legController->commands[foot].vDes = vDesFootWorld;
-    this->_data->debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesFootWorld);
-    this->_data->debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesFootWorld);
   }
+
+  footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 2);
+
+  Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
+  Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+  // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) -
+  // this->_data->_quadruped->getHipLocation(foot); Vec3<float> vDesLeg = seResult.rBody *
+  // (vDesFootWorld - seResult.vWorld);
+
+  // this->_data->_legController->commands[foot].pDes = pDesLeg;
+  // this->_data->_legController->commands[foot].vDes = vDesLeg;
+  this->_data->_legController->commands[foot].pDes = pDesFootWorld;
+  this->_data->_legController->commands[foot].vDes = vDesFootWorld;
+  this->_data->debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesFootWorld);
+  this->_data->debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesFootWorld);
 
   // Vec3<float> p_des = footSwingTrajectories[0].getPosition();
   // Vec3<float> v_des = footSwingTrajectories[0].getVelocity();
@@ -391,6 +390,30 @@ void FSM_State_Testing<T>::test2(float h)
   // Vec3<float> p_act = this->_data->_legController->datas[0].p;
   // Vec3<float> q_eval = this->findAngles(0, p_act);
   // cout << "q_eval: " << q_eval << endl;
+
+  static Vec3<T> q(0, 0, 0);
+  static Vec3<T> dq(0, 0, 0);
+  static Vec3<T> ddq(0, 0, 0);
+  static T dt = 0.002;
+
+  Mat3<T> M = _A.block(6, 6, 3, 3);
+  Vec3<T> C = _coriolis.block(6, 0, 3, 1);
+  Vec3<T> G = _grav.block(6, 0, 3, 1);
+  Vec3<T> tau_final(0, 0, 0);
+  tau_final = tau + this->_data->_legController->datas[0].J.transpose() *
+                      (this->_data->_legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->_legController->datas[0].p) +
+                       this->_data->_legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->_legController->datas[0].v));
+
+  ddq = M.inverse() * (tau_final - C - G);
+  dq = dq + ddq * dt;
+
+  // ROS_INFO("time");
+
+  // cout << "C+G: " << C + G << endl;
+  // cout << "M: " << M << endl;
+  cout << "ddq: " << ddq << endl;
+  cout << "dq: " << dq << endl;
+  // cout << "tau_final: " << tau_final << endl;
 }
 
 template<typename T>

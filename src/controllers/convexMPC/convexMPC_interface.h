@@ -25,9 +25,11 @@ struct update_data_t
   float q[4];
   float w[3];
   float r[12];
+  float roll;
+  float pitch;
   float yaw;
   float weights[12];
-  float traj[12*K_MAX_GAIT_SEGMENTS];
+  float traj[12 * K_MAX_GAIT_SEGMENTS];
   float alpha;
   unsigned char gait[K_MAX_GAIT_SEGMENTS];
   unsigned char hack_pad[1000];
@@ -42,7 +44,7 @@ EXTERNC void update_problem_data(double* p, double* v, double* q, double* w, dou
 EXTERNC double get_solution(int index);
 EXTERNC void update_solver_settings(int max_iter, double rho, double sigma, double solver_alpha, double terminate, double use_jcqp);
 EXTERNC void update_problem_data_floats(float* p, float* v, float* q, float* w,
-                                        float* r, float yaw, float* weights,
+                                        float* r, float roll, float pitch, float yaw, float* weights,
                                         float* state_trajectory, float alpha, int* gait);
 
 void update_x_drag(float x_drag);

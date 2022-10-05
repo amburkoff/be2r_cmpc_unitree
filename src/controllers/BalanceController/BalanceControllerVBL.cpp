@@ -287,6 +287,8 @@ void BalanceControllerVBL::calc_linear_error()
 
   // Orientation error for data logging purposes
   matrixLogRot(R_b_world_desired * R_b_world.transpose(), orientation_error);
+
+  cout << "s_LQR: " << s_LQR << endl;
 }
 
 void BalanceControllerVBL::calc_constraint_check()
@@ -332,6 +334,8 @@ void BalanceControllerVBL::update_A_LQR()
   }
   A_LQR.block<3, 3>(9, 6) << tempBlock;
 
+  cout << "A: " << A_LQR << endl;
+
   /* NOTE: WE ASSUME THAT DESIRED ANGULAR VELOCITY IS ZERO
   if desired angular velocity of the body is nonzero, an additional block needs to be
   added at A_LQR.block<3,3>(9,9) too account for Coriolis term */
@@ -344,7 +348,9 @@ void BalanceControllerVBL::update_B_LQR()
   for (int leg = 0; leg < 4; leg++)
   {
     if (contact_state(leg) > threshold)
+    {
       contact_legs++;
+    }
   }
   B_LQR.resize(vblNUM_VARIABLES_QP, 3 * contact_legs);
   B_LQR.setZero();
@@ -356,14 +362,16 @@ void BalanceControllerVBL::update_B_LQR()
   for (int leg = 0; leg < 4; leg++)
   {
     if (stance_legs == 5 && (leg == 0 || leg == 3))
-    { // zero B columns for FR and BL legs
+    {
+      // zero B columns for FR and BL legs
       tempSkewMatrix3.setZero();
       B_LQR.block<3, 3>(3, 3 * leg_cnt) << tempSkewMatrix3;
       B_LQR.block<3, 3>(9, 3 * leg_cnt) << tempSkewMatrix3;
       leg_cnt++;
     }
     else if (contact_state(leg) > threshold)
-    { // Compute B_LQR using only legs in contact
+    {
+      // Compute B_LQR using only legs in contact
       Eigen::VectorXd rd;
       rd.resize(3, 1);
       tempSkewMatrix3.setIdentity();
@@ -371,7 +379,7 @@ void BalanceControllerVBL::update_B_LQR()
       rd << p_feet_desired.col(leg);
       crossMatrix(tempSkewMatrix3, rd);
       B_LQR.block<3, 3>(9, 3 * leg_cnt)
-          << Ig.inverse() * R_b_world_desired.transpose() * tempSkewMatrix3;
+        << Ig.inverse() * R_b_world_desired.transpose() * tempSkewMatrix3;
       leg_cnt++;
     }
 
@@ -387,7 +395,9 @@ void BalanceControllerVBL::update_B_LQR()
 
   // Build weight matrix R to match dimension
   for (int i = 0; i < 3 * contact_legs; i++)
+  {
     R_LQR(i, i) = R1_QP(i, i);
+  }
 
   if (stance_legs == 5)
   { // Increase cost for out of contact legs
@@ -397,6 +407,8 @@ void BalanceControllerVBL::update_B_LQR()
       R_LQR(i + 9, i + 9) = 20 * R_LQR(i + 9, i + 9);
     }
   }
+
+  cout << "B: " << B_LQR << endl;
 }
 
 void BalanceControllerVBL::update_P_LQR()
@@ -438,9 +450,11 @@ void BalanceControllerVBL::update_P_LQR()
   U21 = U.block<vblNUM_VARIABLES_QP, vblNUM_VARIABLES_QP>(vblNUM_VARIABLES_QP, 0);
   P_complex = -U21 * U11.inverse();
   P_LQR = P_complex.real();
+  cout << "P: " << P_LQR << endl;
 
   // Optimal control policy
   f_unc = -R1_QP.inverse() * B_QP.transpose() * P_LQR * s_LQR;
+  cout << "R1_QP: " << R1_QP << endl;
   cost_to_go = s_LQR.transpose() * P_LQR * s_LQR;
 }
 
@@ -464,13 +478,13 @@ void BalanceControllerVBL::calc_A_qpOASES()
   for (int i = 0; i < vblNUM_CONTACT_POINTS; i++)
   {
     C_control.block<1, 3>(5 * i + 0, 3 * i)
-        << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
+      << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
     C_control.block<1, 3>(5 * i + 1, 3 * i)
-        << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
+      << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
     C_control.block<1, 3>(5 * i + 2, 3 * i)
-        << mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
+      << mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
     C_control.block<1, 3>(5 * i + 3, 3 * i)
-        << mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
+      << mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
     C_control.block<1, 3>(5 * i + 4, 3 * i) << direction_normal_flatGround.transpose();
   }
 
@@ -506,18 +520,18 @@ void BalanceControllerVBL::calc_lbA_ubA_qpOASES()
     lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i] = contact_state(i) * vblNEGATIVE_NUMBER;
     lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 1] = contact_state(i) * vblNEGATIVE_NUMBER;
     lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 2] =
-        -mu_friction * f_ref_world(3 * i + 2) * .7071;
+      -mu_friction * f_ref_world(3 * i + 2) * .7071;
     lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 3] =
-        -mu_friction * f_ref_world(3 * i + 2) * .7071;
+      -mu_friction * f_ref_world(3 * i + 2) * .7071;
     lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 4] =
-        contact_state(i) * minNormalForces_feet(i) - f_ref_world(3 * i + 2);
+      contact_state(i) * minNormalForces_feet(i) - f_ref_world(3 * i + 2);
 
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i] = mu_friction * f_ref_world(3 * i + 2) * .7071;
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 1] = mu_friction * f_ref_world(3 * i + 2) * .7071;
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 2] = contact_state(i) * vblPOSITIVE_NUMBER;
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 3] = contact_state(i) * vblPOSITIVE_NUMBER;
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 4] =
-        contact_state(i) * maxNormalForces_feet(i) - f_ref_world(3 * i + 2);
+      contact_state(i) * maxNormalForces_feet(i) - f_ref_world(3 * i + 2);
   }
 }
 
@@ -595,6 +609,11 @@ void BalanceControllerVBL::set_mass(double mass_in)
 void BalanceControllerVBL::set_inertia(double Ixx, double Iyy, double Izz)
 {
   Ig << Ixx, 0, 0, 0, Iyy, 0, 0, 0, Izz;
+}
+
+Eigen::VectorXd BalanceControllerVBL::getFunc()
+{
+  return f_unc;
 }
 
 void BalanceControllerVBL::set_RobotLimits()

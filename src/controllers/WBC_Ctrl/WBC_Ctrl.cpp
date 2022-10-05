@@ -81,29 +81,34 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   // WBC Computation
   _ComputeWBC();
 
-  static Vec3<T> q(0, 0, 0);
-  static Vec3<T> dq(0, 0, 0);
-  static Vec3<T> ddq(0, 0, 0);
-  static T dt = 0.002;
+  // static Vec3<T> q(0, 0, 0);
+  // static Vec3<T> dq(0, 0, 0);
+  // static Vec3<T> ddq(0, 0, 0);
+  // static T dt = 0.002;
 
-  Mat3<T> M = _A.block(6, 6, 3, 3);
-  Vec3<T> C = _coriolis.block(6, 0, 3, 1);
-  Vec3<T> G = _grav.block(6, 0, 3, 1);
-  // Vec3<T> tau = data._legController->commands[0].tauFeedForward;
-  Vec3<T> tau(0, 0, 0);
-  tau << _tau_ff[0], _tau_ff[1], _tau_ff[2];
+  // Mat3<T> M = _A.block(6, 6, 3, 3);
+  // Vec3<T> C = _coriolis.block(6, 0, 3, 1);
+  // Vec3<T> G = _grav.block(6, 0, 3, 1);
+  // // Vec3<T> tau = data._legController->commands[0].tauFeedForward;
+  // Vec3<T> tau(0, 0, 0);
+  // tau << _tau_ff[0], _tau_ff[1], _tau_ff[2];
 
-  // cout << "M: " << M << endl;
-  // cout << "C: " << C << endl;
-  // cout << "G: " << G << endl;
-  cout << "tau: " << tau << endl;
+  // ddq = M.inverse() * (tau - C - G);
+  // dq = dq + ddq * dt;
 
-  ddq = M.inverse() * (tau - C - G);
-  dq = dq + ddq * dt;
+  // // cout << "M: " << M << endl;
+  // // cout << "C: " << C << endl;
+  // // cout << "G: " << G << endl;
+  // // cout << "C+G: " << C + G << endl;
+  // // cout << "tau: " << tau << endl;
+  // // cout << "ddq: " << ddq << endl;
 
-  data.debug->all_legs_info.leg[0].joint[0].dq_raw = dq[0];
-  data.debug->all_legs_info.leg[0].joint[1].dq_raw = dq[1];
-  data.debug->all_legs_info.leg[0].joint[2].dq_raw = dq[2];
+  // data.debug->all_legs_info.leg[0].joint[0].dq_raw = dq[0];
+  // data.debug->all_legs_info.leg[0].joint[1].dq_raw = dq[1];
+  // data.debug->all_legs_info.leg[0].joint[2].dq_raw = dq[2];
+
+  // cout << "ddq: " << ddq << endl;
+  // cout << "dq: " << dq << endl;
 
   // Update Leg Command
   _UpdateLegCMD(data);
