@@ -5,7 +5,10 @@
 using namespace std;
 // using namespace USDK;
 
-Body_Manager::Body_Manager() : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+Body_Manager::Body_Manager()
+  : _zero_time(0),
+    safe(UNITREE_LEGGED_SDK::LeggedType::A1),
+    udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
@@ -91,12 +94,13 @@ unitree_legged_msgs::LowState Body_Manager::_udpStateToRos(UNITREE_LEGGED_SDK::L
 
 void Body_Manager::init()
 {
+  _time_start = ros::Time::now();
+  _debug = new Debug(_time_start);
+
   _initSubscribers();
   _initPublishers();
   ROS_INFO_STREAM("[Body_Manager] Loading parameters from ros server\n");
   _initParameters();
-
-  _time_start = ros::Time::now();
 
   // TODO: check exist
   if (_is_param_updated)
@@ -123,8 +127,6 @@ void Body_Manager::init()
 
   _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
   cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << " (" << MAIN_LOOP_RATE << " Hz)" << endl;
-
-  _debug = new Debug(_time_start);
 
   // Always initialize the leg controller and state estimator
   _legController = new LegController<float>(_quadruped);
@@ -489,8 +491,11 @@ void Body_Manager::_initSubscribers()
 {
   _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
   _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
-  _sub_ground_truth = _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_ground_truth =
+    _nh.subscribe("/ground_truth_odom", 1, &Body_Manager::_groundTruthCallback, this, ros::TransportHints().tcpNoDelay(true));
   _srv_do_step = _nh.advertiseService("/do_step", &Body_Manager::_srvDoStep, this);
+  _srv_stop_map = _nh.advertiseService(ros::this_node::getName() + "/stop_map_update", &Body_Manager::_srvStopMap, this);
+  _srv_start_map = _nh.advertiseService(ros::this_node::getName() + "/start_map_update", &Body_Manager::_srvStartMap, this);
 }
 
 bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response)
@@ -498,6 +503,24 @@ bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trig
   ROS_INFO("DO STEP!");
 
   _is_do_step = !_is_do_step;
+
+  return true;
+}
+
+bool Body_Manager::_srvStartMap(std_srvs::Empty::Request& reqest, std_srvs::Empty::Response& response)
+{
+  ROS_INFO("Start map update!");
+
+  _debug->is_map_upd_stop = false;
+
+  return true;
+}
+
+bool Body_Manager::_srvStopMap(std_srvs::Empty::Request& reqest, std_srvs::Empty::Response& response)
+{
+  ROS_INFO("Stop map update!");
+
+  _debug->is_map_upd_stop = true;
 
   return true;
 }

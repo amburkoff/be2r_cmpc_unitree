@@ -49,6 +49,7 @@ public:
 
   std::string map_topic_raw;
   std::string map_topic_filter;
+  std::string map_topic_plane;
 
 private:
   //-----ROS-------
@@ -56,9 +57,11 @@ private:
   ros::Subscriber _map_sub;
   ros::Subscriber _map_raw_sub;
   ros::Subscriber _robot_pose_sub;
+  ros::Subscriber _map_plane_sub;
 
   grid_map::GridMap _grid_map;
   grid_map::GridMap _grid_map_raw;
+  grid_map::GridMap _grid_map_plane;
   geometry_msgs::PoseWithCovarianceStamped _robot_pose;
   // Keep track of the control iterations
   int iter = 0;
@@ -100,6 +103,7 @@ private:
 
   void _elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg);
   void _elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg);
+  void _elevMapPlaneCallback(const grid_map_msgs::GridMapConstPtr& msg);
   void _robotPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
 
   vectorAligned<Vec3<T>> _obs_list; // loc, height

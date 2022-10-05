@@ -44,6 +44,8 @@ public:
   nav_msgs::Path leg_traj_des[4];
   geometry_msgs::Point leg_force[4];
 
+  bool is_map_upd_stop;
+
 private:
   void _init();
   void _initPublishers();

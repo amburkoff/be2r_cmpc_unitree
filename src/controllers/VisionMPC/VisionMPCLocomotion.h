@@ -35,7 +35,10 @@ public:
   VisionMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  void run(const Vec3<float>& vel_cmd, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void run(const Vec3<float>& vel_cmd,
+           const grid_map::GridMap& height_map,
+           const grid_map::GridMap& height_map_raw,
+           const grid_map::GridMap& map_plane);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -60,6 +63,7 @@ private:
                        const Vec3<float>& body_pos,
                        const grid_map::GridMap& height_map,
                        const grid_map::GridMap& height_map_raw,
+                       const grid_map::GridMap& map_plane,
                        int leg);
 
   void _idxMapChecking(Vec3<float>& Pf,
@@ -133,3 +137,5 @@ private:
 
   SparseCMPC _sparseCMPC;
 };
+
+Eigen::Array2i checkBoundaries(const grid_map::GridMap& map, int col, int row);
