@@ -81,6 +81,30 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   // WBC Computation
   _ComputeWBC();
 
+  static Vec3<T> q(0, 0, 0);
+  static Vec3<T> dq(0, 0, 0);
+  static Vec3<T> ddq(0, 0, 0);
+  static T dt = 0.002;
+
+  Mat3<T> M = _A.block(6, 6, 3, 3);
+  Vec3<T> C = _coriolis.block(6, 0, 3, 1);
+  Vec3<T> G = _grav.block(6, 0, 3, 1);
+  // Vec3<T> tau = data._legController->commands[0].tauFeedForward;
+  Vec3<T> tau(0, 0, 0);
+  tau << _tau_ff[0], _tau_ff[1], _tau_ff[2];
+
+  // cout << "M: " << M << endl;
+  // cout << "C: " << C << endl;
+  // cout << "G: " << G << endl;
+  cout << "tau: " << tau << endl;
+
+  ddq = M.inverse() * (tau - C - G);
+  dq = dq + ddq * dt;
+
+  data.debug->all_legs_info.leg[0].joint[0].dq_raw = dq[0];
+  data.debug->all_legs_info.leg[0].joint[1].dq_raw = dq[1];
+  data.debug->all_legs_info.leg[0].joint[2].dq_raw = dq[2];
+
   // Update Leg Command
   _UpdateLegCMD(data);
 }
@@ -94,14 +118,15 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
   for (size_t leg(0); leg < cheetah::num_leg; ++leg)
   {
     cmd[leg].zero();
+
     for (size_t jidx(0); jidx < cheetah::num_leg_joint; ++jidx)
     {
       cmd[leg].tauFeedForward[jidx] = _tau_ff[cheetah::num_leg_joint * leg + jidx];
       cmd[leg].qDes[jidx] = _des_jpos[cheetah::num_leg_joint * leg + jidx];
       cmd[leg].qdDes[jidx] = _des_jvel[cheetah::num_leg_joint * leg + jidx];
 
-      cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
       cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
+      cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
 
       // // Contact
       // if (contact[leg] > 0.)
@@ -164,6 +189,7 @@ void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est,
   _model.generalizedGravityForce();
   _model.generalizedCoriolisForce();
 
+  _A.setZero(18, 18);
   _A = _model.getMassMatrix();
   _grav = _model.getGravityForce();
   _coriolis = _model.getCoriolisForce();
