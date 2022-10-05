@@ -123,14 +123,15 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
   for (size_t leg(0); leg < cheetah::num_leg; ++leg)
   {
     cmd[leg].zero();
+
     for (size_t jidx(0); jidx < cheetah::num_leg_joint; ++jidx)
     {
       cmd[leg].tauFeedForward[jidx] = _tau_ff[cheetah::num_leg_joint * leg + jidx];
       cmd[leg].qDes[jidx] = _des_jpos[cheetah::num_leg_joint * leg + jidx];
       cmd[leg].qdDes[jidx] = _des_jvel[cheetah::num_leg_joint * leg + jidx];
 
-      cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
       cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
+      cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
 
       // // Contact
       // if (contact[leg] > 0.)
@@ -193,6 +194,7 @@ void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est,
   _model.generalizedGravityForce();
   _model.generalizedCoriolisForce();
 
+  _A.setZero(18, 18);
   _A = _model.getMassMatrix();
   _grav = _model.getGravityForce();
   _coriolis = _model.getCoriolisForce();
