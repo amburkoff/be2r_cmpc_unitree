@@ -199,7 +199,7 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
   Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
   Vec3<float> v_robot = seResult.vWorld;
-
+  std::cout << "v_des_robot" << v_des_robot[0] << endl;
   // std::cout << "sensor data: " << data._stateEstimator->getContactSensorData()(0) << std::endl;
   static Vec3<float> pDesFootWorldStance[4] = {pFoot[0], pFoot[1], pFoot[2], pFoot[3]};
 
