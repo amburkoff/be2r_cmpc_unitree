@@ -7,15 +7,13 @@ using namespace std;
 
 Body_Manager::Body_Manager()
   : _zero_time(0),
-    safe(UNITREE_LEGGED_SDK::LeggedType::A1),
-    udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+    safe(UNITREE_LEGGED_SDK::LeggedType::A1)
+// udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
   server.setCallback(f);
   ROS_INFO("START SERVER");
-
-  udp.InitCmdData(_udp_low_cmd);
 
   vectorNavData.quat[0] = 1.0;
   vectorNavData.quat[1] = 0.0;
@@ -34,9 +32,9 @@ Body_Manager::~Body_Manager()
   delete _stateEstimator;
 }
 
-void Body_Manager::UDPRecv() { udp.Recv(); }
+void Body_Manager::UDPRecv() { udp->Recv(); }
 
-void Body_Manager::UDPSend() { udp.Send(); }
+void Body_Manager::UDPSend() { udp->Send(); }
 
 UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd)
 {
@@ -130,6 +128,16 @@ void Body_Manager::init()
     _quadruped = buildMiniCheetah<float>(RobotType::GO1);
   }
 
+  if (is_udp_connection)
+  {
+    udp = new UNITREE_LEGGED_SDK::UDP(UNITREE_LEGGED_SDK::LOWLEVEL);
+    udp->InitCmdData(_udp_low_cmd);
+  }
+  else
+  {
+    udp = nullptr;
+  }
+
   _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
   cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << " (" << MAIN_LOOP_RATE << " Hz)" << endl;
 
@@ -157,9 +165,9 @@ void Body_Manager::_readRobotData()
 {
   // TODO check if we can send only zero struct and recieve falid data and dont crash robot
   // controller
-  udp.SetSend(_udp_low_cmd);
+  udp->SetSend(_udp_low_cmd);
   // TODO check if TRULY NEW data recieved
-  udp.GetRecv(_udp_low_state);
+  udp->GetRecv(_udp_low_state);
 
   _low_state = _udpStateToRos(_udp_low_state);
 
@@ -463,7 +471,7 @@ void Body_Manager::finalizeStep()
     safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
 
     // put udp struct to udp send transfer process
-    udp.SetSend(_udp_low_cmd);
+    udp->SetSend(_udp_low_cmd);
   }
 
   _pub_low_cmd.publish(_low_cmd);
