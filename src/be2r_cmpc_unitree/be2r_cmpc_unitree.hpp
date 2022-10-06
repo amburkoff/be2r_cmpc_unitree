@@ -111,6 +111,7 @@ private:
   void _initPublishers();
   void _filterInput();
   void _initParameters();
+  void _odomPublish();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
@@ -123,7 +124,7 @@ private:
 
   // Unitree sdk
   UNITREE_LEGGED_SDK::Safety safe;
-  UNITREE_LEGGED_SDK::UDP udp;
+  UNITREE_LEGGED_SDK::UDP* udp;
   void _readRobotData();
   UNITREE_LEGGED_SDK::LowCmd _udp_low_cmd = {};
   UNITREE_LEGGED_SDK::LowState _udp_low_state = {};

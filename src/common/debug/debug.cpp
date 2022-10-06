@@ -79,7 +79,7 @@ void Debug::updatePlot()
 #ifdef PUB_IMU_AND_ODOM
   nav_msgs::Odometry odom;
 
-  odom.header.stamp = ros::Time::now();
+  odom.header.stamp = time_stamp_udp_get;
   odom.header.frame_id = "odom";
   odom.child_frame_id = "base";
 
@@ -96,7 +96,7 @@ void Debug::updatePlot()
   odom.twist.twist.angular = body_info.vel_act.angular;
 
   imu.header.frame_id = "imu_link";
-  imu.header.stamp = ros::Time::now();
+  imu.header.stamp = time_stamp_udp_get;
 
   imu.orientation = odom_quat;
 
@@ -145,25 +145,12 @@ void Debug::updateVisualization()
   _drawLegsForce();
 }
 
-void Debug::tfPublish()
+void Debug::tfOdomPublish(ros::Time stamp)
 {
-  bool use_map = false;
-  geometry_msgs::TransformStamped odom_corr_transform;
-  if (use_map)
-  {
-    try
-    {
-      odom_corr_transform = _tf_buffer.lookupTransform("corrected_odom", "odom", ros::Time(0));
-    }
-    catch (tf2::TransformException& ex)
-    {
-      ROS_WARN("%s", ex.what());
-    }
-  }
   geometry_msgs::TransformStamped odom_trans;
   z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
 
-  odom_trans.header.stamp = ros::Time::now();
+  odom_trans.header.stamp = stamp;
   odom_trans.header.frame_id = "odom";
   odom_trans.child_frame_id = "base";
 
@@ -181,18 +168,35 @@ void Debug::tfPublish()
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
+}
 
-  geometry_msgs::TransformStamped odom_trans_world;
+void Debug::tfPublish()
+{
+  // bool use_map = false;
+  // geometry_msgs::TransformStamped odom_corr_transform;
+  // if (use_map)
+  // {
+  //   try
+  //   {
+  //     odom_corr_transform = _tf_buffer.lookupTransform("corrected_odom", "odom", ros::Time(0));
+  //   }
+  //   catch (tf2::TransformException& ex)
+  //   {
+  //     ROS_WARN("%s", ex.what());
+  //   }
+  // }
 
-  odom_trans_world.header.stamp = odom_trans.header.stamp;
-  odom_trans_world.header.frame_id = "world";
-  odom_trans_world.child_frame_id = "odom";
+  // geometry_msgs::TransformStamped odom_trans_world;
 
-  // z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
-  odom_trans_world.transform.translation.z = 0;
-  odom_trans_world.transform.rotation.w = 1.;
+  // odom_trans_world.header.stamp = time_stamp_udp_get;
+  // odom_trans_world.header.frame_id = "world";
+  // odom_trans_world.child_frame_id = "odom";
 
-  world_odom_broadcaster.sendTransform(odom_trans_world);
+  // // z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
+  // odom_trans_world.transform.translation.z = 0;
+  // odom_trans_world.transform.rotation.w = 1.;
+
+  // world_odom_broadcaster.sendTransform(odom_trans_world);
 }
 
 Vec3<float> Debug::_getHipLocation(uint8_t leg_num)

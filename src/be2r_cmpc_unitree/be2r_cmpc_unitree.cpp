@@ -7,20 +7,23 @@ using namespace std;
 
 Body_Manager::Body_Manager()
   : _zero_time(0),
-    safe(UNITREE_LEGGED_SDK::LeggedType::A1),
-    udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+    safe(UNITREE_LEGGED_SDK::LeggedType::A1)
+// udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
   server.setCallback(f);
   ROS_INFO("START SERVER");
 
-  udp.InitCmdData(_udp_low_cmd);
-
   vectorNavData.quat[0] = 1.0;
   vectorNavData.quat[1] = 0.0;
   vectorNavData.quat[2] = 0.0;
   vectorNavData.quat[3] = 0.0;
+
+  _udp_low_state.imu.quaternion[0] = 1.0;
+  _udp_low_state.imu.quaternion[1] = 0.0;
+  _udp_low_state.imu.quaternion[2] = 0.0;
+  _udp_low_state.imu.quaternion[3] = 0.0;
 }
 
 Body_Manager::~Body_Manager()
@@ -29,9 +32,9 @@ Body_Manager::~Body_Manager()
   delete _stateEstimator;
 }
 
-void Body_Manager::UDPRecv() { udp.Recv(); }
+void Body_Manager::UDPRecv() { udp->Recv(); }
 
-void Body_Manager::UDPSend() { udp.Send(); }
+void Body_Manager::UDPSend() { udp->Send(); }
 
 UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd)
 {
@@ -125,6 +128,16 @@ void Body_Manager::init()
     _quadruped = buildMiniCheetah<float>(RobotType::GO1);
   }
 
+  if (is_udp_connection)
+  {
+    udp = new UNITREE_LEGGED_SDK::UDP(UNITREE_LEGGED_SDK::LOWLEVEL);
+    udp->InitCmdData(_udp_low_cmd);
+  }
+  else
+  {
+    udp = nullptr;
+  }
+
   _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
   cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << " (" << MAIN_LOOP_RATE << " Hz)" << endl;
 
@@ -152,13 +165,14 @@ void Body_Manager::_readRobotData()
 {
   // TODO check if we can send only zero struct and recieve falid data and dont crash robot
   // controller
-  udp.SetSend(_udp_low_cmd);
+  udp->SetSend(_udp_low_cmd);
   // TODO check if TRULY NEW data recieved
-  udp.GetRecv(_udp_low_state);
+  udp->GetRecv(_udp_low_state);
 
   _low_state = _udpStateToRos(_udp_low_state);
 
   _low_state.header.stamp = ros::Time::now();
+  _debug->time_stamp_udp_get = _low_state.header.stamp;
   _pub_low_state.publish(_low_state);
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
@@ -188,7 +202,7 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
   // binary contact
-  int16_t force_threshold = 10;
+  int16_t force_threshold = 70;
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -228,6 +242,21 @@ void Body_Manager::_readRobotData()
   }
 }
 
+void Body_Manager::_odomPublish()
+{
+  _debug->body_info.pos_act = ros::toMsg(_stateEstimator->getResult().position);
+
+  _debug->body_info.quat_act.x = _stateEstimator->getResult().orientation.x();
+  _debug->body_info.quat_act.y = _stateEstimator->getResult().orientation.y();
+  _debug->body_info.quat_act.z = _stateEstimator->getResult().orientation.z();
+  _debug->body_info.quat_act.w = _stateEstimator->getResult().orientation.w();
+
+  if (is_udp_connection)
+    _debug->tfOdomPublish(_debug->time_stamp_udp_get);
+  else
+    _debug->tfOdomPublish(ros::Time::now());
+}
+
 void Body_Manager::run()
 {
   Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
@@ -239,6 +268,8 @@ void Body_Manager::run()
 
   // Run the state estimator step
   _stateEstimator->run();
+
+  _odomPublish();
 
   // Update the data from the robot (put data from LowState to LegController->Datas)
   setupStep();
@@ -457,7 +488,7 @@ void Body_Manager::finalizeStep()
     safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
 
     // put udp struct to udp send transfer process
-    udp.SetSend(_udp_low_cmd);
+    udp->SetSend(_udp_low_cmd);
   }
 
   _pub_low_cmd.publish(_low_cmd);
