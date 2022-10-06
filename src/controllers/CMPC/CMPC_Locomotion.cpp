@@ -38,17 +38,30 @@ using namespace std;
 ////////////////////
 
 CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data)
-  : _data(data), iterationsBetweenMPC(_iterations_between_mpc), _parameters(_data->userParameters), _gait_period(_parameters->gait_period),
-    horizonLength(_data->staticParams->horizon), dt(_dt),
-    trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
-    trot_contact(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25), "Trot contact"),
+  : _data(data),
+    iterationsBetweenMPC(_iterations_between_mpc),
+    _parameters(_data->userParameters),
+    _gait_period(_parameters->gait_period),
+    horizonLength(_data->staticParams->horizon),
+    dt(_dt),
+    trotting(_gait_period,
+             Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+             Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
+             "Trotting"),
+    trot_contact(_gait_period,
+                 Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+                 Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25),
+                 "Trot contact"),
     standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
     walking(
       GAIT_PERIOD_WALKING,
       Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
       Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING),
       "Walking"), // for real
-    two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, 0), "Two legs balance")
+    two_leg_balance(_gait_period,
+                    Vec4<int>(0, 0, 0, 0),
+                    Vec4<int>(_gait_period, _gait_period, _gait_period, 0),
+                    "Two legs balance")
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
@@ -275,8 +288,9 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
   for (int i = 0; i < 4; i++)
   {
-    //foot pos in world frame
-    pFoot[i] = seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
+    // foot pos in world frame
+    pFoot[i] =
+      seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
   }
 
   if (gait != &standing)
@@ -661,7 +675,8 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   else
   {
     // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-    _pitch_des = data._stateEstimator->getResult().rpy[1] + data._stateEstimator->getResult().est_pitch_plane - 0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
+    _pitch_des = data._stateEstimator->getResult().rpy[1] + data._stateEstimator->getResult().est_pitch_plane -
+                 0.07 * sqrt(_x_vel_des * _x_vel_des + _y_vel_des * _y_vel_des);
     // _pitch_des = data._stateEstimator->getResult().est_pitch_plane;
   }
 
@@ -1062,12 +1077,12 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 
   // Q roll pitch yaw x_des y_des z_des v_roll_des v_pitch_des v_yaw_des vx_des vy_des vz_des
   //  original
-  //  float Q[12] = {0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1};
+  float Q[12] = { 0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1 };
 
   // my
   //  float Q[12] = { 2.5, 2.5, 10, 300, 300, 1000, 0, 0, 0.5, 1.5, 1.5, 1 };
   //  float Q[12] = { 0.25, 4, 7, 4, 4, 20, 0.1, 0.1, 3, 0.4, 0.4, 0.2 };
-  float Q[12] = { 10, 10, 15, 15, 15, 20, 0.5, 0.5, 3, 0.4, 0.4, 0.2 };
+  // float Q[12] = { 10, 10, 15, 15, 15, 20, 0.5, 0.5, 3, 0.4, 0.4, 0.2 };
 
   // from sparse
   //  float Q[12] = { 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2 };

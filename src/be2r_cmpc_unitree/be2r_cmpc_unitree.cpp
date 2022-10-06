@@ -159,6 +159,7 @@ void Body_Manager::_readRobotData()
   _low_state = _udpStateToRos(_udp_low_state);
 
   _low_state.header.stamp = ros::Time::now();
+  _debug->time_stamp_udp_get = _low_state.header.stamp;
   _pub_low_state.publish(_low_state);
 
   for (uint8_t leg_num = 0; leg_num < 4; leg_num++)
@@ -188,7 +189,7 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
   // binary contact
-  int16_t force_threshold = 10;
+  int16_t force_threshold = 70;
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -228,6 +229,21 @@ void Body_Manager::_readRobotData()
   }
 }
 
+void Body_Manager::_odomPublish()
+{
+  _debug->body_info.pos_act = ros::toMsg(_stateEstimator->getResult().position);
+
+  _debug->body_info.quat_act.x = _stateEstimator->getResult().orientation.x();
+  _debug->body_info.quat_act.y = _stateEstimator->getResult().orientation.y();
+  _debug->body_info.quat_act.z = _stateEstimator->getResult().orientation.z();
+  _debug->body_info.quat_act.w = _stateEstimator->getResult().orientation.w();
+
+  if (is_udp_connection)
+    _debug->tfOdomPublish(_debug->time_stamp_udp_get);
+  else
+    _debug->tfOdomPublish(ros::Time::now());
+}
+
 void Body_Manager::run()
 {
   Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
@@ -239,6 +255,8 @@ void Body_Manager::run()
 
   // Run the state estimator step
   _stateEstimator->run();
+
+  _odomPublish();
 
   // Update the data from the robot (put data from LowState to LegController->Datas)
   setupStep();

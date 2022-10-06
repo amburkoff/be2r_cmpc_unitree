@@ -539,9 +539,12 @@ void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
 
   // prev proportional k = [0.5, 0.2, 0.5]
   // des vel in robot frame
+  // default from joystick
+  ////////////////////////////
   des_vel[0] = this->_data->_desiredStateCommand->leftAnalogStick[1];
   des_vel[1] = this->_data->_desiredStateCommand->leftAnalogStick[0];
   des_vel[2] = this->_data->_desiredStateCommand->rightAnalogStick[0];
+  ///////////////////////////////////////////////////////////////////
 
   des_vel_filtered[0] = des_vel_filtered[0] * (1 - filter) + des_vel[0] * filter;
   des_vel_filtered[1] = des_vel_filtered[1] * (1 - filter) + des_vel[1] * filter;
