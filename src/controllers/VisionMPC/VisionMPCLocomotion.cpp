@@ -122,25 +122,6 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   auto& seResult = _data->_stateEstimator->getResult();
   Vec3<float> v_robot = seResult.vWorld;
 
-  // cout << "vx: " << _x_vel_des << " vy: " << _y_vel_des << " yaw: " << _yaw_turn_rate << endl;
-  // static bool is_stand_switch = false;
-
-  // if ((abs(_x_vel_des) > 0.005) || (abs(_y_vel_des) > 0.005) || (abs(_yaw_turn_rate) > 0.005))
-  // {
-  //   current_gait = gaitNumber;
-  // }
-  // else
-  // {
-  //   current_gait = 4;
-  //   gaitNumber = 4;
-  // }
-
-  // if (is_stand_switch)
-  // {
-  //   _yaw_des = seResult.rpy[2];
-  //   is_stand_switch = false;
-  // }
-
   // Check if transition to standing
   if (((gaitNumber == 4) && current_gait != 4) || firstRun)
   {
@@ -190,17 +171,16 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   // p front mid, p back mid
   Vec3<float> p_fm = (pDesFootWorldStance[0] + pDesFootWorldStance[1]) / 2;
   Vec3<float> p_bm = (pDesFootWorldStance[2] + pDesFootWorldStance[3]) / 2;
-  float des_pitch = 0;
 
-  if (current_gait != 4)
+  if (current_gait == 4 || current_gait == 13)
   {
-    des_pitch =
+    _pitch_des = 0.0;
+  }
+  else
+  {
+    _pitch_des =
       _data->_stateEstimator->getResult().rpy[1] + _data->_stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
   }
-
-  // put to target
-  _pitch_des = des_pitch;
-  _data->debug->all_legs_info.leg[0].force_raw = _pitch_des;
 
   // Integral-esque pitche and roll compensation
   if (fabs(v_robot[0]) > .2) // avoid dividing by zero
@@ -224,8 +204,10 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
   }
 
-  world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
-
+  if (gait != &standing)
+  {
+    world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
+  }
   // some first time initialization
   if (firstRun)
   {
@@ -893,9 +875,11 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
   auto seResult = data._stateEstimator->getResult();
 
   // original
-  float Q[12] = { 0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1 };
+  // float Q[12] = { 0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1 };
   // float Q[12] = {2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1};
   // float Q[12] = { 2.5, 2.5, 10, 300, 300, 300, 0, 0, 0.5, 1.5, 1.5, 1 };
+
+  float Q[12] = { 10, 10, 15, 3, 3, 30, 0.5, 0.5, 3, 0.4, 0.4, 0.2 };
 
   float roll = seResult.rpy[0];
   float pitch = seResult.rpy[1];
