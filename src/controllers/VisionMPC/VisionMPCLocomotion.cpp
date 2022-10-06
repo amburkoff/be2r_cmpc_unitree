@@ -95,7 +95,15 @@ void VisionMPCLocomotion::_setupCommand(ControlFSMData<float>& data)
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
 
-  _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  // _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  if ((M_PI - abs(_yaw_des)) <= 0.1)
+  {
+    _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  }
+  else
+  {
+    _yaw_des += dt * _yaw_turn_rate;
+  }
   _roll_des = 0.;
   _pitch_des = 0.;
 
@@ -203,6 +211,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
                   seResult.rBody.transpose() * (_data->_quadruped->getHipLocation(foot) + _data->_legController->datas[foot].p);
     footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
   }
+  static float z_des[4] = { 0 };
 
   if (gait != &standing)
   {
@@ -229,6 +238,8 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       _data->debug->all_legs_info.leg[i].swing_pf.x = pFoot[i](0);
       _data->debug->all_legs_info.leg[i].swing_pf.y = pFoot[i](1);
       _data->debug->all_legs_info.leg[i].swing_pf.z = pFoot[i](2);
+
+      z_des[i] = pFoot[i](2);
     }
 
     firstRun = false;
@@ -247,7 +258,6 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
   // cout << "iter: " << _iterationCounter << " first swing leg 0" << firstSwing[0] << endl;
 
-  static float z_des[4] = { 0 };
 
   for (int i = 0; i < 4; i++)
   {
@@ -293,7 +303,10 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     pf[1] += pfy_rel;
     pf[2] = z_des[i];
 
-    _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, map_plane, i);
+    // _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, map_plane, i);
+
+    if (pf[2] > 0.02)
+      std::cout << "PF = " << pf[2] << std::endl;
 
     footSwingTrajectories[i].setFinalPosition(pf);
     _data->debug->all_legs_info.leg[i].swing_pf.x = pf(0);
@@ -620,16 +633,16 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  std::cout << "From map " << h << std::endl;
   //  std::cout << "z_offset " << __data->debug->z_offset << std::endl;
   // ЕВРИСТИКА
-  // static double start_offset = 0.7;
-  // if (_data->_stateEstimator->getResult().position(0) > start_offset)
-  // {
-  //   static double step_length = 0.6;
-  //   double x = _data->_stateEstimator->getResult().position(0) - start_offset;
-  //   double k = x / step_length;
-  //   if (k >= 1.0)
-  //     k = 1.0;
-  //   _data->debug->z_offset = k * 0.40;
-  // }
+  static double start_offset = 0.7;
+  if (_data->_stateEstimator->getResult().position(0) > start_offset)
+  {
+    static double step_length = 0.6;
+    double x = _data->_stateEstimator->getResult().position(0) - start_offset;
+    double k = x / step_length;
+    if (k >= 1.0)
+      k = 1.0;
+    _data->debug->z_offset = k * 0.40;
+  }
 
   // double mean_p0_h = 0;
   // for (size_t leg = 0; leg < 4; leg++)
