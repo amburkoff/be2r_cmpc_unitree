@@ -61,7 +61,6 @@ template<typename T>
 float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
 {
   float z = 0;
-  static float z_prev = 0;
 
   static float A_res = 0.0;
   static float B_res = 0.0;
@@ -70,10 +69,10 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   Vec3<float> p[4];
   Vec3<float> p_local[4];
 
-  p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[0]);
-  p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[1]);
-  p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[2]);
-  p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[3]);
+  // p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[0]);
+  // p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[1]);
+  // p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[2]);
+  // p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[3]);
 
   p_local[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[0]);
   p_local[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[1]);
@@ -97,6 +96,7 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   }
 
   static float filter = 0.5;
+  static float f = 0.1;
   float A = K_solution(0);
   float B = K_solution(1);
   float C = K_solution(2);
@@ -117,6 +117,9 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
 
   // z = 1 / sqrt(A * A + B * B + C * C);
   z = 1 / sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
+  static float z_prev = z;
+  // z = (1.0 - f) * z_prev + f * z;
+  z_prev = z;
   this->_stateEstimatorData.debug->body_info.pos_z_global = z;
 
   return z;
@@ -250,7 +253,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
 
   // my local body height based on least square plane
-  // this->_stateEstimatorData.result->position(2) = my_z;
+  this->_stateEstimatorData.result->position(2) = my_z;
 }
 
 template class LinearKFPositionVelocityEstimator<float>;

@@ -21,6 +21,11 @@ Body_Manager::Body_Manager()
   vectorNavData.quat[1] = 0.0;
   vectorNavData.quat[2] = 0.0;
   vectorNavData.quat[3] = 0.0;
+
+  _udp_low_state.imu.quaternion[0] = 1.0;
+  _udp_low_state.imu.quaternion[1] = 0.0;
+  _udp_low_state.imu.quaternion[2] = 0.0;
+  _udp_low_state.imu.quaternion[3] = 0.0;
 }
 
 Body_Manager::~Body_Manager()
@@ -188,7 +193,8 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
   // binary contact
-  int16_t force_threshold = 10;
+  // int16_t force_threshold = 10;
+  int16_t force_threshold = 70;
 
   for (size_t i = 0; i < 4; i++)
   {
