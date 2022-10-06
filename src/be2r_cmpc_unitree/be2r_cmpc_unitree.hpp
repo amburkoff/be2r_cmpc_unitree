@@ -111,6 +111,7 @@ private:
   void _initPublishers();
   void _filterInput();
   void _initParameters();
+  void _odomPublish();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
