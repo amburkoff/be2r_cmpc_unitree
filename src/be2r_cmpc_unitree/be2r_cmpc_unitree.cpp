@@ -21,6 +21,11 @@ Body_Manager::Body_Manager()
   vectorNavData.quat[1] = 0.0;
   vectorNavData.quat[2] = 0.0;
   vectorNavData.quat[3] = 0.0;
+
+  _udp_low_state.imu.quaternion[0] = 1.0;
+  _udp_low_state.imu.quaternion[1] = 0.0;
+  _udp_low_state.imu.quaternion[2] = 0.0;
+  _udp_low_state.imu.quaternion[3] = 0.0;
 }
 
 Body_Manager::~Body_Manager()
