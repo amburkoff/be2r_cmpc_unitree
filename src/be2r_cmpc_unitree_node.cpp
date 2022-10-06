@@ -25,13 +25,21 @@ int main(int argc, char* argv[])
 
   unitree.init();
 
-  UNITREE_LEGGED_SDK::LoopFunc loop_udpSend("udp_send", 0.002, 3, boost::bind(&Body_Manager::UDPSend, &unitree));
-  UNITREE_LEGGED_SDK::LoopFunc loop_udpRecv("udp_recv", 0.002, 3, boost::bind(&Body_Manager::UDPRecv, &unitree));
+  // UNITREE_LEGGED_SDK::LoopFunc loop_udpSend("udp_send", 0.002, 3, boost::bind(&Body_Manager::UDPSend, &unitree));
+  // UNITREE_LEGGED_SDK::LoopFunc loop_udpRecv("udp_recv", 0.002, 3, boost::bind(&Body_Manager::UDPRecv, &unitree));
+
+  UNITREE_LEGGED_SDK::LoopFunc* loop_udpSend = nullptr;
+  UNITREE_LEGGED_SDK::LoopFunc* loop_udpRecv = nullptr;
 
   if (unitree.is_udp_connection)
   {
-    loop_udpSend.start();
-    loop_udpRecv.start();
+    ROS_WARN("UDP CONNECTION");
+    loop_udpSend = new UNITREE_LEGGED_SDK::LoopFunc("udp_send", 0.002, 3, boost::bind(&Body_Manager::UDPSend, &unitree));
+    loop_udpRecv = new UNITREE_LEGGED_SDK::LoopFunc("udp_recv", 0.002, 3, boost::bind(&Body_Manager::UDPRecv, &unitree));
+    // loop_udpSend.start();
+    // loop_udpRecv.start();
+    loop_udpSend->start();
+    loop_udpRecv->start();
   }
 
   ROS_INFO("Initialization Done!");

@@ -99,7 +99,8 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _body_height = _parameters->body_height;
 
   float x_vel_cmd, y_vel_cmd;
-  float filter(0.005);
+  float filter_x(0.05);
+  float filter_y(0.005);
 
   _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
   x_vel_cmd = data._desiredStateCommand->leftAnalogStick[1];
@@ -109,8 +110,8 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   x_vel_cmd *= data._desiredStateCommand->maxVelX;
   y_vel_cmd *= data._desiredStateCommand->maxVelY;
 
-  _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
-  _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
+  _x_vel_des = _x_vel_des * (1 - filter_x) + x_vel_cmd * filter_x;
+  _y_vel_des = _y_vel_des * (1 - filter_y) + y_vel_cmd * filter_y;
 
   // _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   // _yaw_des += dt * _yaw_turn_rate;
