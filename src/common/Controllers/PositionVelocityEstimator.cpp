@@ -8,15 +8,18 @@
  */
 
 #include "Controllers/PositionVelocityEstimator.h"
+#include <cmath>
+#include <iostream>
+#include <iterator>
+#include <ostream>
 
 /*!
  * Initialize the state estimator
  */
-template <typename T>
+template<typename T>
 void LinearKFPositionVelocityEstimator<T>::setup()
 {
-  T dt = 0.002;
-  // T dt = this->_stateEstimatorData.parameters->controller_dt;
+  T dt = this->_stateEstimatorData.parameters->controller_dt;
   _xhat.setZero();
   _ps.setZero();
   _vs.setZero();
@@ -61,13 +64,83 @@ void LinearKFPositionVelocityEstimator<T>::setup()
   da_filt_prev << 0,0,0;
 }
 
-template <typename T>
-LinearKFPositionVelocityEstimator<T>::LinearKFPositionVelocityEstimator() {}
+template<typename T>
+float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
+{
+  float z = 0;
+
+  static float A_res = 0.0;
+  static float B_res = 0.0;
+  static float C_res = 0.0;
+
+  Vec3<float> p[4];
+  Vec3<float> p_local[4];
+
+  // p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[0]);
+  // p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[1]);
+  // p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[2]);
+  // p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[3]);
+
+  p_local[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[0]);
+  p_local[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[1]);
+  p_local[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[2]);
+  p_local[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[3]);
+
+  Eigen::Matrix<float, 4, 3> P = Eigen::Matrix<float, 4, 3>::Zero(4, 3);
+
+  P.block(0, 0, 1, 3) = p_local[0].transpose();
+  P.block(1, 0, 1, 3) = p_local[1].transpose();
+  P.block(2, 0, 1, 3) = p_local[2].transpose();
+  P.block(3, 0, 1, 3) = p_local[3].transpose();
+
+  // cout << P << endl;
+
+  Vec3<float> K_solution = Vec3<float>::Zero();
+
+  if (P != Eigen::Matrix<float, 4, 3>::Zero(4, 3))
+  {
+    K_solution = (P.transpose() * P).inverse() * P.transpose() * Vec4<float>(1, 1, 1, 1);
+  }
+
+  static float filter = 0.5;
+  static float f = 0.1;
+  float A = K_solution(0);
+  float B = K_solution(1);
+  float C = K_solution(2);
+  A_res = A_res * (1.0 - filter) + A * filter;
+  B_res = B_res * (1.0 - filter) + B * filter;
+  C_res = C_res * (1.0 - filter) + C * filter;
+
+  // std::cout << K_solution << std::endl;
+  // std::cout << A_res << " " << B_res << " " << C_res << " " << std::endl;
+
+  this->_stateEstimatorData.debug->mnk_plane.x = A_res;
+  this->_stateEstimatorData.debug->mnk_plane.y = B_res;
+  this->_stateEstimatorData.debug->mnk_plane.z = C_res;
+
+  float del = sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
+  float pitch = acos(A / del) - M_PI / 2.0;
+  this->_stateEstimatorData.result->est_pitch_plane = pitch;
+
+  // z = 1 / sqrt(A * A + B * B + C * C);
+  z = 1 / sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
+  static float z_prev = z;
+  // z = (1.0 - f) * z_prev + f * z;
+  z_prev = z;
+  this->_stateEstimatorData.debug->body_info.pos_z_global = z;
+
+  return z;
+}
+
+template<typename T>
+LinearKFPositionVelocityEstimator<T>::LinearKFPositionVelocityEstimator()
+{
+}
 
 /*!
  * Run state estimator
  */
-template <typename T>
+template<typename T>
 void LinearKFPositionVelocityEstimator<T>::run()
 {
     static uint16_t counter = 0;
@@ -236,11 +309,12 @@ template class LinearKFPositionVelocityEstimator<double>;
 /*!
  * Run cheater estimator to copy cheater state into state estimate
  */
-template <typename T>
+template<typename T>
 void CheaterPositionVelocityEstimator<T>::run()
 {
   this->_stateEstimatorData.result->position = this->_stateEstimatorData.cheaterState->position.template cast<T>();
-  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() * this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
+                                             this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
 }
 

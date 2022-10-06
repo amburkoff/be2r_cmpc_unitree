@@ -98,8 +98,7 @@ class ConvexMPCLocomotion
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ConvexMPCLocomotion(float _dt, int _iterations_between_mpc,
-                      be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
+  ConvexMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
   template<typename T>
@@ -123,6 +122,13 @@ public:
 
 private:
   void _SetupCommand(ControlFSMData<float>& data);
+  void recompute_timing(int iterations_per_mpc);
+  void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
+  void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
+  void solveSparseMPC(int* mpcTable, ControlFSMData<float>& data);
+  void initSparseMPC();
+
+  ControlFSMData<float>* _fsm_data;
 
   float _yaw_turn_rate;
   float _yaw_des;
@@ -141,13 +147,8 @@ private:
   float _body_height_running = 0.29;
   float _body_height_jumping = 0.36;
 
-  void recompute_timing(int iterations_per_mpc);
-  void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
-  void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
-  void solveSparseMPC(int* mpcTable, ControlFSMData<float>& data);
-  void initSparseMPC();
-  int iterationsBetweenMPC;
-  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
+  int _iterationsBetweenMPC;
+  be2r_cmpc_unitree::ros_dynamic_paramsConfig* _dyn_params = nullptr;
   int _gait_period;
   int horizonLength;
   int default_iterations_between_mpc;
@@ -157,8 +158,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGait trotting, trotting_copy, bounding, pronking, jumping, galloping, standing,
-    trotRunning, walking, walking2, pacing;
+  OffsetDurationGait trotting, bounding, pronking, jumping, galloping, standing, trotRunning, walking, walking2, pacing;
   MixedFrequncyGait random, random2;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
@@ -175,10 +175,7 @@ private:
   Vec3<float> pFoot[4];
   CMPC_Result<float> result;
   float trajAll[12 * 36];
-  ros::Publisher _pub_des_traj[4];
   ros::NodeHandle _nh;
-  visualization_msgs::Marker marker[4];
-  ros::Publisher _vis_pub[4];
 
   CMPC_Jump jump_state;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <cstdint>
 #include <iostream>
 
 // ROS
@@ -15,7 +16,9 @@
 #include <ros/transport_hints.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
+#include <std_srvs/Empty.h>
 #include <std_srvs/Trigger.h>
+#include <string>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
 
@@ -25,10 +28,6 @@
 #include "Controllers/StateEstimatorContainer.h"
 #include "LegController.h"
 #include "MiniCheetah.h"
-#include "RobotParameters.h"
-#include "lcm_msgs/spi_command_t.hpp"
-#include "lcm_msgs/spi_data_t.hpp"
-#include "lcm_msgs/spi_torque_t.hpp"
 // #include "Controllers/ContactEstimator.h"
 #include "Controllers/ContactEstimator.h"
 #include "Controllers/DesiredStateCommand.h"
@@ -37,11 +36,16 @@
 #include "Controllers/PositionVelocityEstimator.h"
 
 // BE2R
-#include "debug.hpp"
 #include "Controllers/be2rPositionVelocityEstimator.h"
 #include "Controllers/MyPositionVelocityEstimator.h"
+#include "debug.hpp"
+
 // Unitree sdk
+// namespace USDK
+// {
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
+// }
+// using namespace USDK;
 
 #define MAIN_LOOP_RATE 500
 
@@ -51,12 +55,9 @@
 #define MOTOR_BREAK 0x00
 #define MOTOR_ON 0x0A
 
-//#define TORQUE_LIMIT_SAFE
-#define TORQUE_LIMIT_MAX
-
-const float max_max_torque[3] = {170.f, 170.f, 260.f}; // TODO CHECK WITH BEN
-const float wimp_torque[3] = {6.f, 6.f, 6.f};          // TODO CHECK WITH BEN
-const float disabled_torque[3] = {0.f, 0.f, 0.f};
+const float max_max_torque[3] = { 170.f, 170.f, 260.f }; // TODO CHECK WITH BEN
+const float wimp_torque[3] = { 6.f, 6.f, 6.f };          // TODO CHECK WITH BEN
+const float disabled_torque[3] = { 0.f, 0.f, 0.f };
 
 constexpr double PosStopF = (2.146E+9f);
 constexpr double VelStopF = (16000.0f);
@@ -74,7 +75,6 @@ public:
   void initializeStateEstimator();
 
   VectorNavData vectorNavData;
-  RobotControlParameters controlParameters;
   SpiData spiData;
   SpiCommand spiCommand;
   u64 _iterations = 0;
@@ -97,6 +97,8 @@ private:
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
   ros::ServiceServer _srv_do_step;
+  ros::ServiceServer _srv_stop_map;
+  ros::ServiceServer _srv_start_map;
   ros::Time _time_start;
   const ros::Time _zero_time;
   bool _is_param_updated = false;
@@ -110,13 +112,16 @@ private:
   void _initPublishers();
   void _filterInput();
   void _initParameters();
+  void _odomPublish();
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
-  void _torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num);
+  void _torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num);
   void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
   void _groundTruthCallback(nav_msgs::Odometry ground_truth_msg);
   bool _srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response);
+  bool _srvStopMap(std_srvs::Empty::Request& reqest, std_srvs::Empty::Response& response);
+  bool _srvStartMap(std_srvs::Empty::Request& reqest, std_srvs::Empty::Response& response);
 
   // Unitree sdk
   UNITREE_LEGGED_SDK::Safety safe;
@@ -129,7 +134,6 @@ private:
   unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
 
   Quadruped<float> _quadruped;
-  FloatingBaseModel<float> _model;
   LegController<float>* _legController = nullptr;
   StateEstimatorContainer<float>* _stateEstimator;
   StateEstimate<float> _stateEstimate;
@@ -141,26 +145,14 @@ private:
   unitree_legged_msgs::LowState _low_state;
   unitree_legged_msgs::LowCmd _low_cmd;
   bool _is_low_level = false;
+  int _power_limit = 0;
   bool _is_torque_safe = true;
-
-  spi_torque_t _spi_torque;
+  string _robot_type = "a1";
 
   ControlFSM<float>* _controlFSM;
 
   // Gait Scheduler controls the nominal contact schedule for the feet
   GaitScheduler<float>* _gaitScheduler;
-  ControlParameters* _userControlParameters = nullptr;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig _rosParameters;
-
-  template <typename T>
-  bool readRosParam(std::string param_name, T& param_var)
-  {
-    if (!ros::param::get(param_name, param_var))
-    {
-      ROS_WARN_STREAM("Can't read param " << param_name);
-      return false;
-    }
-    // std::cout << "[ROS PARAM] " << param_name << ": " << param_var << std::endl;
-    return true;
-  }
+  StaticParams _rosStaticParams;
 };

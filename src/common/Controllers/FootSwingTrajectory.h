@@ -46,16 +46,14 @@ public:
    * @param mode : the mode of the Modified interpolate function
    */
   void setMode(int mode) { _mode = mode; }
+  const Vec3<T>& getInitialPosition() { return _p0; }
 
   /*!
    * Set the desired final position of the foot
    * @param pf : the final foot posiiton
    */
-  void setFinalPosition(Vec3<T> pf)
-  {
-    _pf = pf;
-    //    std::cout << "Step dist " << _pf - _p0 << std::endl;
-  }
+  void setFinalPosition(Vec3<T> pf) { _pf = pf; }
+  const Vec3<T>& getFinalPosition() { return _pf; }
 
   /*!
    * Set the maximum height of the swing

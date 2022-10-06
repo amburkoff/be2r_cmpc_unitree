@@ -129,5 +129,4 @@ void FootSwingTrajectory<T>::computeStairsSwingTrajectoryBezier(T phase, T swing
   _a[2] = za;
 }
 
-template class FootSwingTrajectory<double>;
 template class FootSwingTrajectory<float>;

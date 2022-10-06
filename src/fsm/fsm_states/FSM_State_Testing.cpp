@@ -13,8 +13,9 @@ using namespace std;
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template <typename T>
-FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING, "TESTING"), _ini_foot_pos(4)
+template<typename T>
+FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING, "TESTING"), _ini_foot_pos(4)
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -24,7 +25,7 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData) : FS
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
 
-  CMPC = new CMPCLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData);
 
   this->turnOnAllSafetyChecks();
 
@@ -38,7 +39,7 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData) : FS
   _wbc_data = new LocomotionCtrlData<T>();
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_Testing<T>::onEnter()
 {
   // Default is to not transition
@@ -62,7 +63,7 @@ void FSM_State_Testing<T>::onEnter()
   }
 }
 
-template <typename T>
+template<typename T>
 T LinearInterpolation(T initPos, T targetPos, double rate)
 {
   T p;
@@ -71,14 +72,61 @@ T LinearInterpolation(T initPos, T targetPos, double rate)
   return p;
 }
 
-template <typename T>
+/**
+ * Calls the functions to be executed on each control loop iteration.
+ */
+template<typename T>
+void FSM_State_Testing<T>::run()
+{
+  switch (this->_data->userParameters->test)
+  {
+    case 0:
+      // test locomotion with CMPC controller
+      LocomotionControlStep();
+      break;
+
+    case 1:
+      //joint test
+      test1();
+      break;
+
+    case 2:
+      //impedance test
+      test2(0.05);
+      break;
+
+    case 3:
+      //impedance test
+      test2(0);
+      break;
+
+    case 4:
+      gravTest();
+      break;
+  }
+
+  // if (this->_data->userParameters->test == 0)
+  // {
+  // }
+  // else if (!this->_data->userParameters->test && !this->_data->userParameters->test1)
+  // {
+  // }
+  // else if (this->_data->userParameters->test1)
+  // {
+  //   test2(0);
+  // }
+
+  // safeJointTest();
+}
+
+template<typename T>
 void FSM_State_Testing<T>::test1()
 {
   static bool start = false;
   static Vec3<T> qInit(0, 0, 0);
   static Vec3<T> qDes(0, 0, 0);
   static int sin_count = 0;
-  static float sin_mid_q[3] = {0.0, 1.2, -2.0};
+  static float sin_mid_q[3] = { 0.0, 1.2, -2.0 };
   static Vec3<T> Kp(0, 0, 0);
   static Vec3<T> Kd(0, 0, 0);
   static Vec3<T> tau(0, 0, 0);
@@ -90,12 +138,19 @@ void FSM_State_Testing<T>::test1()
   }
 
   float rate = iter / 200.0; // needs count to 200
-  Kp[0] = 5.0;
-  Kp[1] = 5.0;
-  Kp[2] = 5.0;
-  Kd[0] = 1.0;
-  Kd[1] = 1.0;
-  Kd[2] = 1.0;
+  // Kp[0] = 5.0;
+  // Kp[1] = 5.0;
+  // Kp[2] = 5.0;
+  // Kd[0] = 1.0;
+  // Kd[1] = 1.0;
+  // Kd[2] = 1.0;
+
+  Kp[0] = this->_data->userParameters->Kp_joint_0;
+  Kp[1] = this->_data->userParameters->Kp_joint_1;
+  Kp[2] = this->_data->userParameters->Kp_joint_2;
+  Kd[0] = this->_data->userParameters->Kd_joint_0;
+  Kd[1] = this->_data->userParameters->Kd_joint_1;
+  Kd[2] = this->_data->userParameters->Kd_joint_2;
 
   qDes[0] = LinearInterpolation(qInit[0], sin_mid_q[0], rate);
   qDes[1] = LinearInterpolation(qInit[1], sin_mid_q[1], rate);
@@ -104,76 +159,93 @@ void FSM_State_Testing<T>::test1()
   float sin_joint1, sin_joint2;
 
   sin_count++;
-  sin_joint1 = 0.6 * sin(3 * M_PI * sin_count / 1000.0);
-  sin_joint2 = -0.6 * sin(1.8 * M_PI * sin_count / 1000.0);
+  sin_joint1 = 0.5 * sin(3 * M_PI * sin_count / 3000.0);
+  sin_joint2 = -0.5 * sin(1.8 * M_PI * sin_count / 3000.0);
   qDes[0] = sin_mid_q[0];
-  qDes[1] = -sin_mid_q[1] - sin_joint1;
+  // qDes[1] = -sin_mid_q[1] - sin_joint1;
+  qDes[1] = -sin_mid_q[1];
   qDes[2] = -sin_mid_q[2] - sin_joint2;
-  // qDes[1] = sin_mid_q[1] + sin_joint1;
-  // qDes[2] = sin_mid_q[2] + sin_joint2;
 
-  tau[0] = Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
-  tau[1] = Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
-  tau[2] = Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
+  // tau[0] =
+  //   Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
+  // tau[1] =
+  //   Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
+  // tau[2] =
+  //   Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
 
-  // this->_data->_legController->commands[0].kpJoint(0, 0) = Kp[0];
-  // this->_data->_legController->commands[0].kpJoint(1, 1) = Kp[1];
-  // this->_data->_legController->commands[0].kpJoint(2, 2) = Kp[2];
-  // this->_data->_legController->commands[0].kdJoint(0, 0) = Kd[0];
-  // this->_data->_legController->commands[0].kdJoint(1, 1) = Kd[1];
-  // this->_data->_legController->commands[0].kdJoint(2, 2) = Kd[2];
+  this->_data->_legController->commands[0].kpJoint(0, 0) = Kp[0];
+  this->_data->_legController->commands[0].kpJoint(1, 1) = Kp[1];
+  this->_data->_legController->commands[0].kpJoint(2, 2) = Kp[2];
+  this->_data->_legController->commands[0].kdJoint(0, 0) = Kd[0];
+  this->_data->_legController->commands[0].kdJoint(1, 1) = Kd[1];
+  this->_data->_legController->commands[0].kdJoint(2, 2) = Kd[2];
 
   this->_data->_legController->commands[0].qDes = qDes;
   this->_data->_legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
 
-  this->_data->_legController->commands[0].kpJoint(0, 0) = 0;
-  this->_data->_legController->commands[0].kpJoint(1, 1) = 0;
-  this->_data->_legController->commands[0].kpJoint(2, 2) = 0;
-  this->_data->_legController->commands[0].kdJoint(0, 0) = 0;
-  this->_data->_legController->commands[0].kdJoint(1, 1) = 0;
-  this->_data->_legController->commands[0].kdJoint(2, 2) = 0;
+  // this->_data->_legController->commands[0].kpJoint(0, 0) = 0;
+  // this->_data->_legController->commands[0].kpJoint(1, 1) = 0;
+  // this->_data->_legController->commands[0].kpJoint(2, 2) = 0;
+  // this->_data->_legController->commands[0].kdJoint(0, 0) = 0;
+  // this->_data->_legController->commands[0].kdJoint(1, 1) = 0;
+  // this->_data->_legController->commands[0].kdJoint(2, 2) = 0;
   // this->_data->_legController->commands[0].qDes = Vec3<T>(0, 0, 0);
   // this->_data->_legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
 
-  this->_data->_legController->commands[0].tauFeedForward = tau;
+  // this->_data->_legController->commands[0].tauFeedForward = tau;
 }
 
-/**
- * Calls the functions to be executed on each control loop iteration.
- */
-template <typename T>
-void FSM_State_Testing<T>::run()
+template<typename T>
+void FSM_State_Testing<T>::safeJointTest()
 {
-  // test1();
-  LocomotionControlStep();
+  for (size_t i = 0; i < 4; i++)
+  {
+    this->_data->_legController->commands[i].kpJoint(0, 0) = 0;
+    this->_data->_legController->commands[i].kpJoint(1, 1) = 0;
+    this->_data->_legController->commands[i].kpJoint(2, 2) = 0;
+
+    this->_data->_legController->commands[i].kdJoint(0, 0) = 3;
+    this->_data->_legController->commands[i].kdJoint(1, 1) = 3;
+    this->_data->_legController->commands[i].kdJoint(2, 2) = 3;
+
+    this->_data->_legController->commands[i].qdDes(0) = 0;
+    this->_data->_legController->commands[i].qdDes(1) = 0;
+    this->_data->_legController->commands[i].qdDes(2) = 0;
+  }
+
+  // this->_data->_legController->edampCommand(4);
 }
 
-template <typename T>
-void FSM_State_Testing<T>::test2()
+//impedance test
+template<typename T>
+void FSM_State_Testing<T>::test2(float h)
 {
-  float rate = 1;
+  // float rate = 1;
+  float rate = 0.5;
   float duration = 1 / rate;
   auto& seResult = this->_data->_stateEstimator->getResult();
+  static bool is_start = true;
 
-  // Vec3<float> p0(0, 0, 0);
-  // Vec3<float> p1(0, 0, 0);
   Vec3<float> p0(0, -0.15, -0.2);
   Vec3<float> p1(0, -0.25, -0.201);
 
-  //near sholder
-  //x 0.047
-  //y -0.15
-  //z -0.073
+  // Vec3<float> p0(0, -0.1, -0.2);
+  // Vec3<float> p1(0, -0.3, -0.2);
 
-  //far 1
-  //x 0.068
-  //y -0.255
-  //z -0.259
+  // near sholder
+  // x 0.047
+  // y -0.15
+  // z -0.073
 
-  //far 2
-  //x -0.178
-  //y -0.163
-  //z -0.2
+  // far 1
+  // x 0.068
+  // y -0.255
+  // z -0.259
+
+  // far 2
+  // x -0.178
+  // y -0.163
+  // z -0.2
   Vec3<float> pDes(0.047, -0.15, -0.073);
   // static Vec3<float> pDes1(0.047, -0.15, -0.073);
   // static Vec3<float> pDes1(0.047, -0.15, -0.1);
@@ -182,7 +254,7 @@ void FSM_State_Testing<T>::test2()
   // static Vec3<float> pDes0(0.068, -0.255, -0.259);
   static bool flag = false;
 
-  T progress = rate * iter * this->_data->controlParameters->controller_dt;
+  T progress = rate * iter * this->_data->staticParams->controller_dt;
 
   auto _model = this->_data->_quadruped->buildModel();
 
@@ -223,6 +295,7 @@ void FSM_State_Testing<T>::test2()
 
   // cout << "grav: " << _grav << endl;
   Vec3<float> tau = _grav.segment(6, 3);
+
   // tau(0) = tau(0);
   // tau(1) = 0;
   // tau(2) = 0;
@@ -233,15 +306,16 @@ void FSM_State_Testing<T>::test2()
   {
     // progress = duration;
     progress = 0;
-    // iter = 0;
+    iter = 0;
     flag = !flag;
+    is_start = false;
   }
 
-  //for real
+  // for real
   // float p = 1200;
   // float d = 15;
 
-  //for sim
+  // for sim
   // float p = 800;
   // float d = 15;
 
@@ -250,67 +324,51 @@ void FSM_State_Testing<T>::test2()
   this->_data->_legController->setLegEnabled(2, false);
   this->_data->_legController->setLegEnabled(3, false);
 
-  for (int foot = 0; foot < 4; foot++)
+  uint8_t foot = 0;
+
+  if (firstSwing[foot])
   {
-    if (firstSwing[foot])
-    {
-      firstSwing[foot] = false;
-      footSwingTrajectories[foot].setHeight(0.05);
-      // footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
-      // footSwingTrajectories[foot].setFinalPosition(pFoot[foot] + Vec3<float>(1, 1, 0));
-    }
+    firstSwing[foot] = false;
+    footSwingTrajectories[foot].setHeight(h);
+    footSwingTrajectories[foot].setInitialPosition(_ini_foot_pos[foot]);
+    footSwingTrajectories[foot].setFinalPosition(p0);
+  }
 
-    // this->_data->_legController->commands[foot].kpCartesian = Vec3<T>(800, 800, 800).asDiagonal();
-    // this->_data->_legController->commands[foot].kdCartesian = Vec3<T>(20, 20, 20).asDiagonal();
+  this->_data->_legController->commands[foot].kpCartesian = Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1, this->_data->userParameters->Kp_cartesian_2).asDiagonal();
+  this->_data->_legController->commands[foot].kdCartesian = Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1, this->_data->userParameters->Kd_cartesian_2).asDiagonal();
 
-    // this->_data->_legController->commands[foot].pDes = pDes;
-    // this->_data->_legController->commands[foot].vDes = Vec3<float>::Constant(0);
+  // this->_data->_legController->commands[foot].pDes = pDes;
+  // this->_data->_legController->commands[foot].vDes = Vec3<float>::Constant(0);
+  this->_data->_legController->commands[foot].tauFeedForward = tau;
 
+  if (!is_start)
+  {
     if (flag == 0)
-    {
-      footSwingTrajectories[foot].setInitialPosition(p0);
-      footSwingTrajectories[foot].setFinalPosition(p1);
-
-      //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes1(0)) + (1. - progress) * pDes0(0);
-      //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes1(1)) + (1. - progress) * pDes0(1);
-      //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes1(2)) + (1. - progress) * pDes0(2);
-      this->_data->_legController->commands[foot].tauFeedForward = tau;
-      //   Vec3<float> L = pDes1 - pDes0;
-      //   this->_data->_legController->commands[foot].vDes = L / duration;
-      footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 5);
-    }
-    else if (flag == 1)
     {
       footSwingTrajectories[foot].setInitialPosition(p1);
       footSwingTrajectories[foot].setFinalPosition(p0);
-      footSwingTrajectories[foot].computeSwingTrajectoryModified(progress, 5, 1);
-      //   this->_data->_legController->commands[foot].pDes[0] = progress * (pDes0(0)) + (1. - progress) * pDes1(0);
-      //   this->_data->_legController->commands[foot].pDes[1] = progress * (pDes0(1)) + (1. - progress) * pDes1(1);
-      //   this->_data->_legController->commands[foot].pDes[2] = progress * (pDes0(2)) + (1. - progress) * pDes1(2);
-      // this->_data->_legController->commands[foot].tauFeedForward = tau;
-      //   Vec3<float> L = pDes0 - pDes1;
-      //   this->_data->_legController->commands[foot].vDes = L / duration;
     }
-
-    
-
-    Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
-    Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
-    // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - this->_data->_quadruped->getHipLocation(foot);
-    // Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-
-    // this->_data->_legController->commands[foot].pDes = pDesLeg;
-    // this->_data->_legController->commands[foot].vDes = vDesLeg;
-    // Kp = {150, 0, 0, 0, 150, 0, 0, 0, 150};
-    // Kp_stance = Kp;
-
-    // Kd = {3, 0, 0, 0, 3, 0, 0, 0, 3};
-    // Kd_stance = Kd;
-    this->_data->_legController->commands[foot].pDes = pDesFootWorld;
-    this->_data->_legController->commands[foot].vDes = vDesFootWorld;
-    // data._legController->commands[foot].kpCartesian = Kp;
-    // data._legController->commands[foot].kdCartesian = Kd;
+    else if (flag == 1)
+    {
+      footSwingTrajectories[foot].setInitialPosition(p0);
+      footSwingTrajectories[foot].setFinalPosition(p1);
+    }
   }
+
+  footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 2);
+
+  Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
+  Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+  // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) -
+  // this->_data->_quadruped->getHipLocation(foot); Vec3<float> vDesLeg = seResult.rBody *
+  // (vDesFootWorld - seResult.vWorld);
+
+  // this->_data->_legController->commands[foot].pDes = pDesLeg;
+  // this->_data->_legController->commands[foot].vDes = vDesLeg;
+  this->_data->_legController->commands[foot].pDes = pDesFootWorld;
+  this->_data->_legController->commands[foot].vDes = vDesFootWorld;
+  this->_data->debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesFootWorld);
+  this->_data->debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesFootWorld);
 
   // Vec3<float> p_des = footSwingTrajectories[0].getPosition();
   // Vec3<float> v_des = footSwingTrajectories[0].getVelocity();
@@ -332,6 +390,99 @@ void FSM_State_Testing<T>::test2()
   // Vec3<float> p_act = this->_data->_legController->datas[0].p;
   // Vec3<float> q_eval = this->findAngles(0, p_act);
   // cout << "q_eval: " << q_eval << endl;
+
+  static Vec3<T> q(0, 0, 0);
+  static Vec3<T> dq(0, 0, 0);
+  static Vec3<T> ddq(0, 0, 0);
+  static T dt = 0.002;
+
+  Mat3<T> M = _A.block(6, 6, 3, 3);
+  Vec3<T> C = _coriolis.block(6, 0, 3, 1);
+  Vec3<T> G = _grav.block(6, 0, 3, 1);
+  Vec3<T> tau_final(0, 0, 0);
+  tau_final = tau + this->_data->_legController->datas[0].J.transpose() *
+                      (this->_data->_legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->_legController->datas[0].p) +
+                       this->_data->_legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->_legController->datas[0].v));
+
+  ddq = M.inverse() * (tau_final - C - G);
+  dq = dq + ddq * dt;
+
+  // ROS_INFO("time");
+
+  // cout << "C+G: " << C + G << endl;
+  // cout << "M: " << M << endl;
+  cout << "ddq: " << ddq << endl;
+  cout << "dq: " << dq << endl;
+  // cout << "tau_final: " << tau_final << endl;
+}
+
+template<typename T>
+void FSM_State_Testing<T>::gravTest()
+{
+  float rate = 0.5;
+  auto& seResult = this->_data->_stateEstimator->getResult();
+  static bool is_start = true;
+
+  Vec3<float> p0(0, -0.15, -0.2);
+  Vec3<float> p1(0, -0.25, -0.2);
+
+  Vec3<float> pDes(0.047, -0.15, -0.073);
+
+  static bool flag = false;
+
+  T progress = rate * iter * this->_data->staticParams->controller_dt;
+
+  auto _model = this->_data->_quadruped->buildModel();
+
+  FBModelState<float> _state;
+  _state.q = DVec<T>::Zero(cheetah::num_act_joint);
+  _state.qd = DVec<T>::Zero(cheetah::num_act_joint);
+
+  _state.bodyOrientation = seResult.orientation;
+  _state.bodyPosition = seResult.position;
+  DVec<T> _full_config(cheetah::num_act_joint + 7);
+
+  _full_config.setZero();
+
+  for (size_t i(0); i < 3; ++i)
+  {
+    _state.bodyVelocity[i] = seResult.omegaBody[i];
+    _state.bodyVelocity[i + 3] = seResult.vBody[i];
+
+    for (size_t leg(0); leg < 4; ++leg)
+    {
+      _state.q[3 * leg + i] = this->_data->_legController->datas[leg].q[i];
+      _state.qd[3 * leg + i] = this->_data->_legController->datas[leg].qd[i];
+
+      _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
+    }
+  }
+
+  _model.setState(_state);
+
+  _model.contactJacobians();
+  _model.massMatrix();
+  _model.generalizedGravityForce();
+  _model.generalizedCoriolisForce();
+
+  auto _A = _model.getMassMatrix();
+  auto _grav = _model.getGravityForce();
+  auto _coriolis = _model.getCoriolisForce();
+
+  cout << "grav: " << _grav << endl;
+  Vec3<float> tau = _grav.segment(6, 3);
+
+  cout << "grav leg0: " << tau << endl;
+
+  this->_data->_legController->setLegEnabled(0, true);
+  this->_data->_legController->setLegEnabled(1, false);
+  this->_data->_legController->setLegEnabled(2, false);
+  this->_data->_legController->setLegEnabled(3, false);
+
+  for (int foot = 0; foot < 4; foot++)
+  {
+    this->_data->_legController->commands[foot].tauFeedForward = tau;
+  }
 }
 
 /**
@@ -340,31 +491,38 @@ void FSM_State_Testing<T>::test2()
  *
  * @return the enumerated FSM state name to transition into
  */
-template <typename T>
+template<typename T>
 FSM_StateName FSM_State_Testing<T>::checkTransition()
 {
   this->nextStateName = this->stateName;
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
-  case K_TESTING:
-    break;
+    case K_TESTING:
+      break;
 
-  case K_STAND_UP:
-    // Requested switch to Stand Up
-    this->nextStateName = FSM_StateName::STAND_UP;
-    break;
+    case K_STAND_UP:
+      // Requested switch to Stand Up
+      this->nextStateName = FSM_StateName::STAND_UP;
+      break;
 
-  case K_PASSIVE: // normal c
-    this->nextStateName = FSM_StateName::PASSIVE;
-    break;
+    case K_PASSIVE: // normal c
+      this->nextStateName = FSM_StateName::PASSIVE;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
-              << K_TESTING << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+    case K_BALANCE_STAND:
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
+      break;
+
+    case K_VISION:
+      this->nextStateName = FSM_StateName::VISION;
+      break;
+
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -377,22 +535,30 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_Testing<T>::transition()
 {
   // Finish Transition
   switch (this->nextStateName)
   {
-  case FSM_StateName::PASSIVE: // normal
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::PASSIVE: // normal
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::STAND_UP:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::STAND_UP:
+      this->transitionData.done = true;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
+    case FSM_StateName::BALANCE_STAND:
+      this->transitionData.done = true;
+      break;
+
+    case FSM_StateName::VISION:
+      this->transitionData.done = true;
+      break;
+
+    default:
+      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM
@@ -402,7 +568,7 @@ TransitionData<T> FSM_State_Testing<T>::transition()
 /**
  * Cleans up the state information on exiting the state.
  */
-template <typename T>
+template<typename T>
 void FSM_State_Testing<T>::onExit()
 {
   // Nothing to clean up when exiting
@@ -411,13 +577,13 @@ void FSM_State_Testing<T>::onExit()
   this->_data->_legController->setEnabled(false);
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_Testing<T>::LocomotionControlStep()
 {
   // Contact state logic
   // estimateContact();
 
-  CMPC->run<T>(*this->_data);
+  CMPC->run(*this->_data);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];
@@ -432,7 +598,7 @@ void FSM_State_Testing<T>::LocomotionControlStep()
     Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
   }
 
-  if (this->_data->userParameters->use_wbc > 0.9)
+  if (this->_data->userParameters->use_wbc)
   {
     _wbc_data->pBody_des = CMPC->pBody_des;
     _wbc_data->vBody_des = CMPC->vBody_des;
@@ -454,7 +620,7 @@ void FSM_State_Testing<T>::LocomotionControlStep()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    //originally commented
+    // originally commented
     this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
     this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
 
@@ -463,7 +629,7 @@ void FSM_State_Testing<T>::LocomotionControlStep()
   }
 }
 
-template <typename T>
+template<typename T>
 bool FSM_State_Testing<T>::locomotionSafe()
 {
   auto& seResult = this->_data->_stateEstimator->getResult();

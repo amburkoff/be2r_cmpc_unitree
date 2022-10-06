@@ -9,6 +9,9 @@ OffsetDurationGaitContact::OffsetDurationGaitContact(int nSegment, Vec4<int> off
   // allocate memory for MPC gait table
   _mpc_table = new int[nSegment * 4];
 
+  // ROS_INFO_STREAM(nSegment << " gait period");
+  std::cout << name << " gait period: " << nSegment << std::endl;
+
   // nSegment - количество сегментов мпс = gait period
 
   // offset и duration stance в диапазоне (0 -- 1)
@@ -206,4 +209,30 @@ void OffsetDurationGaitContact::restoreDefaults()
   _durations = _durations_defaults;
   _offsets = _offsets_defaults;
   _offsetsFloat = _offsetsF_defaults;
+}
+
+void OffsetDurationGaitContact::updatePeriod(int n)
+{
+  if (n == this->_nIterations || _phase != 0)
+  {
+    return;
+  }
+
+  _offsets = (float(n) * _offsetsFloat).cast<int>();
+  _durations = (float(n) * _durationsFloat).cast<int>();
+  std::cout << "offsets is " << _offsets(1) << " " << _offsets(2) << std::endl;
+  std::cout << "duration is " << _durations(1) << " " << _durations(2) << std::endl;
+  _nIterations = n;
+
+  delete[] _mpc_table;
+
+  _mpc_table = new int[_nIterations * 4];
+  // offset и duration в диапазоне горизонта (0 -- 1)
+  _durations_defaults = _durations;
+  _offsets_defaults = _offsets;
+  // _durationsF_defaults
+  // _offsetsF_defaults
+
+  _stance = _durations[0];
+  _swing = _nIterations - _durations[0];
 }

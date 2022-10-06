@@ -8,9 +8,6 @@
 #include <WBC/WBIC/KinWBC.hpp>
 #include <WBC/WBIC/WBIC.hpp>
 
-#include "lcm_msgs/wbc_test_data_t.hpp"
-#include <lcm/lcm-cpp.hpp>
-
 #define WBCtrl WBC_Ctrl<T>
 
 template<typename T>
@@ -63,8 +60,5 @@ protected:
   // std::vector<T> _Kp_joint_swing, _Kd_joint_swing;
 
   unsigned long long _iter;
-
-  lcm::LCM _wbcLCM;
-  wbc_test_data_t _wbc_data_lcm;
 };
 #endif

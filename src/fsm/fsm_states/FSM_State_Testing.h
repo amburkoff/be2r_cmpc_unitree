@@ -13,7 +13,7 @@
 /**
  *
  */
-template <typename T>
+template<typename T>
 class FSM_State_Testing : public FSM_State<T>
 {
 public:
@@ -26,7 +26,9 @@ public:
   void run();
 
   void test1();
-  void test2();
+  void test2(float h);
+  void gravTest();
+  void safeJointTest();
 
   // Checks for any transition triggers
   FSM_StateName checkTransition();
@@ -42,6 +44,7 @@ public:
   CMPCLocomotion* CMPC;
   WBC_Ctrl<T>* _wbc_ctrl;
   LocomotionCtrlData<T>* _wbc_data;
+  FloatingBaseModel<T> _model;
   void LocomotionControlStep();
 
   bool locomotionSafe();

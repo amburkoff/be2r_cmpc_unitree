@@ -69,10 +69,7 @@ struct PathVisualization
   size_t num_points = 0;
   Vec4<float> color;
   Vec3<float> position[VISUALIZATION_MAX_PATH_POINTS];
-  void clear()
-  {
-    num_points = 0;
-  }
+  void clear() { num_points = 0; }
 };
 
 /*!
@@ -106,14 +103,16 @@ struct MeshVisualization
  */
 struct VisualizationData
 {
-  size_t num_paths = 0, num_arrows = 0, num_cones = 0, num_spheres = 0,
-         num_blocks = 0, num_meshes = 0;
+  size_t num_paths = 0, num_arrows = 0, num_cones = 0, num_spheres = 0, num_blocks = 0,
+         num_meshes = 0;
   SphereVisualization spheres[VISUALIZATION_MAX_ITEMS];
   BlockVisualization blocks[VISUALIZATION_MAX_ITEMS];
   ArrowVisualization arrows[VISUALIZATION_MAX_ITEMS];
   ConeVisualization cones[VISUALIZATION_MAX_ITEMS];
   PathVisualization paths[VISUALIZATION_MAX_PATHS];
   MeshVisualization meshes[VISUALIZATION_MAX_MESHES];
+  Vec3<float> pDes[4];
+  Vec3<float> vDes[4];
 
   /*!
    * Remove all debug data

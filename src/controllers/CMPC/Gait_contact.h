@@ -20,6 +20,7 @@ public:
   virtual int getCurrentGaitIteration() = 0;
   virtual void earlyContactHandle(Vec4<uint8_t>, int, int) {}
   virtual void restoreDefaults() {}
+  virtual void updatePeriod(int) {}
 
 protected:
   std::string _name;
@@ -44,6 +45,7 @@ public:
   void debugPrint();
   void earlyContactHandle(Vec4<uint8_t> footSensorState, int iterationsBetweenMPC, int currentIteration);
   void restoreDefaults();
+  void updatePeriod(int);
 
   bool is_contact[4] = {};
   float delta_t[4] = {};

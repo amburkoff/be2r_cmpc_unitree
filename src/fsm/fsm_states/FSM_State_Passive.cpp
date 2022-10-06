@@ -12,21 +12,24 @@
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template <typename T>
+template<typename T>
 FSM_State_Passive<T>::FSM_State_Passive(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::PASSIVE, "PASSIVE")
 {
   // Do nothing
   // Set the pre controls safety checks
-  this->checkSafeOrientation = false;
+  // this->checkSafeOrientation = false;
 
   // Post control safety checks
-  this->checkPDesFoot = false;
-  this->checkForceFeedForward = false;
+  // this->checkPDesFoot = false;
+  // this->checkForceFeedForward = false;
+
+  this->turnOffAllSafetyChecks();
+  // this->checkJointLimits = true;
 
   this->_control_fsm_data = _controlFSMData;
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_Passive<T>::onEnter()
 {
   // Default is to not transition
@@ -44,10 +47,16 @@ void FSM_State_Passive<T>::onEnter()
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
-template <typename T>
+template<typename T>
 void FSM_State_Passive<T>::run()
 {
   // Do nothing, all commands should begin as zeros
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    this->_control_fsm_data->debug->last_p_local_stance[i] = ros::toMsg(this->_control_fsm_data->_legController->datas[i].p + this->_control_fsm_data->_quadruped->getHipLocation(i));
+  }
+
   testTransition();
   this->_metric->debugPrint();
 }
@@ -58,39 +67,15 @@ void FSM_State_Passive<T>::run()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_Passive<T>::testTransition()
 {
   this->transitionData.done = true;
 
   Mat3<float> Kd;
 
-  //for sim
-  // Kd << 1, 0, 0,
-  //     0, 4, 0,
-  //     0, 0, 4;
-
-  //for real
-  // Kd << 0.65, 0, 0,
-  //     0, 0.65, 0,
-  //     0, 0, 0.65;
-
-  // float threshold = 5;
-
   for (size_t i = 0; i < 4; i++)
   {
-    // if (counter < 1500)
-    // {
-    //   this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 2;
-    //   ROS_INFO("THRESHOLD");
-
-    //   counter++;
-    // }
-    // else
-    // {
-    // this->_control_fsm_data->_legController->commands[i].kdJoint = Kd * 0;
-    // }
-
     this->_control_fsm_data->_legController->commands[i].kpJoint = Mat3<T>::Zero();
     this->_control_fsm_data->_legController->commands[i].kdJoint = Mat3<T>::Zero();
 
@@ -114,14 +99,14 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
  *
  * @return the enumerated FSM state name to transition into
  */
-template <typename T>
+template<typename T>
 FSM_StateName FSM_State_Passive<T>::checkTransition()
 {
   this->nextStateName = this->stateName;
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
   case K_PASSIVE: // normal c (0)
     // Normal operation for state based transitions
@@ -168,7 +153,7 @@ FSM_StateName FSM_State_Passive<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_Passive<T>::transition()
 {
   // Finish Transition
@@ -181,7 +166,7 @@ TransitionData<T> FSM_State_Passive<T>::transition()
 /**
  * Cleans up the state information on exiting the state.
  */
-template <typename T>
+template<typename T>
 void FSM_State_Passive<T>::onExit()
 {
   // Nothing to clean up when exiting

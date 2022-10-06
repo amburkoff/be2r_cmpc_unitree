@@ -1,10 +1,12 @@
 #include "WBC_Ctrl.hpp"
+#include "FloatingBaseModel.h"
+#include "WBC/WBC.hpp"
 #include <Utilities/Timer.h>
 #include <Utilities/Utilities_print.h>
 
-template <typename T>
+template<typename T>
 WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model)
-    : _full_config(cheetah::num_act_joint + 7), _tau_ff(cheetah::num_act_joint), _des_jpos(cheetah::num_act_joint), _des_jvel(cheetah::num_act_joint), _wbcLCM(getLcmUrl(255))
+  : _full_config(cheetah::num_act_joint + 7), _tau_ff(cheetah::num_act_joint), _des_jpos(cheetah::num_act_joint), _des_jvel(cheetah::num_act_joint)
 {
   _iter = 0;
   _full_config.setZero();
@@ -30,7 +32,7 @@ WBC_Ctrl<T>::WBC_Ctrl(FloatingBaseModel<T> model)
   _state.qd = DVec<T>::Zero(cheetah::num_act_joint);
 }
 
-template <typename T>
+template<typename T>
 WBC_Ctrl<T>::~WBC_Ctrl()
 {
   delete _kin_wbc;
@@ -54,7 +56,7 @@ WBC_Ctrl<T>::~WBC_Ctrl()
   _contact_list.clear();
 }
 
-template <typename T>
+template<typename T>
 void WBC_Ctrl<T>::_ComputeWBC()
 {
   // TEST
@@ -65,7 +67,7 @@ void WBC_Ctrl<T>::_ComputeWBC()
   _wbic->MakeTorque(_tau_ff, _wbic_data);
 }
 
-template <typename T>
+template<typename T>
 void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
 {
   ++_iter;
@@ -79,35 +81,72 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   // WBC Computation
   _ComputeWBC();
 
+  // static Vec3<T> q(0, 0, 0);
+  // static Vec3<T> dq(0, 0, 0);
+  // static Vec3<T> ddq(0, 0, 0);
+  // static T dt = 0.002;
+
+  // Mat3<T> M = _A.block(6, 6, 3, 3);
+  // Vec3<T> C = _coriolis.block(6, 0, 3, 1);
+  // Vec3<T> G = _grav.block(6, 0, 3, 1);
+  // // Vec3<T> tau = data._legController->commands[0].tauFeedForward;
+  // Vec3<T> tau(0, 0, 0);
+  // tau << _tau_ff[0], _tau_ff[1], _tau_ff[2];
+
+  // ddq = M.inverse() * (tau - C - G);
+  // dq = dq + ddq * dt;
+
+  // // cout << "M: " << M << endl;
+  // // cout << "C: " << C << endl;
+  // // cout << "G: " << G << endl;
+  // // cout << "C+G: " << C + G << endl;
+  // // cout << "tau: " << tau << endl;
+  // // cout << "ddq: " << ddq << endl;
+
+  // data.debug->all_legs_info.leg[0].joint[0].dq_raw = dq[0];
+  // data.debug->all_legs_info.leg[0].joint[1].dq_raw = dq[1];
+  // data.debug->all_legs_info.leg[0].joint[2].dq_raw = dq[2];
+
+  // cout << "ddq: " << ddq << endl;
+  // cout << "dq: " << dq << endl;
+
   // Update Leg Command
   _UpdateLegCMD(data);
 }
 
-template <typename T>
+template<typename T>
 void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
 {
   LegControllerCommand<T>* cmd = data._legController->commands;
-  // Vec4<T> contact = data._stateEstimator->getResult().contactEstimate;
+  Vec4<T> contact = data._stateEstimator->getResult().contactEstimate;
 
   for (size_t leg(0); leg < cheetah::num_leg; ++leg)
   {
     cmd[leg].zero();
+
     for (size_t jidx(0); jidx < cheetah::num_leg_joint; ++jidx)
     {
       cmd[leg].tauFeedForward[jidx] = _tau_ff[cheetah::num_leg_joint * leg + jidx];
       cmd[leg].qDes[jidx] = _des_jpos[cheetah::num_leg_joint * leg + jidx];
       cmd[leg].qdDes[jidx] = _des_jvel[cheetah::num_leg_joint * leg + jidx];
 
-      cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
       cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
+      cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
 
-      // if(contact[leg] > 0.){ // Contact
-      // cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
-      // cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
-      //}else{
-      // cmd[leg].kpJoint(jidx, jidx) = _Kp_joint_swing[jidx];
-      // cmd[leg].kdJoint(jidx, jidx) = _Kd_joint_swing[jidx];
-      //}
+      // // Contact
+      // if (contact[leg] > 0.)
+      // {
+      //   cmd[leg].zero();
+      //   cmd[leg].tauFeedForward[jidx] = _tau_ff[cheetah::num_leg_joint * leg + jidx];
+      //   cmd[leg].qDes[jidx] = _des_jpos[cheetah::num_leg_joint * leg + jidx];
+      //   cmd[leg].qdDes[jidx] = _des_jvel[cheetah::num_leg_joint * leg + jidx];
+
+      //   cmd[leg].kpJoint(jidx, jidx) = _Kp_joint[jidx];
+      //   cmd[leg].kdJoint(jidx, jidx) = _Kd_joint[jidx];
+      // }
+      // else
+      // {
+      // }
     }
   }
 
@@ -128,7 +167,7 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
   // data._legController->is_low_level = true;
 }
 
-template <typename T>
+template<typename T>
 void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est,
                                const LegControllerData<T>* leg_data)
 {
@@ -155,6 +194,7 @@ void WBC_Ctrl<T>::_UpdateModel(const StateEstimate<T>& state_est,
   _model.generalizedGravityForce();
   _model.generalizedCoriolisForce();
 
+  _A.setZero(18, 18);
   _A = _model.getMassMatrix();
   _grav = _model.getGravityForce();
   _coriolis = _model.getCoriolisForce();

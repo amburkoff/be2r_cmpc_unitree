@@ -15,11 +15,12 @@ using namespace std;
 /*!
  * Zero the leg command so the leg will not output torque
  */
-template <typename T>
+template<typename T>
 void LegControllerCommand<T>::zero()
 {
   tauFeedForward = Vec3<T>::Zero();
   forceFeedForward = Vec3<T>::Zero();
+  tauSafe = Vec3<T>::Zero();
   qDes = Vec3<T>::Zero();
   qdDes = Vec3<T>::Zero();
   pDes = Vec3<T>::Zero();
@@ -35,7 +36,7 @@ void LegControllerCommand<T>::zero()
 /*!
  * Zero the leg data
  */
-template <typename T>
+template<typename T>
 void LegControllerData<T>::zero()
 {
   q = Vec3<T>::Zero();
@@ -51,7 +52,7 @@ void LegControllerData<T>::zero()
  * the control code is confused and doesn't change the leg command, the legs
  * won't remember the last command.
  */
-template <typename T>
+template<typename T>
 void LegController<T>::zeroCommand()
 {
   for (auto& cmd : commands)
@@ -71,8 +72,8 @@ void LegController<T>::zeroCommand()
  * gain is Nm/(rad/s), and for the Cheetah 3 it is N/m. You still must call
  * updateCommand for this command to end up in the low-level command data!
  */
-template <typename T>
-void LegController<T>::edampCommand(RobotType robot, T gain)
+template<typename T>
+void LegController<T>::edampCommand(T gain)
 {
   zeroCommand();
 
@@ -82,15 +83,19 @@ void LegController<T>::edampCommand(RobotType robot, T gain)
     {
       commands[leg].kdJoint(axis, axis) = gain;
     }
+
+    _legEnabled[leg] = true;
   }
 }
 
 /*!
  * Update the "leg data" from a SPIne board message
  */
-template <typename T>
+template<typename T>
 void LegController<T>::updateData(const SpiData* spiData)
 {
+  static float fc = 0.8;
+
   for (int leg = 0; leg < 4; leg++)
   {
     // q:
@@ -114,13 +119,13 @@ void LegController<T>::updateData(const SpiData* spiData)
 /*!
  * Update the "leg command" for the SPIne board message
  */
-template <typename T>
+template<typename T>
 void LegController<T>::updateCommand(SpiCommand* spiCommand)
 {
   for (int leg = 0; leg < 4; leg++)
   {
     // tauFF
-    Vec3<T> legTorque = commands[leg].tauFeedForward; //vision, wbc, jposinit and control, invdyn,
+    Vec3<T> legTorque = commands[leg].tauFeedForward; // vision, wbc, jposinit and control, invdyn,
 
     // forceFF
     Vec3<T> footForce = commands[leg].forceFeedForward;
@@ -146,6 +151,7 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
 
     // Torque
     legTorque += datas[leg].J.transpose() * footForce;
+    // legTorque += commands[leg].tauSafe;
 
     // set command:
     spiCommand->tau_abad_ff[leg] = legTorque(0);
@@ -162,7 +168,7 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     spiCommand->kd_hip[leg] = commands[leg].kdJoint(1, 1);
     spiCommand->kd_knee[leg] = commands[leg].kdJoint(2, 2);
 
-    //is low level control -> change signs
+    // is low level control -> change signs
     if (is_low_level)
     {
       spiCommand->q_des_abad[leg] = commands[leg].qDes(0);
@@ -185,7 +191,8 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     }
 
     // estimate torque
-    datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) + commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
+    datas[leg].tauEstimate = legTorque + commands[leg].kpJoint * (commands[leg].qDes - datas[leg].q) +
+                             commands[leg].kdJoint * (commands[leg].qdDes - datas[leg].qd);
 
     spiCommand->flags[leg] = _legEnabled[leg];
 
@@ -219,7 +226,7 @@ template class LegController<float>;
  * Compute the position of the foot and its Jacobian.  This is done in the local
  * leg coordinate system. If J/p are NULL, the calculation will be skipped.
  */
-template <typename T>
+template<typename T>
 void computeLegJacobianAndPosition(Quadruped<T>& quad, Vec3<T>& q, Mat3<T>* J, Vec3<T>* p, int leg)
 {
   T l1 = quad._abadLinkLength;
@@ -260,6 +267,14 @@ void computeLegJacobianAndPosition(Quadruped<T>& quad, Vec3<T>& q, Mat3<T>* J, V
   }
 }
 
-template void computeLegJacobianAndPosition<double>(Quadruped<double>& quad, Vec3<double>& q, Mat3<double>* J, Vec3<double>* p, int leg);
+template void computeLegJacobianAndPosition<double>(Quadruped<double>& quad,
+                                                    Vec3<double>& q,
+                                                    Mat3<double>* J,
+                                                    Vec3<double>* p,
+                                                    int leg);
 
-template void computeLegJacobianAndPosition<float>(Quadruped<float>& quad, Vec3<float>& q, Mat3<float>* J, Vec3<float>* p, int leg);
+template void computeLegJacobianAndPosition<float>(Quadruped<float>& quad,
+                                                   Vec3<float>& q,
+                                                   Mat3<float>* J,
+                                                   Vec3<float>* p,
+                                                   int leg);

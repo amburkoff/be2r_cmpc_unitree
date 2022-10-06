@@ -1,11 +1,10 @@
 #include "Gait.h"
 
 // Offset - Duration Gait
-OffsetDurationGait::OffsetDurationGait(int nSegment, Vec4<int> offsets, Vec4<int> durations,
-                                       const std::string& name)
-  : _offsets(offsets.array())
-  , _durations(durations.array())
-  , _nIterations(nSegment) // == horizon
+OffsetDurationGait::OffsetDurationGait(int nSegment, Vec4<int> offsets, Vec4<int> durations, const std::string& name)
+  : _offsets(offsets.array()),
+    _durations(durations.array()),
+    _nIterations(nSegment) // == horizon
 {
 
   _name = name;
@@ -24,8 +23,7 @@ OffsetDurationGait::OffsetDurationGait(int nSegment, Vec4<int> offsets, Vec4<int
   _swing = nSegment - durations[0];
 }
 
-MixedFrequncyGait::MixedFrequncyGait(int nSegment, Vec4<int> periods, float duty_cycle,
-                                     const std::string& name)
+MixedFrequncyGait::MixedFrequncyGait(int nSegment, Vec4<int> periods, float duty_cycle, const std::string& name)
 {
   _name = name;
   _duty_cycle = duty_cycle;
@@ -216,8 +214,7 @@ void OffsetDurationGait::setIterations(int iterationsPerMPC, int currentIteratio
   // Текущая итерация диапазон (0 - (_nIterations-1))
   _iteration = (currentIteration / iterationsPerMPC) % _nIterations;
   // Фаза походки
-  _phase = (float)(currentIteration % (iterationsPerMPC * _nIterations)) /
-           (float)(iterationsPerMPC * _nIterations);
+  _phase = (float)(currentIteration % (iterationsPerMPC * _nIterations)) / (float)(iterationsPerMPC * _nIterations);
   //  printf("phase: %.3f\n", _phase);
   //  printf("iteration: %d\n", _iteration);
 }
@@ -246,10 +243,7 @@ float OffsetDurationGait::getCurrentSwingTime(float dtMPC, int leg)
   return dtMPC * _swing;
 }
 
-float MixedFrequncyGait::getCurrentSwingTime(float dtMPC, int leg)
-{
-  return dtMPC * (1. - _duty_cycle) * _periods[leg];
-}
+float MixedFrequncyGait::getCurrentSwingTime(float dtMPC, int leg) { return dtMPC * (1. - _duty_cycle) * _periods[leg]; }
 
 float OffsetDurationGait::getCurrentStanceTime(float dtMPC, int leg)
 {
@@ -257,17 +251,13 @@ float OffsetDurationGait::getCurrentStanceTime(float dtMPC, int leg)
   return dtMPC * _stance;
 }
 
-float MixedFrequncyGait::getCurrentStanceTime(float dtMPC, int leg)
-{
-  return dtMPC * _duty_cycle * _periods[leg];
-}
+float MixedFrequncyGait::getCurrentStanceTime(float dtMPC, int leg) { return dtMPC * _duty_cycle * _periods[leg]; }
 
 void OffsetDurationGait::debugPrint() {}
 
 void MixedFrequncyGait::debugPrint() {}
 
-void OffsetDurationGait::earlyContactHandle(Vec4<uint8_t> footSensorState, int iterationsBetweenMPC,
-                                            int currentIteration)
+void OffsetDurationGait::earlyContactHandle(Vec4<uint8_t> footSensorState, int iterationsBetweenMPC, int currentIteration)
 {
   for (long leg = 0; leg < 4; leg++)
   {
@@ -275,27 +265,13 @@ void OffsetDurationGait::earlyContactHandle(Vec4<uint8_t> footSensorState, int i
     if ((getSwingState()[leg] > 0.75f) && (footSensorState(leg) == 1))
     {
       // Уменьшить оффсет, увеличить duration на ту же величину
-      std::cout << "SWING STATE before" << getSwingState()[leg] << std::endl;
-      float difference = _offsetsFloat(leg) - _phase < -0.001f ? _offsetsFloat(leg) - _phase + 1.0f
-                                                               : _offsetsFloat(leg) - _phase;
-      std::cout << "difference in phase " << difference << std::endl;
-      std::cout << "phase" << _phase << std::endl;
-      std::cout << "offset [ " << leg << "] " << _offsetsFloat(leg) << std::endl;
-      std::cout << "duration before [ " << leg << "] " << _durationsFloat(leg) << std::endl;
+      float difference = _offsetsFloat(leg) - _phase < -0.001f ? _offsetsFloat(leg) - _phase + 1.0f : _offsetsFloat(leg) - _phase;
+
       _offsetsFloat(leg) -= difference * 1.0001;
-      //      _offsets(leg) = int(_offsetsFloat(leg)) * _nIterations;
-      //      if (_offsetsFloat(leg) == 0.5f)
-      //        _durationsFloat(leg) += difference;
-      //      if (_offsetsFloat(leg) <= 0.01f)
       _durationsFloat(leg) += difference;
 
       _durations(leg) = int(_durationsFloat(leg) * float(_nIterations));
       _offsets(leg) = int(_offsetsFloat(leg) * float(_nIterations));
-      //      std::cout << "_durations(leg)" << _durations(leg) << std::endl;
-      std::cout << "offset after [ " << leg << "] " << _offsetsFloat(leg) << std::endl;
-      std::cout << "duration after [ " << leg << "] " << _durationsFloat(leg) << std::endl;
-      std::cout << "SWING STATE after" << getSwingState()[leg] << std::endl;
-      std::cout << "STANCE STATE after" << getContactState()[leg] << std::endl;
     }
     if ((getSwingState()[leg] < 0.25f) && (footSensorState(leg) == 1))
     {
@@ -309,4 +285,26 @@ void OffsetDurationGait::restoreDefaults()
   _durations = _durations_defaults;
   _offsets = _offsets_defaults;
   _offsetsFloat = _offsetsF_defaults;
+}
+
+void OffsetDurationGait::updatePeriod(int n)
+{
+  if (n == this->_nIterations || _phase != 0)
+    return;
+
+  _offsets = (float(n) * _offsetsFloat).cast<int>();
+  _durations = (float(n) * _durationsFloat).cast<int>();
+  std::cout << "offsets is " << _offsets(1) << " " << _offsets(2) << std::endl;
+  std::cout << "duration is " << _durations(1) << " " << _durations(2) << std::endl;
+  _nIterations = n;
+
+  delete[] _mpc_table;
+
+  _mpc_table = new int[_nIterations * 4];
+  // offset и duration в диапазоне горизонта (0 -- 1)
+  _durations_defaults = _durations;
+  _offsets_defaults = _offsets;
+
+  _stance = _durations[0];
+  _swing = _nIterations - _durations[0];
 }

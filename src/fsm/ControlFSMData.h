@@ -6,9 +6,10 @@
 #include "Controllers/LegController.h"
 #include "Controllers/StateEstimatorContainer.h"
 #include "Dynamics/Quadruped.h"
-#include <ControlParameters/RobotParameters.h>
+#include "ros_read_param.h"
 #include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
 #include <debug.hpp>
+#include <ros/ros.h>
 
 /**
  *
@@ -22,9 +23,9 @@ struct ControlFSMData
   LegController<T>* _legController;
   GaitScheduler<T>* _gaitScheduler;
   DesiredStateCommand<T>* _desiredStateCommand;
-  RobotControlParameters* controlParameters;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters;
   VisualizationData* visualizationData;
+  StaticParams* staticParams;
   Debug* debug;
 };
 

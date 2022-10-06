@@ -16,7 +16,7 @@
  * Position and velocity estimator based on a Kalman Filter.
  * This is the algorithm used in Mini Cheetah and Cheetah 3.
  */
-template <typename T>
+template<typename T>
 class LinearKFPositionVelocityEstimator : public GenericEstimator<T>
 {
 public:
@@ -27,13 +27,16 @@ public:
 
 private:
   Eigen::Matrix<T, 18, 1> _xhat;
+  Eigen::Matrix<T, 18, 1> _xhat_;
   Eigen::Matrix<T, 12, 1> _ps;
   Eigen::Matrix<T, 12, 1> _vs;
   Eigen::Matrix<T, 18, 18> _A;
+  Eigen::Matrix<T, 6, 6> _A2;
   Eigen::Matrix<T, 18, 18> _Q0;
   Eigen::Matrix<T, 18, 18> _P;
   Eigen::Matrix<T, 28, 28> _R0;
   Eigen::Matrix<T, 18, 3> _B;
+  Eigen::Matrix<T, 6, 3> _B2;
   Eigen::Matrix<T, 28, 18> _C;
   Vec3<T> a_old;
   Vec3<T> a_filt;
@@ -46,7 +49,7 @@ private:
  * "Cheater" position and velocity estimator which will return the correct position and
  * velocity when running in simulation.
  */
-template <typename T>
+template<typename T>
 class CheaterPositionVelocityEstimator : public GenericEstimator<T>
 {
 public:

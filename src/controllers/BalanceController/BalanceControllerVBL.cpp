@@ -2,10 +2,12 @@
 /*
 +
 +References:
-+   [R1] M. Focchi, A. del Prete, I. Havoutis, R. Featherstone, D. G. Caldwell, and C. Semini. High-slope terrain
++   [R1] M. Focchi, A. del Prete, I. Havoutis, R. Featherstone, D. G. Caldwell, and C. Semini.
+High-slope terrain
 +   locomotion for torque-controlled quadruped robots. Autonomous Robots, 2016.
 +
-+   [R2] R. M. Murray, S. S. Sastry, and L. Zexiang. A Mathematical Introduction to Robotic Manipulation. CRC
++   [R2] R. M. Murray, S. S. Sastry, and L. Zexiang. A Mathematical Introduction to Robotic
+Manipulation. CRC
 +   Press, Inc., Boca Raton, FL, USA, 1st edition, 1994.
 +
 +Cheetah-3-Documentation-Control:
@@ -31,17 +33,6 @@ BalanceControllerVBL::BalanceControllerVBL() : QProblemObj_qpOASES(vblNUM_VARIAB
 
   QPFinished = false;
 
-  lcm = new lcm::LCM("udpm://239.255.76.67:7667?ttl=1");
-  if (lcm->good())
-  {
-    printf("LCM IN BALANCE CONTROL INITIALIZED\n");
-  }
-  else
-  {
-    printf("LCM IN BALANCE CONTROLLER FAILED\n");
-    exit(-1);
-  }
-
   // Eigen QP matrices
   H_eigen.resize(vblNUM_VARIABLES_QP, vblNUM_VARIABLES_QP);
   A_eigen.resize(vblNUM_CONSTRAINTS_QP, vblNUM_VARIABLES_QP);
@@ -55,9 +46,7 @@ BalanceControllerVBL::BalanceControllerVBL() : QProblemObj_qpOASES(vblNUM_VARIAB
 
   /* Model and World parameters and force limits */
   Ig.resize(3, 3);
-  Ig << .35, 0, 0,
-      0, 2.1, 0,
-      0, 0, 2.1;
+  Ig << .35, 0, 0, 0, 2.1, 0, 0, 0, 2.1;
   gravity.resize(3, 1);
 
   direction_normal_flatGround.resize(3, 1);
@@ -165,10 +154,8 @@ BalanceControllerVBL::BalanceControllerVBL() : QProblemObj_qpOASES(vblNUM_VARIAB
 
 /* --------------- Primary Interface ------------------- */
 
-void BalanceControllerVBL::updateProblemData(double* xfb_in,
-                                             double* p_feet_in,
-                                             double* p_feet_desired_in,
-                                             double* rpy_des_in,
+void BalanceControllerVBL::updateProblemData(double* xfb_in, double* p_feet_in,
+                                             double* p_feet_desired_in, double* rpy_des_in,
                                              double* rpy_act_in)
 {
 
@@ -208,10 +195,8 @@ void BalanceControllerVBL::updateProblemData(double* xfb_in,
   nWSR_qpOASES = nWSR_fixed;
 }
 
-void BalanceControllerVBL::SetContactData(double* contact_state_in,
-                                          double* min_forces_in,
-                                          double* max_forces_in,
-                                          double threshold_in,
+void BalanceControllerVBL::SetContactData(double* contact_state_in, double* min_forces_in,
+                                          double* max_forces_in, double threshold_in,
                                           int stance_legs_in)
 {
 
@@ -227,15 +212,6 @@ void BalanceControllerVBL::SetContactData(double* contact_state_in,
   copy_Array_to_Eigen(maxNormalForces_feet, max_forces_in, 4, 0);
   threshold = threshold_in;
   stance_legs = stance_legs_in;
-
-  // Write to LCM
-  for (int i = 0; i < 4; i++)
-  {
-    two_contact_stand_data.contact_state[i] = contact_state_in[i];
-    two_contact_stand_data.minForces[i] = contact_state_in[i] * min_forces_in[i];
-    two_contact_stand_data.maxForces[i] = contact_state_in[i] * max_forces_in[i];
-  }
-  two_contact_stand_data.stance_legs = stance_legs;
 
   calc_lb_ub_qpOASES();
   calc_lbA_ubA_qpOASES();
@@ -254,7 +230,6 @@ void BalanceControllerVBL::solveQP(double* xOpt)
   }
 
   calc_constraint_check();
-  two_contact_stand_data_publish = two_contact_stand_data;
 }
 
 void BalanceControllerVBL::solveQP_nonThreaded(double* xOpt)
@@ -270,8 +245,7 @@ void BalanceControllerVBL::solveQP_nonThreaded(double* xOpt)
   }
   else
   {
-    qp_exit_flag = QProblemObj_qpOASES.init(H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES, ubA_qpOASES, nWSR_qpOASES,
-                                            &cpu_time, xOpt_qpOASES, yOpt_qpOASES, &guessedBounds, &guessedConstraints);
+    qp_exit_flag = QProblemObj_qpOASES.init(H_qpOASES, g_qpOASES, A_qpOASES, lb_qpOASES, ub_qpOASES, lbA_qpOASES, ubA_qpOASES, nWSR_qpOASES, &cpu_time, xOpt_qpOASES, yOpt_qpOASES, &guessedBounds, &guessedConstraints);
   }
 
   QProblemObj_qpOASES.getPrimalSolution(xOpt_qpOASES);
@@ -280,9 +254,6 @@ void BalanceControllerVBL::solveQP_nonThreaded(double* xOpt)
   QProblemObj_qpOASES.getBounds(guessedBounds);
   QProblemObj_qpOASES.getConstraints(guessedConstraints);
 
-  two_contact_stand_data.exit_flag = qp_exit_flag;
-  two_contact_stand_data.nWSR = nWSR_qpOASES;
-  two_contact_stand_data.cpu_time_microseconds = cpu_time * 1.0e6;
   copy_real_t_to_Eigen(xOpt_eigen, xOpt_qpOASES, 12);
 
   // Combine reference control (f_des) and linear control (xOpt_eigen) inputs
@@ -301,7 +272,6 @@ void BalanceControllerVBL::solveQP_nonThreaded(double* xOpt)
   QProblemObj_qpOASES.reset();
 
   calc_constraint_check();
-  two_contact_stand_data_publish = two_contact_stand_data;
 }
 
 /* --------------- Control Math ------------ */
@@ -317,30 +287,13 @@ void BalanceControllerVBL::calc_linear_error()
 
   // Orientation error for data logging purposes
   matrixLogRot(R_b_world_desired * R_b_world.transpose(), orientation_error);
+
+  cout << "s_LQR: " << s_LQR << endl;
 }
 
 void BalanceControllerVBL::calc_constraint_check()
 {
   C_times_f_opt = C_control * xOpt_eigen;
-
-  for (int i = 0; i < vblNUM_VARIABLES_QP; i++)
-  {
-    two_contact_stand_data.f_opt[i] = xOpt_eigen(i);
-    two_contact_stand_data.f_control[i] = xOpt_combined(i);
-    two_contact_stand_data.f_unc[i] = f_unc[i];
-  }
-
-  for (int i = 0; i < 4; i++)
-  {
-    two_contact_stand_data.f_ref[i] = f_ref_world[3 * i + 2];
-  }
-
-  for (int i = 0; i < vblNUM_CONSTRAINTS_QP; i++)
-  {
-    two_contact_stand_data.lbA[i] = lbA_qpOASES[i];
-    two_contact_stand_data.ubA[i] = ubA_qpOASES[i];
-    two_contact_stand_data.C_times_f[i] = C_times_f_opt(i);
-  }
 }
 
 /* --------------- QP Matrices and Problem Data ------------ */
@@ -381,8 +334,10 @@ void BalanceControllerVBL::update_A_LQR()
   }
   A_LQR.block<3, 3>(9, 6) << tempBlock;
 
+  cout << "A: " << A_LQR << endl;
+
   /* NOTE: WE ASSUME THAT DESIRED ANGULAR VELOCITY IS ZERO
-  if desired angular velocity of the body is nonzero, an additional block needs to be 
+  if desired angular velocity of the body is nonzero, an additional block needs to be
   added at A_LQR.block<3,3>(9,9) too account for Coriolis term */
 }
 
@@ -393,7 +348,9 @@ void BalanceControllerVBL::update_B_LQR()
   for (int leg = 0; leg < 4; leg++)
   {
     if (contact_state(leg) > threshold)
+    {
       contact_legs++;
+    }
   }
   B_LQR.resize(vblNUM_VARIABLES_QP, 3 * contact_legs);
   B_LQR.setZero();
@@ -405,21 +362,24 @@ void BalanceControllerVBL::update_B_LQR()
   for (int leg = 0; leg < 4; leg++)
   {
     if (stance_legs == 5 && (leg == 0 || leg == 3))
-    { //zero B columns for FR and BL legs
+    {
+      // zero B columns for FR and BL legs
       tempSkewMatrix3.setZero();
       B_LQR.block<3, 3>(3, 3 * leg_cnt) << tempSkewMatrix3;
       B_LQR.block<3, 3>(9, 3 * leg_cnt) << tempSkewMatrix3;
       leg_cnt++;
     }
     else if (contact_state(leg) > threshold)
-    { // Compute B_LQR using only legs in contact
+    {
+      // Compute B_LQR using only legs in contact
       Eigen::VectorXd rd;
       rd.resize(3, 1);
       tempSkewMatrix3.setIdentity();
       B_LQR.block<3, 3>(3, 3 * leg_cnt) << 1 / mass * tempSkewMatrix3;
       rd << p_feet_desired.col(leg);
       crossMatrix(tempSkewMatrix3, rd);
-      B_LQR.block<3, 3>(9, 3 * leg_cnt) << Ig.inverse() * R_b_world_desired.transpose() * tempSkewMatrix3;
+      B_LQR.block<3, 3>(9, 3 * leg_cnt)
+        << Ig.inverse() * R_b_world_desired.transpose() * tempSkewMatrix3;
       leg_cnt++;
     }
 
@@ -435,7 +395,9 @@ void BalanceControllerVBL::update_B_LQR()
 
   // Build weight matrix R to match dimension
   for (int i = 0; i < 3 * contact_legs; i++)
+  {
     R_LQR(i, i) = R1_QP(i, i);
+  }
 
   if (stance_legs == 5)
   { // Increase cost for out of contact legs
@@ -445,6 +407,8 @@ void BalanceControllerVBL::update_B_LQR()
       R_LQR(i + 9, i + 9) = 20 * R_LQR(i + 9, i + 9);
     }
   }
+
+  cout << "B: " << B_LQR << endl;
 }
 
 void BalanceControllerVBL::update_P_LQR()
@@ -486,16 +450,18 @@ void BalanceControllerVBL::update_P_LQR()
   U21 = U.block<vblNUM_VARIABLES_QP, vblNUM_VARIABLES_QP>(vblNUM_VARIABLES_QP, 0);
   P_complex = -U21 * U11.inverse();
   P_LQR = P_complex.real();
+  cout << "P: " << P_LQR << endl;
 
   // Optimal control policy
   f_unc = -R1_QP.inverse() * B_QP.transpose() * P_LQR * s_LQR;
+  cout << "R1_QP: " << R1_QP << endl;
   cost_to_go = s_LQR.transpose() * P_LQR * s_LQR;
 }
 
 void BalanceControllerVBL::calc_H_qpOASES()
 {
   // Use LQR matrices to compute the QP cost matrix H
-  //H_eigen = 2*(R1_QP);
+  // H_eigen = 2*(R1_QP);
   H_eigen = 2 * (R1_QP + R2_QP);
 
   // Copy to real_t array (qpOASES data type)
@@ -511,10 +477,14 @@ void BalanceControllerVBL::calc_A_qpOASES()
 
   for (int i = 0; i < vblNUM_CONTACT_POINTS; i++)
   {
-    C_control.block<1, 3>(5 * i + 0, 3 * i) << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
-    C_control.block<1, 3>(5 * i + 1, 3 * i) << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
-    C_control.block<1, 3>(5 * i + 2, 3 * i) << mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
-    C_control.block<1, 3>(5 * i + 3, 3 * i) << mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
+    C_control.block<1, 3>(5 * i + 0, 3 * i)
+      << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
+    C_control.block<1, 3>(5 * i + 1, 3 * i)
+      << -mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
+    C_control.block<1, 3>(5 * i + 2, 3 * i)
+      << mu_friction * .7071 * direction_normal_flatGround.transpose() + t2y.transpose();
+    C_control.block<1, 3>(5 * i + 3, 3 * i)
+      << mu_friction * .7071 * direction_normal_flatGround.transpose() + t1x.transpose();
     C_control.block<1, 3>(5 * i + 4, 3 * i) << direction_normal_flatGround.transpose();
   }
 
@@ -524,7 +494,7 @@ void BalanceControllerVBL::calc_A_qpOASES()
 void BalanceControllerVBL::calc_g_qpOASES()
 {
   // Use LQR matrices to compute the QP cost vector g
-  //g_eigen = 2*(B_QP.transpose()*P_LQR.transpose()*s_LQR);
+  // g_eigen = 2*(B_QP.transpose()*P_LQR.transpose()*s_LQR);
   g_eigen = 2 * (B_QP.transpose() * P_LQR.transpose() * s_LQR - R2_QP * xOptPrev);
 
   // Copy to real_t array (qpOASES data type)
@@ -549,39 +519,38 @@ void BalanceControllerVBL::calc_lbA_ubA_qpOASES()
   {
     lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i] = contact_state(i) * vblNEGATIVE_NUMBER;
     lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 1] = contact_state(i) * vblNEGATIVE_NUMBER;
-    lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 2] = -mu_friction * f_ref_world(3 * i + 2) * .7071;
-    lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 3] = -mu_friction * f_ref_world(3 * i + 2) * .7071;
-    lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 4] = contact_state(i) * minNormalForces_feet(i) - f_ref_world(3 * i + 2);
+    lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 2] =
+      -mu_friction * f_ref_world(3 * i + 2) * .7071;
+    lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 3] =
+      -mu_friction * f_ref_world(3 * i + 2) * .7071;
+    lbA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 4] =
+      contact_state(i) * minNormalForces_feet(i) - f_ref_world(3 * i + 2);
 
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i] = mu_friction * f_ref_world(3 * i + 2) * .7071;
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 1] = mu_friction * f_ref_world(3 * i + 2) * .7071;
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 2] = contact_state(i) * vblPOSITIVE_NUMBER;
     ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 3] = contact_state(i) * vblPOSITIVE_NUMBER;
-    ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 4] = contact_state(i) * maxNormalForces_feet(i) - f_ref_world(3 * i + 2);
+    ubA_qpOASES[vblNUM_CONSTRAINTS_PER_FOOT * i + 4] =
+      contact_state(i) * maxNormalForces_feet(i) - f_ref_world(3 * i + 2);
   }
-}
-
-void BalanceControllerVBL::publish_data_lcm()
-{
-  lcm->publish("CONTROLLER_two_contact_stand_data", &two_contact_stand_data_publish);
 }
 
 void BalanceControllerVBL::update_log_variables(double* rpy_des_in, double* rpy_act_in)
 {
-  for (int i = 0; i < 3; i++)
-  {
-    two_contact_stand_data.p_des[i] = x_COM_world_desired(i);
-    two_contact_stand_data.p_act[i] = x_COM_world(i);
-    two_contact_stand_data.rpy[i] = rpy_des_in[i];
-    two_contact_stand_data.rpy_act[i] = rpy_act_in[i];
-  }
+  //  for (int i = 0; i < 3; i++)
+  //  {
+  //    two_contact_stand_data.p_des[i] = x_COM_world_desired(i);
+  //    two_contact_stand_data.p_act[i] = x_COM_world(i);
+  //    two_contact_stand_data.rpy[i] = rpy_des_in[i];
+  //    two_contact_stand_data.rpy_act[i] = rpy_act_in[i];
+  //  }
 
-  for (int i = 0; i < 12; i++)
-  {
-    two_contact_stand_data.s[i] = s_LQR(i);
-  }
+  //  for (int i = 0; i < 12; i++)
+  //  {
+  //    two_contact_stand_data.s[i] = s_LQR(i);
+  //  }
 
-  two_contact_stand_data.cost_to_go = cost_to_go;
+  //  two_contact_stand_data.cost_to_go = cost_to_go;
 }
 /* ------------ Set Parameter Values -------------- */
 
@@ -639,9 +608,12 @@ void BalanceControllerVBL::set_mass(double mass_in)
 
 void BalanceControllerVBL::set_inertia(double Ixx, double Iyy, double Izz)
 {
-  Ig << Ixx, 0, 0,
-      0, Iyy, 0,
-      0, 0, Izz;
+  Ig << Ixx, 0, 0, 0, Iyy, 0, 0, 0, Izz;
+}
+
+Eigen::VectorXd BalanceControllerVBL::getFunc()
+{
+  return f_unc;
 }
 
 void BalanceControllerVBL::set_RobotLimits()
@@ -722,8 +694,8 @@ void BalanceControllerVBL::matrixLogRot(const Eigen::MatrixXd& R, Eigen::VectorX
     theta = acos(tmp);
   }
 
-  //Matrix3F omegaHat = (R-R.transpose())/(2 * sin(theta));
-  //crossExtract(omegaHat,omega);
+  // Matrix3F omegaHat = (R-R.transpose())/(2 * sin(theta));
+  // crossExtract(omegaHat,omega);
   omega << R(2, 1) - R(1, 2), R(0, 2) - R(2, 0), R(1, 0) - R(0, 1);
   if (theta > 10e-5)
   {
@@ -762,14 +734,14 @@ void BalanceControllerVBL::matrixExpOmegaCross(const Eigen::VectorXd& omega, Eig
   {
     omegaHat.setZero();
     crossMatrix(omegaHat, omega / theta);
-    //R = I + omegaHat sin(theta) + omegaHat^2 (1-cos(theta))
+    // R = I + omegaHat sin(theta) + omegaHat^2 (1-cos(theta))
     R += omegaHat * sin(theta) + omegaHat * omegaHat * (1 - cos(theta));
   }
 }
 
 void BalanceControllerVBL::quaternion_to_rotationMatrix(Eigen::MatrixXd& R, Eigen::VectorXd& quat)
 {
-  //wikipedia
+  // wikipedia
   R(0, 0) = 1 - 2 * quat(2) * quat(2) - 2 * quat(3) * quat(3);
   R(0, 1) = 2 * quat(1) * quat(2) - 2 * quat(0) * quat(3);
   R(0, 2) = 2 * quat(1) * quat(3) + 2 * quat(0) * quat(2);

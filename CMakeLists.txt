@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(be2r_cmpc_unitree)
 
-# Запуск скрипта для создания типов lcm
-execute_process(
-  COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_types_no_java.sh
-)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -23,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 # Eigen find
 find_package (Eigen3 REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
 set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk")
+# set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk-3.4.2")
 set(UNITREE_PLATFORM "amd64")
 
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)
@@ -53,7 +51,6 @@ include_directories(
   src/controllers/convexMPC
   src/fsm
   src/fsm/fsm_states
-  src/lcm-types
   src/third_party
   src/third_party/ParamHandler
   src/third_party/qpOASES/include

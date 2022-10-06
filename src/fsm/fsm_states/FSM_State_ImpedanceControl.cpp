@@ -51,7 +51,7 @@ FSM_StateName FSM_State_ImpedanceControl<T>::checkTransition()
 {
   // Get the next state
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State)
   {
   case K_IMPEDANCE_CONTROL:
     // Normal operation for state based transitions
@@ -70,7 +70,7 @@ FSM_StateName FSM_State_ImpedanceControl<T>::checkTransition()
 
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << 0
-              << " to " << this->_data->controlParameters->control_mode
+              << " to " << this->_data->userParameters->FSM_State
               << std::endl;
   }
 
