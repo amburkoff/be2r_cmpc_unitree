@@ -9,6 +9,12 @@
 
 using namespace std;
 
+void execBash(string msg)
+{
+  string str = "rosrun dynamic_reconfigure dynparam set /unitree_ctrl FSM_State " + msg;
+  system(str.c_str());
+}
+
 /**
  * Constructor for the Control FSM. Passes in all of the necessary
  * data and stores it in a struct. Initializes the FSM with a starting
@@ -88,6 +94,7 @@ void ControlFSM<T>::initialize()
 template<typename T>
 void ControlFSM<T>::runFSM()
 {
+
   // Check the robot state for safe operation
   operatingMode = safetyPreCheck();
 
@@ -124,6 +131,37 @@ void ControlFSM<T>::runFSM()
     // Run normal controls if no transition is detected
     if (operatingMode == FSM_OperatingMode::NORMAL)
     {
+      if (data._desiredStateCommand->down && (FSM_StateName::PASSIVE != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 0;
+        t1 = new std::thread(execBash, "0");
+        ROS_WARN("PASSIVE");
+      }
+
+      if (data._desiredStateCommand->up && (FSM_StateName::STAND_UP != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 1;
+
+        t1 = new std::thread(execBash, "1");
+        ROS_WARN("STAND UP");
+      }
+
+      if (data._desiredStateCommand->left && (FSM_StateName::TESTING != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 12;
+
+        t1 = new std::thread(execBash, "12");
+        ROS_WARN("TESTING");
+      }
+      
+      if (data._desiredStateCommand->right && (FSM_StateName::BALANCE_STAND != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 3;
+
+        t1 = new std::thread(execBash, "3");
+        ROS_WARN("BALANCE STAND");
+      }
+
       // Check the current state for any transition
       nextStateName = currentState->checkTransition();
 
@@ -137,7 +175,7 @@ void ControlFSM<T>::runFSM()
         nextState = getNextState(nextStateName);
 
         // Print transition initialized info
-        // printInfo(1);
+        printInfo(1);
       }
       else
       {

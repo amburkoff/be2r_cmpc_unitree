@@ -527,6 +527,7 @@ void Body_Manager::_initSubscribers()
   _srv_do_step = _nh.advertiseService("/do_step", &Body_Manager::_srvDoStep, this);
   _srv_stop_map = _nh.advertiseService(ros::this_node::getName() + "/stop_map_update", &Body_Manager::_srvStopMap, this);
   _srv_start_map = _nh.advertiseService(ros::this_node::getName() + "/start_map_update", &Body_Manager::_srvStartMap, this);
+  _sub_joy = _nh.subscribe("/joy", 1, &Body_Manager::_joyCallback, this, ros::TransportHints().tcpNoDelay(true));
 }
 
 bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response)
@@ -589,6 +590,38 @@ void Body_Manager::_groundTruthCallback(nav_msgs::Odometry ground_truth_msg)
   // _cheater_state.orientation[1] = ground_truth_msg.pose.pose.orientation.x;
   // _cheater_state.orientation[2] = ground_truth_msg.pose.pose.orientation.y;
   // _cheater_state.orientation[3] = ground_truth_msg.pose.pose.orientation.z;
+}
+
+void Body_Manager::_joyCallback(sensor_msgs::Joy msg)
+{
+  driverCommand.up = 0;
+  driverCommand.down = 0;
+  driverCommand.left = 0;
+  driverCommand.right = 0;
+  driverCommand.circle = 0;
+  driverCommand.triangle = 0;
+
+  if (msg.axes[6] > 0)
+  {
+    driverCommand.left = true;
+  }
+
+  if (msg.axes[6] < 0)
+  {
+    driverCommand.right = true;
+  }
+
+  if (msg.axes[7] > 0)
+  {
+    driverCommand.up = true;
+  }
+
+  if(msg.axes[7] < 0)
+  {
+    driverCommand.down = true;
+  }
+
+  driverCommand.circle = msg.buttons[1];
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)

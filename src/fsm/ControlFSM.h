@@ -1,6 +1,7 @@
 #ifndef CONTROLFSM_H
 #define CONTROLFSM_H
 
+#include "thread"
 #include <iostream>
 
 // Contains all of the control related data
@@ -13,6 +14,7 @@
 #include "FSM_State.h"
 #include "FSM_State_BackFlip.h"
 #include "FSM_State_BalanceStand.h"
+#include "FSM_State_BalanceVBL.h"
 #include "FSM_State_LayDown.h"
 #include "FSM_State_Locomotion.h"
 #include "FSM_State_Passive.h"
@@ -20,7 +22,6 @@
 #include "FSM_State_StandUp.h"
 #include "FSM_State_Testing.h"
 #include "FSM_State_Vision.h"
-#include "FSM_State_BalanceVBL.h"
 
 // #include "FSM_State_FrontJump.h"
 // #include "FSM_State_ImpedanceControl.h"
@@ -40,7 +41,7 @@ enum class FSM_OperatingMode
 /**
  *
  */
-template <typename T>
+template<typename T>
 struct FSM_StatesList
 {
   FSM_State<T>* invalid;
@@ -63,7 +64,7 @@ struct FSM_StatesList
 /**
  *
  */
-template <typename T>
+template<typename T>
 struct FSM_ControllerList
 {
 };
@@ -71,7 +72,7 @@ struct FSM_ControllerList
 /**
  * Control FSM handles the FSM states from a higher level
  */
-template <typename T>
+template<typename T>
 class ControlFSM
 {
 public:
@@ -118,6 +119,8 @@ private:
 
   // Choose how often to print info, every N iterations
   int printNum = 10000; // N*(0.001s) in simulation time
+
+  std::thread* t1 = nullptr;
 
   // Track the number of iterations since last info print
   int printIter = 0; // make larger than printNum to not print

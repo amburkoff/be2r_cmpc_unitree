@@ -19,7 +19,10 @@ struct GamepadCommand
   GamepadCommand() { zero(); }
 
   bool leftBumper, rightBumper, leftTriggerButton, rightTriggerButton, back,
-      start, a, b, x, y, leftStickButton, rightStickButton, logitechButton;
+    start, a, b, x, y, leftStickButton, rightStickButton, logitechButton;
+
+  bool up, down, left, right;
+  bool triangle, circle;
 
   Vec2<float> leftStickAnalog, rightStickAnalog;
   float leftTriggerAnalog, rightTriggerAnalog;
@@ -41,6 +44,12 @@ struct GamepadCommand
     y = false;
     leftStickButton = false;
     rightStickButton = false;
+    up = false;
+    down = false;
+    left = false;
+    right = false;
+    circle = false;
+    triangle = false;
 
     leftTriggerAnalog = 0;
     rightTriggerAnalog = 0;
@@ -68,19 +77,19 @@ struct GamepadCommand
   std::string toString()
   {
     std::string result =
-        "Result:\nleftBumper: " + boolToString(leftBumper) + "\n" +
-        "rightBumper: " + boolToString(rightBumper) + "\n" +
-        "leftTriggerButton: " + boolToString(leftTriggerButton) + "\n" +
-        "rightTriggerButton: " + boolToString(rightTriggerButton) + "\n" +
-        "back: " + boolToString(back) + "\n" + "start: " + boolToString(start) +
-        "\n" + "a: " + boolToString(a) + "\n" + "b: " + boolToString(b) + "\n" +
-        "x: " + boolToString(x) + "\n" + "y: " + boolToString(y) + "\n" +
-        "leftStickButton: " + boolToString(leftStickButton) + "\n" +
-        "rightStickButton: " + boolToString(rightStickButton) + "\n" +
-        "leftTriggerAnalog: " + std::to_string(leftTriggerAnalog) + "\n" +
-        "rightTriggerAnalog: " + std::to_string(rightTriggerAnalog) + "\n" +
-        "leftStickAnalog: " + eigenToString(leftStickAnalog) + "\n" +
-        "rightStickAnalog: " + eigenToString(rightStickAnalog) + "\n";
+      "Result:\nleftBumper: " + boolToString(leftBumper) + "\n" +
+      "rightBumper: " + boolToString(rightBumper) + "\n" +
+      "leftTriggerButton: " + boolToString(leftTriggerButton) + "\n" +
+      "rightTriggerButton: " + boolToString(rightTriggerButton) + "\n" +
+      "back: " + boolToString(back) + "\n" + "start: " + boolToString(start) +
+      "\n" + "a: " + boolToString(a) + "\n" + "b: " + boolToString(b) + "\n" +
+      "x: " + boolToString(x) + "\n" + "y: " + boolToString(y) + "\n" +
+      "leftStickButton: " + boolToString(leftStickButton) + "\n" +
+      "rightStickButton: " + boolToString(rightStickButton) + "\n" +
+      "leftTriggerAnalog: " + std::to_string(leftTriggerAnalog) + "\n" +
+      "rightTriggerAnalog: " + std::to_string(rightTriggerAnalog) + "\n" +
+      "leftStickAnalog: " + eigenToString(leftStickAnalog) + "\n" +
+      "rightStickAnalog: " + eigenToString(rightStickAnalog) + "\n";
     return result;
   }
 };

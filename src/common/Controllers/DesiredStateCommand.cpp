@@ -8,7 +8,7 @@
 /**
  *
  */
-template <typename T>
+template<typename T>
 void DesiredStateData<T>::zero()
 {
   // Overall desired state
@@ -22,7 +22,7 @@ template struct DesiredStateData<float>;
 /**
  *
  */
-template <typename T>
+template<typename T>
 void DesiredStateCommand<T>::convertToStateCommands()
 {
   data.zero();
@@ -43,6 +43,10 @@ void DesiredStateCommand<T>::convertToStateCommands()
 
   leftAnalogStick = leftAnalogStick * (T(1) - filter) + joystickLeft * filter;
   rightAnalogStick = rightAnalogStick * (T(1) - filter) + joystickRight * filter;
+  up = gamepadCommand->up;
+  down = gamepadCommand->down;
+  right = gamepadCommand->right;
+  left = gamepadCommand->left;
 
   // Desired states from the controller
   data.stateDes(6) = deadband(leftAnalogStick[1], minVelX, maxVelX);           // forward linear velocity
@@ -59,7 +63,7 @@ void DesiredStateCommand<T>::convertToStateCommands()
   data.stateDes(5) = dt * data.stateDes(11);                                   // Yaw
 }
 
-template <typename T>
+template<typename T>
 void DesiredStateCommand<T>::setCommandLimits(T minVelX_in, T maxVelX_in,
                                               T minVelY_in, T maxVelY_in, T minTurnRate_in, T maxTurnRate_in)
 {
@@ -74,7 +78,7 @@ void DesiredStateCommand<T>::setCommandLimits(T minVelX_in, T maxVelX_in,
 /**
  *
  */
-template <typename T>
+template<typename T>
 void DesiredStateCommand<T>::desiredStateTrajectory(int N, Vec10<T> dtVec)
 {
   A = Mat12<T>::Zero();
@@ -113,7 +117,7 @@ void DesiredStateCommand<T>::desiredStateTrajectory(int N, Vec10<T> dtVec)
 /**
  *
  */
-template <typename T>
+template<typename T>
 float DesiredStateCommand<T>::deadband(float command, T minVal, T maxVal)
 {
   if (command < deadbandRegion && command > -deadbandRegion)
@@ -129,7 +133,7 @@ float DesiredStateCommand<T>::deadband(float command, T minVal, T maxVal)
 /**
  *
  */
-template <typename T>
+template<typename T>
 void DesiredStateCommand<T>::printRawInfo()
 {
   // Increment printing iteration
@@ -169,7 +173,7 @@ void DesiredStateCommand<T>::printRawInfo()
 /**
  *
  */
-template <typename T>
+template<typename T>
 void DesiredStateCommand<T>::printStateCommandInfo()
 {
   // Increment printing iteration

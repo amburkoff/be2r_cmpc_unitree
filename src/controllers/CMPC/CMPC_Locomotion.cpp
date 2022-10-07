@@ -747,6 +747,8 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   static Vec3<float> delta_p_bw[4] = {};
   static Vec3<float> last_p_body = data._stateEstimator->getResult().position;
   static Vec3<float> last_q_body = data._stateEstimator->getResult().rpy;
+  static uint32_t stand_iterator[4] = { 0, 0, 0, 0 };
+  static float z_stand_avr[4] = { 0, 0, 0, 0 };
 
   for (int foot = 0; foot < 4; foot++)
   {
@@ -893,12 +895,19 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     }
     else // foot is in stance
     {
+      stand_iterator[foot]++;
+
       firstSwing[foot] = true;
 
       data.debug->leg_traj_des[foot].poses.clear();
       data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
 
-      data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
+      // data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
+      // z_stand_avr[foot] += (ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot))).z;
+      geometry_msgs::Point point;
+      point = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
+      // point.z = z_stand_avr[foot] / stand_iterator[foot];
+      data.debug->last_p_local_stance[foot] = point;
 
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(1.0, swingTimes[foot]);
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();

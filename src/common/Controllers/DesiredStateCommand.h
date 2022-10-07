@@ -86,6 +86,12 @@ public:
 
   Vec2<float> leftAnalogStick;
   Vec2<float> rightAnalogStick;
+  bool up = false;
+  bool down = false;
+  bool left = false;
+  bool right = false;
+  bool triangle = false;
+  bool circle = false;
 
   // Holds the instantaneous desired state and future desired state trajectory
   DesiredStateData<T> data;
