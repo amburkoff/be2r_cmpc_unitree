@@ -69,11 +69,6 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   Vec3<float> p[4];
   Vec3<float> p_local[4];
 
-  // p[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[0]);
-  // p[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[1]);
-  // p[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[2]);
-  // p[3] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_stance[3]);
-
   p_local[0] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[0]);
   p_local[1] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[1]);
   p_local[2] = ros::fromMsg(this->_stateEstimatorData.debug->last_p_local_stance[2]);
@@ -85,8 +80,6 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   P.block(1, 0, 1, 3) = p_local[1].transpose();
   P.block(2, 0, 1, 3) = p_local[2].transpose();
   P.block(3, 0, 1, 3) = p_local[3].transpose();
-
-  // cout << P << endl;
 
   Vec3<float> K_solution = Vec3<float>::Zero();
 
@@ -103,9 +96,6 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   A_res = A_res * (1.0 - filter) + A * filter;
   B_res = B_res * (1.0 - filter) + B * filter;
   C_res = C_res * (1.0 - filter) + C * filter;
-
-  // std::cout << K_solution << std::endl;
-  // std::cout << A_res << " " << B_res << " " << C_res << " " << std::endl;
 
   this->_stateEstimatorData.debug->mnk_plane.x = A_res;
   this->_stateEstimatorData.debug->mnk_plane.y = B_res;

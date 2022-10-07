@@ -21,6 +21,7 @@
 #include <string>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
+#include <sensor_msgs/Joy.h>
 
 // MIT
 #include "Configuration.h"
@@ -95,6 +96,7 @@ private:
   ros::Subscriber _sub_ground_truth;
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
+  ros::Subscriber _sub_joy;
   ros::ServiceServer _srv_do_step;
   ros::ServiceServer _srv_stop_map;
   ros::ServiceServer _srv_start_map;
@@ -115,6 +117,7 @@ private:
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
+  void _joyCallback(sensor_msgs::Joy msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num);
   void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
   void _groundTruthCallback(nav_msgs::Odometry ground_truth_msg);

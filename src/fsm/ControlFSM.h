@@ -1,6 +1,7 @@
 #ifndef CONTROLFSM_H
 #define CONTROLFSM_H
 
+#include "thread"
 #include <iostream>
 
 // Contains all of the control related data
@@ -124,6 +125,8 @@ private:
 
   // Choose how often to print info, every N iterations
   int printNum = 10000; // N*(0.001s) in simulation time
+
+  std::thread* t1 = nullptr;
 
   // Track the number of iterations since last info print
   int printIter = 0; // make larger than printNum to not print
