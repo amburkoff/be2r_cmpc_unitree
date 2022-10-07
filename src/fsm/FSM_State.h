@@ -24,6 +24,7 @@
 #define K_BACKFLIP 9
 #define K_FRONTJUMP 11
 #define K_TESTING 12
+#define K_TESTING_CV 14
 
 // Specific control states
 #define K_JOINT_PD 51
@@ -52,13 +53,14 @@ enum class FSM_StateName
   BACKFLIP,
   FRONTJUMP,
   TESTING,
-  BALANCE_VBL
+  BALANCE_VBL,
+  TESTING_CV
 };
 
 /**
  *
  */
-template <typename T>
+template<typename T>
 class FSM_State
 {
 public:

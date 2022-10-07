@@ -21,7 +21,10 @@ using namespace std;
  */
 template<typename T>
 FSM_State_StandUp<T>::FSM_State_StandUp(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP"), _ini_foot_pos(4), _init_joint_q(4), _stand_joint_q(4)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP"),
+    _ini_foot_pos(4),
+    _init_joint_q(4),
+    _stand_joint_q(4)
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -110,7 +113,8 @@ void FSM_State_StandUp<T>::standUpImpedance()
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
 
-    this->_data->debug->last_p_local_stance[i] = ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
+    this->_data->debug->last_p_local_stance[i] =
+      ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
 
     this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
@@ -154,7 +158,8 @@ void FSM_State_StandUp<T>::standUpJointPD()
     this->_data->_legController->commands[i].qDes = q_des[i];
     this->_data->_legController->commands[i].qdDes = Vec3<float>::Zero();
 
-    this->_data->debug->last_p_local_stance[i] = ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
+    this->_data->debug->last_p_local_stance[i] =
+      ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
 
     this->_data->_legController->commands[i].forceFeedForward = leg_force;
   }
@@ -206,6 +211,10 @@ FSM_StateName FSM_State_StandUp<T>::checkTransition()
       this->nextStateName = FSM_StateName::TESTING;
       break;
 
+    case K_TESTING_CV:
+      this->nextStateName = FSM_StateName::TESTING_CV;
+      break;
+
     default:
       std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_STAND_UP << " to "
                 << this->_data->userParameters->FSM_State << std::endl;
@@ -252,6 +261,10 @@ TransitionData<T> FSM_State_StandUp<T>::transition()
       break;
 
     case FSM_StateName::TESTING:
+      this->transitionData.done = true;
+      break;
+
+    case FSM_StateName::TESTING_CV:
       this->transitionData.done = true;
       break;
 

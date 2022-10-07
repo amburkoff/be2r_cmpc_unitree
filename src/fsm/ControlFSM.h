@@ -13,14 +13,15 @@
 #include "FSM_State.h"
 #include "FSM_State_BackFlip.h"
 #include "FSM_State_BalanceStand.h"
+#include "FSM_State_BalanceVBL.h"
 #include "FSM_State_LayDown.h"
 #include "FSM_State_Locomotion.h"
 #include "FSM_State_Passive.h"
 #include "FSM_State_RecoveryStand.h"
 #include "FSM_State_StandUp.h"
 #include "FSM_State_Testing.h"
+#include "FSM_State_Testing_cv.h"
 #include "FSM_State_Vision.h"
-#include "FSM_State_BalanceVBL.h"
 
 // #include "FSM_State_FrontJump.h"
 // #include "FSM_State_ImpedanceControl.h"
@@ -40,7 +41,7 @@ enum class FSM_OperatingMode
 /**
  *
  */
-template <typename T>
+template<typename T>
 struct FSM_StatesList
 {
   FSM_State<T>* invalid;
@@ -54,6 +55,7 @@ struct FSM_StatesList
   FSM_State_RecoveryStand<T>* recoveryStand;
   FSM_State_BackFlip<T>* backflip;
   FSM_State_BalanceVBL<T>* balance_vbl;
+  FSM_State_Testing_Cv<T>* testingCV;
 
   // FSM_State_JointPD<T>* jointPD;
   // FSM_State_ImpedanceControl<T>* impedanceControl;
@@ -63,7 +65,7 @@ struct FSM_StatesList
 /**
  *
  */
-template <typename T>
+template<typename T>
 struct FSM_ControllerList
 {
 };
@@ -71,14 +73,18 @@ struct FSM_ControllerList
 /**
  * Control FSM handles the FSM states from a higher level
  */
-template <typename T>
+template<typename T>
 class ControlFSM
 {
 public:
-  ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* _stateEstimator,
-             LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
-             DesiredStateCommand<T>* _desiredStateCommand, StaticParams* controlParameters,
-             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters, Debug* debug);
+  ControlFSM(Quadruped<T>* _quadruped,
+             StateEstimatorContainer<T>* _stateEstimator,
+             LegController<T>* _legController,
+             GaitScheduler<T>* _gaitScheduler,
+             DesiredStateCommand<T>* _desiredStateCommand,
+             StaticParams* controlParameters,
+             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
+             Debug* debug);
 
   // Initializes the Control FSM instance
   void initialize();

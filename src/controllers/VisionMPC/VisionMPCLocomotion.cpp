@@ -258,7 +258,6 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
   // cout << "iter: " << _iterationCounter << " first swing leg 0" << firstSwing[0] << endl;
 
-
   for (int i = 0; i < 4; i++)
   {
     if (firstSwing[i])
@@ -303,7 +302,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     pf[1] += pfy_rel;
     pf[2] = z_des[i];
 
-    // _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, map_plane, i);
+    _updateFoothold(pf, seResult.position, height_map_filter, height_map_raw, map_plane, i);
 
     if (pf[2] > 0.02)
       std::cout << "PF = " << pf[2] << std::endl;
@@ -674,6 +673,11 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   pf_h -= p0_h;
   // pf_h -= _floor_plane_height;
   pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
+  if (pf[2] > 0.17)
+  {
+    pf[2] = 0.17;
+    std::cout << "Leg height limit" << std::endl;
+  }
   // if (leg == 0)
   //   std::cout << "PF_0 = " << pf[2] << std::endl;
 
