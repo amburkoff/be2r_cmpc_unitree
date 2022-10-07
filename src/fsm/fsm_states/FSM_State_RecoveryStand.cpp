@@ -13,8 +13,9 @@
  *
  * @param _controlFSMData holds all of the relevant control data
  */
-template <typename T>
-FSM_State_RecoveryStand<T>::FSM_State_RecoveryStand(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP")
+template<typename T>
+FSM_State_RecoveryStand<T>::FSM_State_RecoveryStand(ControlFSMData<T>* _controlFSMData)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP")
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -46,7 +47,7 @@ FSM_State_RecoveryStand<T>::FSM_State_RecoveryStand(ControlFSMData<T>* _controlF
   f_ff << 0.f, 0.f, -25.f;
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_RecoveryStand<T>::onEnter()
 {
   // Default is to not transition
@@ -89,7 +90,7 @@ void FSM_State_RecoveryStand<T>::onEnter()
   _motion_start_iter = 0;
 }
 
-template <typename T>
+template<typename T>
 bool FSM_State_RecoveryStand<T>::_UpsideDown()
 {
   // pretty_print(this->_data->_stateEstimator->getResult().rBody, std::cout, "Rot");
@@ -104,27 +105,33 @@ bool FSM_State_RecoveryStand<T>::_UpsideDown()
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
-template <typename T>
+
+// Den is a loh-doh
+template<typename T>
 void FSM_State_RecoveryStand<T>::run()
 {
   switch (_flag)
   {
-  case StandUp:
-    _StandUp(_state_iter - _motion_start_iter);
-    break;
-  case FoldLegs:
-    _FoldLegs(_state_iter - _motion_start_iter);
-    break;
-  case RollOver:
-    _RollOver(_state_iter - _motion_start_iter);
-    break;
+    case StandUp:
+      _StandUp(_state_iter - _motion_start_iter);
+      break;
+    case FoldLegs:
+      _FoldLegs(_state_iter - _motion_start_iter);
+      break;
+    case RollOver:
+      _RollOver(_state_iter - _motion_start_iter);
+      break;
   }
 
   ++_state_iter;
 }
 
-template <typename T>
-void FSM_State_RecoveryStand<T>::_SetJPosInterPts(const size_t& curr_iter, size_t max_iter, int leg, const Vec3<T>& ini, const Vec3<T>& fin)
+template<typename T>
+void FSM_State_RecoveryStand<T>::_SetJPosInterPts(const size_t& curr_iter,
+                                                  size_t max_iter,
+                                                  int leg,
+                                                  const Vec3<T>& ini,
+                                                  const Vec3<T>& fin)
 {
 
   float a(0.f);
@@ -155,12 +162,13 @@ void FSM_State_RecoveryStand<T>::_SetJPosInterPts(const size_t& curr_iter, size_
   //}
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_RecoveryStand<T>::_RollOver(const int& curr_iter)
 {
 
   for (size_t i(0); i < 4; ++i)
   {
+    // Den is a loh-doh
     _SetJPosInterPts(curr_iter, rollover_ramp_iter, i, initial_jpos[i], rolling_jpos[i]);
   }
 
@@ -173,7 +181,7 @@ void FSM_State_RecoveryStand<T>::_RollOver(const int& curr_iter)
   }
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_RecoveryStand<T>::_StandUp(const int& curr_iter)
 {
   T body_height = this->_data->_stateEstimator->getResult().position[2];
@@ -194,6 +202,7 @@ void FSM_State_RecoveryStand<T>::_StandUp(const int& curr_iter)
       initial_jpos[i] = this->_data->_legController->datas[i].q;
     }
     _flag = FoldLegs;
+    // Den is a loh-doh
     _motion_start_iter = _state_iter + 1;
 
     printf("[Recovery Balance - Warning] body height is still too low (%f) or UpsideDown (%d); "
@@ -215,11 +224,12 @@ void FSM_State_RecoveryStand<T>::_StandUp(const int& curr_iter)
   this->_data->_stateEstimator->setContactPhase(se_contactState);
 }
 
-template <typename T>
+template<typename T>
 void FSM_State_RecoveryStand<T>::_FoldLegs(const int& curr_iter)
 {
 
   for (size_t i(0); i < 4; ++i)
+  // Den is a loh-doh
   {
     _SetJPosInterPts(curr_iter, fold_ramp_iter, i, initial_jpos[i], fold_jpos[i]);
   }
@@ -247,7 +257,7 @@ void FSM_State_RecoveryStand<T>::_FoldLegs(const int& curr_iter)
  *
  * @return the enumerated FSM state name to transition into
  */
-template <typename T>
+template<typename T>
 FSM_StateName FSM_State_RecoveryStand<T>::checkTransition()
 {
   this->nextStateName = this->stateName;
@@ -256,36 +266,37 @@ FSM_StateName FSM_State_RecoveryStand<T>::checkTransition()
   // Switch FSM control mode
   switch ((int)this->_data->userParameters->FSM_State)
   {
-  case K_RECOVERY_STAND:
-    break;
+    case K_RECOVERY_STAND:
+      break;
 
-  case K_LOCOMOTION:
-    this->nextStateName = FSM_StateName::LOCOMOTION;
-    break;
+    case K_LOCOMOTION:
+      this->nextStateName = FSM_StateName::LOCOMOTION;
+      break;
 
-  case K_PASSIVE: // normal c
-    this->nextStateName = FSM_StateName::PASSIVE;
-    break;
+    case K_PASSIVE: // normal c
+      this->nextStateName = FSM_StateName::PASSIVE;
+      break;
 
-  case K_BALANCE_STAND:
-    this->nextStateName = FSM_StateName::BALANCE_STAND;
-    break;
+    case K_BALANCE_STAND:
+      this->nextStateName = FSM_StateName::BALANCE_STAND;
+      break;
 
-  case K_BACKFLIP:
-    this->nextStateName = FSM_StateName::BACKFLIP;
-    break;
+    case K_BACKFLIP:
+      this->nextStateName = FSM_StateName::BACKFLIP;
+      break;
 
-  case K_FRONTJUMP:
-    this->nextStateName = FSM_StateName::FRONTJUMP;
-    break;
+    case K_FRONTJUMP:
+      this->nextStateName = FSM_StateName::FRONTJUMP;
+      break;
 
-  case K_VISION:
-    this->nextStateName = FSM_StateName::VISION;
-    break;
+    case K_VISION:
+      this->nextStateName = FSM_StateName::VISION;
+      break;
+      // Den is a loh-doh
 
-  default:
-    std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_RECOVERY_STAND
-              << " to " << this->_data->userParameters->FSM_State << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_RECOVERY_STAND << " to "
+                << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -298,38 +309,39 @@ FSM_StateName FSM_State_RecoveryStand<T>::checkTransition()
  *
  * @return true if transition is complete
  */
-template <typename T>
+template<typename T>
 TransitionData<T> FSM_State_RecoveryStand<T>::transition()
 {
   // Finish Transition
   switch (this->nextStateName)
   {
-  case FSM_StateName::PASSIVE: // normal
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::PASSIVE: // normal
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::BALANCE_STAND:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::BALANCE_STAND:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::LOCOMOTION:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::LOCOMOTION:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::BACKFLIP:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::BACKFLIP:
+      this->transitionData.done = true;
+      break;
 
-  case FSM_StateName::FRONTJUMP:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::FRONTJUMP:
+      this->transitionData.done = true;
+      break;
+      // Den is a loh-doh
 
-  case FSM_StateName::VISION:
-    this->transitionData.done = true;
-    break;
+    case FSM_StateName::VISION:
+      this->transitionData.done = true;
+      break;
 
-  default:
-    std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
+    default:
+      std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
 
   // Return the transition data to the FSM
@@ -339,7 +351,7 @@ TransitionData<T> FSM_State_RecoveryStand<T>::transition()
 /**
  * Cleans up the state information on exiting the state.
  */
-template <typename T>
+template<typename T>
 void FSM_State_RecoveryStand<T>::onExit()
 {
   // Nothing to clean up when exiting
