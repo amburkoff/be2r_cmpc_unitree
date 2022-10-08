@@ -58,10 +58,10 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int iterations_between_mpc, 
     random2(_gait_period, Vec4<int>(8, 16, 16, 8), 0.5, "Double Trot")
 {
   // discretization of the MPC model or the MPC frequency
-  dtMPC = dt * iterationsBetweenMPC;
+  dtMPC = dt * _iterationsBetweenMPC;
   //dt and iterationsBetweenMPC is a controller working period and connection with MPC period, could be found at FCM_State_Locomotion
-  default_iterations_between_mpc = iterationsBetweenMPC;
-  printf("[Convex MPC] dt: %.3f iterations: %d horizon: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, HORIZON, dtMPC);
+  default_iterations_between_mpc = _iterationsBetweenMPC;
+  printf("[Convex MPC] dt: %.3f iterations: %d horizon: %d, dtMPC: %.3f\n", dt, _iterationsBetweenMPC, HORIZON, dtMPC);
   
    // void setup_problem(double dt, int horizon, double mu, double f_max)
   // mu -- friction coefficient, f_max -- force limit for the MPC QP solution
@@ -420,6 +420,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   // ROS_INFO_STREAM("is contact: " << se_contactState(0));
 
   // static bool is_stance[4] = {0, 0, 0, 0};
+  static nav_msgs::Path path[4];
+  static geometry_msgs::PoseStamped pose[4];
 
   for (int foot = 0; foot < 4; foot++)
   {
@@ -452,6 +454,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         firstSwing[foot] = false;
         is_stance[foot] = 0;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+        path[foot].poses.clear();
+        geometry_msgs::PoseStamped Emptypose;
+        pose[foot] = Emptypose;
       }
 
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);

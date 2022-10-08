@@ -86,8 +86,8 @@ private:
   ros::Publisher _pub_odom;
   ros::Publisher _pub_body_info;
   ros::Publisher _pub_metric_info;
-  tf::TransformBroadcaster odom_broadcaster;
-  tf::TransformBroadcaster world_broadcaster;
+  // tf::TransformBroadcaster odom_broadcaster;
+  // tf::TransformBroadcaster world_broadcaster;
   ros::Publisher _pub_vis_last_p_stance;
   ros::Publisher _pub_vis_swing_pf;
   ros::Publisher _pub_vis_estimated_stance_plane;

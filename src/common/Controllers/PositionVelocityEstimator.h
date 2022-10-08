@@ -22,6 +22,7 @@ class LinearKFPositionVelocityEstimator : public GenericEstimator<T>
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   LinearKFPositionVelocityEstimator();
+  float _getLocalBodyHeight();
   virtual void run();
   virtual void setup();
 
