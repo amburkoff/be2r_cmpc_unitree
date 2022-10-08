@@ -15,7 +15,8 @@ using namespace std;
  */
 template<typename T>
 FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING, "TESTING"), _ini_foot_pos(4)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING, "TESTING"),
+    _ini_foot_pos(4)
 {
   // Do nothing
   // Set the pre controls safety checks
@@ -86,17 +87,17 @@ void FSM_State_Testing<T>::run()
       break;
 
     case 1:
-      //joint test
+      // joint test
       test1();
       break;
 
     case 2:
-      //impedance test
+      // impedance test
       test2(0.05);
       break;
 
     case 3:
-      //impedance test
+      // impedance test
       test2(0);
       break;
 
@@ -216,7 +217,7 @@ void FSM_State_Testing<T>::safeJointTest()
   // this->_data->_legController->edampCommand(4);
 }
 
-//impedance test
+// impedance test
 template<typename T>
 void FSM_State_Testing<T>::test2(float h)
 {
@@ -334,8 +335,14 @@ void FSM_State_Testing<T>::test2(float h)
     footSwingTrajectories[foot].setFinalPosition(p0);
   }
 
-  this->_data->_legController->commands[foot].kpCartesian = Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1, this->_data->userParameters->Kp_cartesian_2).asDiagonal();
-  this->_data->_legController->commands[foot].kdCartesian = Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1, this->_data->userParameters->Kd_cartesian_2).asDiagonal();
+  this->_data->_legController->commands[foot].kpCartesian =
+    Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1,
+                this->_data->userParameters->Kp_cartesian_2)
+      .asDiagonal();
+  this->_data->_legController->commands[foot].kdCartesian =
+    Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1,
+                this->_data->userParameters->Kd_cartesian_2)
+      .asDiagonal();
 
   // this->_data->_legController->commands[foot].pDes = pDes;
   // this->_data->_legController->commands[foot].vDes = Vec3<float>::Constant(0);
@@ -400,9 +407,10 @@ void FSM_State_Testing<T>::test2(float h)
   Vec3<T> C = _coriolis.block(6, 0, 3, 1);
   Vec3<T> G = _grav.block(6, 0, 3, 1);
   Vec3<T> tau_final(0, 0, 0);
-  tau_final = tau + this->_data->_legController->datas[0].J.transpose() *
-                      (this->_data->_legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->_legController->datas[0].p) +
-                       this->_data->_legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->_legController->datas[0].v));
+  tau_final =
+    tau + this->_data->_legController->datas[0].J.transpose() *
+            (this->_data->_legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->_legController->datas[0].p) +
+             this->_data->_legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->_legController->datas[0].v));
 
   ddq = M.inverse() * (tau_final - C - G);
   dq = dq + ddq * dt;
@@ -503,10 +511,10 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
     case K_TESTING:
       break;
 
-    case K_STAND_UP:
-      // Requested switch to Stand Up
-      this->nextStateName = FSM_StateName::STAND_UP;
-      break;
+      // case K_STAND_UP:
+      //   // Requested switch to Stand Up
+      //   this->nextStateName = FSM_StateName::STAND_UP;
+      //   break;
 
     case K_PASSIVE: // normal c
       this->nextStateName = FSM_StateName::PASSIVE;

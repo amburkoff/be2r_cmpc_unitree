@@ -70,6 +70,7 @@ void FSM_State_RecoveryStand<T>::onEnter()
 
   _flag = FoldLegs;
 
+  //
   if (!_UpsideDown())
   { // Proper orientation
     if ((0.2 < body_height) && (body_height < 0.45))
@@ -229,7 +230,6 @@ void FSM_State_RecoveryStand<T>::_FoldLegs(const int& curr_iter)
 {
 
   for (size_t i(0); i < 4; ++i)
-  // Den is a loh-doh
   {
     _SetJPosInterPts(curr_iter, fold_ramp_iter, i, initial_jpos[i], fold_jpos[i]);
   }

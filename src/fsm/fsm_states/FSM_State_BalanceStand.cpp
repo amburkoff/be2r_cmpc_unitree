@@ -132,11 +132,11 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
       this->transitionDuration = 0.0;
       break;
 
-    case K_STAND_UP:
-      this->nextStateName = FSM_StateName::STAND_UP;
-      // Transition time is immediate
-      this->transitionDuration = 0.0;
-      break;
+      // case K_STAND_UP:
+      //   this->nextStateName = FSM_StateName::STAND_UP;
+      //   // Transition time is immediate
+      //   this->transitionDuration = 0.0;
+      //   break;
 
     case K_VISION:
       this->nextStateName = FSM_StateName::VISION;
@@ -279,9 +279,13 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
     vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
     Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
     Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    geometry_msgs::Point point;
+    point = ros::toMsg(this->_data->_legController->datas[leg].p + this->_data->_quadruped->getHipLocation(leg));
+    this->_data->debug->last_p_local_stance[leg] = point;
   }
+  // point.z = z_stand_avr[foot] / stand_iterator[foot];
 
-  // Orientation
+  // Orientation from joy
   // _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
   // _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
   // _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
@@ -292,12 +296,16 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
     ticks = 0;
     dance_cntr++;
   }
-  std::cout << "ticks = " << ticks << std::endl;
+  // std::cout << "ticks = " << ticks << std::endl;
   static double deg = M_PI / 180;
   _wbc_data->pBody_RPY_des[0] = 0.;
-  _wbc_data->pBody_RPY_des[1] = std::cos((double(ticks) / 1000.) * 6.28) * 15 * deg;
+  // _wbc_data->pBody_RPY_des[1] = std::cos((double(ticks) / 1000.) * 6.28) * 15 * deg;
   // _wbc_data->pBody_RPY_des[2] = 0;
-  _wbc_data->pBody_RPY_des[2] = _ini_body_ori_rpy[2] + std::sin((double(ticks) / 1000.) * 6.28) * 15 * deg;
+  // _wbc_data->pBody_RPY_des[2] = _ini_body_ori_rpy[2] + std::sin((double(ticks) / 1000.) * 6.28) * 15 * deg;
+
+  _wbc_data->pBody_des[2] = 0.23 + std::cos((double(ticks) / 1000.) * 6.28) * 0.08;
+  _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1] + std::sin((double(ticks) / 1000.) * 6.28) * 20 * deg;
+
   // switch (dance_cntr)
   // {
   //   case 1:
@@ -342,7 +350,7 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   //     break;
   // }
   // Height
-  _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
+  // _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
 
   // cout << "des rpy: " << _wbc_data->pBody_RPY_des[0] << " " << _wbc_data->pBody_RPY_des[1] << " "
   // << _wbc_data->pBody_RPY_des[2] << endl;

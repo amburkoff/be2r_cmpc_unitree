@@ -38,17 +38,32 @@ using namespace std;
 ////////////////////
 
 CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data)
-  : _data(data), iterationsBetweenMPC(_iterations_between_mpc), _parameters(_data->userParameters), _gait_period(_parameters->gait_period),
-    horizonLength(_data->staticParams->horizon), dt(_dt),
-    trotting(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0), "Trotting"),
-    trot_contact(_gait_period, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25), "Trot contact"),
+  : _data(data),
+    iterationsBetweenMPC(_iterations_between_mpc),
+    _parameters(_data->userParameters),
+    _gait_period(_parameters->gait_period),
+    horizonLength(_data->staticParams->horizon),
+    dt(_dt),
+    trotting(_gait_period,
+             Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+             Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
+             "Trotting"),
+    // trotting_long(_gait_period * 2, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0,
+    // _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, "trot_long"),
+    trot_contact(_gait_period,
+                 Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
+                 Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25),
+                 "Trot contact"),
     standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
     walking(
       GAIT_PERIOD_WALKING,
       Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
       Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING),
       "Walking"), // for real
-    two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, 0), "Two legs balance")
+    two_leg_balance(_gait_period,
+                    Vec4<int>(0, 0, 0, 0),
+                    Vec4<int>(_gait_period, _gait_period, _gait_period, 0),
+                    "Two legs balance")
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
@@ -99,7 +114,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _body_height = _parameters->body_height;
 
   float x_vel_cmd, y_vel_cmd;
-  float filter_x(0.05);
+  float filter_x(0.25);
   float filter_y(0.005);
 
   _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
@@ -276,8 +291,9 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
   for (int i = 0; i < 4; i++)
   {
-    //foot pos in world frame
-    pFoot[i] = seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
+    // foot pos in world frame
+    pFoot[i] =
+      seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
   }
 
   if (gait != &standing)
@@ -428,7 +444,8 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
     delta_p_bw[foot] += seResult.vBody * dt;
     delta_yaw[foot] += seResult.omegaBody(2) * dt;
-    data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
+    data.debug->last_p_local_stance[foot] =
+      ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     if (swingState > 0) // foot is in swing
     {
@@ -780,7 +797,8 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     delta_yaw[foot] += seResult.omegaBody(2) * dt * Kf;
     // delta_p_bw[foot] = data._stateEstimator->getResult().position - last_p_body;
     // delta_yaw[foot] = data._stateEstimator->getResult().rpy[2] - last_q_body(2);
-    data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
+    data.debug->last_p_local_stance[foot] =
+      ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
     if (swingState > 0) // foot is in swing
     {
@@ -902,8 +920,9 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       data.debug->leg_traj_des[foot].poses.clear();
       data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
 
-      // data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
-      // z_stand_avr[foot] += (ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot))).z;
+      // data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p +
+      // data._quadruped->getHipLocation(foot)); z_stand_avr[foot] += (ros::toMsg(data._legController->datas[foot].p +
+      // data._quadruped->getHipLocation(foot))).z;
       geometry_msgs::Point point;
       point = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
       // point.z = z_stand_avr[foot] / stand_iterator[foot];
