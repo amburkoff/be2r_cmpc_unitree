@@ -22,7 +22,7 @@ struct GamepadCommand
     logitechButton;
 
   bool up, down, left, right;
-  bool triangle, circle, cross;
+  bool triangle, circle, cross, rectangle;
 
   Vec2<float> leftStickAnalog, rightStickAnalog;
   float leftTriggerAnalog, rightTriggerAnalog;

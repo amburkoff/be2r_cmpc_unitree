@@ -625,6 +625,7 @@ void Body_Manager::_joyCallback(sensor_msgs::Joy msg)
   driverCommand.circle = msg.buttons[1];
   driverCommand.triangle = msg.buttons[2];
   driverCommand.cross = msg.buttons[0];
+  driverCommand.rectangle = msg.buttons[3];
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)

@@ -91,6 +91,7 @@ public:
   bool triangle = false;
   bool circle = false;
   bool cross = false;
+  bool rectangle = false;
 
   // Holds the instantaneous desired state and future desired state trajectory
   DesiredStateData<T> data;

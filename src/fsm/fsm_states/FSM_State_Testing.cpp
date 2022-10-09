@@ -102,20 +102,18 @@ void FSM_State_Testing<T>::run()
 
     case 2:
       // impedance test
-      test2(0.05);
+      // test2(0.05);
+      LocomotionControlStep();
       break;
 
     case 3:
       // impedance test
-      test2(0);
+      // test2(0);
+      LocomotionControlStep();
       break;
 
     case 4:
       gravTest();
-      break;
-
-    case 5:
-      take_leg();
       break;
   }
 
@@ -435,30 +433,6 @@ void FSM_State_Testing<T>::test2(float h)
   cout << "ddq: " << ddq << endl;
   cout << "dq: " << dq << endl;
   // cout << "tau_final: " << tau_final << endl;
-}
-
-template<typename T>
-void FSM_State_Testing<T>::take_leg()
-{
-  DVec<T> qDes;
-  qDes << 0, -1.052, 2.63;
-  DVec<T> qdDes;
-  qdDes << 0, 0, 0;
-
-  static double progress(0.);
-  progress += this->_data->staticParams->controller_dt;
-  double movement_duration(3.0);
-  double ratio = progress / movement_duration;
-
-  if (ratio > 1.)
-  {
-    ratio = 1.;
-  }
-
-  this->jointPDControl(0, ratio * qDes + (1. - ratio) * _ini_jpos.head(3), qdDes);
-  this->jointPDControl(1, ratio * qDes + (1. - ratio) * _ini_jpos.segment(3, 3), qdDes);
-  this->jointPDControl(2, ratio * qDes + (1. - ratio) * _ini_jpos.segment(6, 3), qdDes);
-  this->jointPDControl(3, ratio * qDes + (1. - ratio) * _ini_jpos.segment(9, 3), qdDes);
 }
 
 template<typename T>
