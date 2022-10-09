@@ -75,9 +75,9 @@ public:
   T minRoll = -0.8;
   T maxPitch = 0.4;
   T minPitch = -0.4;
-  T maxVelX = 1.0;
+  T maxVelX = 0.5;
   T minVelX = -1.0;
-  T maxVelY = 0.5;
+  T maxVelY = 0.3;
   T minVelY = -0.5;
   T maxTurnRate = 2.5;
   T minTurnRate = -2.5;

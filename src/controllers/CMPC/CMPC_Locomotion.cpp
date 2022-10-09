@@ -134,7 +134,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   x_vel_cmd *= data._desiredStateCommand->maxVelX;
   y_vel_cmd *= data._desiredStateCommand->maxVelY;
 
-  pitch_cmd = 0.2 * data._desiredStateCommand->rightAnalogStick[1];
+  pitch_cmd = 0.4 * data._desiredStateCommand->rightAnalogStick[1];
 
   _x_vel_des = _x_vel_des * (1 - filter_x) + x_vel_cmd * filter_x;
   _y_vel_des = _y_vel_des * (1 - filter_y) + y_vel_cmd * filter_y;
