@@ -3,15 +3,15 @@
 
 #include "FSM_State.h"
 
-template <typename T>
+template<typename T>
 class WBC_Ctrl;
-template <typename T>
+template<typename T>
 class LocomotionCtrlData;
 
 /**
  *
  */
-template <typename T>
+template<typename T>
 class FSM_State_BalanceStand : public FSM_State<T>
 {
 public:
@@ -38,7 +38,9 @@ private:
   int _iter = 0;
 
   // Parses contact specific controls to the leg controller
-  void BalanceStandStep();
+  void BalanceStandStepDefault();
+  void BalanceStandStepWave();
+  void BalanceStandStepCircle();
 
   WBC_Ctrl<T>* _wbc_ctrl;
   LocomotionCtrlData<T>* _wbc_data;
@@ -48,6 +50,7 @@ private:
   Vec3<T> _ini_body_pos;
   Vec3<T> _ini_body_ori_rpy;
   T _body_weight;
+  std::thread* t1 = nullptr;
 };
 
 #endif // FSM_STATE_BALANCESTAND_H

@@ -59,6 +59,12 @@ void FSM_State_BalanceStand<T>::onEnter()
   _body_weight = this->_data->_quadruped->_bodyMass * 9.81;
 }
 
+void execBashBalance(string msg)
+{
+  string str = "rosrun dynamic_reconfigure dynparam set /unitree_ctrl test " + msg;
+  system(str.c_str());
+}
+
 /**
  * Calls the functions to be executed on each control loop iteration.
  */
@@ -69,7 +75,42 @@ void FSM_State_BalanceStand<T>::run()
   contactState << 0.5, 0.5, 0.5, 0.5;
   this->_data->_stateEstimator->setContactPhase(contactState);
 
-  BalanceStandStep();
+  // std::cout << "circle = " << this->_data->_desiredStateCommand->circle << std::endl;
+  // std::cout << "triangle = " << this->_data->_desiredStateCommand->triangle << std::endl;
+  // std::cout << "cross = " << this->_data->_desiredStateCommand->cross << std::endl;
+  if (this->_data->_desiredStateCommand->circle)
+  {
+    this->_data->userParameters->test = 2;
+    t1 = new std::thread(execBashBalance, "2");
+    this->_data->_desiredStateCommand->circle = false;
+  }
+  else if (this->_data->_desiredStateCommand->triangle)
+  {
+    this->_data->userParameters->test = 1;
+    t1 = new std::thread(execBashBalance, "1");
+    this->_data->_desiredStateCommand->triangle = false;
+  }
+  else if (this->_data->_desiredStateCommand->cross)
+  {
+    this->_data->userParameters->test = 0;
+    t1 = new std::thread(execBashBalance, "0");
+    this->_data->_desiredStateCommand->cross = false;
+  }
+
+  switch (this->_data->userParameters->test)
+  {
+    case 0:
+      BalanceStandStepDefault();
+      break;
+
+    case 1:
+      BalanceStandStepWave();
+      break;
+
+    case 2:
+      BalanceStandStepCircle();
+      break;
+  }
 }
 
 /**
@@ -188,7 +229,7 @@ TransitionData<T> FSM_State_BalanceStand<T>::transition()
   switch (this->nextStateName)
   {
     case FSM_StateName::LOCOMOTION:
-      BalanceStandStep();
+      BalanceStandStepDefault();
 
       _iter++;
       if (_iter >= this->transitionDuration * 1000)
@@ -252,7 +293,7 @@ void FSM_State_BalanceStand<T>::onExit()
  * Calculate the commands for the leg controllers for each of the feet.
  */
 template<typename T>
-void FSM_State_BalanceStand<T>::BalanceStandStep()
+void FSM_State_BalanceStand<T>::BalanceStandStepDefault()
 {
   static size_t ticks = 0;
   ticks++;
@@ -286,9 +327,9 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   // point.z = z_stand_avr[foot] / stand_iterator[foot];
 
   // Orientation from joy
-  // _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
-  // _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
-  // _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
+  _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
+  _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
+  _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
 
   static size_t dance_cntr = 0;
   if (ticks >= 1000)
@@ -299,61 +340,157 @@ void FSM_State_BalanceStand<T>::BalanceStandStep()
   // std::cout << "ticks = " << ticks << std::endl;
   static double deg = M_PI / 180;
   _wbc_data->pBody_RPY_des[0] = 0.;
-  // _wbc_data->pBody_RPY_des[1] = std::cos((double(ticks) / 1000.) * 6.28) * 15 * deg;
-  // _wbc_data->pBody_RPY_des[2] = 0;
-  // _wbc_data->pBody_RPY_des[2] = _ini_body_ori_rpy[2] + std::sin((double(ticks) / 1000.) * 6.28) * 15 * deg;
 
-  _wbc_data->pBody_des[2] = 0.23 + std::cos((double(ticks) / 1000.) * 6.28) * 0.08;
-  _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1] + std::sin((double(ticks) / 1000.) * 6.28) * 20 * deg;
-
-  // switch (dance_cntr)
-  // {
-  //   case 1:
-  //     _wbc_data->pBody_RPY_des[0] = 30 * deg;
-  //     _wbc_data->pBody_RPY_des[1] = 0.;
-  //     _wbc_data->pBody_RPY_des[2] = 0.;
-  //     break;
-
-  //   case 2:
-  //     _wbc_data->pBody_RPY_des[0] = 0.;
-  //     _wbc_data->pBody_RPY_des[1] = 15 * deg;
-  //     _wbc_data->pBody_RPY_des[2] = 0.;
-  //     break;
-
-  //   case 3:
-  //     _wbc_data->pBody_RPY_des[0] = -30 * deg;
-  //     _wbc_data->pBody_RPY_des[1] = 0.;
-  //     _wbc_data->pBody_RPY_des[2] = 0.;
-  //     break;
-
-  //   case 4:
-  //     _wbc_data->pBody_RPY_des[0] = -30 * deg;
-  //     _wbc_data->pBody_RPY_des[1] = 0.;
-  //     _wbc_data->pBody_RPY_des[2] = 0.;
-  //     break;
-
-  //   case 5:
-  //     _wbc_data->pBody_RPY_des[0] = 0.;
-  //     _wbc_data->pBody_RPY_des[1] = -15 * deg;
-  //     _wbc_data->pBody_RPY_des[2] = 0.;
-  //     break;
-
-  //   case 6:
-  //     _wbc_data->pBody_RPY_des[0] = 0.;
-  //     _wbc_data->pBody_RPY_des[1] = 0.;
-  //     _wbc_data->pBody_RPY_des[2] = 30 * deg;
-  //     break;
-  //   case 7:
-  //     _wbc_data->pBody_RPY_des[0] = 0.;
-  //     _wbc_data->pBody_RPY_des[1] = 0.;
-  //     _wbc_data->pBody_RPY_des[2] = -30 * deg;
-  //     break;
-  // }
   // Height
-  // _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
+  _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
+
+  _wbc_data->vBody_Ori_des.setZero();
+
+  for (size_t i(0); i < 4; ++i)
+  {
+    _wbc_data->pFoot_des[i].setZero();
+    _wbc_data->vFoot_des[i].setZero();
+    _wbc_data->aFoot_des[i].setZero();
+    _wbc_data->Fr_des[i].setZero();
+    _wbc_data->Fr_des[i][2] = _body_weight / 4.;
+    _wbc_data->contact_state[i] = true;
+  }
+
+  if (this->_data->_desiredStateCommand->trigger_pressed)
+  {
+    _wbc_data->pBody_des[2] = 0.05;
+
+    if (last_height_command - _wbc_data->pBody_des[2] > 0.001)
+    {
+      _wbc_data->pBody_des[2] = last_height_command - 0.001;
+    }
+  }
+
+  last_height_command = _wbc_data->pBody_des[2];
+
+  _wbc_ctrl->run(_wbc_data, *this->_data);
+}
+
+template<typename T>
+void FSM_State_BalanceStand<T>::BalanceStandStepCircle()
+{
+  static size_t ticks = 0;
+  ticks++;
+
+  _wbc_data->pBody_des = _ini_body_pos;
+  _wbc_data->vBody_des.setZero();
+  _wbc_data->aBody_des.setZero();
+
+  _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; // original
+  _wbc_data->pBody_RPY_des[0] = 0;
+  _wbc_data->pBody_RPY_des[1] = 0;
+  // _wbc_data->pBody_RPY_des[2] = 0;
+
+  // cout << "init rpy: " << _ini_body_ori_rpy << endl;
+
+  Vec3<T> pDes_backup[4];
+  Vec3<T> vDes_backup[4];
+  Mat3<T> Kp_backup[4];
+  Mat3<T> Kd_backup[4];
+
+  for (int leg(0); leg < 4; ++leg)
+  {
+    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    geometry_msgs::Point point;
+    point = ros::toMsg(this->_data->_legController->datas[leg].p + this->_data->_quadruped->getHipLocation(leg));
+    this->_data->debug->last_p_local_stance[leg] = point;
+  }
+
+  static size_t dance_cntr = 0;
+  if (ticks >= 1000)
+  {
+    ticks = 0;
+    dance_cntr++;
+  }
+  // std::cout << "ticks = " << ticks << std::endl;
+  static double deg = M_PI / 180;
+  _wbc_data->pBody_RPY_des[0] = 0.;
+  _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1] + std::sin((double(ticks) / 1000.) * 6.28) * 20 * deg;
+  _wbc_data->pBody_RPY_des[2] = _ini_body_ori_rpy[2] + std::cos((double(ticks) / 1000.) * 6.28) * 20 * deg;
+
+  // Height
+  _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
 
   // cout << "des rpy: " << _wbc_data->pBody_RPY_des[0] << " " << _wbc_data->pBody_RPY_des[1] << " "
   // << _wbc_data->pBody_RPY_des[2] << endl;
+
+  _wbc_data->vBody_Ori_des.setZero();
+
+  for (size_t i(0); i < 4; ++i)
+  {
+    _wbc_data->pFoot_des[i].setZero();
+    _wbc_data->vFoot_des[i].setZero();
+    _wbc_data->aFoot_des[i].setZero();
+    _wbc_data->Fr_des[i].setZero();
+    _wbc_data->Fr_des[i][2] = _body_weight / 4.;
+    _wbc_data->contact_state[i] = true;
+  }
+
+  if (this->_data->_desiredStateCommand->trigger_pressed)
+  {
+    _wbc_data->pBody_des[2] = 0.05;
+
+    if (last_height_command - _wbc_data->pBody_des[2] > 0.001)
+    {
+      _wbc_data->pBody_des[2] = last_height_command - 0.001;
+    }
+  }
+
+  last_height_command = _wbc_data->pBody_des[2];
+
+  _wbc_ctrl->run(_wbc_data, *this->_data);
+}
+
+template<typename T>
+void FSM_State_BalanceStand<T>::BalanceStandStepWave()
+{
+  static size_t ticks = 0;
+  ticks++;
+
+  _wbc_data->pBody_des = _ini_body_pos;
+  _wbc_data->vBody_des.setZero();
+  _wbc_data->aBody_des.setZero();
+
+  _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; // original
+  _wbc_data->pBody_RPY_des[0] = 0;
+  _wbc_data->pBody_RPY_des[1] = 0;
+
+  Vec3<T> pDes_backup[4];
+  Vec3<T> vDes_backup[4];
+  Mat3<T> Kp_backup[4];
+  Mat3<T> Kd_backup[4];
+
+  for (int leg(0); leg < 4; ++leg)
+  {
+    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    geometry_msgs::Point point;
+    point = ros::toMsg(this->_data->_legController->datas[leg].p + this->_data->_quadruped->getHipLocation(leg));
+    this->_data->debug->last_p_local_stance[leg] = point;
+  }
+
+  static size_t dance_cntr = 0;
+  if (ticks >= 1000)
+  {
+    ticks = 0;
+    dance_cntr++;
+  }
+  // std::cout << "ticks = " << ticks << std::endl;
+  static double deg = M_PI / 180;
+  _wbc_data->pBody_RPY_des[0] = 0.;
+
+  _wbc_data->pBody_des[2] = 0.23 + std::cos((double(ticks) / 1000.) * 6.28) * 0.08;
+  _wbc_data->pBody_RPY_des[1] = _ini_body_ori_rpy[1] + std::sin((double(ticks) / 1000.) * 6.28) * 20 * deg;
 
   _wbc_data->vBody_Ori_des.setZero();
 

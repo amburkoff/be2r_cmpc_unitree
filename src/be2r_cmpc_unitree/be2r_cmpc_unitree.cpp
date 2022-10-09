@@ -600,6 +600,7 @@ void Body_Manager::_joyCallback(sensor_msgs::Joy msg)
   driverCommand.right = 0;
   driverCommand.circle = 0;
   driverCommand.triangle = 0;
+  driverCommand.cross = false;
 
   if (msg.axes[6] > 0)
   {
@@ -616,12 +617,14 @@ void Body_Manager::_joyCallback(sensor_msgs::Joy msg)
     driverCommand.up = true;
   }
 
-  if(msg.axes[7] < 0)
+  if (msg.axes[7] < 0)
   {
     driverCommand.down = true;
   }
 
   driverCommand.circle = msg.buttons[1];
+  driverCommand.triangle = msg.buttons[2];
+  driverCommand.cross = msg.buttons[0];
 }
 
 void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)

@@ -9,6 +9,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
+#include <thread>
 // #include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
 
 // Normal robot states

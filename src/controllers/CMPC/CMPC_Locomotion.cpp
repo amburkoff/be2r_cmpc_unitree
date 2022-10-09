@@ -42,14 +42,20 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
     iterationsBetweenMPC(_iterations_between_mpc),
     _parameters(_data->userParameters),
     _gait_period(_parameters->gait_period),
+    _gait_period_long(_parameters->gait_period * 1.3),
     horizonLength(_data->staticParams->horizon),
     dt(_dt),
     trotting(_gait_period,
              Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
              Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
              "Trotting"),
-    // trotting_long(_gait_period * 2, Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0), Vec4<int>(_gait_period / 2.0,
-    // _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, "trot_long"),
+    trot_long(_gait_period_long,
+              Vec4<int>(0, _gait_period_long / 2.0, _gait_period_long / 2.0, 0),
+              Vec4<int>(2.5 * _gait_period_long / 4.0,
+                        2.5 * _gait_period_long / 4.0,
+                        2.5 * _gait_period_long / 4.0,
+                        2.5 * _gait_period_long / 4.0),
+              "Trotting long"),
     trot_contact(_gait_period,
                  Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
                  Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25),
@@ -114,7 +120,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _body_height = _parameters->body_height;
 
   float x_vel_cmd, y_vel_cmd;
-  float filter_x(0.25);
+  float filter_x(0.005);
   float filter_y(0.005);
 
   _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
@@ -657,6 +663,10 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   {
     gait = &walking;
   }
+  else if (current_gait == 15)
+  {
+    gait = &trot_long;
+  }
 
   // gait->updatePeriod(_parameters->gait_period);
   gait->restoreDefaults();
@@ -988,7 +998,9 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.0;
-  pBody_RPY_des[1] = _pitch_des;
+  static double deg = M_PI / 180;
+  float pitch_joy = data._desiredStateCommand->rightAnalogStick[0] * 20 * deg;
+  pBody_RPY_des[1] = _pitch_des + pitch_joy;
   // pBody_RPY_des[1] = 0.0;
   // pBody_RPY_des[2] = 0.0;
   pBody_RPY_des[2] = _yaw_des;

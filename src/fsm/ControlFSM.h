@@ -1,8 +1,8 @@
 #ifndef CONTROLFSM_H
 #define CONTROLFSM_H
 
-#include "thread"
 #include <iostream>
+#include <thread>
 
 // Contains all of the control related data
 #include "ControlFSMData.h"

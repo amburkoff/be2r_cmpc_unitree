@@ -27,6 +27,7 @@ public:
   void test1();
   void test2(float h);
   void gravTest();
+  void take_leg();
   void safeJointTest();
 
   // Checks for any transition triggers
@@ -52,6 +53,7 @@ private:
   // Keep track of the control iterations
   int iter = 0;
   std::vector<Vec3<T>> _ini_foot_pos;
+  DVec<T> _ini_jpos;
   FootSwingTrajectory<float> footSwingTrajectories[4];
   bool firstSwing[4];
   Vec3<float> pFoot[4];
