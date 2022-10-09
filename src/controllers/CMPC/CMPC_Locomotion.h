@@ -163,7 +163,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance;
+  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance, give_hand;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -175,6 +175,7 @@ private:
   Vec3<float> world_position_desired;
   Vec3<float> rpy_int;
   Vec3<float> rpy_comp;
+  float pitch_cmd = 0;
   float x_comp_integral = 0;
   Vec3<float> pFoot[4];
   CMPC_result<float> result;

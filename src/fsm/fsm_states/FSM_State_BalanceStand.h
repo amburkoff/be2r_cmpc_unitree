@@ -47,7 +47,9 @@ private:
 
   Vec3<T> _ini_body_pos;
   Vec3<T> _ini_body_ori_rpy;
+  Vec3<T> _ini_foot_pos[4];
   T _body_weight;
+  bool flag = false;
 };
 
 #endif // FSM_STATE_BALANCESTAND_H

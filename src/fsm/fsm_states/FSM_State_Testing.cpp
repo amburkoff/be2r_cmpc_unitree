@@ -87,7 +87,8 @@ void FSM_State_Testing<T>::run()
 
     case 1:
       //joint test
-      test1();
+      // test1();
+      LocomotionControlStep();
       break;
 
     case 2:
