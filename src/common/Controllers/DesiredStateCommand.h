@@ -49,8 +49,7 @@ class DesiredStateCommand
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // Initialize with the GamepadCommand struct
-  DesiredStateCommand(GamepadCommand* command, StaticParams* _parameters,
-                      StateEstimate<T>* sEstimate, float _dt)
+  DesiredStateCommand(GamepadCommand* command, StaticParams* _parameters, StateEstimate<T>* sEstimate, float _dt)
   {
     gamepadCommand = command;
     stateEstimate = sEstimate;
@@ -65,8 +64,7 @@ public:
   }
 
   void convertToStateCommands();
-  void setCommandLimits(T minVelX_in, T maxVelX_in, T minVelY_in, T maxVelY_in, T minTurnRate_in,
-                        T maxTurnRate_in);
+  void setCommandLimits(T minVelX_in, T maxVelX_in, T minVelY_in, T maxVelY_in, T minTurnRate_in, T maxTurnRate_in);
   void desiredStateTrajectory(int N, Vec10<T> dtVec);
   void printRawInfo();
   void printStateCommandInfo();
@@ -92,11 +90,12 @@ public:
   bool right = false;
   bool triangle = false;
   bool circle = false;
+  bool cross = false;
 
   // Holds the instantaneous desired state and future desired state trajectory
   DesiredStateData<T> data;
 
-  const GamepadCommand* gamepadCommand;
+  GamepadCommand* gamepadCommand;
 
   bool trigger_pressed = false;
 

@@ -28,10 +28,14 @@ void execBash(string msg)
  * @param controlParameters passes in the control parameters from the GUI
  */
 template<typename T>
-ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* _stateEstimator,
-                          LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
-                          DesiredStateCommand<T>* _desiredStateCommand, StaticParams* staticParams,
-                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters, Debug* debug)
+ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped,
+                          StateEstimatorContainer<T>* _stateEstimator,
+                          LegController<T>* _legController,
+                          GaitScheduler<T>* _gaitScheduler,
+                          DesiredStateCommand<T>* _desiredStateCommand,
+                          StaticParams* staticParams,
+                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
+                          Debug* debug)
 {
   // Add the pointers to the ControlFSMData struct
   data._quadruped = _quadruped;
@@ -55,6 +59,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
   statesList.recoveryStand = new FSM_State_RecoveryStand<T>(&data);
   statesList.backflip = new FSM_State_BackFlip<T>(&data);
   statesList.balance_vbl = new FSM_State_BalanceVBL<T>(&data);
+  statesList.testingCV = new FSM_State_Testing_Cv<T>(&data);
 
   // statesList.jointPD = new FSM_State_JointPD<T>(&data);
   // statesList.impedanceControl = new FSM_State_ImpedanceControl<T>(&data);
@@ -103,7 +108,7 @@ void ControlFSM<T>::runFSM()
   {
     if (operatingMode == FSM_OperatingMode::EDAMP)
     {
-      //we do this only once, because we dont change operation mode from estop/edamp to normal
+      // we do this only once, because we dont change operation mode from estop/edamp to normal
       static bool flag = true;
       static unsigned long iter_start = 0;
       static const unsigned long iter_duration = 1000;
@@ -347,6 +352,9 @@ FSM_State<T>* ControlFSM<T>::getNextState(FSM_StateName stateName)
     case FSM_StateName::BACKFLIP:
       return statesList.backflip;
 
+    case FSM_StateName::TESTING_CV:
+      return statesList.testingCV;
+
       // case FSM_StateName::FRONTJUMP:
       //   return statesList.frontJump;
 
@@ -383,8 +391,8 @@ void ControlFSM<T>::printInfo(int opt)
         }
         else if (operatingMode == FSM_OperatingMode::TRANSITIONING)
         {
-          std::cout << "Operating Mode: TRANSITIONING from " << currentState->stateString << " to "
-                    << nextState->stateString << "\n";
+          std::cout << "Operating Mode: TRANSITIONING from " << currentState->stateString << " to " << nextState->stateString
+                    << "\n";
         }
         else if (operatingMode == FSM_OperatingMode::ESTOP)
         {
@@ -404,15 +412,15 @@ void ControlFSM<T>::printInfo(int opt)
       break;
 
     case 1: // Initializing FSM State transition
-      std::cout << "[CONTROL FSM] Transition initialized from " << currentState->stateString
-                << " to " << nextState->stateString << "\n"
+      std::cout << "[CONTROL FSM] Transition initialized from " << currentState->stateString << " to " << nextState->stateString
+                << "\n"
                 << std::endl;
 
       break;
 
     case 2: // Finalizing FSM State transition
-      std::cout << "[CONTROL FSM] Transition finalizing from " << currentState->stateString
-                << " to " << nextState->stateString << "\n"
+      std::cout << "[CONTROL FSM] Transition finalizing from " << currentState->stateString << " to " << nextState->stateString
+                << "\n"
                 << std::endl;
 
       break;

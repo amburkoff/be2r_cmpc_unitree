@@ -28,7 +28,7 @@ void DesiredStateCommand<T>::convertToStateCommands()
   data.zero();
   Vec2<float> joystickLeft, joystickRight;
 
-  //T height_cmd(0.3);
+  // T height_cmd(0.3);
 
   joystickLeft = gamepadCommand->leftStickAnalog;
   joystickRight = gamepadCommand->rightStickAnalog;
@@ -47,6 +47,12 @@ void DesiredStateCommand<T>::convertToStateCommands()
   down = gamepadCommand->down;
   right = gamepadCommand->right;
   left = gamepadCommand->left;
+  circle = gamepadCommand->circle;
+  triangle = gamepadCommand->triangle;
+  cross = gamepadCommand->cross;
+  gamepadCommand->cross = false;
+  gamepadCommand->circle = false;
+  gamepadCommand->triangle = false;
 
   // Desired states from the controller
   data.stateDes(6) = deadband(leftAnalogStick[1], minVelX, maxVelX);           // forward linear velocity
@@ -61,11 +67,17 @@ void DesiredStateCommand<T>::convertToStateCommands()
   data.stateDes(3) = 0.0;                                                      // Roll
   data.stateDes(4) = deadband(rightAnalogStick[1], minPitch, maxPitch);        // Pitch
   data.stateDes(5) = dt * data.stateDes(11);                                   // Yaw
+
+  // gamepadCommand->zero();
 }
 
 template<typename T>
-void DesiredStateCommand<T>::setCommandLimits(T minVelX_in, T maxVelX_in,
-                                              T minVelY_in, T maxVelY_in, T minTurnRate_in, T maxTurnRate_in)
+void DesiredStateCommand<T>::setCommandLimits(T minVelX_in,
+                                              T maxVelX_in,
+                                              T minVelY_in,
+                                              T maxVelY_in,
+                                              T minTurnRate_in,
+                                              T maxTurnRate_in)
 {
   minVelX = minVelX_in;
   maxVelX = maxVelX_in;
@@ -144,25 +156,17 @@ void DesiredStateCommand<T>::printRawInfo()
   {
     std::cout << "[DESIRED STATE COMMAND] Printing Raw Gamepad Info...\n";
     std::cout << "---------------------------------------------------------\n";
-    std::cout << "Button Start: " << gamepadCommand->start
-              << " | Back: " << gamepadCommand->back << "\n";
-    std::cout << "Button A: " << gamepadCommand->a
-              << " | B: " << gamepadCommand->b << " | X: " << gamepadCommand->x
+    std::cout << "Button Start: " << gamepadCommand->start << " | Back: " << gamepadCommand->back << "\n";
+    std::cout << "Button A: " << gamepadCommand->a << " | B: " << gamepadCommand->b << " | X: " << gamepadCommand->x
               << " | Y: " << gamepadCommand->y << "\n";
-    std::cout << "Left Stick Button: " << gamepadCommand->leftStickButton
-              << " | X: " << gamepadCommand->leftStickAnalog[0]
+    std::cout << "Left Stick Button: " << gamepadCommand->leftStickButton << " | X: " << gamepadCommand->leftStickAnalog[0]
               << " | Y: " << gamepadCommand->leftStickAnalog[1] << "\n";
-    std::cout << "Right Analog Button: " << gamepadCommand->rightStickButton
-              << " | X: " << gamepadCommand->rightStickAnalog[0]
+    std::cout << "Right Analog Button: " << gamepadCommand->rightStickButton << " | X: " << gamepadCommand->rightStickAnalog[0]
               << " | Y: " << gamepadCommand->rightStickAnalog[1] << "\n";
-    std::cout << "Left Bumper: " << gamepadCommand->leftBumper
-              << " | Trigger Switch: " << gamepadCommand->leftTriggerButton
-              << " | Trigger Value: " << gamepadCommand->leftTriggerAnalog
-              << "\n";
-    std::cout << "Right Bumper: " << gamepadCommand->rightBumper
-              << " | Trigger Switch: " << gamepadCommand->rightTriggerButton
-              << " | Trigger Value: " << gamepadCommand->rightTriggerAnalog
-              << "\n\n";
+    std::cout << "Left Bumper: " << gamepadCommand->leftBumper << " | Trigger Switch: " << gamepadCommand->leftTriggerButton
+              << " | Trigger Value: " << gamepadCommand->leftTriggerAnalog << "\n";
+    std::cout << "Right Bumper: " << gamepadCommand->rightBumper << " | Trigger Switch: " << gamepadCommand->rightTriggerButton
+              << " | Trigger Value: " << gamepadCommand->rightTriggerAnalog << "\n\n";
     std::cout << std::endl;
 
     // Reset iteration counter
@@ -184,17 +188,11 @@ void DesiredStateCommand<T>::printStateCommandInfo()
   {
     std::cout << "[DESIRED STATE COMMAND] Printing State Command Info...\n";
     std::cout << "---------------------------------------------------------\n";
-    std::cout << "Position X: " << data.stateDes(0)
-              << " | Y: " << data.stateDes(1) << " | Z: " << data.stateDes(2)
+    std::cout << "Position X: " << data.stateDes(0) << " | Y: " << data.stateDes(1) << " | Z: " << data.stateDes(2) << "\n";
+    std::cout << "Orientation Roll: " << data.stateDes(3) << " | Pitch: " << data.stateDes(4) << " | Yaw: " << data.stateDes(5)
               << "\n";
-    std::cout << "Orientation Roll: " << data.stateDes(3)
-              << " | Pitch: " << data.stateDes(4)
-              << " | Yaw: " << data.stateDes(5) << "\n";
-    std::cout << "Velocity X: " << data.stateDes(6)
-              << " | Y: " << data.stateDes(7) << " | Z: " << data.stateDes(8)
-              << "\n";
-    std::cout << "Angular Velocity X: " << data.stateDes(9)
-              << " | Y: " << data.stateDes(10) << " | Z: " << data.stateDes(11)
+    std::cout << "Velocity X: " << data.stateDes(6) << " | Y: " << data.stateDes(7) << " | Z: " << data.stateDes(8) << "\n";
+    std::cout << "Angular Velocity X: " << data.stateDes(9) << " | Y: " << data.stateDes(10) << " | Z: " << data.stateDes(11)
               << "\n";
     std::cout << std::endl;
     std::cout << std::endl;

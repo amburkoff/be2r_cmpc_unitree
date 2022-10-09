@@ -1,8 +1,8 @@
 #ifndef CONTROLFSM_H
 #define CONTROLFSM_H
 
-#include "thread"
 #include <iostream>
+#include <thread>
 
 // Contains all of the control related data
 #include "ControlFSMData.h"
@@ -21,6 +21,7 @@
 #include "FSM_State_RecoveryStand.h"
 #include "FSM_State_StandUp.h"
 #include "FSM_State_Testing.h"
+#include "FSM_State_Testing_cv.h"
 #include "FSM_State_Vision.h"
 
 // #include "FSM_State_FrontJump.h"
@@ -55,6 +56,7 @@ struct FSM_StatesList
   FSM_State_RecoveryStand<T>* recoveryStand;
   FSM_State_BackFlip<T>* backflip;
   FSM_State_BalanceVBL<T>* balance_vbl;
+  FSM_State_Testing_Cv<T>* testingCV;
 
   // FSM_State_JointPD<T>* jointPD;
   // FSM_State_ImpedanceControl<T>* impedanceControl;
@@ -76,10 +78,14 @@ template<typename T>
 class ControlFSM
 {
 public:
-  ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* _stateEstimator,
-             LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
-             DesiredStateCommand<T>* _desiredStateCommand, StaticParams* controlParameters,
-             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters, Debug* debug);
+  ControlFSM(Quadruped<T>* _quadruped,
+             StateEstimatorContainer<T>* _stateEstimator,
+             LegController<T>* _legController,
+             GaitScheduler<T>* _gaitScheduler,
+             DesiredStateCommand<T>* _desiredStateCommand,
+             StaticParams* controlParameters,
+             be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
+             Debug* debug);
 
   // Initializes the Control FSM instance
   void initialize();
