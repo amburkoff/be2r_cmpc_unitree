@@ -323,7 +323,7 @@ void Body_Manager::run()
 
   _debug->updateVisualization();
   _debug->updatePlot();
-  _debug->tfPublish();
+  // _debug->tfPublish();
 }
 
 void Body_Manager::setupStep()

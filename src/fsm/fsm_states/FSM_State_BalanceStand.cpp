@@ -113,9 +113,9 @@ void FSM_State_BalanceStand<T>::run()
   // give hand
   else if (this->_data->_desiredStateCommand->rectangle)
   {
-    this->_data->userParameters->test = 0;
+    this->_data->userParameters->test = 3;
     t1 = new std::thread(execBashBalance, "3");
-    this->_data->_desiredStateCommand->cross = false;
+    this->_data->_desiredStateCommand->rectangle = false;
   }
 
   switch (this->_data->userParameters->test)
@@ -411,7 +411,8 @@ void FSM_State_BalanceStand<T>::BalanceStandStepDefault()
     point = ros::toMsg(this->_data->_legController->datas[foot].p + this->_data->_quadruped->getHipLocation(foot));
     this->_data->debug->last_p_local_stance[foot] = point;
     // this->_data->debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(_wbc_data->pFoot_des[foot]);
-    // this->_data->debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(0) + this->_data->_legController->datas[foot].p));
+    // this->_data->debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(seResult.position + seResult.rBody.transpose() *
+    // (this->_data->_quadruped->getHipLocation(0) + this->_data->_legController->datas[foot].p));
   }
 }
 
@@ -551,7 +552,7 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
   _wbc_data->vBody_des.setZero();
   _wbc_data->aBody_des.setZero();
 
-  _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; //original
+  _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; // original
   _wbc_data->pBody_RPY_des[0] = 0;
   _wbc_data->pBody_RPY_des[1] = 0;
 
@@ -715,7 +716,9 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
     point = ros::toMsg(this->_data->_legController->datas[foot].p + this->_data->_quadruped->getHipLocation(foot));
     this->_data->debug->last_p_local_stance[foot] = point;
     this->_data->debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(_wbc_data->pFoot_des[foot]);
-    this->_data->debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(0) + this->_data->_legController->datas[foot].p));
+    this->_data->debug->all_legs_info.leg.at(foot).p_w_act =
+      ros::toMsg(seResult.position + seResult.rBody.transpose() *
+                                       (this->_data->_quadruped->getHipLocation(0) + this->_data->_legController->datas[foot].p));
   }
 
   this->_data->debug->all_legs_info.leg.at(0).p_des = ros::toMsg(p_des);

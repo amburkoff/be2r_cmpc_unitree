@@ -157,6 +157,7 @@ private:
   int iterationsBetweenMPC;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
   int _gait_period;
+  int _gait_period_long;
   int horizonLength;
   int default_iterations_between_mpc;
   float dt;
@@ -165,7 +166,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance;
+  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance, trot_long;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -173,6 +174,7 @@ private:
   float stand_traj[6];
   int current_gait;
   int gaitNumber;
+  float _pitch_cmd = 0;
 
   Vec3<float> world_position_desired;
   Vec3<float> rpy_int;

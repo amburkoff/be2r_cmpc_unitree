@@ -50,9 +50,11 @@ void DesiredStateCommand<T>::convertToStateCommands()
   circle = gamepadCommand->circle;
   triangle = gamepadCommand->triangle;
   cross = gamepadCommand->cross;
+  rectangle = gamepadCommand->rectangle;
   gamepadCommand->cross = false;
   gamepadCommand->circle = false;
   gamepadCommand->triangle = false;
+  gamepadCommand->rectangle = false;
 
   // Desired states from the controller
   data.stateDes(6) = deadband(leftAnalogStick[1], minVelX, maxVelX);           // forward linear velocity

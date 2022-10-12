@@ -95,8 +95,8 @@ void FSM_State_Testing<T>::run()
       break;
 
     case 1:
-      //joint test
-      // test1();
+      // joint test
+      //  test1();
       LocomotionControlStep();
       break;
 
@@ -537,6 +537,10 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
 
     case K_VISION:
       this->nextStateName = FSM_StateName::VISION;
+      break;
+
+    case K_TESTING_CV:
+      this->nextStateName = FSM_StateName::TESTING_CV;
       break;
 
     default:

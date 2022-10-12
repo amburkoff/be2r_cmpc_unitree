@@ -42,7 +42,8 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
     iterationsBetweenMPC(_iterations_between_mpc),
     _parameters(_data->userParameters),
     _gait_period(_parameters->gait_period),
-    _gait_period_long(_parameters->gait_period * 1.3),
+    // _gait_period_long(_parameters->gait_period * 1.3),
+    _gait_period_long(34),
     horizonLength(_data->staticParams->horizon),
     dt(_dt),
     trotting(_gait_period,
@@ -51,10 +52,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
              "Trotting"),
     trot_long(_gait_period_long,
               Vec4<int>(0, _gait_period_long / 2.0, _gait_period_long / 2.0, 0),
-              Vec4<int>(2.5 * _gait_period_long / 4.0,
-                        2.5 * _gait_period_long / 4.0,
-                        2.5 * _gait_period_long / 4.0,
-                        2.5 * _gait_period_long / 4.0),
+              Vec4<int>(26, 26, 26, 26),
               "Trotting long"),
     trot_contact(_gait_period,
                  Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
@@ -123,7 +121,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _body_height = _parameters->body_height;
 
   float x_vel_cmd, y_vel_cmd;
-  float filter_x(0.005);
+  float filter_x(0.05);
   float filter_y(0.005);
 
   _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
@@ -313,7 +311,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 //   for (int i = 0; i < 4; i++)
 //   {
 //     //foot pos in world frame
-//     pFoot[i] = seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
+//     pFoot[i] = seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) +
+//     data._legController->datas[i].p);
 //   }
 
 //   if (gait != &standing)
@@ -464,7 +463,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
 //     delta_p_bw[foot] += seResult.vBody * dt;
 //     delta_yaw[foot] += seResult.omegaBody(2) * dt;
-//     data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
+//     data.debug->last_p_local_stance[foot] = ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] -
+//     delta_p_bw[foot]));
 
 //     if (swingState > 0) // foot is in swing
 //     {
@@ -725,13 +725,15 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   else if (current_gait != 11)
   {
     // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-    _pitch_des = pitch_cmd + data._stateEstimator->getResult().rpy[1] + data._stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
+    _pitch_des = pitch_cmd + data._stateEstimator->getResult().rpy[1] + data._stateEstimator->getResult().est_pitch_plane -
+                 0.07 * _x_vel_des;
     // _pitch_des = data._stateEstimator->getResult().est_pitch_plane;
   }
 
   for (int i = 0; i < 4; i++)
   {
-    pFoot[i] = seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
+    pFoot[i] =
+      seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
   }
 
   if ((gait != &standing) || (gait != &give_hand))
@@ -1032,9 +1034,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.0;
-  static double deg = M_PI / 180;
-  float pitch_joy = data._desiredStateCommand->rightAnalogStick[0] * 20 * deg;
-  pBody_RPY_des[1] = _pitch_des + pitch_joy;
+  pBody_RPY_des[1] = _pitch_des;
   // pBody_RPY_des[1] = 0.0;
   // pBody_RPY_des[2] = 0.0;
   pBody_RPY_des[2] = _yaw_des;
