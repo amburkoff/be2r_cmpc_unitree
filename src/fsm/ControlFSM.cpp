@@ -24,7 +24,6 @@ void execBash(string msg)
  * @param stateEstimator contains the estimated states
  * @param legController interface to the leg controllers
  * @param _gaitScheduler controls scheduled foot contact modes
- * @param _desiredStateCommand gets the desired COM state trajectories
  * @param controlParameters passes in the control parameters from the GUI
  */
 template<typename T>
@@ -407,7 +406,6 @@ void ControlFSM<T>::printInfo(int opt)
 
       // Print robot info about the robot's status
       // data._gaitScheduler->printGaitInfo();
-      // data._desiredStateCommand->printStateCommandInfo();
 
       break;
 

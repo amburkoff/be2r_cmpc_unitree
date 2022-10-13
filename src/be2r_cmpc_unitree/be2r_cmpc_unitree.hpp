@@ -30,7 +30,6 @@
 #include "MiniCheetah.h"
 // #include "Controllers/ContactEstimator.h"
 #include "Controllers/ContactEstimator.h"
-#include "Controllers/DesiredStateCommand.h"
 #include "Controllers/GaitScheduler.h"
 #include "Controllers/OrientationEstimator.h"
 #include "Controllers/PositionVelocityEstimator.h"

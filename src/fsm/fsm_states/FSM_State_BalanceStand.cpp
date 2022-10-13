@@ -84,11 +84,6 @@ void FSM_State_BalanceStand<T>::run()
   contactState << 0.5, 0.5, 0.5, 0.5;
   this->_data->stateEstimator->setContactPhase(contactState);
 
-  // std::cout << "circle = " << this->_data->_desiredStateCommand->circle << std::endl;
-  // std::cout << "triangle = " << this->_data->_desiredStateCommand->triangle << std::endl;
-  // std::cout << "cross = " << this->_data->_desiredStateCommand->cross << std::endl;
-  // std::cout << "rectangle = " << this->_data->_desiredStateCommand->rectangle << std::endl;
-
   // circle
   if (this->_data->gamepad_command->circle)
   {
@@ -579,22 +574,6 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
 
   static unsigned long iter_start = 0;
 
-  // switch (this->_data->userParameters->test)
-  // {
-  //   //standard
-  //   case 0:
-  //     // Height
-  //     _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
-
-  //     // Orientation
-  //     _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
-  //     _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
-  //     _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
-  //     break;
-
-  //     // give hand
-  //   case 3:
-
   float progress = rate * _iter * this->_data->staticParams->controller_dt;
 
   if (progress > 1)
@@ -675,8 +654,6 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
     _wbc_data->contact_state[0] = false;
     _wbc_data->Fr_des[0][2] = 0;
   }
-  // break;
-  // }
 
   _wbc_data->vBody_Ori_des.setZero();
 

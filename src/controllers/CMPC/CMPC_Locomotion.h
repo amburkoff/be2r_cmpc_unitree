@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Controllers/DesiredStateCommand.h"
 #include "FloatingBaseModel.h"
 #include "Gait_contact.h"
 #include "cppTypes.h"

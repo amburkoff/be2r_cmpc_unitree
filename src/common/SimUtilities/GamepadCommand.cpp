@@ -42,6 +42,12 @@ void GamepadCommand::_joyCallback(sensor_msgs::Joy msg)
   PS = msg.buttons[10];
   L3 = msg.buttons[11];
   R3 = msg.buttons[12];
+
+  left_stick_analog[1] = msg.axes[1];
+  left_stick_analog[0] = msg.axes[0];
+
+  right_stick_analog[1] = msg.axes[4];
+  right_stick_analog[0] = msg.axes[3];
 }
 
 void GamepadCommand::_initSubscribers()

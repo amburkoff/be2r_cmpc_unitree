@@ -63,9 +63,9 @@ public:
   float min_roll = -0.8;
   float max_pitch = 0.4;
   float min_pitch = -0.4;
-  float max_vel_x = 0.5;
-  float min_vel_x = -0.5;
-  float max_vel_y = 0.3;
+  float max_vel_x = 0.7;
+  float min_vel_x = -0.7;
+  float max_vel_y = 0.5;
   float min_vel_y = -0.5;
   float max_turn_rate = 2.5;
   float min_turn_rate = -2.5;

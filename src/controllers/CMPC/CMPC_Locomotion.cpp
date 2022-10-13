@@ -699,7 +699,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     gait = &trot_long;
   }
 
-  // gait->updatePeriod(_parameters->gait_period);
+  gait->updatePeriod(_parameters->gait_period);
   gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
   gait->earlyContactHandle(data.stateEstimator->getContactSensorData(), iterationsBetweenMPC, iterationCounter);
@@ -744,7 +744,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   {
     world_position_desired[0] = seResult.position[0];
     world_position_desired[1] = seResult.position[1];
-    // world_position_desired[2] = seResult.rpy[2];
     world_position_desired[2] = seResult.position[2];
     _yaw_des = seResult.rpy[2];
 
@@ -865,10 +864,10 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 
       footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
 
-      //  
+      //
       Vec3<float> offset(0, side_sign[foot] * data.quadruped->_abadLinkLength, 0);
 
-      Vec3<float> pRobotFrame = (data.quadruped->getHipLocation(foot) + offset);
+      Vec3<float> pRobotFrame = data.quadruped->getHipLocation(foot) + offset;
 
       pRobotFrame[1] += interleave_y[foot] * v_abs * interleave_gain;
       float stance_time = gait->getCurrentStanceTime(dtMPC, foot);
@@ -885,17 +884,22 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       float p_rel_max = 0.3f;
 
       // Using the estimated velocity is correct
-      float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time +
-                      .03f * (seResult.vWorld[0] - v_des_world[0]) +
-                      (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
-      float pfy_rel = seResult.vWorld[1] * .5 * stance_time * dtMPC + .03f * (seResult.vWorld[1] - v_des_world[1]) +
-                      (0.5f * seResult.position[2] / 9.81f) * (-seResult.vWorld[0] * _yaw_turn_rate);
+      // float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time + .03f * (seResult.vWorld[0] - v_des_world[0]) + (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
+      // float pfy_rel = seResult.vWorld[1] * .5 * stance_time * dtMPC + .03f * (seResult.vWorld[1] - v_des_world[1]) + (0.5f * seResult.position[2] / 9.81f) * (-seResult.vWorld[0] * _yaw_turn_rate);
+
+      float pfx_rel = seResult.vWorld[0] * stance_time / 2.0 + 0.02f * (v_des_world[0] - seResult.vWorld[0]) + 0.5f * seResult.position[2] / 9.81f * seResult.vWorld[1] * _yaw_turn_rate;
+      float pfy_rel = seResult.vWorld[1] * stance_time / 2.0 + 0.02f * (v_des_world[1] - seResult.vWorld[1]) - 0.5f * seResult.position[2] / 9.81f * seResult.vWorld[0] * _yaw_turn_rate;
 
       pfx_rel = fminf(fmaxf(pfx_rel, -p_rel_max), p_rel_max);
       pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
       Pf[0] += pfx_rel;
       Pf[1] += pfy_rel;
       Pf[2] = z_des[foot];
+      // Pf[2] = 0.0;
+
+      // cout << "z_des " << foot << " " << z_des[foot] << endl;
+      // cout << "x_rel " << foot << ": " << pfx_rel << endl;
+      // cout << "y_rel " << foot << ": " << pfy_rel << endl;
 
       footSwingTrajectories[foot].setFinalPosition(Pf);
       data.debug->all_legs_info.leg[foot].swing_pf.x = Pf(0);
