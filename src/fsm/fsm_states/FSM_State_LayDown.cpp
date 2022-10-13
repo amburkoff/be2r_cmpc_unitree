@@ -46,7 +46,7 @@ void FSM_State_LayDown<T>::onEnter()
 
   for (size_t leg(0); leg < 4; ++leg)
   {
-    _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
+    _ini_foot_pos[leg] = this->_data->legController->datas[leg].p;
   }
 }
 
@@ -61,10 +61,10 @@ void FSM_State_LayDown<T>::run()
   if (progress > 1.)
   {
     progress = 1.;
-    this->_data->_legController->setEnabled(false);
+    this->_data->legController->setEnabled(false);
   }
 
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  auto& seResult = this->_data->stateEstimator->getResult();
   float mass = 8;
   Vec3<float> leg_force;
   leg_force << 0, 0, 0;
@@ -81,18 +81,18 @@ void FSM_State_LayDown<T>::run()
 
   for (int i = 0; i < 4; i++)
   {
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(p, p, p).asDiagonal();
-    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(d, d, d).asDiagonal();
+    this->_data->legController->commands[i].kpCartesian = Vec3<T>(p, p, p).asDiagonal();
+    this->_data->legController->commands[i].kdCartesian = Vec3<T>(d, d, d).asDiagonal();
 
-    this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
-    this->_data->_legController->commands[i].pDes[2] =
+    this->_data->legController->commands[i].pDes = _ini_foot_pos[i];
+    this->_data->legController->commands[i].pDes[2] =
       progress * (-0.07) + (1. - progress) * _ini_foot_pos[i][2];
 
-    this->_data->_legController->commands[i].forceFeedForward = leg_force;
+    this->_data->legController->commands[i].forceFeedForward = leg_force;
   }
 
   // cout << "z ini: " << _ini_foot_pos[0][2] << " z des: " <<
-  // this->_data->_legController->commands[0].pDes[2] << endl;
+  // this->_data->legController->commands[0].pDes[2] << endl;
 }
 
 /**

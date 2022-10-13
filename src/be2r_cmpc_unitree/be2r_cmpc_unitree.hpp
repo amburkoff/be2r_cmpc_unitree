@@ -21,7 +21,6 @@
 #include <string>
 #include <unitree_legged_msgs/LowCmd.h>
 #include <unitree_legged_msgs/LowState.h>
-#include <sensor_msgs/Joy.h>
 
 // MIT
 #include "Configuration.h"
@@ -96,7 +95,6 @@ private:
   ros::Subscriber _sub_ground_truth;
   ros::Subscriber _sub_low_state;
   ros::Subscriber _sub_cmd_vel;
-  ros::Subscriber _sub_joy;
   ros::ServiceServer _srv_do_step;
   ros::ServiceServer _srv_stop_map;
   ros::ServiceServer _srv_start_map;
@@ -117,7 +115,6 @@ private:
 
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
-  void _joyCallback(sensor_msgs::Joy msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num);
   void _callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_paramsConfig& config, uint32_t level);
   void _groundTruthCallback(nav_msgs::Odometry ground_truth_msg);
@@ -135,22 +132,20 @@ private:
   UNITREE_LEGGED_SDK::LowCmd _rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd);
   unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
 
+  ControlFSM<float>* _controlFSM;
   Quadruped<float> _quadruped;
   LegController<float>* _legController = nullptr;
-  StateEstimatorContainer<float>* _stateEstimator;
+  StateEstimatorContainer<float>* _stateEstimator = nullptr;
   StateEstimate<float> _stateEstimate;
-  DesiredStateCommand<float>* _desiredStateCommand;
   CheaterState<float> _cheater_state;
-  Debug* _debug;
-  GamepadCommand driverCommand;
+  Debug* _debug = nullptr;
+  GamepadCommand* _gamepad_command = nullptr;
   unitree_legged_msgs::LowState _low_state;
   unitree_legged_msgs::LowCmd _low_cmd;
   bool _is_low_level = false;
   int _power_limit = 0;
   bool _is_torque_safe = true;
   string _robot_type = "a1";
-
-  ControlFSM<float>* _controlFSM;
 
   // Gait Scheduler controls the nominal contact schedule for the feet
   GaitScheduler<float>* _gaitScheduler;

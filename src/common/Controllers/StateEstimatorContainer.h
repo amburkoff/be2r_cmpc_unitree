@@ -12,7 +12,6 @@
 
 #include "Controllers/LegController.h"
 #include "SimUtilities/IMUTypes.h"
-#include "SimUtilities/VisualizationData.h"
 #include "debug/debug.hpp"
 #include "ros_read_param.h"
 
@@ -110,17 +109,11 @@ public:
   /*!
    * Run all estimators
    */
-  void run(CheetahVisualization* visualization = nullptr)
+  void run()
   {
     for (auto estimator : _estimators)
     {
       estimator->run();
-    }
-    if (visualization)
-    {
-      visualization->quat = _data.result->orientation.template cast<float>();
-      visualization->p = _data.result->position.template cast<float>();
-      // todo contact!
     }
   }
 

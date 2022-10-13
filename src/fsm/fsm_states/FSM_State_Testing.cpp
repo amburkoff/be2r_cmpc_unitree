@@ -36,7 +36,7 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   // Initialize GRF and footstep locations to 0s
   this->footFeedForwardForces = Mat34<T>::Zero();
   this->footstepLocations = Mat34<T>::Zero();
-  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->_quadruped->buildModel());
+  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->quadruped->buildModel());
   _wbc_data = new LocomotionCtrlData<T>();
 }
 
@@ -51,14 +51,14 @@ void FSM_State_Testing<T>::onEnter()
 
   CMPC->initialize();
 
-  this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+  this->_data->gaitScheduler->gaitData._nextGait = GaitType::TROT;
 
   // Reset iteration counter
   iter = 0;
 
   for (size_t leg(0); leg < 4; ++leg)
   {
-    _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
+    _ini_foot_pos[leg] = this->_data->legController->datas[leg].p;
 
     firstSwing[leg] = true;
   }
@@ -67,7 +67,7 @@ void FSM_State_Testing<T>::onEnter()
   // {
   //   for (size_t jidx(0); jidx < 3; ++jidx)
   //   {
-  //     _ini_jpos[3 * leg + jidx] = FSM_State<T>::_data->_legController->datas[leg].q[jidx];
+  //     _ini_jpos[3 * leg + jidx] = FSM_State<T>::_data->legController->datas[leg].q[jidx];
   //   }
   // }
 }
@@ -145,7 +145,7 @@ void FSM_State_Testing<T>::test1()
 
   if (start == false)
   {
-    qInit = this->_data->_legController->datas[0].q;
+    qInit = this->_data->legController->datas[0].q;
     start = true;
   }
 
@@ -179,32 +179,32 @@ void FSM_State_Testing<T>::test1()
   qDes[2] = -sin_mid_q[2] - sin_joint2;
 
   // tau[0] =
-  //   Kp[0] * (qDes[0] - this->_data->_legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->_legController->datas[0].qd(0));
+  //   Kp[0] * (qDes[0] - this->_data->legController->datas[0].q(0)) + Kd[0] * (0 - this->_data->legController->datas[0].qd(0));
   // tau[1] =
-  //   Kp[1] * (qDes[1] - this->_data->_legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->_legController->datas[0].qd(1));
+  //   Kp[1] * (qDes[1] - this->_data->legController->datas[0].q(1)) + Kd[1] * (0 - this->_data->legController->datas[0].qd(1));
   // tau[2] =
-  //   Kp[2] * (qDes[2] - this->_data->_legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->_legController->datas[0].qd(2));
+  //   Kp[2] * (qDes[2] - this->_data->legController->datas[0].q(2)) + Kd[2] * (0 - this->_data->legController->datas[0].qd(2));
 
-  this->_data->_legController->commands[0].kpJoint(0, 0) = Kp[0];
-  this->_data->_legController->commands[0].kpJoint(1, 1) = Kp[1];
-  this->_data->_legController->commands[0].kpJoint(2, 2) = Kp[2];
-  this->_data->_legController->commands[0].kdJoint(0, 0) = Kd[0];
-  this->_data->_legController->commands[0].kdJoint(1, 1) = Kd[1];
-  this->_data->_legController->commands[0].kdJoint(2, 2) = Kd[2];
+  this->_data->legController->commands[0].kpJoint(0, 0) = Kp[0];
+  this->_data->legController->commands[0].kpJoint(1, 1) = Kp[1];
+  this->_data->legController->commands[0].kpJoint(2, 2) = Kp[2];
+  this->_data->legController->commands[0].kdJoint(0, 0) = Kd[0];
+  this->_data->legController->commands[0].kdJoint(1, 1) = Kd[1];
+  this->_data->legController->commands[0].kdJoint(2, 2) = Kd[2];
 
-  this->_data->_legController->commands[0].qDes = qDes;
-  this->_data->_legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
+  this->_data->legController->commands[0].qDes = qDes;
+  this->_data->legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
 
-  // this->_data->_legController->commands[0].kpJoint(0, 0) = 0;
-  // this->_data->_legController->commands[0].kpJoint(1, 1) = 0;
-  // this->_data->_legController->commands[0].kpJoint(2, 2) = 0;
-  // this->_data->_legController->commands[0].kdJoint(0, 0) = 0;
-  // this->_data->_legController->commands[0].kdJoint(1, 1) = 0;
-  // this->_data->_legController->commands[0].kdJoint(2, 2) = 0;
-  // this->_data->_legController->commands[0].qDes = Vec3<T>(0, 0, 0);
-  // this->_data->_legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
+  // this->_data->legController->commands[0].kpJoint(0, 0) = 0;
+  // this->_data->legController->commands[0].kpJoint(1, 1) = 0;
+  // this->_data->legController->commands[0].kpJoint(2, 2) = 0;
+  // this->_data->legController->commands[0].kdJoint(0, 0) = 0;
+  // this->_data->legController->commands[0].kdJoint(1, 1) = 0;
+  // this->_data->legController->commands[0].kdJoint(2, 2) = 0;
+  // this->_data->legController->commands[0].qDes = Vec3<T>(0, 0, 0);
+  // this->_data->legController->commands[0].qdDes = Vec3<T>(0, 0, 0);
 
-  // this->_data->_legController->commands[0].tauFeedForward = tau;
+  // this->_data->legController->commands[0].tauFeedForward = tau;
 }
 
 template<typename T>
@@ -212,20 +212,20 @@ void FSM_State_Testing<T>::safeJointTest()
 {
   for (size_t i = 0; i < 4; i++)
   {
-    this->_data->_legController->commands[i].kpJoint(0, 0) = 0;
-    this->_data->_legController->commands[i].kpJoint(1, 1) = 0;
-    this->_data->_legController->commands[i].kpJoint(2, 2) = 0;
+    this->_data->legController->commands[i].kpJoint(0, 0) = 0;
+    this->_data->legController->commands[i].kpJoint(1, 1) = 0;
+    this->_data->legController->commands[i].kpJoint(2, 2) = 0;
 
-    this->_data->_legController->commands[i].kdJoint(0, 0) = 3;
-    this->_data->_legController->commands[i].kdJoint(1, 1) = 3;
-    this->_data->_legController->commands[i].kdJoint(2, 2) = 3;
+    this->_data->legController->commands[i].kdJoint(0, 0) = 3;
+    this->_data->legController->commands[i].kdJoint(1, 1) = 3;
+    this->_data->legController->commands[i].kdJoint(2, 2) = 3;
 
-    this->_data->_legController->commands[i].qdDes(0) = 0;
-    this->_data->_legController->commands[i].qdDes(1) = 0;
-    this->_data->_legController->commands[i].qdDes(2) = 0;
+    this->_data->legController->commands[i].qdDes(0) = 0;
+    this->_data->legController->commands[i].qdDes(1) = 0;
+    this->_data->legController->commands[i].qdDes(2) = 0;
   }
 
-  // this->_data->_legController->edampCommand(4);
+  // this->_data->legController->edampCommand(4);
 }
 
 // impedance test
@@ -235,7 +235,7 @@ void FSM_State_Testing<T>::test2(float h)
   // float rate = 1;
   float rate = 0.5;
   float duration = 1 / rate;
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  auto& seResult = this->_data->stateEstimator->getResult();
   static bool is_start = true;
 
   Vec3<float> p0(0, -0.15, -0.2);
@@ -268,7 +268,7 @@ void FSM_State_Testing<T>::test2(float h)
 
   T progress = rate * iter * this->_data->staticParams->controller_dt;
 
-  auto _model = this->_data->_quadruped->buildModel();
+  auto _model = this->_data->quadruped->buildModel();
 
   FBModelState<float> _state;
   _state.q = DVec<T>::Zero(cheetah::num_act_joint);
@@ -287,8 +287,8 @@ void FSM_State_Testing<T>::test2(float h)
 
     for (size_t leg(0); leg < 4; ++leg)
     {
-      _state.q[3 * leg + i] = this->_data->_legController->datas[leg].q[i];
-      _state.qd[3 * leg + i] = this->_data->_legController->datas[leg].qd[i];
+      _state.q[3 * leg + i] = this->_data->legController->datas[leg].q[i];
+      _state.qd[3 * leg + i] = this->_data->legController->datas[leg].qd[i];
 
       _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
     }
@@ -331,10 +331,10 @@ void FSM_State_Testing<T>::test2(float h)
   // float p = 800;
   // float d = 15;
 
-  this->_data->_legController->setLegEnabled(0, true);
-  this->_data->_legController->setLegEnabled(1, false);
-  this->_data->_legController->setLegEnabled(2, false);
-  this->_data->_legController->setLegEnabled(3, false);
+  this->_data->legController->setLegEnabled(0, true);
+  this->_data->legController->setLegEnabled(1, false);
+  this->_data->legController->setLegEnabled(2, false);
+  this->_data->legController->setLegEnabled(3, false);
 
   uint8_t foot = 0;
 
@@ -346,18 +346,18 @@ void FSM_State_Testing<T>::test2(float h)
     footSwingTrajectories[foot].setFinalPosition(p0);
   }
 
-  this->_data->_legController->commands[foot].kpCartesian =
+  this->_data->legController->commands[foot].kpCartesian =
     Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1,
                 this->_data->userParameters->Kp_cartesian_2)
       .asDiagonal();
-  this->_data->_legController->commands[foot].kdCartesian =
+  this->_data->legController->commands[foot].kdCartesian =
     Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1,
                 this->_data->userParameters->Kd_cartesian_2)
       .asDiagonal();
 
-  // this->_data->_legController->commands[foot].pDes = pDes;
-  // this->_data->_legController->commands[foot].vDes = Vec3<float>::Constant(0);
-  this->_data->_legController->commands[foot].tauFeedForward = tau;
+  // this->_data->legController->commands[foot].pDes = pDes;
+  // this->_data->legController->commands[foot].vDes = Vec3<float>::Constant(0);
+  this->_data->legController->commands[foot].tauFeedForward = tau;
 
   if (!is_start)
   {
@@ -378,13 +378,13 @@ void FSM_State_Testing<T>::test2(float h)
   Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
   Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
   // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) -
-  // this->_data->_quadruped->getHipLocation(foot); Vec3<float> vDesLeg = seResult.rBody *
+  // this->_data->quadruped->getHipLocation(foot); Vec3<float> vDesLeg = seResult.rBody *
   // (vDesFootWorld - seResult.vWorld);
 
-  // this->_data->_legController->commands[foot].pDes = pDesLeg;
-  // this->_data->_legController->commands[foot].vDes = vDesLeg;
-  this->_data->_legController->commands[foot].pDes = pDesFootWorld;
-  this->_data->_legController->commands[foot].vDes = vDesFootWorld;
+  // this->_data->legController->commands[foot].pDes = pDesLeg;
+  // this->_data->legController->commands[foot].vDes = vDesLeg;
+  this->_data->legController->commands[foot].pDes = pDesFootWorld;
+  this->_data->legController->commands[foot].vDes = vDesFootWorld;
   this->_data->debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesFootWorld);
   this->_data->debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesFootWorld);
 
@@ -403,9 +403,9 @@ void FSM_State_Testing<T>::test2(float h)
 
   // this->jointPDControl(0, q_des, dq_des);
   // this->lowLeveljointPDControl(0, q_des, dq_des);
-  // this->_data->_legController->is_low_level = true;
+  // this->_data->legController->is_low_level = true;
 
-  // Vec3<float> p_act = this->_data->_legController->datas[0].p;
+  // Vec3<float> p_act = this->_data->legController->datas[0].p;
   // Vec3<float> q_eval = this->findAngles(0, p_act);
   // cout << "q_eval: " << q_eval << endl;
 
@@ -419,9 +419,9 @@ void FSM_State_Testing<T>::test2(float h)
   Vec3<T> G = _grav.block(6, 0, 3, 1);
   Vec3<T> tau_final(0, 0, 0);
   tau_final =
-    tau + this->_data->_legController->datas[0].J.transpose() *
-            (this->_data->_legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->_legController->datas[0].p) +
-             this->_data->_legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->_legController->datas[0].v));
+    tau + this->_data->legController->datas[0].J.transpose() *
+            (this->_data->legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->legController->datas[0].p) +
+             this->_data->legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->legController->datas[0].v));
 
   ddq = M.inverse() * (tau_final - C - G);
   dq = dq + ddq * dt;
@@ -439,7 +439,7 @@ template<typename T>
 void FSM_State_Testing<T>::gravTest()
 {
   float rate = 0.5;
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  auto& seResult = this->_data->stateEstimator->getResult();
   static bool is_start = true;
 
   Vec3<float> p0(0, -0.15, -0.2);
@@ -451,7 +451,7 @@ void FSM_State_Testing<T>::gravTest()
 
   T progress = rate * iter * this->_data->staticParams->controller_dt;
 
-  auto _model = this->_data->_quadruped->buildModel();
+  auto _model = this->_data->quadruped->buildModel();
 
   FBModelState<float> _state;
   _state.q = DVec<T>::Zero(cheetah::num_act_joint);
@@ -470,8 +470,8 @@ void FSM_State_Testing<T>::gravTest()
 
     for (size_t leg(0); leg < 4; ++leg)
     {
-      _state.q[3 * leg + i] = this->_data->_legController->datas[leg].q[i];
-      _state.qd[3 * leg + i] = this->_data->_legController->datas[leg].qd[i];
+      _state.q[3 * leg + i] = this->_data->legController->datas[leg].q[i];
+      _state.qd[3 * leg + i] = this->_data->legController->datas[leg].qd[i];
 
       _full_config[3 * leg + i + 6] = _state.q[3 * leg + i];
     }
@@ -493,14 +493,14 @@ void FSM_State_Testing<T>::gravTest()
 
   cout << "grav leg0: " << tau << endl;
 
-  this->_data->_legController->setLegEnabled(0, true);
-  this->_data->_legController->setLegEnabled(1, false);
-  this->_data->_legController->setLegEnabled(2, false);
-  this->_data->_legController->setLegEnabled(3, false);
+  this->_data->legController->setLegEnabled(0, true);
+  this->_data->legController->setLegEnabled(1, false);
+  this->_data->legController->setLegEnabled(2, false);
+  this->_data->legController->setLegEnabled(3, false);
 
   for (int foot = 0; foot < 4; foot++)
   {
-    this->_data->_legController->commands[foot].tauFeedForward = tau;
+    this->_data->legController->commands[foot].tauFeedForward = tau;
   }
 }
 
@@ -591,9 +591,9 @@ template<typename T>
 void FSM_State_Testing<T>::onExit()
 {
   // Nothing to clean up when exiting
-  // this->_data->_legController->zeroCommand();
+  // this->_data->legController->zeroCommand();
 
-  this->_data->_legController->setEnabled(false);
+  this->_data->legController->setEnabled(false);
 }
 
 template<typename T>
@@ -611,10 +611,10 @@ void FSM_State_Testing<T>::LocomotionControlStep()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
-    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
-    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
-    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    pDes_backup[leg] = this->_data->legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->legController->commands[leg].kdCartesian;
   }
 
   if (this->_data->userParameters->use_wbc)
@@ -640,18 +640,18 @@ void FSM_State_Testing<T>::LocomotionControlStep()
   for (int leg(0); leg < 4; ++leg)
   {
     // originally commented
-    this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
-    this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
+    this->_data->legController->commands[leg].pDes = pDes_backup[leg];
+    this->_data->legController->commands[leg].vDes = vDes_backup[leg];
 
-    this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
-    this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
+    this->_data->legController->commands[leg].kpCartesian = Kp_backup[leg];
+    this->_data->legController->commands[leg].kdCartesian = Kd_backup[leg];
   }
 }
 
 template<typename T>
 bool FSM_State_Testing<T>::locomotionSafe()
 {
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  auto& seResult = this->_data->stateEstimator->getResult();
 
   const T max_roll = 40;
   const T max_pitch = 40;
@@ -670,7 +670,7 @@ bool FSM_State_Testing<T>::locomotionSafe()
 
   for (int leg = 0; leg < 4; leg++)
   {
-    auto p_leg = this->_data->_legController->datas[leg].p;
+    auto p_leg = this->_data->legController->datas[leg].p;
     if (p_leg[2] > 0)
     {
       printf("Unsafe locomotion: leg %d is above hip (%.3f m)\n", leg, p_leg[2]);
@@ -683,7 +683,7 @@ bool FSM_State_Testing<T>::locomotionSafe()
       return false;
     }
 
-    auto v_leg = this->_data->_legController->datas[leg].v.norm();
+    auto v_leg = this->_data->legController->datas[leg].v.norm();
     if (std::fabs(v_leg) > 9.)
     {
       printf("Unsafe locomotion: leg %d is moving too quickly (%.3f m/s)\n", leg, v_leg);

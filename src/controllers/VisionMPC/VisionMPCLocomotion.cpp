@@ -77,11 +77,11 @@ void VisionMPCLocomotion::_setupCommand(ControlFSMData<float>& data)
   float filter(0.1);
 
   // Original
-  x_vel_cmd = data._desiredStateCommand->leftAnalogStick[1];
-  y_vel_cmd = data._desiredStateCommand->leftAnalogStick[0];
-  _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
+  x_vel_cmd = data.gamepad_command->left_stick_analog[1];
+  y_vel_cmd = data.gamepad_command->left_stick_analog[0];
+  _yaw_turn_rate = data.gamepad_command->right_stick_analog[0];
 
-  // auto curr_pos = (this->_data->_stateEstimator->getResult()).position;
+  // auto curr_pos = (this->_data->stateEstimator->getResult()).position;
   // std::cout << "cur_pose = " << curr_pos(0) << std::endl;
   // if (curr_pos(0) <= 1.5)
   // {
@@ -95,10 +95,10 @@ void VisionMPCLocomotion::_setupCommand(ControlFSMData<float>& data)
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
 
-  // _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  // _yaw_des = data.stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   if ((M_PI - abs(_yaw_des)) <= 0.1)
   {
-    _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+    _yaw_des = data.stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   }
   else
   {
@@ -127,7 +127,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
   gaitNumber = _data->userParameters->cmpc_gait;
 
-  auto& seResult = _data->_stateEstimator->getResult();
+  auto& seResult = _data->stateEstimator->getResult();
   Vec3<float> v_robot = seResult.vWorld;
 
   // Check if transition to standing
@@ -164,7 +164,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   gait->restoreDefaults();
   gait->setIterations(_iterationsBetweenMPC, _iterationCounter);
   // gait->earlyContactHandle(seResult.contactSensor, _iterationsBetweenMPC, _iterationCounter);
-  gait->earlyContactHandle(_data->_stateEstimator->getContactSensorData(), _iterationsBetweenMPC, _iterationCounter);
+  gait->earlyContactHandle(_data->stateEstimator->getContactSensorData(), _iterationsBetweenMPC, _iterationCounter);
   //  std::cout << "_iterationCounter " << _iterationCounter << std::endl;
 
   recompute_timing(default_iterations_between_mpc);
@@ -173,7 +173,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
   Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
 
-  // std::cout << "sensor data: " << data._stateEstimator->getContactSensorData()(0) << std::endl;
+  // std::cout << "sensor data: " << data.stateEstimator->getContactSensorData()(0) << std::endl;
   static Vec3<float> pDesFootWorldStance[4] = { pFoot[0], pFoot[1], pFoot[2], pFoot[3] };
 
   // p front mid, p back mid
@@ -187,7 +187,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   else
   {
     _pitch_des =
-      _data->_stateEstimator->getResult().rpy[1] + _data->_stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
+      _data->stateEstimator->getResult().rpy[1] + _data->stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
   }
 
   // Integral-esque pitche and roll compensation
@@ -208,7 +208,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
   for (int foot = 0; foot < 4; foot++)
   {
     pFoot[foot] = seResult.position +
-                  seResult.rBody.transpose() * (_data->_quadruped->getHipLocation(foot) + _data->_legController->datas[foot].p);
+                  seResult.rBody.transpose() * (_data->quadruped->getHipLocation(foot) + _data->legController->datas[foot].p);
     footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
   }
   static float z_des[4] = { 0 };
@@ -271,9 +271,9 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
     footSwingTrajectories[i].setHeight(_dyn_params->Swing_traj_height);
 
-    Vec3<float> offset(0, side_sign[i] * _data->_quadruped->_abadLinkLength, 0);
+    Vec3<float> offset(0, side_sign[i] * _data->quadruped->_abadLinkLength, 0);
 
-    Vec3<float> pRobotFrame = (_data->_quadruped->getHipLocation(i) + offset);
+    Vec3<float> pRobotFrame = (_data->quadruped->getHipLocation(i) + offset);
 
     pRobotFrame[1] += interleave_y[i] * v_abs * interleave_gain;
     float stance_time = gait->getCurrentStanceTime(dtMPC, i);
@@ -327,13 +327,13 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     _data->debug->all_legs_info.leg[leg_num].stance_time = contactStates[leg_num];
     _data->debug->all_legs_info.leg[leg_num].swing_time = swingStates[leg_num];
     _data->debug->all_legs_info.leg[leg_num].phase = gait->getCurrentGaitPhase();
-    _data->debug->all_legs_info.leg[leg_num].is_contact = _data->_stateEstimator->getContactSensorData()(leg_num);
+    _data->debug->all_legs_info.leg[leg_num].is_contact = _data->stateEstimator->getContactSensorData()(leg_num);
   }
 
   updateMPCIfNeeded(mpcTable, *_data, omniMode);
 
   Vec4<float> se_contactState(0, 0, 0, 0);
-  se_contactState = _data->_stateEstimator->getContactSensorData().cast<float>();
+  se_contactState = _data->stateEstimator->getContactSensorData().cast<float>();
   static bool is_stance[4] = { 0, 0, 0, 0 };
   static Vec3<float> p_fw[4] = {};
   static Vec3<float> p_fl[4] = {};
@@ -356,7 +356,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       pDesFootWorldStance[foot] = pFoot[foot];
       _data->debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
       p_fw[foot] = pFoot[foot];
-      p_fl[foot] = _data->_legController->datas[foot].p + _data->_quadruped->getHipLocation(foot);
+      p_fl[foot] = _data->legController->datas[foot].p + _data->quadruped->getHipLocation(foot);
       delta_p_bw[foot] << 0, 0, 0;
       delta_yaw[foot] = 0;
     }
@@ -388,11 +388,11 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
-      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data->_quadruped->getHipLocation(foot);
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data->quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data->_legController->_datas[foot].p
-      // + _data->_quadruped->getHipLocation(foot)) + seResult.position;
-      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data->_legController->datas[foot].v) + seResult.vWorld;
+      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data->legController->_datas[foot].p
+      // + _data->quadruped->getHipLocation(foot)) + seResult.position;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data->legController->datas[foot].v) + seResult.vWorld;
 
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;
@@ -433,10 +433,10 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       if (!_data->userParameters->use_wbc)
       {
         // Update leg control command regardless of the usage of WBIC
-        _data->_legController->commands[foot].pDes = pDesLeg;
-        _data->_legController->commands[foot].vDes = vDesLeg;
-        _data->_legController->commands[foot].kpCartesian = Kp;
-        _data->_legController->commands[foot].kdCartesian = Kd;
+        _data->legController->commands[foot].pDes = pDesLeg;
+        _data->legController->commands[foot].vDes = vDesLeg;
+        _data->legController->commands[foot].kpCartesian = Kp;
+        _data->legController->commands[foot].kdCartesian = Kd;
       }
     }
     else // foot is in stance
@@ -447,30 +447,30 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> vDesFootWorld(0, 0, 0);
       // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorldStance[foot] - seResult.position) -
-      // _data->_quadruped->getHipLocation(foot);
-      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data->_quadruped->getHipLocation(foot);
+      // _data->quadruped->getHipLocation(foot);
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - _data->quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data->_legController->_datas[foot].p
-      // + _data->_quadruped->getHipLocation(foot)) + seResult.position;
-      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data->_legController->datas[foot].v) + seResult.vWorld;
+      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (_data->legController->_datas[foot].p
+      // + _data->quadruped->getHipLocation(foot)) + seResult.position;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (_data->legController->datas[foot].v) + seResult.vWorld;
 
       if (!_data->userParameters->use_wbc) // wbc off
       {
-        _data->_legController->commands[foot].pDes = pDesLeg;
-        _data->_legController->commands[foot].vDes = vDesLeg;
-        _data->_legController->commands[foot].kpCartesian = Kp_stance;
-        _data->_legController->commands[foot].kdCartesian = Kd_stance;
+        _data->legController->commands[foot].pDes = pDesLeg;
+        _data->legController->commands[foot].vDes = vDesLeg;
+        _data->legController->commands[foot].kpCartesian = Kp_stance;
+        _data->legController->commands[foot].kdCartesian = Kd_stance;
 
-        _data->_legController->commands[foot].forceFeedForward = f_ff[foot];
-        _data->_legController->commands[foot].kdJoint =
+        _data->legController->commands[foot].forceFeedForward = f_ff[foot];
+        _data->legController->commands[foot].kdJoint =
           Vec3<float>(_dyn_params->Kd_joint_0, _dyn_params->Kd_joint_1, _dyn_params->Kd_joint_2).asDiagonal();
       }
       else
       { // Stance foot damping
-        _data->_legController->commands[foot].pDes = pDesLeg;
-        _data->_legController->commands[foot].vDes = vDesLeg;
-        _data->_legController->commands[foot].kpCartesian = 0. * Kp_stance;
-        _data->_legController->commands[foot].kdCartesian = Kd_stance;
+        _data->legController->commands[foot].pDes = pDesLeg;
+        _data->legController->commands[foot].vDes = vDesLeg;
+        _data->legController->commands[foot].kpCartesian = 0. * Kp_stance;
+        _data->legController->commands[foot].kdCartesian = Kd_stance;
       }
 
       se_contactState[foot] = contactState;
@@ -504,8 +504,8 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
     }
   }
 
-  _data->_stateEstimator->setContactPhase(se_contactState);
-  _data->_stateEstimator->setSwingPhase(gait->getSwingState());
+  _data->stateEstimator->setContactPhase(se_contactState);
+  _data->stateEstimator->setSwingPhase(gait->getSwingState());
 
   // Update For WBC
   pBody_des[0] = world_position_desired[0];
@@ -633,10 +633,10 @@ void VisionMPCLocomotion::_updateFoothold(Vec3<float>& pf,
   //  std::cout << "z_offset " << __data->debug->z_offset << std::endl;
   // ЕВРИСТИКА
   static double start_offset = 0.7;
-  if (_data->_stateEstimator->getResult().position(0) > start_offset)
+  if (_data->stateEstimator->getResult().position(0) > start_offset)
   {
     static double step_length = 0.6;
-    double x = _data->_stateEstimator->getResult().position(0) - start_offset;
+    double x = _data->stateEstimator->getResult().position(0) - start_offset;
     double k = x / step_length;
     if (k >= 1.0)
       k = 1.0;
@@ -770,7 +770,7 @@ void VisionMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>
   // _iterationsBetweenMPC = 30;
   if ((_iterationCounter % _iterationsBetweenMPC) == 0)
   {
-    auto seResult = data._stateEstimator->getResult();
+    auto seResult = data.stateEstimator->getResult();
     float* p = seResult.position.data();
 
     Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
@@ -889,7 +889,7 @@ void VisionMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>
 
 void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
-  auto seResult = data._stateEstimator->getResult();
+  auto seResult = data.stateEstimator->getResult();
 
   // original
   // float Q[12] = { 0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1 };
@@ -974,7 +974,7 @@ void VisionMPCLocomotion::solveSparseMPC(int* mpcTable, ControlFSMData<float>& d
   // X0, contact trajectory, state trajectory, feet, get result!
   (void)mpcTable;
   (void)data;
-  auto seResult = data._stateEstimator->getResult();
+  auto seResult = data.stateEstimator->getResult();
 
   std::vector<ContactState> contactStates;
   for (int i = 0; i < horizonLength; i++)

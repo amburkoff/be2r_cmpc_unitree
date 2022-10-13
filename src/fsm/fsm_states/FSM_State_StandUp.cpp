@@ -66,8 +66,8 @@ void FSM_State_StandUp<T>::onEnter()
 
   for (size_t leg(0); leg < 4; ++leg)
   {
-    _ini_foot_pos[leg] = this->_data->_legController->datas[leg].p;
-    _init_joint_q[leg] = this->_data->_legController->datas[leg].q;
+    _ini_foot_pos[leg] = this->_data->legController->datas[leg].p;
+    _init_joint_q[leg] = this->_data->legController->datas[leg].q;
     _stand_joint_q[leg](0) = 0.0;
     _stand_joint_q[leg](1) = -1.05;
     _stand_joint_q[leg](2) = 2.1;
@@ -97,8 +97,8 @@ void FSM_State_StandUp<T>::standUpImpedance()
     progress = 1.;
   }
 
-  auto& seResult = this->_data->_stateEstimator->getResult();
-  float mass = this->_data->_quadruped->_bodyMass;
+  auto& seResult = this->_data->stateEstimator->getResult();
+  float mass = this->_data->quadruped->_bodyMass;
   Vec3<float> leg_force;
   leg_force << 0, 0, 0;
   float force = -mass * 9.81 / 4;
@@ -107,16 +107,16 @@ void FSM_State_StandUp<T>::standUpImpedance()
   for (int i = 0; i < 4; i++)
   {
     // for real with gravity compensation
-    this->_data->_legController->commands[i].kpCartesian = Kp_cartesian;
-    this->_data->_legController->commands[i].kdCartesian = Kd_cartesian;
+    this->_data->legController->commands[i].kpCartesian = Kp_cartesian;
+    this->_data->legController->commands[i].kdCartesian = Kd_cartesian;
 
-    this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
-    this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
+    this->_data->legController->commands[i].pDes = _ini_foot_pos[i];
+    this->_data->legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
 
     this->_data->debug->last_p_local_stance[i] =
-      ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
+      ros::toMsg(this->_data->legController->datas[i].p + this->_data->quadruped->getHipLocation(i));
 
-    this->_data->_legController->commands[i].forceFeedForward = leg_force;
+    this->_data->legController->commands[i].forceFeedForward = leg_force;
   }
 }
 
@@ -131,8 +131,8 @@ void FSM_State_StandUp<T>::standUpJointPD()
     progress = 1.;
   }
 
-  auto& seResult = this->_data->_stateEstimator->getResult();
-  float mass = this->_data->_quadruped->_bodyMass;
+  auto& seResult = this->_data->stateEstimator->getResult();
+  float mass = this->_data->quadruped->_bodyMass;
   Vec3<float> leg_force;
   leg_force << 0, 0, 0;
   float force = -mass * 9.81 / 4;
@@ -151,17 +151,17 @@ void FSM_State_StandUp<T>::standUpJointPD()
     q_des[i](2) *= -1;
 
     // for real with gravity compensation
-    this->_data->_legController->commands[i].kpJoint = Kp_joint;
-    this->_data->_legController->commands[i].kdJoint = Kd_joint;
+    this->_data->legController->commands[i].kpJoint = Kp_joint;
+    this->_data->legController->commands[i].kdJoint = Kd_joint;
 
-    // this->_data->_legController->commands[i].qDes = _stand_joint_q[i] * progress + (1.0 - progress) * _init_joint_q[i];
-    this->_data->_legController->commands[i].qDes = q_des[i];
-    this->_data->_legController->commands[i].qdDes = Vec3<float>::Zero();
+    // this->_data->legController->commands[i].qDes = _stand_joint_q[i] * progress + (1.0 - progress) * _init_joint_q[i];
+    this->_data->legController->commands[i].qDes = q_des[i];
+    this->_data->legController->commands[i].qdDes = Vec3<float>::Zero();
 
     this->_data->debug->last_p_local_stance[i] =
-      ros::toMsg(this->_data->_legController->datas[i].p + this->_data->_quadruped->getHipLocation(i));
+      ros::toMsg(this->_data->legController->datas[i].p + this->_data->quadruped->getHipLocation(i));
 
-    this->_data->_legController->commands[i].forceFeedForward = leg_force;
+    this->_data->legController->commands[i].forceFeedForward = leg_force;
   }
 }
 

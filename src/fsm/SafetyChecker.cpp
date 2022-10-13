@@ -22,10 +22,10 @@ bool SafetyChecker<T>::checkSafeOrientation()
 {
   // cout << "[SafetyChecker] checkSafeOrientation func start" << endl;
 
-  if (abs(data->_stateEstimator->getResult().rpy(0)) >= 1.0 || abs(data->_stateEstimator->getResult().rpy(1)) >= 1.0)
+  if (abs(data->stateEstimator->getResult().rpy(0)) >= 1.0 || abs(data->stateEstimator->getResult().rpy(1)) >= 1.0)
   {
-    cout << "[SafetyChecker] Roll is " << abs(data->_stateEstimator->getResult().rpy(0)) << endl;
-    cout << "[SafetyChecker] Pitch is " << abs(data->_stateEstimator->getResult().rpy(1)) << endl;
+    cout << "[SafetyChecker] Roll is " << abs(data->stateEstimator->getResult().rpy(0)) << endl;
+    cout << "[SafetyChecker] Pitch is " << abs(data->stateEstimator->getResult().rpy(1)) << endl;
 
     printf("Orientation safety check failed!\n");
     return false;
@@ -47,65 +47,65 @@ bool SafetyChecker<T>::checkPDesFoot()
 
   // Safety parameters
   T maxAngle = 1.0472; // 60 degrees (should be changed)
-  T maxPDes = data->_quadruped->_maxLegLength * sin(maxAngle);
+  T maxPDes = data->quadruped->_maxLegLength * sin(maxAngle);
 
   // Check all of the legs
   for (int leg = 0; leg < 4; leg++)
   {
     // Keep the foot from going too far from the body in +x
-    if (data->_legController->commands[leg].pDes(0) > maxPDes)
+    if (data->legController->commands[leg].pDes(0) > maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << maxPDes << std::endl;
-      data->_legController->commands[leg].pDes(0) = maxPDes;
+      std::cout << "   commanded: " << data->legController->commands[leg].pDes(0) << " | modified: " << maxPDes << std::endl;
+      data->legController->commands[leg].pDes(0) = maxPDes;
       safePDesFoot = false;
     }
 
     // Keep the foot from going too far from the body in -x
-    if (data->_legController->commands[leg].pDes(0) < -maxPDes)
+    if (data->legController->commands[leg].pDes(0) < -maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(0) << " | modified: " << -maxPDes << std::endl;
-      data->_legController->commands[leg].pDes(0) = -maxPDes;
+      std::cout << "   commanded: " << data->legController->commands[leg].pDes(0) << " | modified: " << -maxPDes << std::endl;
+      data->legController->commands[leg].pDes(0) = -maxPDes;
       safePDesFoot = false;
     }
 
     // Keep the foot from going too far from the body in +y
-    if (data->_legController->commands[leg].pDes(1) > maxPDes)
+    if (data->legController->commands[leg].pDes(1) > maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << maxPDes << std::endl;
-      data->_legController->commands[leg].pDes(1) = maxPDes;
+      std::cout << "   commanded: " << data->legController->commands[leg].pDes(1) << " | modified: " << maxPDes << std::endl;
+      data->legController->commands[leg].pDes(1) = maxPDes;
       safePDesFoot = false;
     }
 
     // Keep the foot from going too far from the body in -y
-    if (data->_legController->commands[leg].pDes(1) < -maxPDes)
+    if (data->legController->commands[leg].pDes(1) < -maxPDes)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(1) << " | modified: " << -maxPDes << std::endl;
-      data->_legController->commands[leg].pDes(1) = -maxPDes;
+      std::cout << "   commanded: " << data->legController->commands[leg].pDes(1) << " | modified: " << -maxPDes << std::endl;
+      data->legController->commands[leg].pDes(1) = -maxPDes;
       safePDesFoot = false;
     }
 
     // Keep the leg under the motor module (don't raise above body or crash into
     // module)
-    if (data->_legController->commands[leg].pDes(2) > -data->_quadruped->_maxLegLength / 4)
+    if (data->legController->commands[leg].pDes(2) > -data->quadruped->_maxLegLength / 4)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 2 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(2)
-                << " | modified: " << -data->_quadruped->_maxLegLength / 4 << std::endl;
-      data->_legController->commands[leg].pDes(2) = -data->_quadruped->_maxLegLength / 4;
+      std::cout << "   commanded: " << data->legController->commands[leg].pDes(2)
+                << " | modified: " << -data->quadruped->_maxLegLength / 4 << std::endl;
+      data->legController->commands[leg].pDes(2) = -data->quadruped->_maxLegLength / 4;
       safePDesFoot = false;
     }
 
     // Keep the foot within the kinematic limits
-    if (data->_legController->commands[leg].pDes(2) < -data->_quadruped->_maxLegLength)
+    if (data->legController->commands[leg].pDes(2) < -data->quadruped->_maxLegLength)
     {
       std::cout << "[CONTROL FSM] Safety: PDes leg: " << leg << " | coordinate: " << 2 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].pDes(2)
-                << " | modified: " << -data->_quadruped->_maxLegLength << std::endl;
-      data->_legController->commands[leg].pDes(2) = -data->_quadruped->_maxLegLength;
+      std::cout << "   commanded: " << data->legController->commands[leg].pDes(2)
+                << " | modified: " << -data->quadruped->_maxLegLength << std::endl;
+      data->legController->commands[leg].pDes(2) = -data->quadruped->_maxLegLength;
       safePDesFoot = false;
     }
   }
@@ -134,62 +134,62 @@ bool SafetyChecker<T>::checkForceFeedForward()
   for (int leg = 0; leg < 4; leg++)
   {
     // Limit the lateral forces in +x body frame
-    if (data->_legController->commands[leg].forceFeedForward(0) > maxLateralForce)
+    if (data->legController->commands[leg].forceFeedForward(0) > maxLateralForce)
     {
       std::cout << "[CONTROL FSM] Safety: Force leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].forceFeedForward(0)
+      std::cout << "   commanded: " << data->legController->commands[leg].forceFeedForward(0)
                 << " | modified: " << maxLateralForce << std::endl;
-      data->_legController->commands[leg].forceFeedForward(0) = maxLateralForce;
+      data->legController->commands[leg].forceFeedForward(0) = maxLateralForce;
       safeForceFeedForward = false;
     }
 
     // Limit the lateral forces in -x body frame
-    if (data->_legController->commands[leg].forceFeedForward(0) < -maxLateralForce)
+    if (data->legController->commands[leg].forceFeedForward(0) < -maxLateralForce)
     {
       std::cout << "[CONTROL FSM] Safety: Force leg: " << leg << " | coordinate: " << 0 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].forceFeedForward(0)
+      std::cout << "   commanded: " << data->legController->commands[leg].forceFeedForward(0)
                 << " | modified: " << -maxLateralForce << std::endl;
-      data->_legController->commands[leg].forceFeedForward(0) = -maxLateralForce;
+      data->legController->commands[leg].forceFeedForward(0) = -maxLateralForce;
       safeForceFeedForward = false;
     }
 
     // Limit the lateral forces in +y body frame
-    if (data->_legController->commands[leg].forceFeedForward(1) > maxLateralForce)
+    if (data->legController->commands[leg].forceFeedForward(1) > maxLateralForce)
     {
       std::cout << "[CONTROL FSM] Safety: Force leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].forceFeedForward(1)
+      std::cout << "   commanded: " << data->legController->commands[leg].forceFeedForward(1)
                 << " | modified: " << maxLateralForce << std::endl;
-      data->_legController->commands[leg].forceFeedForward(1) = maxLateralForce;
+      data->legController->commands[leg].forceFeedForward(1) = maxLateralForce;
       safeForceFeedForward = false;
     }
 
     // Limit the lateral forces in -y body frame
-    if (data->_legController->commands[leg].forceFeedForward(1) < -maxLateralForce)
+    if (data->legController->commands[leg].forceFeedForward(1) < -maxLateralForce)
     {
       std::cout << "[CONTROL FSM] Safety: Force leg: " << leg << " | coordinate: " << 1 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].forceFeedForward(1)
+      std::cout << "   commanded: " << data->legController->commands[leg].forceFeedForward(1)
                 << " | modified: " << -maxLateralForce << std::endl;
-      data->_legController->commands[leg].forceFeedForward(1) = -maxLateralForce;
+      data->legController->commands[leg].forceFeedForward(1) = -maxLateralForce;
       safeForceFeedForward = false;
     }
 
     // Limit the vertical forces in +z body frame
-    if (data->_legController->commands[leg].forceFeedForward(2) > maxVerticalForce)
+    if (data->legController->commands[leg].forceFeedForward(2) > maxVerticalForce)
     {
       std::cout << "[CONTROL FSM] Safety: Force leg: " << leg << " | coordinate: " << 2 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].forceFeedForward(2)
+      std::cout << "   commanded: " << data->legController->commands[leg].forceFeedForward(2)
                 << " | modified: " << -maxVerticalForce << std::endl;
-      data->_legController->commands[leg].forceFeedForward(2) = maxVerticalForce;
+      data->legController->commands[leg].forceFeedForward(2) = maxVerticalForce;
       safeForceFeedForward = false;
     }
 
     // Limit the vertical forces in -z body frame
-    if (data->_legController->commands[leg].forceFeedForward(2) < -maxVerticalForce)
+    if (data->legController->commands[leg].forceFeedForward(2) < -maxVerticalForce)
     {
       std::cout << "[CONTROL FSM] Safety: Force leg: " << leg << " | coordinate: " << 2 << "\n";
-      std::cout << "   commanded: " << data->_legController->commands[leg].forceFeedForward(2)
+      std::cout << "   commanded: " << data->legController->commands[leg].forceFeedForward(2)
                 << " | modified: " << maxVerticalForce << std::endl;
-      data->_legController->commands[leg].forceFeedForward(2) = -maxVerticalForce;
+      data->legController->commands[leg].forceFeedForward(2) = -maxVerticalForce;
       safeForceFeedForward = false;
     }
   }
@@ -245,20 +245,20 @@ bool SafetyChecker<T>::checkJointLimits()
   //change signs back to Unitree
   for (size_t i = 0; i < 4; i++)
   {
-    leg[i].q[0] = data->_legController->datas[i].q(0);
-    leg[i].q[1] = -data->_legController->datas[i].q(1);
-    leg[i].q[2] = -data->_legController->datas[i].q(2);
+    leg[i].q[0] = data->legController->datas[i].q(0);
+    leg[i].q[1] = -data->legController->datas[i].q(1);
+    leg[i].q[2] = -data->legController->datas[i].q(2);
 
-    leg[i].dq[0] = data->_legController->datas[i].qd(0);
-    leg[i].dq[1] = -data->_legController->datas[i].qd(1);
-    leg[i].dq[2] = -data->_legController->datas[i].qd(2);
+    leg[i].dq[0] = data->legController->datas[i].qd(0);
+    leg[i].dq[1] = -data->legController->datas[i].qd(1);
+    leg[i].dq[2] = -data->legController->datas[i].qd(2);
   }
 
   // for (size_t i = 0; i < 1; i++)
   // {
-  //   ROS_INFO_STREAM("leg: " << i << " j0 safe min: " << limit_joint0[0] << " act: " << data->_legController->datas[i].q(0) * sign[i] << " max: " << limit_joint0[1]);
-  //   ROS_INFO_STREAM("leg: " << i << " j1 safe min: " << limit_joint1[0] << " act: " << -data->_legController->datas[i].q(1) << " max: " << limit_joint1[1]);
-  //   ROS_INFO_STREAM("leg: " << i << " j2 safe min: " << limit_joint2[0] << " act: " << -data->_legController->datas[i].q(2) << " max: " << limit_joint2[1]);
+  //   ROS_INFO_STREAM("leg: " << i << " j0 safe min: " << limit_joint0[0] << " act: " << data->legController->datas[i].q(0) * sign[i] << " max: " << limit_joint0[1]);
+  //   ROS_INFO_STREAM("leg: " << i << " j1 safe min: " << limit_joint1[0] << " act: " << -data->legController->datas[i].q(1) << " max: " << limit_joint1[1]);
+  //   ROS_INFO_STREAM("leg: " << i << " j2 safe min: " << limit_joint2[0] << " act: " << -data->legController->datas[i].q(2) << " max: " << limit_joint2[1]);
   // }
 
   // const float Kp_exp[3] = { 11, 6, 5 };
@@ -279,73 +279,73 @@ bool SafetyChecker<T>::checkJointLimits()
     if ((leg[i].q[0] * sign[i]) < tau_limit_joint0[0])
     {
       float delta_q = tau_limit_joint0[0] - leg[i].q[0] * sign[i];
-      data->_legController->_legEnabled[i] = true;
+      data->legController->_legEnabled[i] = true;
 
       float tau = sgn(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j0 dq safe min: " << delta_q << " tau: " << tau);
 
-      data->_legController->commands[i].tauSafe(0) = tau * sign[i];
+      data->legController->commands[i].tauSafe(0) = tau * sign[i];
     }
     // joint 0 max
     if (leg[i].q[0] * sign[i] > tau_limit_joint0[1])
     {
       float delta_q = tau_limit_joint0[1] - leg[i].q[0] * sign[i];
-      data->_legController->_legEnabled[i] = true;
+      data->legController->_legEnabled[i] = true;
 
       float tau = sgn(delta_q) * (exp(Kp_exp[0] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j0 dq safe min: " << delta_q << " tau: " << tau);
 
-      data->_legController->commands[i].tauSafe(0) = tau * sign[i];
+      data->legController->commands[i].tauSafe(0) = tau * sign[i];
     }
 
     // joint 1 min
     if (leg[i].q[1] < tau_limit_joint1[0])
     {
       float delta_q = tau_limit_joint1[0] - leg[i].q[1];
-      data->_legController->_legEnabled[i] = true;
+      data->legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
       float tau = sgn(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j1 dq safe min: " << delta_q << " tau: " << tau);
 
-      data->_legController->commands[i].tauSafe(1) = -tau;
+      data->legController->commands[i].tauSafe(1) = -tau;
     }
     // joint 1 max
     if (leg[i].q[1] > tau_limit_joint1[1])
     {
       float delta_q = tau_limit_joint1[1] - leg[i].q[1];
-      data->_legController->_legEnabled[i] = true;
+      data->legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
       float tau = sgn(delta_q) * (exp(Kp_exp[1] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j1 dq safe max: " << delta_q << " tau: " << tau);
 
-      data->_legController->commands[i].tauSafe(1) = -tau;
+      data->legController->commands[i].tauSafe(1) = -tau;
     }
 
     // joint 2 min
     if (leg[i].q[2] < tau_limit_joint2[0])
     {
       float delta_q = tau_limit_joint2[0] - leg[i].q[2];
-      data->_legController->_legEnabled[i] = true;
+      data->legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
       float tau = sgn(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j2 dq safe min: " << delta_q << " tau: " << tau);
 
-      data->_legController->commands[i].tauSafe(2) = -tau;
+      data->legController->commands[i].tauSafe(2) = -tau;
     }
     // joint 2 max
     if (leg[i].q[2] > tau_limit_joint2[1])
     {
       float delta_q = tau_limit_joint2[1] - leg[i].q[2];
-      data->_legController->_legEnabled[i] = true;
+      data->legController->_legEnabled[i] = true;
 
       // float tau = Kp_safe * delta_q;
       float tau = sgn(delta_q) * (exp(Kp_exp[2] * abs(delta_q)) - 1) / 0.4;
       // ROS_INFO_STREAM("leg: " << i << " j2 dq safe max: " << delta_q << " tau: " << tau);
 
-      data->_legController->commands[i].tauSafe(2) = -tau;
+      data->legController->commands[i].tauSafe(2) = -tau;
     }
   }
 

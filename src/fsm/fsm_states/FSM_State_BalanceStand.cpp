@@ -28,7 +28,7 @@ FSM_State_BalanceStand<T>::FSM_State_BalanceStand(ControlFSMData<T>* _controlFSM
   // Initialize GRF to 0s
   this->footFeedForwardForces = Mat34<T>::Zero();
 
-  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->_quadruped->buildModel());
+  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->quadruped->buildModel());
   _wbc_data = new LocomotionCtrlData<T>();
 
   _wbc_ctrl->setFloatingBaseWeight(1000.);
@@ -44,13 +44,13 @@ void FSM_State_BalanceStand<T>::onEnter()
   this->transitionData.zero();
 
   // Always set the gait to be standing in this state
-  this->_data->_gaitScheduler->gaitData._nextGait = GaitType::STAND;
+  this->_data->gaitScheduler->gaitData._nextGait = GaitType::STAND;
 
-  _ini_body_pos = (this->_data->_stateEstimator->getResult()).position;
+  _ini_body_pos = (this->_data->stateEstimator->getResult()).position;
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    _ini_foot_pos[i] = this->_data->_legController->datas[i].p;
+    _ini_foot_pos[i] = this->_data->legController->datas[i].p;
   }
 
   // cout << _ini_body_pos << endl;
@@ -62,8 +62,8 @@ void FSM_State_BalanceStand<T>::onEnter()
 
   last_height_command = _ini_body_pos[2];
 
-  _ini_body_ori_rpy = (this->_data->_stateEstimator->getResult()).rpy;
-  _body_weight = this->_data->_quadruped->_bodyMass * 9.81;
+  _ini_body_ori_rpy = (this->_data->stateEstimator->getResult()).rpy;
+  _body_weight = this->_data->quadruped->_bodyMass * 9.81;
 
   flag = false;
 }
@@ -82,7 +82,7 @@ void FSM_State_BalanceStand<T>::run()
 {
   Vec4<T> contactState;
   contactState << 0.5, 0.5, 0.5, 0.5;
-  this->_data->_stateEstimator->setContactPhase(contactState);
+  this->_data->stateEstimator->setContactPhase(contactState);
 
   // std::cout << "circle = " << this->_data->_desiredStateCommand->circle << std::endl;
   // std::cout << "triangle = " << this->_data->_desiredStateCommand->triangle << std::endl;
@@ -90,32 +90,32 @@ void FSM_State_BalanceStand<T>::run()
   // std::cout << "rectangle = " << this->_data->_desiredStateCommand->rectangle << std::endl;
 
   // circle
-  if (this->_data->_desiredStateCommand->circle)
+  if (this->_data->gamepad_command->circle)
   {
     this->_data->userParameters->test = 2;
     t1 = new std::thread(execBashBalance, "2");
-    this->_data->_desiredStateCommand->circle = false;
+    this->_data->gamepad_command->circle = false;
   }
   // wave
-  else if (this->_data->_desiredStateCommand->triangle)
+  else if (this->_data->gamepad_command->triangle)
   {
     this->_data->userParameters->test = 1;
     t1 = new std::thread(execBashBalance, "1");
-    this->_data->_desiredStateCommand->triangle = false;
+    this->_data->gamepad_command->triangle = false;
   }
   // standart balance stand
-  else if (this->_data->_desiredStateCommand->cross)
+  else if (this->_data->gamepad_command->cross)
   {
     this->_data->userParameters->test = 0;
     t1 = new std::thread(execBashBalance, "0");
-    this->_data->_desiredStateCommand->cross = false;
+    this->_data->gamepad_command->cross = false;
   }
   // give hand
-  else if (this->_data->_desiredStateCommand->rectangle)
+  else if (this->_data->gamepad_command->rectangle)
   {
-    this->_data->userParameters->test = 0;
+    this->_data->userParameters->test = 3;
     t1 = new std::thread(execBashBalance, "3");
-    this->_data->_desiredStateCommand->cross = false;
+    this->_data->gamepad_command->rectangle = false;
   }
 
   switch (this->_data->userParameters->test)
@@ -189,7 +189,7 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
       this->transitionDuration = 0.0;
 
       // Set the next gait in the scheduler to
-      this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+      this->_data->gaitScheduler->gaitData._nextGait = GaitType::TROT;
       break;
 
     case K_PASSIVE:
@@ -248,7 +248,7 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
 template<typename T>
 TransitionData<T> FSM_State_BalanceStand<T>::transition()
 {
-  // this->_data->_legController->is_low_level = true;
+  // this->_data->legController->is_low_level = true;
 
   // Switch FSM control mode
   switch (this->nextStateName)
@@ -347,19 +347,19 @@ void FSM_State_BalanceStand<T>::BalanceStandStepDefault()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
-    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
-    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
-    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    pDes_backup[leg] = this->_data->legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->legController->commands[leg].kdCartesian;
     geometry_msgs::Point point;
-    point = ros::toMsg(this->_data->_legController->datas[leg].p + this->_data->_quadruped->getHipLocation(leg));
+    point = ros::toMsg(this->_data->legController->datas[leg].p + this->_data->quadruped->getHipLocation(leg));
     this->_data->debug->last_p_local_stance[leg] = point;
   }
 
   // Orientation from joy
-  _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[1];
-  _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->_desiredStateCommand->gamepadCommand->rightStickAnalog[0];
-  _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[0];
+  _wbc_data->pBody_RPY_des[1] = 0.4 * this->_data->gamepad_command->right_stick_analog[1];
+  _wbc_data->pBody_RPY_des[0] = 0.4 * this->_data->gamepad_command->right_stick_analog[0];
+  _wbc_data->pBody_RPY_des[2] -= 0.4 * this->_data->gamepad_command->left_stick_analog[0];
 
   static size_t dance_cntr = 0;
   if (ticks >= 1000)
@@ -372,7 +372,7 @@ void FSM_State_BalanceStand<T>::BalanceStandStepDefault()
   _wbc_data->pBody_RPY_des[0] = 0.;
 
   // Height
-  _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
+  _wbc_data->pBody_des[2] += 0.08 * this->_data->gamepad_command->left_stick_analog[1];
 
   _wbc_data->vBody_Ori_des.setZero();
 
@@ -386,17 +386,17 @@ void FSM_State_BalanceStand<T>::BalanceStandStepDefault()
     _wbc_data->contact_state[i] = true;
   }
 
-  if (this->_data->_desiredStateCommand->trigger_pressed)
-  {
-    _wbc_data->pBody_des[2] = 0.05;
+  // if (this->_data->gamepad_command->trigger_pressed)
+  // {
+  //   _wbc_data->pBody_des[2] = 0.05;
 
-    if (last_height_command - _wbc_data->pBody_des[2] > 0.001)
-    {
-      _wbc_data->pBody_des[2] = last_height_command - 0.001;
-    }
-  }
+  //   if (last_height_command - _wbc_data->pBody_des[2] > 0.001)
+  //   {
+  //     _wbc_data->pBody_des[2] = last_height_command - 0.001;
+  //   }
+  // }
 
-  last_height_command = _wbc_data->pBody_des[2];
+  // last_height_command = _wbc_data->pBody_des[2];
 
   _wbc_ctrl->run(_wbc_data, *this->_data);
 
@@ -404,15 +404,6 @@ void FSM_State_BalanceStand<T>::BalanceStandStepDefault()
   this->_data->debug->body_info.euler_des.x = _wbc_data->pBody_RPY_des[0];
   this->_data->debug->body_info.euler_des.y = _wbc_data->pBody_RPY_des[1];
   this->_data->debug->body_info.euler_des.z = _wbc_data->pBody_RPY_des[2];
-
-  for (uint8_t foot = 0; foot < 4; foot++)
-  {
-    geometry_msgs::Point point;
-    point = ros::toMsg(this->_data->_legController->datas[foot].p + this->_data->_quadruped->getHipLocation(foot));
-    this->_data->debug->last_p_local_stance[foot] = point;
-    // this->_data->debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(_wbc_data->pFoot_des[foot]);
-    // this->_data->debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(0) + this->_data->_legController->datas[foot].p));
-  }
 }
 
 template<typename T>
@@ -438,12 +429,12 @@ void FSM_State_BalanceStand<T>::BalanceStandStepCircle()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
-    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
-    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
-    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    pDes_backup[leg] = this->_data->legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->legController->commands[leg].kdCartesian;
     geometry_msgs::Point point;
-    point = ros::toMsg(this->_data->_legController->datas[leg].p + this->_data->_quadruped->getHipLocation(leg));
+    point = ros::toMsg(this->_data->legController->datas[leg].p + this->_data->quadruped->getHipLocation(leg));
     this->_data->debug->last_p_local_stance[leg] = point;
   }
 
@@ -460,7 +451,7 @@ void FSM_State_BalanceStand<T>::BalanceStandStepCircle()
   _wbc_data->pBody_RPY_des[2] = _ini_body_ori_rpy[2] + std::cos((double(ticks) / 1000.) * 6.28) * 20 * deg;
 
   // Height
-  _wbc_data->pBody_des[2] += 0.08 * this->_data->_desiredStateCommand->gamepadCommand->leftStickAnalog[1];
+  _wbc_data->pBody_des[2] += 0.08 * this->_data->gamepad_command->left_stick_analog[1];
 
   _wbc_ctrl->run(_wbc_data, *this->_data);
 }
@@ -486,12 +477,12 @@ void FSM_State_BalanceStand<T>::BalanceStandStepWave()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
-    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
-    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
-    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    pDes_backup[leg] = this->_data->legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->legController->commands[leg].kdCartesian;
     geometry_msgs::Point point;
-    point = ros::toMsg(this->_data->_legController->datas[leg].p + this->_data->_quadruped->getHipLocation(leg));
+    point = ros::toMsg(this->_data->legController->datas[leg].p + this->_data->quadruped->getHipLocation(leg));
     this->_data->debug->last_p_local_stance[leg] = point;
   }
 
@@ -520,17 +511,17 @@ void FSM_State_BalanceStand<T>::BalanceStandStepWave()
     _wbc_data->contact_state[i] = true;
   }
 
-  if (this->_data->_desiredStateCommand->trigger_pressed)
-  {
-    _wbc_data->pBody_des[2] = 0.05;
+  // if (this->_data->gamepad_command->trigger_pressed)
+  // {
+  //   _wbc_data->pBody_des[2] = 0.05;
 
-    if (last_height_command - _wbc_data->pBody_des[2] > 0.001)
-    {
-      _wbc_data->pBody_des[2] = last_height_command - 0.001;
-    }
-  }
+  //   if (last_height_command - _wbc_data->pBody_des[2] > 0.001)
+  //   {
+  //     _wbc_data->pBody_des[2] = last_height_command - 0.001;
+  //   }
+  // }
 
-  last_height_command = _wbc_data->pBody_des[2];
+  // last_height_command = _wbc_data->pBody_des[2];
 
   _wbc_ctrl->run(_wbc_data, *this->_data);
 }
@@ -543,7 +534,7 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
   Mat3<T> Kp_backup[4];
   Mat3<T> Kd_backup[4];
 
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  auto& seResult = this->_data->stateEstimator->getResult();
 
   float rate = 0.5;
 
@@ -557,10 +548,10 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
-    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
-    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
-    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    pDes_backup[leg] = this->_data->legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->legController->commands[leg].kdCartesian;
   }
 
   for (size_t i(0); i < 4; ++i)
@@ -581,7 +572,7 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
   // p_des(1) = -0.1;
   // p_des(2) = -0.132;
 
-  // Vec3<float> p0_act = this->_data->_legController->datas[0].p;
+  // Vec3<float> p0_act = this->_data->legController->datas[0].p;
 
   // p_des = p0_act;
   // p_des(2) = -0.132;
@@ -640,14 +631,14 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
   _wbc_data->pBody_RPY_des[1] = LinearInterpolation(pitch_start, pitch_des, progress);
 
   float epsilon = 0.005;
-  // Vec3<float> p_err = _wbc_data->pBody_des - (this->_data->_stateEstimator->getResult()).position;
-  Vec3<float> p_err = p_body_des - (this->_data->_stateEstimator->getResult()).position;
+  // Vec3<float> p_err = _wbc_data->pBody_des - (this->_data->stateEstimator->getResult()).position;
+  Vec3<float> p_err = p_body_des - (this->_data->stateEstimator->getResult()).position;
 
   if (abs(p_err(0) < epsilon) && abs(p_err(1) < epsilon) && (flag == false))
   {
     flag = true;
     iter_start = _iter;
-    _ini_foot_pos[0] = this->_data->_legController->datas[0].p;
+    _ini_foot_pos[0] = this->_data->legController->datas[0].p;
     ROS_WARN("low error");
   }
 
@@ -671,7 +662,7 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
     p_des = LinearInterpolation(_ini_foot_pos[0], p_des, progress_local);
 
     Vec3<float> p_w_des(0, 0, 0);
-    p_w_des = seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(0) + p_des);
+    p_w_des = seResult.position + seResult.rBody.transpose() * (this->_data->quadruped->getHipLocation(0) + p_des);
 
     for (size_t i(0); i < 4; ++i)
     {
@@ -693,14 +684,14 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
 
   // if (abs(p_err(0) < epsilon) && abs(p_err(1) < epsilon))
   // {
-  //   // this->_data->_legController->commands[0].zero();
-  //   this->_data->_legController->commands[0].tauFeedForward(0) = 0;
-  //   this->_data->_legController->commands[0].tauFeedForward(1) = 0;
-  //   this->_data->_legController->commands[0].tauFeedForward(2) = 0;
+  //   // this->_data->legController->commands[0].zero();
+  //   this->_data->legController->commands[0].tauFeedForward(0) = 0;
+  //   this->_data->legController->commands[0].tauFeedForward(1) = 0;
+  //   this->_data->legController->commands[0].tauFeedForward(2) = 0;
 
-  //   this->_data->_legController->commands[0].forceFeedForward(0) = 0;
-  //   this->_data->_legController->commands[0].forceFeedForward(1) = 0;
-  //   this->_data->_legController->commands[0].forceFeedForward(2) = 0;
+  //   this->_data->legController->commands[0].forceFeedForward(0) = 0;
+  //   this->_data->legController->commands[0].forceFeedForward(1) = 0;
+  //   this->_data->legController->commands[0].forceFeedForward(2) = 0;
   //   ROS_WARN_ONCE("give hand (no tau) 2");
   // }
 
@@ -712,10 +703,10 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
   for (uint8_t foot = 0; foot < 4; foot++)
   {
     geometry_msgs::Point point;
-    point = ros::toMsg(this->_data->_legController->datas[foot].p + this->_data->_quadruped->getHipLocation(foot));
+    point = ros::toMsg(this->_data->legController->datas[foot].p + this->_data->quadruped->getHipLocation(foot));
     this->_data->debug->last_p_local_stance[foot] = point;
     this->_data->debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(_wbc_data->pFoot_des[foot]);
-    this->_data->debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(seResult.position + seResult.rBody.transpose() * (this->_data->_quadruped->getHipLocation(0) + this->_data->_legController->datas[foot].p));
+    this->_data->debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(seResult.position + seResult.rBody.transpose() * (this->_data->quadruped->getHipLocation(0) + this->_data->legController->datas[foot].p));
   }
 
   this->_data->debug->all_legs_info.leg.at(0).p_des = ros::toMsg(p_des);

@@ -28,7 +28,7 @@ FSM_State_FrontJump<T>::FSM_State_FrontJump(ControlFSMData<T>* _controlFSMData)
   zero_vec3.setZero();
   f_ff << 0.f, 0.f, -25.f;
 
-  _data_reader = new DataReader(this->_data->_quadruped->_robotType, FSM_StateName::FRONTJUMP);
+  _data_reader = new DataReader(this->_data->quadruped->_robotType, FSM_StateName::FRONTJUMP);
 
   front_jump_ctrl_ = new FrontJumpCtrl<T>(_data_reader, this->_data->staticParams->controller_dt);
   front_jump_ctrl_->SetParameter();
@@ -54,7 +54,7 @@ void FSM_State_FrontJump<T>::onEnter()
   // initial configuration, position
   for (size_t i(0); i < 4; ++i)
   {
-    initial_jpos[i] = this->_data->_legController->datas[i].q;
+    initial_jpos[i] = this->_data->legController->datas[i].q;
   }
   front_jump_ctrl_->SetParameter();
 }
@@ -96,13 +96,13 @@ bool FSM_State_FrontJump<T>::_Initialization()
   {
     for (int leg = 0; leg < 4; ++leg)
     {
-      this->_data->_legController->commands[leg].qDes = initial_jpos[leg];
+      this->_data->legController->commands[leg].qDes = initial_jpos[leg];
       for (int jidx = 0; jidx < 3; ++jidx)
       {
-        this->_data->_legController->commands[leg].tauFeedForward[jidx] = 0.;
-        this->_data->_legController->commands[leg].qdDes[jidx] = 0.;
-        this->_data->_legController->commands[leg].kpJoint(jidx, jidx) = 20.;
-        this->_data->_legController->commands[leg].kdJoint(jidx, jidx) = 2.;
+        this->_data->legController->commands[leg].tauFeedForward[jidx] = 0.;
+        this->_data->legController->commands[leg].qdDes[jidx] = 0.;
+        this->_data->legController->commands[leg].kpJoint(jidx, jidx) = 20.;
+        this->_data->legController->commands[leg].kdJoint(jidx, jidx) = 2.;
       }
     }
     return true;
@@ -124,19 +124,19 @@ void FSM_State_FrontJump<T>::ComputeCommand()
   // {
   //   if (this->_data->_desiredStateCommand->rcCommand->mode == RC_mode::BACKFLIP_PRE)
   //   {
-  //     front_jump_ctrl_->OneStep(_curr_time, true, this->_data->_legController->commands);
+  //     front_jump_ctrl_->OneStep(_curr_time, true, this->_data->legController->commands);
   //   }
   //   else
   //   {
-  //     front_jump_ctrl_->OneStep(_curr_time, false, this->_data->_legController->commands);
+  //     front_jump_ctrl_->OneStep(_curr_time, false, this->_data->legController->commands);
   //   }
   // }
   // else
   // {
-  //   front_jump_ctrl_->OneStep(_curr_time, false, this->_data->_legController->commands);
+  //   front_jump_ctrl_->OneStep(_curr_time, false, this->_data->legController->commands);
   // }
 
-  // if (front_jump_ctrl_->EndOfPhase(this->_data->_legController->datas))
+  // if (front_jump_ctrl_->EndOfPhase(this->_data->legController->datas))
   // {
   //   front_jump_ctrl_->LastVisit();
   // }
@@ -149,10 +149,10 @@ void FSM_State_FrontJump<T>::_SafeCommand()
   {
     for (int jidx = 0; jidx < 3; ++jidx)
     {
-      this->_data->_legController->commands[leg].tauFeedForward[jidx] = 0.;
-      this->_data->_legController->commands[leg].qDes[jidx] =
-        this->_data->_legController->datas[leg].q[jidx];
-      this->_data->_legController->commands[leg].qdDes[jidx] = 0.;
+      this->_data->legController->commands[leg].tauFeedForward[jidx] = 0.;
+      this->_data->legController->commands[leg].qDes[jidx] =
+        this->_data->legController->datas[leg].q[jidx];
+      this->_data->legController->commands[leg].qdDes[jidx] = 0.;
     }
   }
 }
