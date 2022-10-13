@@ -18,7 +18,7 @@ public:
   void run();
 
   // setup methods
-  template <typename T>
+  template<typename T>
   void setRobotParameters(Mat3<T>& inertia, T mass, T maxForce)
   {
     _Ibody = inertia.template cast<double>();
@@ -31,14 +31,14 @@ public:
     _mu = mu;
   }
 
-  template <typename T>
+  template<typename T>
   void setWeights(Vec12<T>& weights, T alpha)
   {
     _weights = weights.template cast<double>();
     _alpha = alpha;
   }
 
-  template <typename T>
+  template<typename T>
   void setX0(Vec3<T> p, Vec3<T> v, Vec4<T> q, Vec3<T> w)
   {
     _p0 = p.template cast<double>();
@@ -61,16 +61,18 @@ public:
     _stateTrajectory = traj;
   }
 
-  template <typename T>
+  template<typename T>
   void setDtTrajectory(std::vector<T>& traj)
   {
     _dtTrajectory.clear();
     _dtTrajectory.reserve(traj.size());
     for (auto pt : traj)
+    {
       _dtTrajectory.push_back(pt);
+    }
   }
 
-  template <typename T>
+  template<typename T>
   void setFeet(Vec12<T>& feet)
   {
     _pFeet = feet.template cast<double>();

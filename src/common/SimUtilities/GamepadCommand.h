@@ -38,6 +38,12 @@ up - axes[7] = 1
 #include <sensor_msgs/Joy.h>
 #include <iostream>
 
+enum StairsMode
+{
+  UP = 0,
+  DOWN = 1
+};
+
 /*!
  * The state of the gamepad
  */
@@ -69,6 +75,8 @@ public:
   float min_vel_y = -0.5;
   float max_turn_rate = 2.5;
   float min_turn_rate = -2.5;
+
+  uint8_t stairs_mode = 0;
 
 private:
   ros::NodeHandle _nh;

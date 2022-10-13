@@ -77,8 +77,8 @@ Quadruped<T> buildMiniCheetah(RobotType robot_type)
       SpatialInertia<T> kneeInertia(0.166, kneeCOM, kneeRotationalInertia);
 
       Vec3<T> rotorCOM(0, 0, 0);
-      SpatialInertia<T> rotorInertiaX(0.055, rotorCOM, rotorRotationalInertiaX);
-      SpatialInertia<T> rotorInertiaY(0.055, rotorCOM, rotorRotationalInertiaY);
+      SpatialInertia<T> rotorInertiaX(0.605, rotorCOM, rotorRotationalInertiaX);
+      SpatialInertia<T> rotorInertiaY(0.605, rotorCOM, rotorRotationalInertiaY);
 
       Mat3<T> bodyRotationalInertia;
       bodyRotationalInertia << 15853, 0, 0, 0, 37799, 0, 0, 0, 45654;
