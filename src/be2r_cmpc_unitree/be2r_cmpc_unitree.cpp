@@ -289,9 +289,28 @@ void Body_Manager::run()
     // Find the current gait schedule
     _gaitScheduler->step();
 
+    static bool dir = 0;
+
+    if (driverCommand.rectangle)
+    {
+      _is_do_step = !_is_do_step;
+    }
+
+    if (driverCommand.triangle)
+    {
+      dir = !dir;
+    }
+
     if (_is_do_step)
     {
-      driverCommand.leftStickAnalog[1] = 0.2;
+      if (dir)
+      {
+        driverCommand.leftStickAnalog[1] = -0.3;
+      }
+      else
+      {
+        driverCommand.leftStickAnalog[1] = 0.3;
+      }
     }
 
     // Find the desired state trajectory

@@ -43,7 +43,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
     _parameters(_data->userParameters),
     _gait_period(_parameters->gait_period),
     // _gait_period_long(_parameters->gait_period * 1.3),
-    _gait_period_long(34),
+    _gait_period_long(32),
     horizonLength(_data->staticParams->horizon),
     dt(_dt),
     trotting(_gait_period,
@@ -52,7 +52,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
              "Trotting"),
     trot_long(_gait_period_long,
               Vec4<int>(0, _gait_period_long / 2.0, _gait_period_long / 2.0, 0),
-              Vec4<int>(26, 26, 26, 26),
+              Vec4<int>(24, 24, 24, 24),
               "Trotting long"),
     trot_contact(_gait_period,
                  Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
@@ -887,9 +887,9 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 
       // Using the estimated velocity is correct
       float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time +
-                      .03f * (seResult.vWorld[0] - v_des_world[0]) +
+                      .12f * (seResult.vWorld[0] - v_des_world[0]) +
                       (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
-      float pfy_rel = seResult.vWorld[1] * .5 * stance_time * dtMPC + .03f * (seResult.vWorld[1] - v_des_world[1]) +
+      float pfy_rel = seResult.vWorld[1] * .5 * stance_time * dtMPC + .12f * (seResult.vWorld[1] - v_des_world[1]) +
                       (0.5f * seResult.position[2] / 9.81f) * (-seResult.vWorld[0] * _yaw_turn_rate);
 
       pfx_rel = fminf(fmaxf(pfx_rel, -p_rel_max), p_rel_max);
