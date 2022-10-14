@@ -109,6 +109,14 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   z = 1 / sqrt(A_res * A_res + B_res * B_res + C_res * C_res);
   static float z_prev = z;
   // z = (1.0 - f) * z_prev + f * z;
+
+  //if NaN
+  if ((z * 5) == z)
+  {
+    // ROS_ERROR("NAN");
+    z = 0;
+  }
+
   z_prev = z;
   this->_stateEstimatorData.debug->body_info.pos_z_global = z;
 

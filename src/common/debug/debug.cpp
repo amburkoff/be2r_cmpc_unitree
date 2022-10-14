@@ -6,7 +6,6 @@ Debug::Debug(ros::Time time_start)
     _tf_buffer(),
     _tf_listener(_tf_buffer)
 {
-  z_offset = 0.f;
   _init();
 }
 
@@ -15,6 +14,9 @@ void Debug::_init()
   _initPublishers();
 
   body_info.quat_act.w = 1.0;
+  body_info.pos_act = ros::toMsg(Vec3<float>(0, 0, 0));
+  ground_truth_odom.pose.pose.position = ros::toMsg(Vec3<float>(0, 0, 0));
+  z_offset = 0.f;
 }
 
 void Debug::_initPublishers()
