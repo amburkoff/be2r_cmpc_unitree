@@ -73,7 +73,7 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   ++_iter;
 
   // Update Model
-  _UpdateModel(data._stateEstimator->getResult(), data._legController->datas);
+  _UpdateModel(data.stateEstimator->getResult(), data.legController->datas);
 
   // Task & Contact Update
   _ContactTaskUpdate(input, data);
@@ -89,7 +89,7 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   // Mat3<T> M = _A.block(6, 6, 3, 3);
   // Vec3<T> C = _coriolis.block(6, 0, 3, 1);
   // Vec3<T> G = _grav.block(6, 0, 3, 1);
-  // // Vec3<T> tau = data._legController->commands[0].tauFeedForward;
+  // // Vec3<T> tau = data.legController->commands[0].tauFeedForward;
   // Vec3<T> tau(0, 0, 0);
   // tau << _tau_ff[0], _tau_ff[1], _tau_ff[2];
 
@@ -117,8 +117,8 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
 template<typename T>
 void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
 {
-  LegControllerCommand<T>* cmd = data._legController->commands;
-  Vec4<T> contact = data._stateEstimator->getResult().contactEstimate;
+  LegControllerCommand<T>* cmd = data.legController->commands;
+  Vec4<T> contact = data.stateEstimator->getResult().contactEstimate;
 
   for (size_t leg(0); leg < cheetah::num_leg; ++leg)
   {
@@ -157,14 +157,14 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
     {
       cmd[leg].qDes[2] = 0.3;
     }
-    if (data._legController->datas[leg].q[2] < 0.3)
+    if (data.legController->datas[leg].q[2] < 0.3)
     {
-      T knee_pos = data._legController->datas[leg].q[2];
+      T knee_pos = data.legController->datas[leg].q[2];
       cmd[leg].tauFeedForward[2] = 1. / (knee_pos * knee_pos + 0.02);
     }
   }
 
-  // data._legController->is_low_level = true;
+  // data.legController->is_low_level = true;
 }
 
 template<typename T>

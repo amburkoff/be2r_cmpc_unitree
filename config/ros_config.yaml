@@ -57,13 +57,13 @@ dynamic_loader:
   Kd_cartesian_1: 15
   Kd_cartesian_2: 15
 
-  body_height: 0.3
+  body_height: 0.33
+  Swing_traj_height  : 0.14   # Set swing traj top point
 
   # safety
   joint_limits: 1
   # joint_limits: 0
 
-  Swing_traj_height  : 0.12   # Set swing traj top point
 
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC
   cmpc_use_sparse   : 0       # switch between sparce and dense mpc

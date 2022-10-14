@@ -36,7 +36,7 @@ void FSM_State_JointPD<T>::onEnter()
   {
     for (size_t jidx(0); jidx < 3; ++jidx)
     {
-      _ini_jpos[3 * leg + jidx] = FSM_State<T>::_data->_legController->datas[leg].q[jidx];
+      _ini_jpos[3 * leg + jidx] = FSM_State<T>::_data->legController->datas[leg].q[jidx];
     }
   }
 }

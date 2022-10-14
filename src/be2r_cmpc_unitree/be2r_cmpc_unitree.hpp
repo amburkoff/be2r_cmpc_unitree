@@ -30,7 +30,6 @@
 #include "MiniCheetah.h"
 // #include "Controllers/ContactEstimator.h"
 #include "Controllers/ContactEstimator.h"
-#include "Controllers/DesiredStateCommand.h"
 #include "Controllers/GaitScheduler.h"
 #include "Controllers/OrientationEstimator.h"
 #include "Controllers/PositionVelocityEstimator.h"
@@ -132,22 +131,20 @@ private:
   UNITREE_LEGGED_SDK::LowCmd _rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd);
   unitree_legged_msgs::LowState _udpStateToRos(UNITREE_LEGGED_SDK::LowState udp_low_state);
 
+  ControlFSM<float>* _controlFSM;
   Quadruped<float> _quadruped;
   LegController<float>* _legController = nullptr;
-  StateEstimatorContainer<float>* _stateEstimator;
+  StateEstimatorContainer<float>* _stateEstimator = nullptr;
   StateEstimate<float> _stateEstimate;
-  DesiredStateCommand<float>* _desiredStateCommand;
   CheaterState<float> _cheater_state;
-  Debug* _debug;
-  GamepadCommand driverCommand;
+  Debug* _debug = nullptr;
+  GamepadCommand* _gamepad_command = nullptr;
   unitree_legged_msgs::LowState _low_state;
   unitree_legged_msgs::LowCmd _low_cmd;
   bool _is_low_level = false;
   int _power_limit = 0;
   bool _is_torque_safe = true;
   string _robot_type = "a1";
-
-  ControlFSM<float>* _controlFSM;
 
   // Gait Scheduler controls the nominal contact schedule for the feet
   GaitScheduler<float>* _gaitScheduler;

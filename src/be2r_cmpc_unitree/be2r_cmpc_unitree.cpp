@@ -147,15 +147,13 @@ void Body_Manager::init()
                                                        &_cheater_state, &_rosStaticParams, _debug);
   initializeStateEstimator();
 
-  // Initialize the DesiredStateCommand object
-  _desiredStateCommand =
-    new DesiredStateCommand<float>(&driverCommand, &_rosStaticParams, &_stateEstimate, _rosStaticParams.controller_dt);
+  _gamepad_command = new GamepadCommand;
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, _rosStaticParams.controller_dt);
 
   // Initializes the Control FSM with all the required data
-  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler, _desiredStateCommand,
+  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler, _gamepad_command,
                                       &_rosStaticParams, &_rosParameters, _debug);
 
   _rosParameters.FSM_State = 0;
@@ -252,9 +250,13 @@ void Body_Manager::_odomPublish()
   _debug->body_info.quat_act.w = _stateEstimator->getResult().orientation.w();
 
   if (is_udp_connection)
+  {
     _debug->tfOdomPublish(_debug->time_stamp_udp_get);
+  }
   else
+  {
     _debug->tfOdomPublish(ros::Time::now());
+  }
 }
 
 void Body_Manager::run()
@@ -291,11 +293,8 @@ void Body_Manager::run()
 
     if (_is_do_step)
     {
-      driverCommand.leftStickAnalog[1] = 0.2;
+      _gamepad_command->left_stick_analog[1] = 0.2;
     }
-
-    // Find the desired state trajectory
-    _desiredStateCommand->convertToStateCommands();
 
     // Run the Control FSM code
     _controlFSM->runFSM();
@@ -528,7 +527,6 @@ void Body_Manager::_initSubscribers()
   _srv_stop_map = _nh.advertiseService(ros::this_node::getName() + "/stop_map_update", &Body_Manager::_srvStopMap, this);
   _srv_start_map = _nh.advertiseService(ros::this_node::getName() + "/start_map_update", &Body_Manager::_srvStartMap, this);
 }
-
 bool Body_Manager::_srvDoStep(std_srvs::Trigger::Request& reqest, std_srvs::Trigger::Response& response)
 {
   ROS_INFO("DO STEP!");
@@ -645,11 +643,11 @@ void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
 
 void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
 {
-  driverCommand.leftStickAnalog[1] = msg.linear.x;
-  driverCommand.leftStickAnalog[0] = -msg.linear.y;
+  _gamepad_command->left_stick_analog[1] = msg.linear.x;
+  _gamepad_command->left_stick_analog[0] = -msg.linear.y;
 
-  driverCommand.rightStickAnalog[1] = msg.angular.x;
-  driverCommand.rightStickAnalog[0] = -msg.angular.z;
+  _gamepad_command->right_stick_analog[1] = msg.angular.x;
+  _gamepad_command->right_stick_analog[0] = msg.angular.z;
 }
 
 /*!

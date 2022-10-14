@@ -1,7 +1,6 @@
 #ifndef CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
 #define CHEETAH_SOFTWARE_CONVEXMPCLOCOMOTION_H
 
-#include "Controllers/DesiredStateCommand.h"
 #include "Gait.h"
 #include "cppTypes.h"
 #include <ControlFSMData.h>

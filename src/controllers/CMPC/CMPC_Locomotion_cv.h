@@ -2,7 +2,9 @@
 
 #include "FloatingBaseModel.h"
 #include "Gait_contact.h"
+#include "Utilities/SpiralIterator.hpp"
 #include "cppTypes.h"
+#include "grid_map_ros/grid_map_ros.hpp"
 #include <ControlFSMData.h>
 #include <FootSwingTrajectory.h>
 #include <SparseCMPC/SparseCMPC.h>
@@ -17,13 +19,13 @@ using Eigen::Array4f;
 using Eigen::Array4i;
 
 template<typename T>
-struct CMPC_result
+struct CMPC_result_Cv
 {
   LegControllerCommand<T> commands[4];
   Vec4<T> contactPhase;
 };
 
-struct CMPC_jump
+struct CMPC_jump_Cv
 {
   static constexpr int START_SEG = 6;
   static constexpr int END_SEG = 0;
@@ -92,17 +94,17 @@ struct CMPC_jump
   }
 };
 
-class CMPCLocomotion
+class CMPCLocomotion_Cv
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
+  CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  void run(ControlFSMData<float>& data);
+  void run(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   void original(ControlFSMData<float>& data);
-  void myVersion(ControlFSMData<float>& data);
+  void myVersion(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -133,7 +135,6 @@ private:
   float _y_vel_des = 0.;
 
   float _body_height = 0.29;
-  float _swing_trajectory_hight = 0.09;
 
   float _body_height_running = 0.29;
   float _body_height_jumping = 0.36;
@@ -155,7 +156,6 @@ private:
   int iterationsBetweenMPC;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
   int _gait_period;
-  int _gait_period_long;
   int horizonLength;
   int default_iterations_between_mpc;
   float dt;
@@ -164,7 +164,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance, give_hand, trot_long;
+  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -176,16 +176,32 @@ private:
   Vec3<float> world_position_desired;
   Vec3<float> rpy_int;
   Vec3<float> rpy_comp;
-  float pitch_cmd = 0;
   float x_comp_integral = 0;
   Vec3<float> pFoot[4];
-  CMPC_result<float> result;
+  CMPC_result_Cv<float> result;
   float trajAll[12 * 36];
   ros::NodeHandle _nh;
 
-  CMPC_jump jump_state;
+  CMPC_jump_Cv jump_state;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
 
   SparseCMPC _sparseCMPC;
+
+  void _updateFoothold(Vec3<float>& pf,
+                       const Vec3<float>& body_pos,
+                       const grid_map::GridMap& height_map,
+                       const grid_map::GridMap& height_map_raw,
+                       int leg);
+
+  void _idxMapChecking(Vec3<float>& Pf,
+                       int x_idx,
+                       int y_idx,
+                       int& x_idx_selected,
+                       int& y_idx_selected,
+                       const grid_map::GridMap& height_map,
+                       const grid_map::GridMap& height_map_raw,
+                       int leg);
 };
+
+Eigen::Array2i checkBoundariess(const grid_map::GridMap& map, int col, int row);

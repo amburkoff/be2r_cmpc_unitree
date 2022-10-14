@@ -9,32 +9,41 @@
 
 using namespace std;
 
+void execBash(string msg)
+{
+  string str = "rosrun dynamic_reconfigure dynparam set /unitree_ctrl FSM_State " + msg;
+  system(str.c_str());
+}
+
 /**
  * Constructor for the Control FSM. Passes in all of the necessary
  * data and stores it in a struct. Initializes the FSM with a starting
  * state and operating mode.
  *
- * @param _quadruped the quadruped information
- * @param _stateEstimator contains the estimated states
- * @param _legController interface to the leg controllers
+ * @param quadruped the quadruped information
+ * @param stateEstimator contains the estimated states
+ * @param legController interface to the leg controllers
  * @param _gaitScheduler controls scheduled foot contact modes
- * @param _desiredStateCommand gets the desired COM state trajectories
  * @param controlParameters passes in the control parameters from the GUI
  */
 template<typename T>
-ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* _stateEstimator,
-                          LegController<T>* _legController, GaitScheduler<T>* _gaitScheduler,
-                          DesiredStateCommand<T>* _desiredStateCommand, StaticParams* staticParams,
-                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters, Debug* debug)
+ControlFSM<T>::ControlFSM(Quadruped<T>* quadruped,
+                          StateEstimatorContainer<T>* stateEstimator,
+                          LegController<T>* legController,
+                          GaitScheduler<T>* gaitScheduler,
+                          GamepadCommand* gamepad_command,
+                          StaticParams* staticParams,
+                          be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
+                          Debug* debug)
 {
   // Add the pointers to the ControlFSMData struct
-  data._quadruped = _quadruped;
-  data._stateEstimator = _stateEstimator;
-  data._legController = _legController;
-  data._gaitScheduler = _gaitScheduler;
-  data._desiredStateCommand = _desiredStateCommand;
+  data.quadruped = quadruped;
+  data.stateEstimator = stateEstimator;
+  data.legController = legController;
+  data.gaitScheduler = gaitScheduler;
   data.staticParams = staticParams;
   data.userParameters = userParameters;
+  data.gamepad_command = gamepad_command;
   data.debug = debug;
 
   // Initialize and add all of the FSM States to the state list
@@ -49,6 +58,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* _quadruped, StateEstimatorContainer<T>* 
   statesList.recoveryStand = new FSM_State_RecoveryStand<T>(&data);
   statesList.backflip = new FSM_State_BackFlip<T>(&data);
   statesList.balance_vbl = new FSM_State_BalanceVBL<T>(&data);
+  statesList.testingCV = new FSM_State_Testing_Cv<T>(&data);
 
   // statesList.jointPD = new FSM_State_JointPD<T>(&data);
   // statesList.impedanceControl = new FSM_State_ImpedanceControl<T>(&data);
@@ -88,6 +98,7 @@ void ControlFSM<T>::initialize()
 template<typename T>
 void ControlFSM<T>::runFSM()
 {
+
   // Check the robot state for safe operation
   operatingMode = safetyPreCheck();
 
@@ -96,7 +107,7 @@ void ControlFSM<T>::runFSM()
   {
     if (operatingMode == FSM_OperatingMode::EDAMP)
     {
-      //we do this only once, because we dont change operation mode from estop/edamp to normal
+      // we do this only once, because we dont change operation mode from estop/edamp to normal
       static bool flag = true;
       static unsigned long iter_start = 0;
       static const unsigned long iter_duration = 1000;
@@ -118,12 +129,43 @@ void ControlFSM<T>::runFSM()
         // ROS_INFO("STOP!");
       }
 
-      data._legController->edampCommand(3.0);
+      data.legController->edampCommand(3.0);
     }
 
     // Run normal controls if no transition is detected
     if (operatingMode == FSM_OperatingMode::NORMAL)
     {
+      if (data.gamepad_command->down && (FSM_StateName::PASSIVE != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 0;
+        t1 = new std::thread(execBash, "0");
+        ROS_WARN("PASSIVE");
+      }
+
+      if (data.gamepad_command->up && (FSM_StateName::STAND_UP != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 1;
+
+        t1 = new std::thread(execBash, "1");
+        ROS_WARN("STAND UP");
+      }
+
+      if (data.gamepad_command->left && (FSM_StateName::TESTING != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 12;
+
+        t1 = new std::thread(execBash, "12");
+        ROS_WARN("TESTING");
+      }
+      
+      if (data.gamepad_command->right && (FSM_StateName::BALANCE_STAND != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 3;
+
+        t1 = new std::thread(execBash, "3");
+        ROS_WARN("BALANCE STAND");
+      }
+
       // Check the current state for any transition
       nextStateName = currentState->checkTransition();
 
@@ -137,7 +179,7 @@ void ControlFSM<T>::runFSM()
         nextState = getNextState(nextStateName);
 
         // Print transition initialized info
-        // printInfo(1);
+        printInfo(1);
       }
       else
       {
@@ -184,7 +226,7 @@ void ControlFSM<T>::runFSM()
     currentState = statesList.passive;
     currentState->onEnter();
     nextStateName = currentState->stateName;
-    data._legController->zeroCommand();
+    data.legController->zeroCommand();
   }
 
   // Print the current state of the FSM
@@ -309,6 +351,9 @@ FSM_State<T>* ControlFSM<T>::getNextState(FSM_StateName stateName)
     case FSM_StateName::BACKFLIP:
       return statesList.backflip;
 
+    case FSM_StateName::TESTING_CV:
+      return statesList.testingCV;
+
       // case FSM_StateName::FRONTJUMP:
       //   return statesList.frontJump;
 
@@ -345,14 +390,14 @@ void ControlFSM<T>::printInfo(int opt)
         }
         else if (operatingMode == FSM_OperatingMode::TRANSITIONING)
         {
-          std::cout << "Operating Mode: TRANSITIONING from " << currentState->stateString << " to "
-                    << nextState->stateString << "\n";
+          std::cout << "Operating Mode: TRANSITIONING from " << currentState->stateString << " to " << nextState->stateString
+                    << "\n";
         }
         else if (operatingMode == FSM_OperatingMode::ESTOP)
         {
           std::cout << "Operating Mode: ESTOP\n";
         }
-        std::cout << "Gait Type: " << data._gaitScheduler->gaitData.gaitName << "\n";
+        std::cout << "Gait Type: " << data.gaitScheduler->gaitData.gaitName << "\n";
         std::cout << std::endl;
 
         // Reset iteration counter
@@ -361,20 +406,19 @@ void ControlFSM<T>::printInfo(int opt)
 
       // Print robot info about the robot's status
       // data._gaitScheduler->printGaitInfo();
-      // data._desiredStateCommand->printStateCommandInfo();
 
       break;
 
     case 1: // Initializing FSM State transition
-      std::cout << "[CONTROL FSM] Transition initialized from " << currentState->stateString
-                << " to " << nextState->stateString << "\n"
+      std::cout << "[CONTROL FSM] Transition initialized from " << currentState->stateString << " to " << nextState->stateString
+                << "\n"
                 << std::endl;
 
       break;
 
     case 2: // Finalizing FSM State transition
-      std::cout << "[CONTROL FSM] Transition finalizing from " << currentState->stateString
-                << " to " << nextState->stateString << "\n"
+      std::cout << "[CONTROL FSM] Transition finalizing from " << currentState->stateString << " to " << nextState->stateString
+                << "\n"
                 << std::endl;
 
       break;

@@ -109,7 +109,7 @@ void LegController<T>::updateData(const SpiData* spiData)
     datas[leg].qd(2) = spiData->qd_knee[leg];
 
     // J and p
-    computeLegJacobianAndPosition<T>(_quadruped, datas[leg].q, &(datas[leg].J), &(datas[leg].p), leg);
+    computeLegJacobianAndPosition<T>(quadruped, datas[leg].q, &(datas[leg].J), &(datas[leg].p), leg);
 
     // v
     datas[leg].v = datas[leg].J * datas[leg].qd;

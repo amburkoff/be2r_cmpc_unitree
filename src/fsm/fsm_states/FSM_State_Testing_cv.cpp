@@ -3,7 +3,7 @@
  * State for be2r testing cases
  */
 
-#include "FSM_State_Testing.h"
+#include "FSM_State_Testing_cv.h"
 
 using namespace std;
 
@@ -14,8 +14,8 @@ using namespace std;
  * @param _controlFSMData holds all of the relevant control data
  */
 template<typename T>
-FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
-  : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING, "TESTING"),
+FSM_State_Testing_Cv<T>::FSM_State_Testing_Cv(ControlFSMData<T>* _controlFSMData)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::TESTING_CV, "TESTING_CV"),
     _ini_foot_pos(4)
 {
   // Do nothing
@@ -26,7 +26,7 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
 
-  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData);
+  CMPC = new CMPCLocomotion_Cv(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData);
 
   this->turnOnAllSafetyChecks();
 
@@ -38,10 +38,32 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   this->footstepLocations = Mat34<T>::Zero();
   _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->quadruped->buildModel());
   _wbc_data = new LocomotionCtrlData<T>();
+
+  ros::readParam("~map_topic_filter", map_topic_filter, std::string("elevation_map_raw"));
+  ros::readParam("~map_topic_raw", map_topic_raw, std::string("elevation_map_raw"));
+  ros::readParam("~map_plane_seg", map_topic_plane, std::string("elevation_map_raw"));
+  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_filter, 1, &FSM_State_Testing_Cv<T>::_elevMapCallback, this);
+  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_raw, 1, &FSM_State_Testing_Cv<T>::_elevMapRawCallback, this);
 }
 
 template<typename T>
-void FSM_State_Testing<T>::onEnter()
+void FSM_State_Testing_Cv<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map);
+  if (!_grid_map.isDefaultStartIndex())
+    _grid_map.convertToDefaultStartIndex();
+}
+
+template<typename T>
+void FSM_State_Testing_Cv<T>::_elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_raw);
+  if (!_grid_map_raw.isDefaultStartIndex())
+    _grid_map_raw.convertToDefaultStartIndex();
+}
+
+template<typename T>
+void FSM_State_Testing_Cv<T>::onEnter()
 {
   // Default is to not transition
   this->nextStateName = this->stateName;
@@ -62,14 +84,6 @@ void FSM_State_Testing<T>::onEnter()
 
     firstSwing[leg] = true;
   }
-
-  // for (size_t leg(0); leg < 4; ++leg)
-  // {
-  //   for (size_t jidx(0); jidx < 3; ++jidx)
-  //   {
-  //     _ini_jpos[3 * leg + jidx] = FSM_State<T>::_data->legController->datas[leg].q[jidx];
-  //   }
-  // }
 }
 
 template<typename T>
@@ -85,7 +99,7 @@ T LinearInterpolation(T initPos, T targetPos, double rate)
  * Calls the functions to be executed on each control loop iteration.
  */
 template<typename T>
-void FSM_State_Testing<T>::run()
+void FSM_State_Testing_Cv<T>::run()
 {
   switch (this->_data->userParameters->test)
   {
@@ -95,21 +109,18 @@ void FSM_State_Testing<T>::run()
       break;
 
     case 1:
-      //joint test
-      // test1();
-      LocomotionControlStep();
+      // joint test
+      test1();
       break;
 
     case 2:
       // impedance test
-      // test2(0.05);
-      LocomotionControlStep();
+      test2(0.05);
       break;
 
     case 3:
       // impedance test
-      // test2(0);
-      LocomotionControlStep();
+      test2(0);
       break;
 
     case 4:
@@ -132,7 +143,7 @@ void FSM_State_Testing<T>::run()
 }
 
 template<typename T>
-void FSM_State_Testing<T>::test1()
+void FSM_State_Testing_Cv<T>::test1()
 {
   static bool start = false;
   static Vec3<T> qInit(0, 0, 0);
@@ -208,7 +219,7 @@ void FSM_State_Testing<T>::test1()
 }
 
 template<typename T>
-void FSM_State_Testing<T>::safeJointTest()
+void FSM_State_Testing_Cv<T>::safeJointTest()
 {
   for (size_t i = 0; i < 4; i++)
   {
@@ -230,7 +241,7 @@ void FSM_State_Testing<T>::safeJointTest()
 
 // impedance test
 template<typename T>
-void FSM_State_Testing<T>::test2(float h)
+void FSM_State_Testing_Cv<T>::test2(float h)
 {
   // float rate = 1;
   float rate = 0.5;
@@ -436,7 +447,7 @@ void FSM_State_Testing<T>::test2(float h)
 }
 
 template<typename T>
-void FSM_State_Testing<T>::gravTest()
+void FSM_State_Testing_Cv<T>::gravTest()
 {
   float rate = 0.5;
   auto& seResult = this->_data->stateEstimator->getResult();
@@ -511,7 +522,7 @@ void FSM_State_Testing<T>::gravTest()
  * @return the enumerated FSM state name to transition into
  */
 template<typename T>
-FSM_StateName FSM_State_Testing<T>::checkTransition()
+FSM_StateName FSM_State_Testing_Cv<T>::checkTransition()
 {
   this->nextStateName = this->stateName;
   iter++;
@@ -519,13 +530,13 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
   // Switch FSM control mode
   switch ((int)this->_data->userParameters->FSM_State)
   {
-    case K_TESTING:
+    case K_TESTING_CV:
       break;
 
-      // case K_STAND_UP:
-      //   // Requested switch to Stand Up
-      //   this->nextStateName = FSM_StateName::STAND_UP;
-      //   break;
+    case K_STAND_UP:
+      // Requested switch to Stand Up
+      this->nextStateName = FSM_StateName::STAND_UP;
+      break;
 
     case K_PASSIVE: // normal c
       this->nextStateName = FSM_StateName::PASSIVE;
@@ -540,7 +551,7 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
       break;
 
     default:
-      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING_CV << " to "
                 << this->_data->userParameters->FSM_State << std::endl;
   }
 
@@ -555,7 +566,7 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
  * @return true if transition is complete
  */
 template<typename T>
-TransitionData<T> FSM_State_Testing<T>::transition()
+TransitionData<T> FSM_State_Testing_Cv<T>::transition()
 {
   // Finish Transition
   switch (this->nextStateName)
@@ -588,7 +599,7 @@ TransitionData<T> FSM_State_Testing<T>::transition()
  * Cleans up the state information on exiting the state.
  */
 template<typename T>
-void FSM_State_Testing<T>::onExit()
+void FSM_State_Testing_Cv<T>::onExit()
 {
   // Nothing to clean up when exiting
   // this->_data->legController->zeroCommand();
@@ -597,12 +608,12 @@ void FSM_State_Testing<T>::onExit()
 }
 
 template<typename T>
-void FSM_State_Testing<T>::LocomotionControlStep()
+void FSM_State_Testing_Cv<T>::LocomotionControlStep()
 {
   // Contact state logic
   // estimateContact();
 
-  CMPC->run(*this->_data);
+  CMPC->run(*this->_data, _grid_map, _grid_map_raw);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];
@@ -649,7 +660,7 @@ void FSM_State_Testing<T>::LocomotionControlStep()
 }
 
 template<typename T>
-bool FSM_State_Testing<T>::locomotionSafe()
+bool FSM_State_Testing_Cv<T>::locomotionSafe()
 {
   auto& seResult = this->_data->stateEstimator->getResult();
 
@@ -694,5 +705,5 @@ bool FSM_State_Testing<T>::locomotionSafe()
   return true;
 }
 
-// template class FSM_State_Testing<double>;
-template class FSM_State_Testing<float>;
+// template class FSM_State_Testing_Cv<double>;
+template class FSM_State_Testing_Cv<float>;

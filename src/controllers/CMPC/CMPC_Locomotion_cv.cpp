@@ -6,7 +6,7 @@
 #include <math.h>
 #include <streambuf>
 
-#include "CMPC_Locomotion.h"
+#include "CMPC_Locomotion_cv.h"
 #include "ControlFSMData.h"
 #include "GraphSearch.h"
 #include "convexMPC_interface.h"
@@ -37,31 +37,22 @@ using namespace std;
 // Controller
 ////////////////////
 
-CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data)
+CMPCLocomotion_Cv::CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data)
   : _data(data),
     iterationsBetweenMPC(_iterations_between_mpc),
     _parameters(_data->userParameters),
     _gait_period(_parameters->gait_period),
-    _gait_period_long(32),
     horizonLength(_data->staticParams->horizon),
     dt(_dt),
     trotting(_gait_period,
              Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
              Vec4<int>(_gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0, _gait_period / 2.0),
              "Trotting"),
-    trot_long(_gait_period_long,
-              Vec4<int>(0, _gait_period_long / 2.0, _gait_period_long / 2.0, 0),
-              Vec4<int>(24,
-                        24,
-                        24,
-                        24),
-              "Trotting long"),
     trot_contact(_gait_period,
                  Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
                  Vec4<int>(_gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25, _gait_period * 0.25),
                  "Trot contact"),
     standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
-    give_hand(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "GiveHand"),
     walking(
       GAIT_PERIOD_WALKING,
       Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.),
@@ -77,7 +68,6 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
   // setup_problem(dtMPC, horizonLength, 0.4, 150); // original
   setup_problem(dtMPC, horizonLength, 0.4, 300); // original
-
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -101,7 +91,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
   _state.qd = DVec<float>::Zero(cheetah::num_act_joint);
 }
 
-void CMPCLocomotion::initialize()
+void CMPCLocomotion_Cv::initialize()
 {
   for (int i = 0; i < 4; i++)
   {
@@ -109,18 +99,18 @@ void CMPCLocomotion::initialize()
   }
 
   firstRun = true;
-
-  iterationCounter = 0;
 }
 
-void CMPCLocomotion::recompute_timing(int iterations_per_mpc)
+void CMPCLocomotion_Cv::recompute_timing(int iterations_per_mpc)
 {
   iterationsBetweenMPC = iterations_per_mpc;
   dtMPC = dt * iterations_per_mpc;
 }
 
-void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
+void CMPCLocomotion_Cv::_SetupCommand(ControlFSMData<float>& data)
 {
+  _body_height = _parameters->body_height;
+
   float x_vel_cmd, y_vel_cmd;
   float filter_x(0.005);
   float filter_y(0.005);
@@ -129,15 +119,9 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   x_vel_cmd = data.gamepad_command->left_stick_analog[1];
   y_vel_cmd = data.gamepad_command->left_stick_analog[0];
 
-  // _yaw_turn_rate *= data.gamepad_command->max_turn_rate;
-  // x_vel_cmd *= data.gamepad_command->max_vel_x;
-  // y_vel_cmd *= data.gamepad_command->max_vel_y;
-
-  _yaw_turn_rate *= data.staticParams->max_turn_rate;
-  x_vel_cmd *= data.staticParams->max_vel_x;
-  y_vel_cmd *= data.staticParams->max_vel_y;
-
-  pitch_cmd = 0.4 * data.gamepad_command->right_stick_analog[1];
+  _yaw_turn_rate *= data.gamepad_command->max_turn_rate;
+  x_vel_cmd *= data.gamepad_command->max_vel_x;
+  y_vel_cmd *= data.gamepad_command->max_vel_y;
 
   _x_vel_des = _x_vel_des * (1 - filter_x) + x_vel_cmd * filter_x;
   _y_vel_des = _y_vel_des * (1 - filter_y) + y_vel_cmd * filter_y;
@@ -154,32 +138,18 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
     _yaw_des += dt * _yaw_turn_rate;
   }
 
-  if (current_gait == 13 || current_gait == 4 || current_gait == 11)
-  {
-    world_position_desired[0] = stand_traj[0] + 0.05 * data.gamepad_command->left_stick_analog[1];
-    world_position_desired[1] = stand_traj[1] + 0.05 * data.gamepad_command->left_stick_analog[0];
-    _body_height = stand_traj[2];
+  // if (_yaw_des >= M_PI)
+  // {
+  //   _yaw_des -= 2 * M_PI;
+  // }
 
-    _pitch_des = 0.2 * data.gamepad_command->right_stick_analog[1];
-    _yaw_des = stand_traj[5] + 0.2 * data.gamepad_command->right_stick_analog[0];
-  }
+  // if (_yaw_des <= -M_PI)
+  // {
+  //   _yaw_des += 2 * M_PI;
+  // }
 
-  _body_height = _parameters->body_height;
-  _swing_trajectory_hight = _parameters->Swing_traj_height;
-
-  if (data.gamepad_command->triangle && (gaitNumber == 15))
-  {
-    data.gamepad_command->stairs_mode = StairsMode::UP;
-    _body_height = 0.32;
-    _swing_trajectory_hight = 0.17;
-  }
-
-  if (data.gamepad_command->cross && (gaitNumber == 15))
-  {
-    data.gamepad_command->stairs_mode = StairsMode::DOWN;
-    _body_height = 0.26;
-    _swing_trajectory_hight = 0.06;
-  }
+  _roll_des = 0.;
+  _pitch_des = 0.;
 
   // Update PD coefs
   Kp = Vec3<float>(_parameters->Kp_cartesian_0, _parameters->Kp_cartesian_1, _parameters->Kp_cartesian_2).asDiagonal();
@@ -189,12 +159,449 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   Kd_stance = Kd;
 }
 
-void CMPCLocomotion::run(ControlFSMData<float>& data)
+void CMPCLocomotion_Cv::run(ControlFSMData<float>& data,
+                            const grid_map::GridMap& height_map,
+                            const grid_map::GridMap& height_map_raw)
 {
-  myVersion(data);
+  // original(data);
+  myVersion(data, height_map, height_map_raw);
 }
 
-void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
+void CMPCLocomotion_Cv::original(ControlFSMData<float>& data)
+{
+  bool omniMode = false;
+
+  // Command Setup
+  _SetupCommand(data);
+
+  gaitNumber = data.userParameters->cmpc_gait;
+
+  auto& seResult = data.stateEstimator->getResult();
+
+  // cout << "vx: " << _x_vel_des << " vy: " << _y_vel_des << " yaw: " << _yaw_turn_rate << endl;
+  // static bool is_stand_switch = false;
+
+  // if ((abs(_x_vel_des) > 0.005) || (abs(_y_vel_des) > 0.005) || (abs(_yaw_turn_rate) > 0.005))
+  // {
+  //   current_gait = gaitNumber;
+  // }
+  // else
+  // {
+  //   current_gait = 4;
+  //   gaitNumber = 4;
+  // }
+
+  // if (is_stand_switch)
+  // {
+  //   _yaw_des = seResult.rpy[2];
+  //   is_stand_switch = false;
+  // }
+
+  // Check if transition to standing
+  if (((gaitNumber == 4) && current_gait != 4) || firstRun)
+  {
+    stand_traj[0] = seResult.position[0];
+    stand_traj[1] = seResult.position[1];
+    stand_traj[2] = seResult.position[2];
+    stand_traj[3] = seResult.rpy[0];
+    stand_traj[4] = seResult.rpy[1];
+    stand_traj[5] = seResult.rpy[2];
+    world_position_desired[0] = stand_traj[0];
+    world_position_desired[1] = stand_traj[1];
+  }
+
+  // pick gait
+  Gait_contact* gait = &trotting;
+  current_gait = gaitNumber;
+
+  if (current_gait == 13)
+  {
+    // gait = &two_leg_balance;
+    gait = &trot_contact;
+  }
+  else if (current_gait == 4)
+  {
+    gait = &standing;
+  }
+  else if (current_gait == 9)
+  {
+    gait = &trotting;
+  }
+  else if (current_gait == 10)
+  {
+    gait = &walking;
+  }
+
+  gait->restoreDefaults();
+  gait->setIterations(iterationsBetweenMPC, iterationCounter);
+  // gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
+  gait->earlyContactHandle(data.stateEstimator->getContactSensorData(), iterationsBetweenMPC, iterationCounter);
+  //  std::cout << "iterationCounter " << iterationCounter << std::endl;
+
+  recompute_timing(default_iterations_between_mpc);
+
+  // integrate position setpoint
+  Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
+  Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
+  Vec3<float> v_robot = seResult.vWorld;
+
+  // std::cout << "sensor data: " << data.stateEstimator->getContactSensorData()(0) << std::endl;
+  static Vec3<float> pDesFootWorldStance[4] = { pFoot[0], pFoot[1], pFoot[2], pFoot[3] };
+
+  // p front mid, p back mid
+  Vec3<float> p_fm = (pDesFootWorldStance[0] + pDesFootWorldStance[1]) / 2;
+  Vec3<float> p_bm = (pDesFootWorldStance[2] + pDesFootWorldStance[3]) / 2;
+  float des_pitch = 0;
+  float des_roll = 0;
+
+  // XZ plane
+  // float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (p_fm(0) - p_bm(0)) * (p_fm(0) - p_bm(0)));
+  float L_xz = sqrt((p_fm(2) - p_bm(2)) * (p_fm(2) - p_bm(2)) + (0.1805 * 2) * (0.1805 * 2));
+
+  if (abs(L_xz) < 0.0001)
+  {
+    des_pitch = 0;
+  }
+  else
+  {
+    // TODO адекватную оценку наклона корпуса
+    des_pitch = des_pitch * (1 - 0.7) - 1.2 * asin((p_fm(2) - p_bm(2)) / (L_xz)) * 0.7;
+  }
+
+  // cout << "pfm z: " << p_fm(2) << " pbm z: " << p_bm(2) << endl;
+  // cout << "des pitch correction: " << des_pitch << endl;
+
+  // put to target
+  _pitch_des = des_pitch;
+
+  // Integral-esque pitche and roll compensation
+  if (fabs(v_robot[0]) > .2) // avoid dividing by zero
+  {
+    rpy_int[1] += dt * (_pitch_des - seResult.rpy[1]) / v_robot[0];
+  }
+  if (fabs(v_robot[1]) > 0.1)
+  {
+    rpy_int[0] += dt * (_roll_des - seResult.rpy[0]) / v_robot[1];
+  }
+
+  rpy_int[0] = fminf(fmaxf(rpy_int[0], -.25), .25);
+  rpy_int[1] = fminf(fmaxf(rpy_int[1], -.25), .25);
+  rpy_comp[1] = v_robot[0] * rpy_int[1];
+  rpy_comp[0] = v_robot[1] * rpy_int[0] * (gaitNumber != 8); // turn off for pronking
+
+  for (int i = 0; i < 4; i++)
+  {
+    // foot pos in world frame
+    pFoot[i] =
+      seResult.position + seResult.rBody.transpose() * (data.quadruped->getHipLocation(i) + data.legController->datas[i].p);
+  }
+
+  if (gait != &standing)
+  {
+    world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
+  }
+
+  // some first time initialization
+  if (firstRun)
+  {
+    world_position_desired[0] = seResult.position[0];
+    world_position_desired[1] = seResult.position[1];
+    world_position_desired[2] = seResult.rpy[2];
+
+    for (int i = 0; i < 4; i++)
+    {
+      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+
+      footSwingTrajectories[i].setInitialPosition(pFoot[i]);
+      data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
+      data.debug->all_legs_info.leg[i].swing_ps.y = pFoot[i](1);
+      data.debug->all_legs_info.leg[i].swing_ps.z = pFoot[i](2);
+
+      footSwingTrajectories[i].setFinalPosition(pFoot[i]);
+      data.debug->all_legs_info.leg[i].swing_pf.x = pFoot[i](0);
+      data.debug->all_legs_info.leg[i].swing_pf.y = pFoot[i](1);
+      data.debug->all_legs_info.leg[i].swing_pf.z = pFoot[i](2);
+    }
+
+    firstRun = false;
+  }
+
+  // foot placement
+  for (int l = 0; l < 4; l++)
+  {
+    swingTimes[l] = gait->getCurrentSwingTime(dtMPC, l);
+  }
+
+  float side_sign[4] = { -1, 1, -1, 1 };
+  float interleave_y[4] = { -0.08, 0.08, 0.02, -0.02 };
+  float interleave_gain = -0.2;
+  float v_abs = std::fabs(v_des_robot[0]);
+
+  // cout << "iter: " << iterationCounter << " first swing leg 0" << firstSwing[0] << endl;
+
+  static float z_des[4] = { 0 };
+
+  for (int i = 0; i < 4; i++)
+  {
+    if (firstSwing[i])
+    {
+      swingTimeRemaining[i] = swingTimes[i];
+    }
+    else
+    {
+      swingTimeRemaining[i] -= dt;
+    }
+
+    // cout << "leg: " << i << " " << swingTimeRemaining[i] << endl;
+
+    footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+
+    Vec3<float> offset(0, side_sign[i] * data.quadruped->_abadLinkLength, 0);
+
+    Vec3<float> pRobotFrame = (data.quadruped->getHipLocation(i) + offset);
+
+    pRobotFrame[1] += interleave_y[i] * v_abs * interleave_gain;
+    float stance_time = gait->getCurrentStanceTime(dtMPC, i);
+
+    Vec3<float> pYawCorrected = coordinateRotation(CoordinateAxis::Z, -_yaw_turn_rate * stance_time / 2) * pRobotFrame;
+
+    Vec3<float> des_vel;
+    des_vel[0] = _x_vel_des;
+    des_vel[1] = _y_vel_des;
+    des_vel[2] = 0.0;
+
+    Vec3<float> Pf = seResult.position + seResult.rBody.transpose() * (pYawCorrected + des_vel * swingTimeRemaining[i]);
+
+    float p_rel_max = 0.3f;
+
+    // Using the estimated velocity is correct
+    float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time +
+                    .03f * (seResult.vWorld[0] - v_des_world[0]) +
+                    (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
+    float pfy_rel = seResult.vWorld[1] * .5 * stance_time * dtMPC + .03f * (seResult.vWorld[1] - v_des_world[1]) +
+                    (0.5f * seResult.position[2] / 9.81f) * (-seResult.vWorld[0] * _yaw_turn_rate);
+
+    pfx_rel = fminf(fmaxf(pfx_rel, -p_rel_max), p_rel_max);
+    pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
+    Pf[0] += pfx_rel;
+    Pf[1] += pfy_rel;
+    Pf[2] = z_des[i];
+
+    footSwingTrajectories[i].setFinalPosition(Pf);
+    data.debug->all_legs_info.leg[i].swing_pf.x = Pf(0);
+    data.debug->all_legs_info.leg[i].swing_pf.y = Pf(1);
+    data.debug->all_legs_info.leg[i].swing_pf.z = Pf(2);
+  }
+
+  // calc gait
+  iterationCounter++;
+
+  // gait
+  // trot leg 0 starts in stance because offset is 0
+  Vec4<float> contactStates = gait->getContactState();
+  Vec4<float> swingStates = gait->getSwingState();
+  int* mpcTable = gait->getMpcTable();
+
+  for (size_t leg_num = 0; leg_num < 4; leg_num++)
+  {
+    data.debug->all_legs_info.leg[leg_num].stance_time = contactStates[leg_num];
+    data.debug->all_legs_info.leg[leg_num].swing_time = swingStates[leg_num];
+    data.debug->all_legs_info.leg[leg_num].phase = gait->getCurrentGaitPhase();
+    data.debug->all_legs_info.leg[leg_num].is_contact = data.stateEstimator->getContactSensorData()(leg_num);
+  }
+
+  updateMPCIfNeeded(mpcTable, data, omniMode);
+
+  Vec4<float> se_contactState(0, 0, 0, 0);
+  se_contactState = data.stateEstimator->getContactSensorData().cast<float>();
+
+  // ROS_INFO_STREAM("is contact: " << se_contactState(0));
+
+  static bool is_stance[4] = { 0, 0, 0, 0 };
+  static Vec3<float> p_fw[4] = {};
+  static Vec3<float> p_fl[4] = {};
+  static float delta_yaw[4] = {};
+  static Vec3<float> delta_p_bw[4] = {};
+
+  for (int foot = 0; foot < 4; foot++)
+  {
+    float contactState = contactStates[foot];
+    float swingState = swingStates[foot];
+
+    if ((is_stance[foot] == 0) && !(swingState > 0))
+    {
+      is_stance[foot] = 1;
+
+      // foot position in world frame at contanct
+      pDesFootWorldStance[foot] = pFoot[foot];
+      data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
+      p_fw[foot] = pFoot[foot];
+
+      p_fl[foot] = data.legController->datas[foot].p + data.quadruped->getHipLocation(foot);
+      delta_p_bw[foot] << 0, 0, 0;
+      delta_yaw[foot] = 0;
+    }
+
+    delta_p_bw[foot] += seResult.vBody * dt;
+    delta_yaw[foot] += seResult.omegaBody(2) * dt;
+    data.debug->last_p_local_stance[foot] =
+      ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
+
+    if (swingState > 0) // foot is in swing
+    {
+      if (firstSwing[foot])
+      {
+        firstSwing[foot] = false;
+        is_stance[foot] = 0;
+        footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+        data.debug->all_legs_info.leg[foot].swing_ps.x = pFoot[foot](0);
+        data.debug->all_legs_info.leg[foot].swing_ps.y = pFoot[foot](1);
+        data.debug->all_legs_info.leg[foot].swing_ps.z = pFoot[foot](2);
+
+        z_des[foot] = pFoot[foot][2];
+      }
+
+      // for visual
+      geometry_msgs::PoseStamped pose_traj;
+      Vec3<float> p_des_traj(0, 0, 0);
+      data.debug->leg_traj_des[foot].poses.clear();
+      data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
+
+      // 20 segment trajcetory
+      for (size_t i = 0; i < 21; i++)
+      {
+        footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + ((1.0 - swingState) / 21.0 * (float)i),
+                                                                 swingTimes[foot]);
+        p_des_traj = footSwingTrajectories[foot].getPosition();
+
+        pose_traj.pose.position = ros::toMsg(p_des_traj);
+
+        data.debug->leg_traj_des[foot].poses.push_back(pose_traj);
+      }
+
+      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
+
+      Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
+      Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data.quadruped->getHipLocation(foot);
+      Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
+      // Vec3<float> pActFootWorld = seResult.rBody.inverse() * (data.legController->datas[foot].p +
+      // data.quadruped->getHipLocation(foot)) + seResult.position;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data.legController->datas[foot].v) + seResult.vWorld;
+
+      // Update for WBC
+      pFoot_des[foot] = pDesFootWorld;
+      vFoot_des[foot] = vDesFootWorld;
+      aFoot_des[foot] = footSwingTrajectories[foot].getAcceleration();
+
+      data.debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesLeg);
+      data.debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesLeg);
+      data.debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(pFoot[foot]);
+      data.debug->all_legs_info.leg.at(foot).v_w_act = ros::toMsg(vActFootWorld);
+      data.debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(pDesFootWorld);
+      data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
+
+      if (!data.userParameters->use_wbc)
+      {
+        // Update leg control command regardless of the usage of WBIC
+        data.legController->commands[foot].pDes = pDesLeg;
+        data.legController->commands[foot].vDes = vDesLeg;
+        data.legController->commands[foot].kpCartesian = Kp;
+        data.legController->commands[foot].kdCartesian = Kd;
+      }
+    }
+    else // foot is in stance
+    {
+      firstSwing[foot] = true;
+
+      data.debug->leg_traj_des[foot].poses.clear();
+      data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
+
+      Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
+      // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+      Vec3<float> vDesFootWorld(0, 0, 0);
+      // Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorldStance[foot] - seResult.position) -
+      // data.quadruped->getHipLocation(foot);
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data.quadruped->getHipLocation(foot);
+      Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data.legController->datas[foot].v) + seResult.vWorld;
+
+      if (!data.userParameters->use_wbc) // wbc off
+      {
+        data.legController->commands[foot].pDes = pDesLeg;
+        data.legController->commands[foot].vDes = vDesLeg;
+        data.legController->commands[foot].kpCartesian = Kp_stance;
+        data.legController->commands[foot].kdCartesian = Kd_stance;
+
+        data.legController->commands[foot].forceFeedForward = f_ff[foot];
+        data.legController->commands[foot].kdJoint =
+          Vec3<float>(_parameters->Kd_joint_0, _parameters->Kd_joint_1, _parameters->Kd_joint_2).asDiagonal();
+      }
+      else
+      { // Stance foot damping
+        data.legController->commands[foot].pDes = pDesLeg;
+        data.legController->commands[foot].vDes = vDesLeg;
+        data.legController->commands[foot].kpCartesian = 0. * Kp_stance;
+        data.legController->commands[foot].kdCartesian = Kd_stance;
+      }
+
+      se_contactState[foot] = contactState;
+
+      data.debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesLeg);
+      data.debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesLeg);
+      data.debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(pFoot[foot]);
+      data.debug->all_legs_info.leg.at(foot).v_w_act = ros::toMsg(vActFootWorld);
+      data.debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(pDesFootWorld);
+      data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
+
+      data.debug->leg_force[foot] = ros::toMsg(f_ff[foot]);
+    }
+  }
+
+  data.stateEstimator->setContactPhase(se_contactState);
+  data.stateEstimator->setSwingPhase(gait->getSwingState());
+
+  // Update For WBC
+  pBody_des[0] = world_position_desired[0];
+  pBody_des[1] = world_position_desired[1];
+  pBody_des[2] = _body_height;
+
+  vBody_des[0] = v_des_world[0];
+  vBody_des[1] = v_des_world[1];
+  vBody_des[2] = 0.;
+
+  aBody_des.setZero();
+
+  pBody_RPY_des[0] = 0.0;
+  // pBody_RPY_des[1] = _pitch_des;
+  pBody_RPY_des[1] = 0.0;
+  // pBody_RPY_des[2] = 0.0;
+  pBody_RPY_des[2] = _yaw_des;
+
+  vBody_Ori_des[0] = 0.;
+  vBody_Ori_des[1] = 0.;
+  vBody_Ori_des[2] = _yaw_turn_rate;
+
+  data.debug->body_info.pos_des = ros::toMsg(pBody_des);
+
+  data.debug->body_info.vel_des.linear.x = vBody_des[0];
+  data.debug->body_info.vel_des.linear.y = vBody_des[1];
+  data.debug->body_info.vel_des.linear.z = vBody_des[2];
+
+  data.debug->body_info.euler_des.x = pBody_RPY_des[0];
+  data.debug->body_info.euler_des.y = pBody_RPY_des[1];
+  data.debug->body_info.euler_des.z = pBody_RPY_des[2];
+
+  data.debug->body_info.vel_des.angular.x = vBody_Ori_des[0];
+  data.debug->body_info.vel_des.angular.y = vBody_Ori_des[1];
+  data.debug->body_info.vel_des.angular.z = vBody_Ori_des[2];
+
+  contact_state = gait->getContactState();
+}
+
+void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
+                                  const grid_map::GridMap& height_map,
+                                  const grid_map::GridMap& height_map_raw)
 {
   bool omniMode = false;
 
@@ -231,20 +638,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     world_position_desired[1] = stand_traj[1];
   }
 
-  // Check if transition to give hand
-  if (((gaitNumber == 11) && current_gait != 11) || firstRun)
-  {
-    stand_traj[0] = seResult.position[0];
-    stand_traj[1] = seResult.position[1];
-    stand_traj[2] = seResult.position[2];
-    // stand_traj[2] = 0.15;
-    stand_traj[3] = seResult.rpy[0];
-    stand_traj[4] = seResult.rpy[1];
-    stand_traj[5] = seResult.rpy[2];
-    world_position_desired[0] = stand_traj[0];
-    world_position_desired[1] = stand_traj[1];
-  }
-
   // pick gait
   Gait_contact* gait = &trotting;
   current_gait = gaitNumber;
@@ -266,14 +659,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   {
     gait = &walking;
   }
-  else if (current_gait == 11)
-  {
-    gait = &give_hand;
-  }
-  else if (current_gait == 15)
-  {
-    gait = &trot_long;
-  }
 
   // gait->updatePeriod(_parameters->gait_period);
   gait->restoreDefaults();
@@ -284,13 +669,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 
   // integrate position setpoint
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
-  Vec3<float> v_des_world(0, 0, 0);
-
-  if (gait != &give_hand)
-  {
-    v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
-  }
-
+  Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
   Vec3<float> v_robot = seResult.vWorld;
   static float z_des[4] = { 0 };
 
@@ -298,19 +677,21 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   {
     _pitch_des = 0.0;
   }
-  else if (current_gait != 11)
+  else
   {
     // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
+    _pitch_des = data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
     // _pitch_des = data.stateEstimator->getResult().est_pitch_plane;
   }
 
   for (int i = 0; i < 4; i++)
   {
-    pFoot[i] = seResult.position + seResult.rBody.transpose() * (data.quadruped->getHipLocation(i) + data.legController->datas[i].p);
+    pFoot[i] =
+      seResult.position + seResult.rBody.transpose() * (data.quadruped->getHipLocation(i) + data.legController->datas[i].p);
+    footSwingTrajectories[i].setInitialPosition(pFoot[i]);
   }
 
-  if ((gait != &standing) || (gait != &give_hand))
+  if (gait != &standing)
   {
     world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
   }
@@ -320,13 +701,13 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   {
     world_position_desired[0] = seResult.position[0];
     world_position_desired[1] = seResult.position[1];
+    // world_position_desired[2] = seResult.rpy[2];
     world_position_desired[2] = seResult.position[2];
     _yaw_des = seResult.rpy[2];
 
     for (int i = 0; i < 4; i++)
     {
-      // footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
-      footSwingTrajectories[i].setHeight(_swing_trajectory_hight);
+      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -386,8 +767,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   static Vec3<float> delta_p_bw[4] = {};
   static Vec3<float> last_p_body = data.stateEstimator->getResult().position;
   static Vec3<float> last_q_body = data.stateEstimator->getResult().rpy;
-  static uint32_t stand_iterator[4] = { 0, 0, 0, 0 };
-  static float z_stand_avr[4] = { 0, 0, 0, 0 };
 
   for (int foot = 0; foot < 4; foot++)
   {
@@ -413,6 +792,8 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     float Kf = 1;
     // float Kf = 0.8;
 
+    // delta_p_bw[foot] += seResult.vBody * dt;
+    // delta_yaw[foot] += seResult.omegaBody(2) * dt;
     delta_p_bw[foot] += seResult.vBody * dt * Kf;
     delta_yaw[foot] += seResult.omegaBody(2) * dt * Kf;
     // delta_p_bw[foot] = data.stateEstimator->getResult().position - last_p_body;
@@ -439,13 +820,11 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
         swingTimeRemaining[foot] -= dt;
       }
 
-      // footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
-      footSwingTrajectories[foot].setHeight(_swing_trajectory_hight);
+      footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
 
-      //
       Vec3<float> offset(0, side_sign[foot] * data.quadruped->_abadLinkLength, 0);
 
-      Vec3<float> pRobotFrame = data.quadruped->getHipLocation(foot) + offset;
+      Vec3<float> pRobotFrame = (data.quadruped->getHipLocation(foot) + offset);
 
       pRobotFrame[1] += interleave_y[foot] * v_abs * interleave_gain;
       float stance_time = gait->getCurrentStanceTime(dtMPC, foot);
@@ -462,14 +841,19 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       float p_rel_max = 0.3f;
 
       // Using the estimated velocity is correct
-      float pfx_rel = seResult.vWorld[0] * stance_time / 2.0 + 0.03f * (v_des_world[0] - seResult.vWorld[0]) + 0.5f * seResult.position[2] / 9.81f * seResult.vWorld[1] * _yaw_turn_rate;
-      float pfy_rel = seResult.vWorld[1] * stance_time / 2.0 + 0.03f * (v_des_world[1] - seResult.vWorld[1]) - 0.5f * seResult.position[2] / 9.81f * seResult.vWorld[0] * _yaw_turn_rate;
+      float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time +
+                      .03f * (seResult.vWorld[0] - v_des_world[0]) +
+                      (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
+      float pfy_rel = seResult.vWorld[1] * .5 * stance_time * dtMPC + .03f * (seResult.vWorld[1] - v_des_world[1]) +
+                      (0.5f * seResult.position[2] / 9.81f) * (-seResult.vWorld[0] * _yaw_turn_rate);
 
       pfx_rel = fminf(fmaxf(pfx_rel, -p_rel_max), p_rel_max);
       pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
       Pf[0] += pfx_rel;
       Pf[1] += pfy_rel;
       Pf[2] = z_des[foot];
+
+      _updateFoothold(Pf, seResult.position, height_map, height_map_raw, foot);
 
       footSwingTrajectories[foot].setFinalPosition(Pf);
       data.debug->all_legs_info.leg[foot].swing_pf.x = Pf(0);
@@ -532,20 +916,13 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     }
     else // foot is in stance
     {
-      stand_iterator[foot]++;
-
       firstSwing[foot] = true;
 
       data.debug->leg_traj_des[foot].poses.clear();
       data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
 
-      // data.debug->last_p_local_stance[foot] = ros::toMsg(data.legController->datas[foot].p +
-      // data.quadruped->getHipLocation(foot)); z_stand_avr[foot] += (ros::toMsg(data.legController->datas[foot].p +
-      // data.quadruped->getHipLocation(foot))).z;
-      geometry_msgs::Point point;
-      point = ros::toMsg(data.legController->datas[foot].p + data.quadruped->getHipLocation(foot));
-      // point.z = z_stand_avr[foot] / stand_iterator[foot];
-      data.debug->last_p_local_stance[foot] = point;
+      data.debug->last_p_local_stance[foot] =
+        ros::toMsg(data.legController->datas[foot].p + data.quadruped->getHipLocation(foot));
 
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(1.0, swingTimes[foot]);
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
@@ -636,7 +1013,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   iterationCounter++;
 }
 
-void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode)
+void CMPCLocomotion_Cv::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode)
 {
   if ((iterationCounter % iterationsBetweenMPC) == 0)
   {
@@ -717,7 +1094,7 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
   }
 }
 
-void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
+void CMPCLocomotion_Cv::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
   auto seResult = data.stateEstimator->getResult();
 
@@ -730,32 +1107,6 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   //  float Q[12] = { 0.25, 4, 7, 4, 4, 20, 0.1, 0.1, 3, 0.4, 0.4, 0.2 };
   // float Q[12] = { 10, 10, 15, 15, 15, 20, 0.5, 0.5, 3, 0.4, 0.4, 0.2 }; //+- norm
   float Q[12] = { 10, 10, 15, 3, 3, 30, 0.5, 0.5, 3, 0.4, 0.4, 0.2 };
-
-  float Q_roll = data.staticParams->Q_roll;
-  float Q_pitch = data.staticParams->Q_roll;
-  float Q_yaw = data.staticParams->Q_yaw;
-  float Q_x = data.staticParams->Q_x;
-  float Q_y = data.staticParams->Q_y;
-  float Q_z = data.staticParams->Q_z;
-  float Q_w_roll = data.staticParams->Q_w_roll;
-  float Q_w_pitch = data.staticParams->Q_w_pitch;
-  float Q_w_yaw = data.staticParams->Q_w_yaw;
-  float Q_vx = data.staticParams->Q_vx;
-  float Q_vy = data.staticParams->Q_vy;
-  float Q_vz = data.staticParams->Q_vz;
-
-  Q[0] = Q_roll;
-  Q[1] = Q_pitch;
-  Q[2] = Q_yaw;
-  Q[3] = Q_x;
-  Q[4] = Q_y;
-  Q[5] = Q_z;
-  Q[6] = Q_w_roll;
-  Q[7] = Q_w_pitch;
-  Q[8] = Q_w_yaw;
-  Q[9] = Q_vx;
-  Q[10] = Q_vy;
-  Q[11] = Q_vz;
 
   // from sparse
   //  float Q[12] = { 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2 };
@@ -816,7 +1167,6 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   for (int leg = 0; leg < 4; leg++)
   {
     Vec3<float> f;
-
     for (int axis = 0; axis < 3; axis++)
     {
       f[axis] = get_solution(leg * 3 + axis);
@@ -830,7 +1180,7 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   }
 }
 
-// void CMPCLocomotion::solveSparseMPC(int* mpcTable, ControlFSMData<float>& data)
+// void CMPCLocomotion_Cv::solveSparseMPC(int* mpcTable, ControlFSMData<float>& data)
 // {
 //   // X0, contact trajectory, state trajectory, feet, get result!
 //   (void)mpcTable;
@@ -877,7 +1227,7 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 //   }
 // }
 
-void CMPCLocomotion::initSparseMPC()
+void CMPCLocomotion_Cv::initSparseMPC()
 {
   Mat3<double> baseInertia;
   baseInertia << 0.07, 0, 0, 0, 0.26, 0, 0, 0, 0.242;
@@ -903,7 +1253,7 @@ void CMPCLocomotion::initSparseMPC()
   _sparseTrajectory.resize(horizonLength);
 }
 
-void CMPCLocomotion::_updateModel(const StateEstimate<float>& state_est, const LegControllerData<float>* leg_data)
+void CMPCLocomotion_Cv::_updateModel(const StateEstimate<float>& state_est, const LegControllerData<float>* leg_data)
 {
   _state.bodyOrientation = state_est.orientation;
   _state.bodyPosition = state_est.position;
@@ -935,4 +1285,129 @@ void CMPCLocomotion::_updateModel(const StateEstimate<float>& state_est, const L
   // cout << "Mass Matrix: " << _A << endl;
   // cout << "C+G: " << _grav+_coriolis << endl;
   // cout << "Gravity: " << _grav << endl;
+}
+
+Eigen::Array2i checkBoundariess(const grid_map::GridMap& map, int col, int row)
+{
+  col = std::clamp(col, 0, map.getSize()(1));
+  row = std::clamp(row, 0, map.getSize()(0));
+  return Eigen::Array2i(col, row);
+}
+
+void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
+                                        const Vec3<float>& body_pos_arg,
+                                        const grid_map::GridMap& height_map_filter,
+                                        const grid_map::GridMap& height_map_raw,
+                                        int leg)
+{
+  // Положение лапы в СК тела
+  //  Vec3<float> scale(1.2, 1, 1);
+  static bool first = true;
+  static Vec3<float> freeze_pose;
+  Vec3<float> body_pos;
+  Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
+  Vec3<float> local_pf;
+  Vec3<float> local_p0;
+  if (_data->debug->is_map_upd_stop)
+  {
+    if (first)
+    {
+      freeze_pose = body_pos_arg;
+      first = false;
+    }
+  }
+  // else
+  // {
+  body_pos = body_pos_arg;
+  local_pf = pf - body_pos;
+  local_p0 = p0 - body_pos;
+  first = true;
+  // }
+  //  Vec3<float> local_pf_scaled = foot.cwiseProduct(scale) - body_pos;
+  //  std::cout << "pf in base frame: " << std::endl << local_pf << std::endl;
+
+  // Координаты цм робота на карте (обычно в центре)
+  int row_idx_body_com = height_map_raw.getSize()(0) / 2;
+  int col_idx_body_com = height_map_raw.getSize()(1) / 2;
+  if (_data->debug->is_map_upd_stop)
+  {
+    col_idx_body_com -= floor((body_pos_arg[0] - freeze_pose[0]) / height_map_raw.getResolution());
+    row_idx_body_com += floor((body_pos_arg[1] - freeze_pose[1]) / height_map_raw.getResolution());
+    col_idx_body_com = std::clamp(col_idx_body_com, 0, height_map_raw.getSize()(1) - 1);
+    row_idx_body_com = std::clamp(row_idx_body_com, 0, height_map_raw.getSize()(0) - 1);
+    // TODO:Call enable update service when touch map edge
+  }
+
+  // Минус для преобразования координат
+  int x_idx = col_idx_body_com - floor(local_pf[0] / height_map_raw.getResolution());
+  int y_idx = row_idx_body_com - floor(local_pf[1] / height_map_raw.getResolution());
+  x_idx = std::clamp(x_idx, 0, height_map_raw.getSize()(1) - 1);
+  y_idx = std::clamp(y_idx, 0, height_map_raw.getSize()(0) - 1);
+
+  int x_idx_selected = x_idx;
+  int y_idx_selected = y_idx;
+
+  _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, height_map_raw, height_map_raw, leg);
+
+  // Минус для преобразования координат
+  pf[0] = -(x_idx_selected - col_idx_body_com) * height_map_raw.getResolution() + body_pos[0];
+  pf[1] = -(y_idx_selected - row_idx_body_com) * height_map_raw.getResolution() + body_pos[1];
+  auto pf_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, x_idx_selected, y_idx_selected));
+  int p0_x_idx = col_idx_body_com - floor(local_p0[0] / height_map_raw.getResolution());
+  int p0_y_idx = row_idx_body_com - floor(local_p0[1] / height_map_raw.getResolution());
+  auto p0_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, p0_x_idx, p0_y_idx));
+
+  // ЕВРИСТИКА
+  static double start_offset = 0.7;
+  if (_data->stateEstimator->getResult().position(0) > start_offset)
+  {
+    static double step_length = 0.6;
+    double x = _data->stateEstimator->getResult().position(0) - start_offset;
+    double k = x / step_length;
+    if (k >= 1.0)
+      k = 1.0;
+    _data->debug->z_offset = k * 0.40;
+  }
+
+  pf_h -= p0_h;
+  pf[2] = (std::isnan(pf_h)) ? 0. : pf_h;
+  if (pf[2] > 0.17)
+  {
+    pf[2] = 0.17;
+    std::cout << "Leg height limit" << std::endl;
+  }
+}
+
+void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
+                                        int x_idx,
+                                        int y_idx,
+                                        int& x_idx_selected,
+                                        int& y_idx_selected,
+                                        const grid_map::GridMap& height_map_filter,
+                                        const grid_map::GridMap& height_map_raw,
+                                        int leg)
+{
+  grid_map::Index center(x_idx, y_idx);
+  // std::cout << " Leg position (x,y) " << pf[0] << " " << pf[1] << std::endl;
+  double radius = 0.09;
+  // std::cout << "Normal is " << height_map_raw.at("normal_z", Eigen::Array2i(x_idx, y_idx)) <<
+  // std::endl;
+  for (grid_map_utils::SpiralIterator iterator(height_map_filter, center, radius); !iterator.isPastEnd(); ++iterator)
+  {
+    auto traversability = height_map_filter.at("normal_vectors_z", *iterator);
+    // auto uncertainty_r = height_map_filter.at("uncertainty_range", *iterator);
+    // if (leg == 0)
+    // std::cout << "traversability = " << traversability << std::endl;
+    // If can step
+    if (!std::isnan(traversability) && traversability > 0.98 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
+    {
+      x_idx_selected = (*iterator)(0);
+      y_idx_selected = (*iterator)(1);
+      // if ((x_idx != x_idx_selected) && (y_idx != y_idx_selected))
+      //   std::cout << "Edit footstep from ( " << x_idx << " " << y_idx << ") to ( " << x_idx_selected << " " << y_idx_selected
+      //             << " )" << std::endl;
+      return;
+    }
+  }
+  //  std::cout << "Can`t find foothold from map!" << std::endl;
 }

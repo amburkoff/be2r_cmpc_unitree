@@ -107,9 +107,9 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   float x_vel_cmd, y_vel_cmd;
   float filter(0.1);
 
-  _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
-  x_vel_cmd = data._desiredStateCommand->leftAnalogStick[1];
-  y_vel_cmd = data._desiredStateCommand->leftAnalogStick[0];
+  _yaw_turn_rate = data.gamepad_command->right_stick_analog[0];
+  x_vel_cmd = data.gamepad_command->left_stick_analog[1];
+  y_vel_cmd = data.gamepad_command->left_stick_analog[0];
   // _yaw_turn_rate = 0;
   // x_vel_cmd = 0;
   // y_vel_cmd = 0;
@@ -117,7 +117,7 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
 
-  _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  _yaw_des = data.stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   _roll_des = 0.;
   _pitch_des = 0.;
 
@@ -143,7 +143,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   //   omniMode = true;
   // }
 
-  auto& seResult = data._stateEstimator->getResult();
+  auto& seResult = data.stateEstimator->getResult();
 
   // Check if transition to standing
   if (((gaitNumber == 4) && current_gait != 4) || firstRun)
@@ -217,7 +217,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   // printf("[%d] [%d]\n", jumping.get_current_gait_phase(),
   // gait->get_current_gait_phase());
   // check jump trigger
-  jump_state.trigger_pressed(jump_state.should_jump(jumping.getCurrentGaitPhase()), data._desiredStateCommand->trigger_pressed);
+  // jump_state.trigger_pressed(jump_state.should_jump(jumping.getCurrentGaitPhase()), data.gamepad_command->trigger_pressed);
 
   // bool too_high = seResult.position[2] > 0.29;
   // check jump action
@@ -291,7 +291,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   for (int i = 0; i < 4; i++)
   {
     pFoot[i] =
-      seResult.position + seResult.rBody.transpose() * (data._quadruped->getHipLocation(i) + data._legController->datas[i].p);
+      seResult.position + seResult.rBody.transpose() * (data.quadruped->getHipLocation(i) + data.legController->datas[i].p);
   }
 
   if (gait != &standing)
@@ -350,9 +350,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
     footSwingTrajectories[i].setHeight(_dyn_params->Swing_traj_height);
 
-    Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
+    Vec3<float> offset(0, side_sign[i] * data.quadruped->_abadLinkLength, 0);
 
-    Vec3<float> pRobotFrame = (data._quadruped->getHipLocation(i) + offset);
+    Vec3<float> pRobotFrame = (data.quadruped->getHipLocation(i) + offset);
 
     pRobotFrame[1] += interleave_y[i] * v_abs * interleave_gain;
     float stance_time = gait->getCurrentStanceTime(dtMPC, i);
@@ -428,7 +428,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
       p_fw[foot] = pFoot[foot];
 
-      p_fl[foot] = data._legController->datas[foot].p + data._quadruped->getHipLocation(foot);
+      p_fl[foot] = data.legController->datas[foot].p + data.quadruped->getHipLocation(foot);
       delta_p_bw[foot] << 0, 0, 0;
       delta_yaw[foot] = 0;
     }
@@ -451,9 +451,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
-      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data.quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].v) + seResult.vWorld;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data.legController->datas[foot].v) + seResult.vWorld;
 
       // if (foot == 3 || foot == 2)
       // {
@@ -480,10 +480,10 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       if (!data.userParameters->use_wbc)
       {
         // Update leg control command regardless of the usage of WBIC
-        data._legController->commands[foot].pDes = pDesLeg;
-        data._legController->commands[foot].vDes = vDesLeg;
-        data._legController->commands[foot].kpCartesian = Kp;
-        data._legController->commands[foot].kdCartesian = Kd;
+        data.legController->commands[foot].pDes = pDesLeg;
+        data.legController->commands[foot].vDes = vDesLeg;
+        data.legController->commands[foot].kpCartesian = Kp;
+        data.legController->commands[foot].kdCartesian = Kd;
       }
     }
     else // foot is in stance
@@ -494,9 +494,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> vDesFootWorld = Vec3<float>::Zero();
-      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
+      Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data.quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].v) + seResult.vWorld;
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data.legController->datas[foot].v) + seResult.vWorld;
       // cout << "Foot " << foot << " relative velocity desired: " <<
       // vDesLeg.transpose() << "\n";
 
@@ -506,21 +506,21 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
       if (!data.userParameters->use_wbc) // wbc off
       {
-        data._legController->commands[foot].pDes = pDesLeg;
-        data._legController->commands[foot].vDes = vDesLeg;
-        data._legController->commands[foot].kpCartesian = Kp_stance;
-        data._legController->commands[foot].kdCartesian = Kd_stance;
+        data.legController->commands[foot].pDes = pDesLeg;
+        data.legController->commands[foot].vDes = vDesLeg;
+        data.legController->commands[foot].kpCartesian = Kp_stance;
+        data.legController->commands[foot].kdCartesian = Kd_stance;
 
-        data._legController->commands[foot].forceFeedForward = f_ff[foot];
-        data._legController->commands[foot].kdJoint =
+        data.legController->commands[foot].forceFeedForward = f_ff[foot];
+        data.legController->commands[foot].kdJoint =
           Vec3<float>(_dyn_params->Kd_joint_0, _dyn_params->Kd_joint_1, _dyn_params->Kd_joint_2).asDiagonal();
       }
       else
       { // Stance foot damping
-        data._legController->commands[foot].pDes = pDesLeg;
-        data._legController->commands[foot].vDes = vDesLeg;
-        data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
-        data._legController->commands[foot].kdCartesian = Kd_stance;
+        data.legController->commands[foot].pDes = pDesLeg;
+        data.legController->commands[foot].vDes = vDesLeg;
+        data.legController->commands[foot].kpCartesian = 0. * Kp_stance;
+        data.legController->commands[foot].kdCartesian = Kd_stance;
       }
 
       se_contactState[foot] = contactState;
@@ -536,8 +536,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     }
   }
 
-  data._stateEstimator->setContactPhase(se_contactState);
-  data._stateEstimator->setSwingPhase(gait->getSwingState());
+  data.stateEstimator->setContactPhase(se_contactState);
+  data.stateEstimator->setSwingPhase(gait->getSwingState());
 
   // Update For WBC
   pBody_des[0] = world_position_desired[0];
@@ -590,7 +590,7 @@ void ConvexMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>
   // _iterationsBetweenMPC = 30;
   if ((iterationCounter % _iterationsBetweenMPC) == 0)
   {
-    auto seResult = data._stateEstimator->getResult();
+    auto seResult = data.stateEstimator->getResult();
     float* p = seResult.position.data();
 
     Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
@@ -688,7 +688,7 @@ void ConvexMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>
 
 void ConvexMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
-  auto seResult = data._stateEstimator->getResult();
+  auto seResult = data.stateEstimator->getResult();
 
   // float Q[12] = {0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2};
 
@@ -773,7 +773,7 @@ void ConvexMPCLocomotion::solveSparseMPC(int* mpcTable, ControlFSMData<float>& d
   // X0, contact trajectory, state trajectory, feet, get result!
   (void)mpcTable;
   (void)data;
-  auto seResult = data._stateEstimator->getResult();
+  auto seResult = data.stateEstimator->getResult();
 
   std::vector<ContactState> contactStates;
   for (int i = 0; i < horizonLength; i++)

@@ -39,7 +39,7 @@ FSM_State_Locomotion<T>::FSM_State_Locomotion(ControlFSMData<T>* _controlFSMData
   // Initialize GRF and footstep locations to 0s
   this->footFeedForwardForces = Mat34<T>::Zero();
   this->footstepLocations = Mat34<T>::Zero();
-  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->_quadruped->buildModel());
+  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->quadruped->buildModel());
   _wbc_data = new LocomotionCtrlData<T>();
 }
 
@@ -54,7 +54,7 @@ void FSM_State_Locomotion<T>::onEnter()
 
   cMPCOld->initialize();
 
-  this->_data->_gaitScheduler->gaitData._nextGait = GaitType::TROT;
+  this->_data->gaitScheduler->gaitData._nextGait = GaitType::TROT;
 }
 
 /**
@@ -191,7 +191,7 @@ TransitionData<T> FSM_State_Locomotion<T>::transition()
 
     case FSM_StateName::LAYDOWN:
       this->transitionData.done = true;
-      // this->_data->_legController->is_low_level = true;
+      // this->_data->legController->is_low_level = true;
       break;
 
     default:
@@ -205,7 +205,7 @@ TransitionData<T> FSM_State_Locomotion<T>::transition()
 template<typename T>
 bool FSM_State_Locomotion<T>::locomotionSafe()
 {
-  auto& seResult = this->_data->_stateEstimator->getResult();
+  auto& seResult = this->_data->stateEstimator->getResult();
 
   const T max_roll = 40;
   const T max_pitch = 40;
@@ -224,7 +224,7 @@ bool FSM_State_Locomotion<T>::locomotionSafe()
 
   for (int leg = 0; leg < 4; leg++)
   {
-    auto p_leg = this->_data->_legController->datas[leg].p;
+    auto p_leg = this->_data->legController->datas[leg].p;
     if (p_leg[2] > 0)
     {
       printf("Unsafe locomotion: leg %d is above hip (%.3f m)\n", leg, p_leg[2]);
@@ -237,7 +237,7 @@ bool FSM_State_Locomotion<T>::locomotionSafe()
       return false;
     }
 
-    auto v_leg = this->_data->_legController->datas[leg].v.norm();
+    auto v_leg = this->_data->legController->datas[leg].v.norm();
     if (std::fabs(v_leg) > 9.)
     {
       printf("Unsafe locomotion: leg %d is moving too quickly (%.3f m/s)\n", leg, v_leg);
@@ -266,7 +266,7 @@ void FSM_State_Locomotion<T>::onExit()
 template<typename T>
 void FSM_State_Locomotion<T>::LocomotionControlStep()
 {
-  // StateEstimate<T> stateEstimate = this->_data->_stateEstimator->getResult();
+  // StateEstimate<T> stateEstimate = this->_data->stateEstimator->getResult();
 
   // Contact state logic
   // estimateContact();
@@ -283,10 +283,10 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
 
   for (int leg(0); leg < 4; ++leg)
   {
-    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
-    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
-    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
-    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    pDes_backup[leg] = this->_data->legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->legController->commands[leg].kdCartesian;
   }
 
   if (this->_data->userParameters->use_wbc)
@@ -312,11 +312,11 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
   for (int leg(0); leg < 4; ++leg)
   {
     // originally commented
-    this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
-    this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
+    this->_data->legController->commands[leg].pDes = pDes_backup[leg];
+    this->_data->legController->commands[leg].vDes = vDes_backup[leg];
 
-    this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
-    this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
+    this->_data->legController->commands[leg].kpCartesian = Kp_backup[leg];
+    this->_data->legController->commands[leg].kdCartesian = Kd_backup[leg];
   }
 }
 

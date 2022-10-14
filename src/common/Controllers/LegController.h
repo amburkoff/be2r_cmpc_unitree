@@ -59,10 +59,10 @@ template <typename T>
 class LegController
 {
 public:
-  LegController(Quadruped<T>& quad) : _quadruped(quad)
+  LegController(Quadruped<T>& quad) : quadruped(quad)
   {
     for (auto& data : datas)
-      data.setQuadruped(_quadruped);
+      data.setQuadruped(quadruped);
   }
 
   void zeroCommand();
@@ -84,7 +84,7 @@ public:
 
   LegControllerCommand<T> commands[4];
   LegControllerData<T> datas[4];
-  Quadruped<T>& _quadruped;
+  Quadruped<T>& quadruped;
   bool _legEnabled[4] = {false};
   T _maxTorque = 0;
   bool _zeroEncoders = false;

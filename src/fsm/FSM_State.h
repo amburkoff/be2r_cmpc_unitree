@@ -9,6 +9,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
+#include <thread>
 // #include <be2r_cmpc_unitree/ros_dynamic_paramsConfig.h>
 
 // Normal robot states
@@ -24,6 +25,7 @@
 #define K_BACKFLIP 9
 #define K_FRONTJUMP 11
 #define K_TESTING 12
+#define K_TESTING_CV 14
 
 // Specific control states
 #define K_JOINT_PD 51
@@ -52,13 +54,14 @@ enum class FSM_StateName
   BACKFLIP,
   FRONTJUMP,
   TESTING,
-  BALANCE_VBL
+  BALANCE_VBL,
+  TESTING_CV
 };
 
 /**
  *
  */
-template <typename T>
+template<typename T>
 class FSM_State
 {
 public:
