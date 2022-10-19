@@ -18,7 +18,7 @@ using namespace std;
  * Get quaternion, rotation matrix, angular velocity (body and world),
  * rpy, acceleration (world, body) by copying from cheater state data
  */
-template <typename T>
+template<typename T>
 void CheaterOrientationEstimator<T>::run()
 {
   this->_stateEstimatorData.result->orientation = this->_stateEstimatorData.cheaterState->orientation.template cast<T>();
@@ -34,13 +34,22 @@ void CheaterOrientationEstimator<T>::run()
  * Get quaternion, rotation matrix, angular velocity (body and world),
  * rpy, acceleration (world, body) from vector nav IMU
  */
-template <typename T>
+template<typename T>
 void VectorNavOrientationEstimator<T>::run()
 {
   this->_stateEstimatorData.result->orientation[0] = this->_stateEstimatorData.vectorNavData->quat[0];
   this->_stateEstimatorData.result->orientation[1] = this->_stateEstimatorData.vectorNavData->quat[1];
   this->_stateEstimatorData.result->orientation[2] = this->_stateEstimatorData.vectorNavData->quat[2];
   this->_stateEstimatorData.result->orientation[3] = this->_stateEstimatorData.vectorNavData->quat[3];
+
+  if (this->_stateEstimatorData.result->orientation.norm() < 0.5)
+  {
+    ROS_ERROR("Quaternion is not normalized!");
+    this->_stateEstimatorData.result->orientation[0] = 1.0;
+    this->_stateEstimatorData.result->orientation[1] = 0.0;
+    this->_stateEstimatorData.result->orientation[2] = 0.0;
+    this->_stateEstimatorData.result->orientation[3] = 0.0;
+  }
 
   // cout << "BEFORE qu0: " << this->_stateEstimatorData.result->orientation[0] << " qu1: " << this->_stateEstimatorData.result->orientation[1] << " qu2: " << this->_stateEstimatorData.result->orientation[2] << " qu3: " << this->_stateEstimatorData.result->orientation[3] << endl;
   //w x y z

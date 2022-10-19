@@ -110,10 +110,9 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   static float z_prev = z;
   // z = (1.0 - f) * z_prev + f * z;
 
-  //if NaN
-  if ((z * 5) == z)
+  if (std::isinf(z))
   {
-    // ROS_ERROR("NAN");
+    // ROS_ERROR("INF");
     z = 0;
   }
 
