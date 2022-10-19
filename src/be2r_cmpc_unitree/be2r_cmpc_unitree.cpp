@@ -200,7 +200,8 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
   // binary contact
-  int16_t force_threshold = 70;
+  // int16_t force_threshold = 70;
+  int16_t force_threshold = 15;
 
   for (size_t i = 0; i < 4; i++)
   {

@@ -170,7 +170,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   if (data.gamepad_command->triangle && (gaitNumber == 15))
   {
     data.gamepad_command->stairs_mode = StairsMode::UP;
-    _body_height = 0.32;
+    _body_height = 0.3;
     _swing_trajectory_hight = 0.17;
   }
 
