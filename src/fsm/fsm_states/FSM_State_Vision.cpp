@@ -27,7 +27,7 @@ FSM_State_Vision<T>::FSM_State_Vision(ControlFSMData<T>* _controlFSMData)
   // Initialize GRF and footstep locations to 0s
   this->footFeedForwardForces = Mat34<T>::Zero();
   this->footstepLocations = Mat34<T>::Zero();
-  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->_quadruped->buildModel());
+  _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->quadruped->buildModel());
   _wbc_data = new LocomotionCtrlData<T>();
   zero_vec3.setZero();
   _global_robot_loc.setZero();
@@ -101,8 +101,8 @@ void FSM_State_Vision<T>::onEnter()
   }
   else
   {
-    _ini_body_pos = (this->_data->_stateEstimator->getResult()).position;
-    _ini_body_ori_rpy = (this->_data->_stateEstimator->getResult()).rpy;
+    _ini_body_pos = (this->_data->stateEstimator->getResult()).position;
+    _ini_body_ori_rpy = (this->_data->stateEstimator->getResult()).rpy;
   }
   printf("[FSM VISION] On Enter\n");
 }
@@ -165,7 +165,7 @@ void FSM_State_Vision<T>::_RCLocomotionControl()
 template<typename T>
 void FSM_State_Vision<T>::_updateStateEstimator()
 {
-  StateEstimate<T>* estimate_handle = this->_data->_stateEstimator->getResultHandle();
+  StateEstimate<T>* estimate_handle = this->_data->stateEstimator->getResultHandle();
 
   // printf("global robot:%f,%f,%f\n", _global_robot_loc[0],
   // _global_robot_loc[1], _global_robot_loc[2]);
@@ -204,7 +204,7 @@ void FSM_State_Vision<T>::_JPosStand()
 //  }
 //  else
 //  {
-//    robot_loc = (this->_data->_stateEstimator->getResult()).position;
+//    robot_loc = (this->_data->stateEstimator->getResult()).position;
 //  }
 //  Vec3<T> obs;
 //  obs[2] = 0.2;
@@ -255,7 +255,7 @@ void FSM_State_Vision<T>::_JPosStand()
 //  }
 //  else
 //  {
-//    robot_loc = (this->_data->_stateEstimator->getResult()).position;
+//    robot_loc = (this->_data->stateEstimator->getResult()).position;
 //  }
 
 //  float w_sd = 60., w_sl = 30., w_max = 10., w_min = 10.; // score wieght
@@ -352,7 +352,7 @@ void FSM_State_Vision<T>::_UpdateObstacle()
   }
   else
   {
-    robot_loc = (this->_data->_stateEstimator->getResult()).position;
+    robot_loc = (this->_data->stateEstimator->getResult()).position;
   }
   // std::cout<<robot_loc[0]<<" "<<robot_loc[1]<<endl;
   // m,n range is 100 (Robot-centric)
@@ -408,7 +408,7 @@ void FSM_State_Vision<T>::_UpdateObstacle()
     if (_b_localization_data) { //TRUE
         robot_loc = _global_robot_loc;
     } else {
-        robot_loc = (this->_data->_stateEstimator->getResult()).position;
+        robot_loc = (this->_data->stateEstimator->getResult()).position;
     }
     Vec3<T> obs;
     obs[2] = 0.27;
@@ -456,9 +456,9 @@ void FSM_State_Vision<T>::_print_obstacle_list()
 //    vel_visual.vel_cmd[i] = des_vel[i];
 //    // 1022
 //    if (i == 2)
-//      vel_visual.base_position[2] = (this->_data->_stateEstimator->getResult()).rpy[2];
+//      vel_visual.base_position[2] = (this->_data->stateEstimator->getResult()).rpy[2];
 //    else
-//      vel_visual.base_position[i] = (this->_data->_stateEstimator->getResult()).position[i];
+//      vel_visual.base_position[i] = (this->_data->stateEstimator->getResult()).position[i];
 //  }
 //  _visionLCM.publish("velocity_cmd", &vel_visual);
 
@@ -499,9 +499,9 @@ void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
   //    curr_pos -= _ini_body_pos;
   //    curr_ori_rpy = _robot_rpy;
   //  }else{
-  //    curr_pos = (this->_data->_stateEstimator->getResult()).position;
+  //    curr_pos = (this->_data->stateEstimator->getResult()).position;
   //    curr_pos -= _ini_body_pos;
-  //    curr_ori_rpy = (this->_data->_stateEstimator->getResult()).rpy;
+  //    curr_ori_rpy = (this->_data->stateEstimator->getResult()).rpy;
   //
   //  }
   //  target_pos = rpyToRotMat(_ini_body_ori_rpy).transpose() * target_pos;
@@ -541,9 +541,9 @@ void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
   // des vel in robot frame
   // default from joystick
   ////////////////////////////
-  des_vel[0] = this->_data->_desiredStateCommand->leftAnalogStick[1];
-  des_vel[1] = this->_data->_desiredStateCommand->leftAnalogStick[0];
-  des_vel[2] = this->_data->_desiredStateCommand->rightAnalogStick[0];
+  des_vel[0] = this->_data->gamepad_command->left_stick_analog[1];
+  des_vel[1] = this->_data->gamepad_command->left_stick_analog[0];
+  des_vel[2] = this->_data->gamepad_command->right_stick_analog[0];
   ///////////////////////////////////////////////////////////////////
 
   des_vel_filtered[0] = des_vel_filtered[0] * (1 - filter) + des_vel[0] * filter;
@@ -551,7 +551,7 @@ void FSM_State_Vision<T>::_UpdateVelCommand(Vec3<T>& des_vel)
   des_vel_filtered[2] = des_vel[2];
 
   // des vel in world frame
-  des_vel = this->_data->_stateEstimator->getResult().rBody.transpose() * des_vel_filtered;
+  des_vel = this->_data->stateEstimator->getResult().rBody.transpose() * des_vel_filtered;
   // saturation [-1;1]
   des_vel[0] = fminf(fmaxf(des_vel[0], -1.), 1.);
   des_vel[1] = fminf(fmaxf(des_vel[1], -1.), 1.);
@@ -688,10 +688,10 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
 
   for (int leg(0); leg < 4; ++leg)
   {
-    pDes_backup[leg] = this->_data->_legController->commands[leg].pDes;
-    vDes_backup[leg] = this->_data->_legController->commands[leg].vDes;
-    Kp_backup[leg] = this->_data->_legController->commands[leg].kpCartesian;
-    Kd_backup[leg] = this->_data->_legController->commands[leg].kdCartesian;
+    pDes_backup[leg] = this->_data->legController->commands[leg].pDes;
+    vDes_backup[leg] = this->_data->legController->commands[leg].vDes;
+    Kp_backup[leg] = this->_data->legController->commands[leg].kpCartesian;
+    Kd_backup[leg] = this->_data->legController->commands[leg].kdCartesian;
   }
 
   if (this->_data->userParameters->use_wbc)
@@ -717,11 +717,11 @@ void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
   for (int leg(0); leg < 4; ++leg)
   {
     // originally commented
-    this->_data->_legController->commands[leg].pDes = pDes_backup[leg];
-    this->_data->_legController->commands[leg].vDes = vDes_backup[leg];
+    this->_data->legController->commands[leg].pDes = pDes_backup[leg];
+    this->_data->legController->commands[leg].vDes = vDes_backup[leg];
 
-    this->_data->_legController->commands[leg].kpCartesian = Kp_backup[leg];
-    this->_data->_legController->commands[leg].kdCartesian = Kd_backup[leg];
+    this->_data->legController->commands[leg].kpCartesian = Kp_backup[leg];
+    this->_data->legController->commands[leg].kdCartesian = Kd_backup[leg];
   }
 }
 

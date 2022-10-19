@@ -38,7 +38,7 @@ void FSM_State_Passive<T>::onEnter()
   is_falling = false;
   counter = 0;
 
-  this->_control_fsm_data->_legController->setEnabled(false);
+  this->_control_fsm_data->legController->setEnabled(false);
 
   // Reset the transition data
   this->transitionData.zero();
@@ -54,7 +54,7 @@ void FSM_State_Passive<T>::run()
 
   for (size_t i = 0; i < 4; i++)
   {
-    this->_control_fsm_data->debug->last_p_local_stance[i] = ros::toMsg(this->_control_fsm_data->_legController->datas[i].p + this->_control_fsm_data->_quadruped->getHipLocation(i));
+    this->_control_fsm_data->debug->last_p_local_stance[i] = ros::toMsg(this->_control_fsm_data->legController->datas[i].p + this->_control_fsm_data->quadruped->getHipLocation(i));
   }
 
   testTransition();
@@ -75,18 +75,18 @@ TransitionData<T> FSM_State_Passive<T>::testTransition()
 
   for (size_t i = 0; i < 4; i++)
   {
-    this->_control_fsm_data->_legController->commands[i].kpJoint = Mat3<T>::Zero();
-    this->_control_fsm_data->_legController->commands[i].kdJoint = Mat3<T>::Zero();
+    this->_control_fsm_data->legController->commands[i].kpJoint = Mat3<T>::Zero();
+    this->_control_fsm_data->legController->commands[i].kdJoint = Mat3<T>::Zero();
 
-    // this->_control_fsm_data->_legController->commands[i].kpCartesian = Mat3<T>::Zero();
-    // this->_control_fsm_data->_legController->commands[i].kdCartesian = Mat3<T>::Zero();
+    // this->_control_fsm_data->legController->commands[i].kpCartesian = Mat3<T>::Zero();
+    // this->_control_fsm_data->legController->commands[i].kdCartesian = Mat3<T>::Zero();
 
-    this->_control_fsm_data->_legController->commands[i].qDes = Vec3<T>::Zero();
-    this->_control_fsm_data->_legController->commands[i].qdDes = Vec3<T>::Zero();
-    this->_control_fsm_data->_legController->commands[i].forceFeedForward = Vec3<T>::Zero();
-    this->_control_fsm_data->_legController->commands[i].tauFeedForward = Vec3<T>::Zero();
+    this->_control_fsm_data->legController->commands[i].qDes = Vec3<T>::Zero();
+    this->_control_fsm_data->legController->commands[i].qdDes = Vec3<T>::Zero();
+    this->_control_fsm_data->legController->commands[i].forceFeedForward = Vec3<T>::Zero();
+    this->_control_fsm_data->legController->commands[i].tauFeedForward = Vec3<T>::Zero();
 
-    this->_control_fsm_data->_legController->setEnabled(false);
+    this->_control_fsm_data->legController->setEnabled(false);
   }
 
   return this->transitionData;

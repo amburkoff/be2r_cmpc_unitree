@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "ControlFSMData.h"
-#include "Controllers/DesiredStateCommand.h"
 #include "FootSwingTrajectory.h"
 #include "GraphSearch.h"
 #include "SparseCMPC/SparseCMPC.h"

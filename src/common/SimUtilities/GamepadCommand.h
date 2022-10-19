@@ -1,93 +1,87 @@
+#pragma once
+
 /*! @file GamepadCommand.h
  *  @brief The GamepadCommand type containing joystick information
  */
 
-#ifndef PROJECT_GAMEPADCOMMAND_H
-#define PROJECT_GAMEPADCOMMAND_H
+/* * * BUTTONS * * * * * * * * * *
+0 - X
+1 - O
+2 - triangle
+3 - square
+4 - L1
+5 - R1
+8 - share
+9 - options
+10 - ps
+11 - L3
+12 - R3
+* * * Arrows in "axes" array * * *
+left - axes[6] = 1
+right - axes[6] = -1
+down - axes[7] = -1
+up - axes[7] = 1
+ * * * * * * * * * * * * * * * * */
 
-#include "Utilities/utilities.h"
+/* * * AXES (JOYSTICKS) * * *
+ *                    left (down) / neutral / right (up)
+0 - Left Horizontal           1.0 /       0 / -1.0
+1 - Left Vertical            -1.0 /       0 /  1.0
+2 - L2                       -1.0 /     1.0 /  1.0
+3 - Right Horizontal          1.0 /     0.0 / -1.0
+4 - Right Vertical           -1.0 /     0.0 /  1.0
+5 - R2                       -1.0 /     1.0 /  1.0
+ * * * * * * * * * * * * * * */
+
 #include "cppTypes.h"
+#include <ros/ros.h>
+#include <sensor_msgs/Joy.h>
+#include <iostream>
+
+enum StairsMode
+{
+  UP = 0,
+  DOWN = 1
+};
 
 /*!
  * The state of the gamepad
  */
-struct GamepadCommand
+class GamepadCommand
 {
-  /*!
-   * Construct a gamepad and set to zero.
-   */
-  GamepadCommand() { zero(); }
-
-  bool leftBumper, rightBumper, leftTriggerButton, rightTriggerButton, back, start, a, b, x, y, leftStickButton, rightStickButton,
-    logitechButton;
+public:
+  GamepadCommand();
 
   bool up, down, left, right;
   bool triangle, circle, cross, rectangle;
+  bool L1, R1, L3, R3;
+  bool share;
+  bool options;
+  bool PS;
 
-  Vec2<float> leftStickAnalog, rightStickAnalog;
-  float leftTriggerAnalog, rightTriggerAnalog;
+  float L2, R2;
 
-  /*!
-   * Set all values to zero
-   */
-  void zero()
-  {
-    leftBumper = false;
-    rightBumper = false;
-    leftTriggerButton = false;
-    rightTriggerButton = false;
-    back = false;
-    start = false;
-    a = false;
-    b = false;
-    x = false;
-    y = false;
-    leftStickButton = false;
-    rightStickButton = false;
-    up = false;
-    down = false;
-    left = false;
-    right = false;
-    circle = false;
-    triangle = false;
-    cross = false;
+  Vec2<float> left_stick_analog, right_stick_analog;
 
-    leftTriggerAnalog = 0;
-    rightTriggerAnalog = 0;
-    leftStickAnalog = Vec2<float>::Zero();
-    rightStickAnalog = Vec2<float>::Zero();
-  }
+  void zeroButtons();
 
-  /*!
-   * The Logitech F310's seem to do a bad job of returning to zero exactly, so a
-   * deadband around zero is useful when integrating joystick commands
-   * @param f : The deadband
-   */
-  void applyDeadband(float f)
-  {
-    eigenDeadband(leftStickAnalog, f);
-    eigenDeadband(rightStickAnalog, f);
-    leftTriggerAnalog = deadband(leftTriggerAnalog, f);
-    rightTriggerAnalog = deadband(rightTriggerAnalog, f);
-  }
+  float max_roll = 0.8;
+  float min_roll = -0.8;
+  float max_pitch = 0.4;
+  float min_pitch = -0.4;
+  float max_vel_x = 0.7;
+  float min_vel_x = -0.7;
+  float max_vel_y = 0.5;
+  float min_vel_y = -0.5;
+  float max_turn_rate = 2.5;
+  float min_turn_rate = -2.5;
 
-  /*!
-   * Represent as human-readable string.
-   * @return string representing state
-   */
-  std::string toString()
-  {
-    std::string result =
-      "Result:\nleftBumper: " + boolToString(leftBumper) + "\n" + "rightBumper: " + boolToString(rightBumper) + "\n" +
-      "leftTriggerButton: " + boolToString(leftTriggerButton) + "\n" + "rightTriggerButton: " + boolToString(rightTriggerButton) +
-      "\n" + "back: " + boolToString(back) + "\n" + "start: " + boolToString(start) + "\n" + "a: " + boolToString(a) + "\n" +
-      "b: " + boolToString(b) + "\n" + "x: " + boolToString(x) + "\n" + "y: " + boolToString(y) + "\n" +
-      "leftStickButton: " + boolToString(leftStickButton) + "\n" + "rightStickButton: " + boolToString(rightStickButton) + "\n" +
-      "leftTriggerAnalog: " + std::to_string(leftTriggerAnalog) + "\n" +
-      "rightTriggerAnalog: " + std::to_string(rightTriggerAnalog) + "\n" + "leftStickAnalog: " + eigenToString(leftStickAnalog) +
-      "\n" + "rightStickAnalog: " + eigenToString(rightStickAnalog) + "\n";
-    return result;
-  }
+  uint8_t stairs_mode = 0;
+
+private:
+  ros::NodeHandle _nh;
+  ros::Subscriber _sub_joy;
+
+  void _initSubscribers();
+  void _joyCallback(sensor_msgs::Joy msg);
 };
-
-#endif // PROJECT_DRIVERCOMMAND_H

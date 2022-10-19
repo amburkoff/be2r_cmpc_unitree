@@ -119,7 +119,7 @@ public:
 
 private:
   // The quadruped model
-  // Quadruped<T>& _quadruped;
+  // Quadruped<T>& quadruped;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _userParameters;
 
   // Control loop timestep change

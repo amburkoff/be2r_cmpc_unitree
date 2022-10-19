@@ -63,10 +63,10 @@ void FSM_State_RecoveryStand<T>::onEnter()
   // initial configuration, position
   for (size_t i(0); i < 4; ++i)
   {
-    initial_jpos[i] = this->_data->_legController->datas[i].q;
+    initial_jpos[i] = this->_data->legController->datas[i].q;
   }
 
-  T body_height = this->_data->_stateEstimator->getResult().position[2];
+  T body_height = this->_data->stateEstimator->getResult().position[2];
 
   _flag = FoldLegs;
 
@@ -94,9 +94,9 @@ void FSM_State_RecoveryStand<T>::onEnter()
 template<typename T>
 bool FSM_State_RecoveryStand<T>::_UpsideDown()
 {
-  // pretty_print(this->_data->_stateEstimator->getResult().rBody, std::cout, "Rot");
-  // if(this->_data->_stateEstimator->getResult().aBody[2] < 0){
-  if (this->_data->_stateEstimator->getResult().rBody(2, 2) < 0)
+  // pretty_print(this->_data->stateEstimator->getResult().rBody, std::cout, "Rot");
+  // if(this->_data->stateEstimator->getResult().aBody[2] < 0){
+  if (this->_data->stateEstimator->getResult().rBody(2, 2) < 0)
   {
     return true;
   }
@@ -185,7 +185,7 @@ void FSM_State_RecoveryStand<T>::_RollOver(const int& curr_iter)
 template<typename T>
 void FSM_State_RecoveryStand<T>::_StandUp(const int& curr_iter)
 {
-  T body_height = this->_data->_stateEstimator->getResult().position[2];
+  T body_height = this->_data->stateEstimator->getResult().position[2];
   bool something_wrong(false);
 
   if (_UpsideDown() || (body_height < 0.1))
@@ -200,7 +200,7 @@ void FSM_State_RecoveryStand<T>::_StandUp(const int& curr_iter)
     // (Can happen when E-Stop is engaged in the middle of Other state)
     for (size_t i(0); i < 4; ++i)
     {
-      initial_jpos[i] = this->_data->_legController->datas[i].q;
+      initial_jpos[i] = this->_data->legController->datas[i].q;
     }
     _flag = FoldLegs;
     // Den is a loh-doh
@@ -219,10 +219,10 @@ void FSM_State_RecoveryStand<T>::_StandUp(const int& curr_iter)
   }
   // feed forward mass of robot.
   // for(int i = 0; i < 4; i++)
-  // this->_data->_legController->commands[i].forceFeedForward = f_ff;
+  // this->_data->legController->commands[i].forceFeedForward = f_ff;
   // Vec4<T> se_contactState(0.,0.,0.,0.);
   Vec4<T> se_contactState(0.5, 0.5, 0.5, 0.5);
-  this->_data->_stateEstimator->setContactPhase(se_contactState);
+  this->_data->stateEstimator->setContactPhase(se_contactState);
 }
 
 template<typename T>

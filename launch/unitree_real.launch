@@ -33,4 +33,6 @@
     <param name="power_limit" type="int" value="$(arg power_limit)" />
   </node>
 
+  <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>
+
 </launch> 

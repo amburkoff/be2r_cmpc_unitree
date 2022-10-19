@@ -33,13 +33,13 @@ void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
   kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
   kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
-  _data->_legController->commands[leg].kpJoint = Eigen::DiagonalMatrix<T, 3>(_data->userParameters->Kp_joint_0, _data->userParameters->Kp_joint_1,
+  _data->legController->commands[leg].kpJoint = Eigen::DiagonalMatrix<T, 3>(_data->userParameters->Kp_joint_0, _data->userParameters->Kp_joint_1,
                                                                              _data->userParameters->Kp_joint_2);
-  _data->_legController->commands[leg].kdJoint = Eigen::DiagonalMatrix<T, 3>(_data->userParameters->Kd_joint_0, _data->userParameters->Kd_joint_1,
+  _data->legController->commands[leg].kdJoint = Eigen::DiagonalMatrix<T, 3>(_data->userParameters->Kd_joint_0, _data->userParameters->Kd_joint_1,
                                                                              _data->userParameters->Kd_joint_2);
 
-  _data->_legController->commands[leg].qDes = qDes;
-  _data->_legController->commands[leg].qdDes = qdDes;
+  _data->legController->commands[leg].qDes = qDes;
+  _data->legController->commands[leg].qdDes = qdDes;
 }
 
 /**
@@ -55,15 +55,15 @@ template<typename T>
 void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes,
                                              Vec3<double> kp_cartesian, Vec3<double> kd_cartesian)
 {
-  _data->_legController->commands[leg].pDes = pDes;
+  _data->legController->commands[leg].pDes = pDes;
   // Create the cartesian P gain matrix
   kpMat << kp_cartesian[0], 0, 0, 0, kp_cartesian[1], 0, 0, 0, kp_cartesian[2];
-  _data->_legController->commands[leg].kpCartesian = kpMat;
+  _data->legController->commands[leg].kpCartesian = kpMat;
 
-  _data->_legController->commands[leg].vDes = vDes;
+  _data->legController->commands[leg].vDes = vDes;
   // Create the cartesian D gain matrix
   kdMat << kd_cartesian[0], 0, 0, 0, kd_cartesian[1], 0, 0, 0, kd_cartesian[2];
-  _data->_legController->commands[leg].kdCartesian = kdMat;
+  _data->legController->commands[leg].kdCartesian = kdMat;
 }
 
 /**
@@ -95,7 +95,7 @@ void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes
 //         // Position the legs under the hips to stand...
 //         // Could also get rid of this and simply send 0 velocity ang vel
 //         // from the CoM desired planner...
-//         commands Vec3<float> posHip = _data->_quadruped.getHipLocation(leg);
+//         commands Vec3<float> posHip = _data->quadruped.getHipLocation(leg);
 //         footstepLocations.col(leg) << projectionMatrix.transpose() * projectionMatrix *
 //                                           (_data->_stateEstimate.position + // rBody *
 //                                            posHip);
@@ -106,7 +106,7 @@ void FSM_State<T>::cartesianImpedanceControl(int leg, Vec3<T> pDes, Vec3<T> vDes
 //         world.Vec3<float> yaw_rate;
 //         yaw_rate << 0, 0, _stateEstimate.omegaWorld(3);
 
-//         Vec3<float> posHip = _data->_quadruped.getHipLocation(leg);
+//         Vec3<float> posHip = _data->quadruped.getHipLocation(leg);
 
 //         float timeStance = _data->_gaitScheduler->gaitData.timeStance(leg);
 
@@ -151,7 +151,7 @@ void FSM_State<T>::runControls()
       // footFeedForwardForces.col(leg) = stateEstimate.rBody *
       // footFeedForwardForces.col(leg);
 
-      footstepLocations.col(leg) << 0.0, 0.0, -_data->_quadruped->_maxLegLength / 2;
+      footstepLocations.col(leg) << 0.0, 0.0, -_data->quadruped->_maxLegLength / 2;
     }
   }
   else if (CONTROLLER_OPTION == 1)
@@ -162,7 +162,7 @@ void FSM_State<T>::runControls()
     // Swing foot landing positions are calculated with heuristics
     for (int leg = 0; leg < 4; leg++)
     {
-      footstepLocations.col(leg) << 0.0, 0.0, -_data->_quadruped->_maxLegLength / 2;
+      footstepLocations.col(leg) << 0.0, 0.0, -_data->quadruped->_maxLegLength / 2;
     } // footstepHeuristicPlacement();
   }
   else if (CONTROLLER_OPTION == 2)
@@ -229,21 +229,21 @@ void FSM_State<T>::runControls()
 
 // for (int i = 0; i < 4; i++)
 // {
-//   se_xfb[i] = (double)_data->_stateEstimator->getResult().orientation(i);
+//   se_xfb[i] = (double)_data->stateEstimator->getResult().orientation(i);
 // }
 // // se_xfb[3] = 1.0;
 // for (int i = 0; i < 3; i++)
 // {
-//   rpy[i] = 0; //(double)_data->_stateEstimator->getResult().rpy(i);
-//   p_des[i] = (double)_data->_stateEstimator->getResult().position(i);
-//   p_act[i] = (double)_data->_stateEstimator->getResult().position(i);
-//   omegaDes[i] = 0; //(double)_data->_stateEstimator->getResult().omegaBody(i);
-//   v_act[i] = (double)_data->_stateEstimator->getResult().vBody(i);
-//   v_des[i] = (double)_data->_stateEstimator->getResult().vBody(i);
+//   rpy[i] = 0; //(double)_data->stateEstimator->getResult().rpy(i);
+//   p_des[i] = (double)_data->stateEstimator->getResult().position(i);
+//   p_act[i] = (double)_data->stateEstimator->getResult().position(i);
+//   omegaDes[i] = 0; //(double)_data->stateEstimator->getResult().omegaBody(i);
+//   v_act[i] = (double)_data->stateEstimator->getResult().vBody(i);
+//   v_des[i] = (double)_data->stateEstimator->getResult().vBody(i);
 
-//   se_xfb[4 + i] = (double)_data->_stateEstimator->getResult().position(i);
-//   se_xfb[7 + i] = (double)_data->_stateEstimator->getResult().omegaBody(i);
-//   se_xfb[10 + i] = (double)_data->_stateEstimator->getResult().vBody(i);
+//   se_xfb[4 + i] = (double)_data->stateEstimator->getResult().position(i);
+//   se_xfb[7 + i] = (double)_data->stateEstimator->getResult().omegaBody(i);
+//   se_xfb[10 + i] = (double)_data->stateEstimator->getResult().vBody(i);
 
 //   // Set the translational and orientation gains
 //   kpCOM[i] = (double)_data->controlParameters->kpCOM(i);
@@ -257,11 +257,11 @@ void FSM_State<T>::runControls()
 // // Get the foot locations relative to COM
 // for (int leg = 0; leg < 4; leg++)
 // {
-//   computeLegJacobianAndPosition(**&_data->_quadruped, _data->_legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, 1);
-//   //pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() *
-//   //(_data->_quadruped->getHipLocation(leg) + pFeetVec);
+//   computeLegJacobianAndPosition(**&_data->quadruped, _data->legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, 1);
+//   //pFeetVecCOM = _data->stateEstimator->getResult().rBody.transpose() *
+//   //(_data->quadruped->getHipLocation(leg) + pFeetVec);
 
-//   pFeetVecCOM = _data->_stateEstimator->getResult().rBody.transpose() * (_data->_quadruped->getHipLocation(leg) + _data->_legController->datas[leg].p);
+//   pFeetVecCOM = _data->stateEstimator->getResult().rBody.transpose() * (_data->quadruped->getHipLocation(leg) + _data->legController->datas[leg].p);
 
 //   pFeet[leg * 3] = (double)pFeetVecCOM[0];
 //   pFeet[leg * 3 + 1] = (double)pFeetVecCOM[1];

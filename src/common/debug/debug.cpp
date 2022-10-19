@@ -6,7 +6,6 @@ Debug::Debug(ros::Time time_start)
     _tf_buffer(),
     _tf_listener(_tf_buffer)
 {
-  z_offset = 0.f;
   _init();
 }
 
@@ -15,6 +14,9 @@ void Debug::_init()
   _initPublishers();
 
   body_info.quat_act.w = 1.0;
+  body_info.pos_act = ros::toMsg(Vec3<float>(0, 0, 0));
+  ground_truth_odom.pose.pose.position = ros::toMsg(Vec3<float>(0, 0, 0));
+  z_offset = 0.f;
 }
 
 void Debug::_initPublishers()
@@ -148,6 +150,7 @@ void Debug::updateVisualization()
 void Debug::tfOdomPublish(ros::Time stamp)
 {
   geometry_msgs::TransformStamped odom_trans;
+  z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
 
   odom_trans.header.stamp = ros::Time::now();
   odom_trans.header.frame_id = "odom";

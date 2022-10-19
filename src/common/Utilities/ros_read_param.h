@@ -41,6 +41,22 @@ struct StaticParams
     readRosParam("/static_params/imu_process_noise_position", imu_process_noise_position);
     readRosParam("/static_params/imu_process_noise_velocity", imu_process_noise_velocity);
     readRosParam("/static_params/cheater_mode", cheater_mode);
+    readRosParam("/static_params/Q_roll", Q_roll);
+    readRosParam("/static_params/Q_pitch", Q_pitch);
+    readRosParam("/static_params/Q_yaw", Q_yaw);
+    readRosParam("/static_params/Q_x", Q_x);
+    readRosParam("/static_params/Q_y", Q_y);
+    readRosParam("/static_params/Q_z", Q_z);
+    readRosParam("/static_params/Q_w_roll", Q_w_roll);
+    readRosParam("/static_params/Q_w_pitch", Q_w_pitch);
+    readRosParam("/static_params/Q_w_yaw", Q_w_yaw);
+    readRosParam("/static_params/Q_vx", Q_vx);
+    readRosParam("/static_params/Q_vy", Q_vy);
+    readRosParam("/static_params/Q_vz", Q_vz);
+
+    readRosParam("/static_params/max_vel_x", max_vel_x);
+    readRosParam("/static_params/max_vel_y", max_vel_y);
+    readRosParam("/static_params/max_turn_rate", max_turn_rate);
   }
   double controller_dt;
   bool cheater_mode;
@@ -51,6 +67,23 @@ struct StaticParams
   double imu_process_noise_position;
   double imu_process_noise_velocity;
   int horizon;
+
+  float Q_roll = 10;
+  float Q_pitch = 10;
+  float Q_yaw = 15;
+  float Q_x = 3;
+  float Q_y = 3;
+  float Q_z = 30;
+  float Q_w_roll = 0.5;
+  float Q_w_pitch = 0.5;
+  float Q_w_yaw = 3;
+  float Q_vx = 0.4;
+  float Q_vy = 0.4;
+  float Q_vz = 0.2;
+
+  float max_vel_x = 0.5;
+  float max_vel_y = 0.4;
+  float max_turn_rate = 2.5;
 };
 
 #endif // ROS_READ_PARAM_H

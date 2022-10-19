@@ -58,8 +58,8 @@ dynamic_loader:
   Kd_cartesian_1: 15
   Kd_cartesian_2: 15
 
-  body_height: 0.33
-  Swing_traj_height  : 0.17   # Set swing traj top point
+  body_height: 0.29
+  Swing_traj_height  : 0.09   # Set swing traj top point
 
   # safety
   joint_limits: 1

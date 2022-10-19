@@ -13,6 +13,8 @@
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_a1_sim.yaml"/>
   </group>
 
+  <param name = "stairs_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/stairs.urdf' " />
+
   <group if="$(eval arg('robot_type') == 'go1')">
     <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find go1_description)/urdf/go1.urdf' " />
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_go1.yaml"/>
@@ -20,6 +22,8 @@
   </group>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <param name = "stairs_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/stairs.urdf' " />
 
   <!--     <arg name="rvizconfig" default="$(find unitree_ros_driver)/rviz/unitree.rviz" />
       <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
@@ -33,5 +37,7 @@
     <param name="power_limit" type="int" value="$(arg power_limit)" />
     <param name="robot_type" type="string" value="$(arg robot_type)" />
   </node>
+
+  <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>
 
 </launch> 

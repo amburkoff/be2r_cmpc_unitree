@@ -78,11 +78,11 @@ template<typename T>
 class ControlFSM
 {
 public:
-  ControlFSM(Quadruped<T>* _quadruped,
-             StateEstimatorContainer<T>* _stateEstimator,
-             LegController<T>* _legController,
-             GaitScheduler<T>* _gaitScheduler,
-             DesiredStateCommand<T>* _desiredStateCommand,
+  ControlFSM(Quadruped<T>* quadruped,
+             StateEstimatorContainer<T>* stateEstimator,
+             LegController<T>* legController,
+             GaitScheduler<T>* gaitScheduler,
+             GamepadCommand* gamepad_command,
              StaticParams* controlParameters,
              be2r_cmpc_unitree::ros_dynamic_paramsConfig* userParameters,
              Debug* debug);
