@@ -13,6 +13,8 @@
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_a1_sim.yaml"/>
   </group>
 
+  <param name = "stairs_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/stairs.urdf' " />
+
   <group if="$(eval arg('robot_type') == 'go1')">
     <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find go1_description)/urdf/go1.urdf' " />
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_go1.yaml"/>

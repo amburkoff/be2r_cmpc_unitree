@@ -51,10 +51,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
              "Trotting"),
     trot_long(_gait_period_long,
               Vec4<int>(0, _gait_period_long / 2.0, _gait_period_long / 2.0, 0),
-              Vec4<int>(24,
-                        24,
-                        24,
-                        24),
+              Vec4<int>(24, 24, 24, 24),
               "Trotting long"),
     trot_contact(_gait_period,
                  Vec4<int>(0, _gait_period / 2.0, _gait_period / 2.0, 0),
@@ -189,10 +186,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   Kd_stance = Kd;
 }
 
-void CMPCLocomotion::run(ControlFSMData<float>& data)
-{
-  myVersion(data);
-}
+void CMPCLocomotion::run(ControlFSMData<float>& data) { myVersion(data); }
 
 void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 {
@@ -301,13 +295,15 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   else if (current_gait != 11)
   {
     // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
+    _pitch_des =
+      pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
     // _pitch_des = data.stateEstimator->getResult().est_pitch_plane;
   }
 
   for (int i = 0; i < 4; i++)
   {
-    pFoot[i] = seResult.position + seResult.rBody.transpose() * (data.quadruped->getHipLocation(i) + data.legController->datas[i].p);
+    pFoot[i] =
+      seResult.position + seResult.rBody.transpose() * (data.quadruped->getHipLocation(i) + data.legController->datas[i].p);
   }
 
   if ((gait != &standing) || (gait != &give_hand))
@@ -462,8 +458,10 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       float p_rel_max = 0.3f;
 
       // Using the estimated velocity is correct
-      float pfx_rel = seResult.vWorld[0] * stance_time / 2.0 + 0.03f * (v_des_world[0] - seResult.vWorld[0]) + 0.5f * seResult.position[2] / 9.81f * seResult.vWorld[1] * _yaw_turn_rate;
-      float pfy_rel = seResult.vWorld[1] * stance_time / 2.0 + 0.03f * (v_des_world[1] - seResult.vWorld[1]) - 0.5f * seResult.position[2] / 9.81f * seResult.vWorld[0] * _yaw_turn_rate;
+      float pfx_rel = seResult.vWorld[0] * stance_time / 2.0 + 0.03f * (v_des_world[0] - seResult.vWorld[0]) +
+                      0.5f * seResult.position[2] / 9.81f * seResult.vWorld[1] * _yaw_turn_rate;
+      float pfy_rel = seResult.vWorld[1] * stance_time / 2.0 + 0.03f * (v_des_world[1] - seResult.vWorld[1]) -
+                      0.5f * seResult.position[2] / 9.81f * seResult.vWorld[0] * _yaw_turn_rate;
 
       pfx_rel = fminf(fmaxf(pfx_rel, -p_rel_max), p_rel_max);
       pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
