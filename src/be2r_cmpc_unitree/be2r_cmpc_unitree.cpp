@@ -294,12 +294,12 @@ void Body_Manager::run()
 
     static bool dir = 0;
 
-    if (driverCommand.rectangle)
+    if (_gamepad_command->rectangle)
     {
       _is_do_step = !_is_do_step;
     }
 
-    if (driverCommand.triangle)
+    if (_gamepad_command->triangle)
     {
       dir = !dir;
     }
@@ -308,11 +308,11 @@ void Body_Manager::run()
     {
       if (dir)
       {
-        driverCommand.leftStickAnalog[1] = -0.3;
+        _gamepad_command->left_stick_analog[1] = -0.3;
       }
       else
       {
-        driverCommand.leftStickAnalog[1] = 0.3;
+        _gamepad_command->left_stick_analog[1] = 0.3;
       }
     }
 
