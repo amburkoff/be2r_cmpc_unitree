@@ -4,6 +4,7 @@
 // template <typename float>
 SystemEnergy::SystemEnergy()
 {
+  // This class calculates current Energy value
   g = Vec3<float>(0, 0, -9.81);
   _KinLinEnergy = float(0);
   _KinRotEnergy = float(0);
@@ -14,12 +15,13 @@ SystemEnergy::SystemEnergy()
 
 Vec4<float> SystemEnergy::getFinalCost()
 {
-  
+  // Calculates Total Energy
   return Vec4<float>(getFinalBodyCost().operator()(3) + getFinalLegCost().sum(),0,0,0);
 }
 
 Vec4<float> SystemEnergy::getFinalBodyCost()
 {
+  // Calculates body Energy as [KinLinEnergy, _KinRotEnergy, _PotEnergy, _TotalEnergy]
   _vBody = this->_data->_stateEstimator->getResult().vBody;
   _KinLinEnergy = _vBody.dot(_vBody) * this->_data->_quadruped->_bodyMass * float(0.5);
   _position = this->_data->_stateEstimator->getResult().position;
@@ -35,7 +37,7 @@ return Result;
 }
 Vec4<float> SystemEnergy::getFinalLegCost()
 {
-  
+  // Calculates leg's total Energy as [_leg1_TotalEnergy ...] 
   Mat3<float> Rbod = this->_data->_stateEstimator->getResult().rBody.transpose();
 
   Mat3<float> Jacobi;
@@ -121,28 +123,3 @@ Vec4<float> SystemEnergy::getFinalLegCost()
   return Vec4<float>(_KinEnergyLeg + _PotEnergyLeg);
 };
 // template <typename T>
-
-
-
-// void ContactEnergy()
-// {
-
-// }
-// void ~ContactEnergy()
-// {
-
-// }
-
-// void ~SystemEnergy()
-// {
-
-// }
-// void CostOfTrasport()
-// {
-
-// }
-// void ~CostOfTrasport()
-// {
-
-// }
-// void ContactEnergy::debugPrint() {}
