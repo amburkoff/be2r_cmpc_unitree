@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Metric.h>
+#include "Metric.h"
 
 using Eigen::Array4f;
 using Eigen::Array4i;
@@ -20,9 +20,12 @@ public:
   // void debugPrint();
 //   void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
 //   void restoreDefaults(){}
-  Vec3<float> g;
+   
 
 private:
+  Vec4<float> _LegPower;
+  Vec4<float> _LegEnergy;
+  float _dt;
   Vec4<float> _test;
   Vec3<float> _vBody;
   Vec3<float> _position;

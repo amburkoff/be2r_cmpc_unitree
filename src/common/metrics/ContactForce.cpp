@@ -1,16 +1,16 @@
-#include "ContactForce.h"
+// #include "ContactForce.h"
 
 
-// template <typename float>
-ContactForce::ContactForce()
-{
-  g = Vec3<float>(0, 0, -9.81);
-  _KinLinEnergy = float(0);
-  _KinRotEnergy = float(0);
-  _PotEnergy = float(0);
-  _KinEnergyLeg.setZero();
-  _PotEnergyLeg.setZero();
-};
+// // template <typename float>
+// ContactForce::ContactForce()
+// {
+//   g = Vec3<float>(0, 0, -9.81);
+//   _KinLinEnergy = float(0);
+//   _KinRotEnergy = float(0);
+//   _PotEnergy = float(0);
+//   _KinEnergyLeg.setZero();
+//   _PotEnergyLeg.setZero();
+// };
 
 // Vec4<float> SystemEnergy::getFinalCost()
 // {
