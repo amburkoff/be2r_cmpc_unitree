@@ -16,6 +16,7 @@ struct problem_setup
   float mu;
   float f_max;
   int horizon;
+  float mass;
 };
 
 struct update_data_t
@@ -39,7 +40,7 @@ struct update_data_t
   float x_drag;
 };
 
-EXTERNC void setup_problem(double dt, int horizon, double mu, double f_max);
+EXTERNC void setup_problem(double dt, int horizon, double mu, double f_max, float mass);
 EXTERNC void update_problem_data(double* p, double* v, double* q, double* w, double* r, double yaw, double* weights, double* state_trajectory, double alpha, int* gait);
 EXTERNC double get_solution(int index);
 EXTERNC void update_solver_settings(int max_iter, double rho, double sigma, double solver_alpha, double terminate, double use_jcqp);

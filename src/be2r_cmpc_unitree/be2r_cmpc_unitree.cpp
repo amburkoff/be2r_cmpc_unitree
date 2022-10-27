@@ -292,29 +292,29 @@ void Body_Manager::run()
     // Find the current gait schedule
     _gaitScheduler->step();
 
-    static bool dir = 0;
+    // static bool dir = 0;
 
-    if (_gamepad_command->rectangle)
-    {
-      _is_do_step = !_is_do_step;
-    }
+    // if (_gamepad_command->rectangle)
+    // {
+    //   _is_do_step = !_is_do_step;
+    // }
 
-    if (_gamepad_command->triangle)
-    {
-      dir = !dir;
-    }
+    // if (_gamepad_command->triangle)
+    // {
+    //   dir = !dir;
+    // }
 
-    if (_is_do_step)
-    {
-      if (dir)
-      {
-        _gamepad_command->left_stick_analog[1] = -0.3;
-      }
-      else
-      {
-        _gamepad_command->left_stick_analog[1] = 0.3;
-      }
-    }
+    // if (_is_do_step)
+    // {
+    //   if (dir)
+    //   {
+    //     _gamepad_command->left_stick_analog[1] = -0.3;
+    //   }
+    //   else
+    //   {
+    //     _gamepad_command->left_stick_analog[1] = 0.3;
+    //   }
+    // }
 
     // Run the Control FSM code
     _controlFSM->runFSM();

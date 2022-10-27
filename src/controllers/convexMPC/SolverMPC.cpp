@@ -292,7 +292,7 @@ Matrix<fpt, 13, 12> B_ct_r;
 
 void solve_mpc(update_data_t* update, problem_setup* setup)
 {
-  rs.set(update->p, update->v, update->q, update->w, update->r, update->roll, update->pitch, update->yaw);
+  rs.set(update->p, update->v, update->q, update->w, update->r, update->roll, update->pitch, update->yaw, setup->mass);
 
 #ifdef K_PRINT_EVERYTHING
 

@@ -13,8 +13,8 @@
 
 #include "Gait.h"
 
-//оригинальные параметры MPC+WBC
-// #define GAIT_PERIOD 14
+// оригинальные параметры MPC+WBC
+//  #define GAIT_PERIOD 14
 
 #define GAIT_PERIOD 14
 // #define GAIT_PERIOD 22
@@ -23,8 +23,8 @@
 // #define GAIT_PERIOD_WALKING 26
 #define GAIT_PERIOD_WALKING 32
 
-//лучшие параметры для только MPC
-// #define GAIT_PERIOD 18
+// лучшие параметры для только MPC
+//  #define GAIT_PERIOD 18
 
 #define STEP_HEIGHT 0.06
 #define BODY_HEIGHT 0.24
@@ -73,7 +73,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
   // setup_problem(dtMPC, horizonLength, 0.4, 150); // original
-  setup_problem(dtMPC, horizonLength, 0.4, 300); // original
+  setup_problem(dtMPC, horizonLength, 0.4, 300, _data->quadruped->_whole_mass); // original
 
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
@@ -788,7 +788,7 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 
   Timer t1;
   dtMPC = dt * iterationsBetweenMPC;
-  setup_problem(dtMPC, horizonLength, 0.4, 120);
+  setup_problem(dtMPC, horizonLength, 0.4, 120, _data->quadruped->_whole_mass);
   update_x_drag(x_comp_integral);
 
   if (vxy[0] > 0.3 || vxy[0] < -0.3)

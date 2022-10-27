@@ -46,8 +46,11 @@ CMPCLocomotion_Cv::CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, Con
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
+
+  _model = _data->quadruped->buildModel();
+
   // setup_problem(dtMPC, horizonLength, 0.4, 150); // original
-  setup_problem(dtMPC, horizonLength, 0.4, 300); // original
+  setup_problem(dtMPC, horizonLength, 0.4, 300, _data->quadruped->_whole_mass); // original
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -67,7 +70,6 @@ CMPCLocomotion_Cv::CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, Con
   vBody_des.setZero();
   aBody_des.setZero();
 
-  _model = _data->quadruped->buildModel();
   _state.q = DVec<float>::Zero(cheetah::num_act_joint);
   _state.qd = DVec<float>::Zero(cheetah::num_act_joint);
 }
@@ -707,7 +709,7 @@ void CMPCLocomotion_Cv::_solveDenseMPC(int* mpcTable, ControlFSMData<float>& dat
 
   Timer t1;
   dtMPC = dt * iterationsBetweenMPC;
-  setup_problem(dtMPC, horizonLength, 0.4, 120);
+  setup_problem(dtMPC, horizonLength, 0.4, 120, _data->quadruped->_whole_mass);
   update_x_drag(x_comp_integral);
 
   if (vxy[0] > 0.3 || vxy[0] < -0.3)

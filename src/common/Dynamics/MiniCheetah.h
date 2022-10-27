@@ -26,6 +26,7 @@ Quadruped<T> buildMiniCheetah(RobotType robot_type)
   {
     case RobotType::A1:
     {
+      cheetah._whole_mass = 13.9;
       cheetah._bodyMass = 6.0;
       cheetah._bodyLength = 0.1805 * 2;
       cheetah._bodyWidth = 0.047 * 2;
@@ -107,6 +108,7 @@ Quadruped<T> buildMiniCheetah(RobotType robot_type)
 
     case RobotType::GO1:
     {
+      cheetah._whole_mass = 12.84;
       cheetah._bodyMass = 5.204;
       cheetah._bodyLength = 0.3762;
       cheetah._bodyWidth = 0.0935;

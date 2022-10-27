@@ -31,7 +31,7 @@ VisionMPCLocomotion::VisionMPCLocomotion(float _dt, int iterations_between_mpc, 
   dtMPC = dt * _iterationsBetweenMPC;
   default_iterations_between_mpc = _iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, _iterationsBetweenMPC, dtMPC);
-  setup_problem(dtMPC, horizonLength, 0.4, 150); // original
+  setup_problem(dtMPC, horizonLength, 0.4, 150, _data->quadruped->_whole_mass); // original
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -931,7 +931,7 @@ void VisionMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 
   Timer t1;
   dtMPC = dt * _iterationsBetweenMPC;
-  setup_problem(dtMPC, horizonLength, 0.4, 120);
+  setup_problem(dtMPC, horizonLength, 0.4, 120, _data->quadruped->_whole_mass);
   // setup_problem(dtMPC,horizonLength,0.4,650); //DH
   update_x_drag(x_comp_integral);
 

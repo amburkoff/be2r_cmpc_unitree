@@ -9,16 +9,16 @@
 
 #include "Gait.h"
 
-//оригинальные параметры MPC+WBC
-// #define GAIT_PERIOD 14
+// оригинальные параметры MPC+WBC
+//  #define GAIT_PERIOD 14
 #define HORIZON 16
 
 #define GAIT_PERIOD 20
 // #define GAIT_PERIOD 34 //1000 Hz
 
-//лучшие параметры для только MPC
-// #define GAIT_PERIOD 18
-// #define HORIZON 5
+// лучшие параметры для только MPC
+//  #define GAIT_PERIOD 18
+//  #define HORIZON 5
 
 #define STEP_HEIGHT 0.06
 #define BODY_HEIGHT 0.24
@@ -61,7 +61,7 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int iterations_between_mpc, 
   dtMPC = dt * _iterationsBetweenMPC;
   default_iterations_between_mpc = _iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, _iterationsBetweenMPC, dtMPC);
-  setup_problem(dtMPC, horizonLength, 0.4, 120); // original (3d arg prev: 1200, 650)
+  setup_problem(dtMPC, horizonLength, 0.4, 120, _fsm_data->quadruped->_whole_mass); // original (3d arg prev: 1200, 650)
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -730,7 +730,7 @@ void ConvexMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
 
   Timer t1;
   dtMPC = dt * _iterationsBetweenMPC;
-  setup_problem(dtMPC, horizonLength, 0.4, 120);
+  setup_problem(dtMPC, horizonLength, 0.4, 120, _fsm_data->quadruped->_whole_mass);
   // setup_problem(dtMPC,horizonLength,0.4,650); //DH
   update_x_drag(x_comp_integral);
 
