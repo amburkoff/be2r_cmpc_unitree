@@ -31,6 +31,7 @@
     <param name="torque_safe_limit" type="bool" value="$(arg torque_safe_limit)" />
     <param name="udp_connection" type="bool" value="$(arg udp_connection)" />
     <param name="power_limit" type="int" value="$(arg power_limit)" />
+    <param name="robot_type" type="string" value="$(arg robot_type)" />
   </node>
 
   <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>

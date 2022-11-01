@@ -7,7 +7,7 @@ using namespace std;
 
 Body_Manager::Body_Manager()
   : _zero_time(0),
-    safe(UNITREE_LEGGED_SDK::LeggedType::A1)
+    safe(UNITREE_LEGGED_SDK::LeggedType::Go1)
 // udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
@@ -130,7 +130,7 @@ void Body_Manager::init()
 
   if (is_udp_connection)
   {
-    udp = new UNITREE_LEGGED_SDK::UDP(UNITREE_LEGGED_SDK::LOWLEVEL);
+    udp = new UNITREE_LEGGED_SDK::UDP(UNITREE_LEGGED_SDK::LOWLEVEL, 8090, "192.168.123.10", 8007);
     udp->InitCmdData(_udp_low_cmd);
   }
   else
@@ -163,7 +163,7 @@ void Body_Manager::_readRobotData()
 {
   // TODO check if we can send only zero struct and recieve falid data and dont crash robot
   // controller
-  udp->SetSend(_udp_low_cmd);
+  //udp->SetSend(_udp_low_cmd);
   // TODO check if TRULY NEW data recieved
   udp->GetRecv(_udp_low_state);
 
