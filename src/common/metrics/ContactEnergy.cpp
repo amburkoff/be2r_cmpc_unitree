@@ -58,6 +58,23 @@ Vec4<float> ContactEnergy::getFinalBodyCost()
 // After that let's compute energy change dE = 1/2*(dq(t+)^T*M(q(t+))*dq(t+) - dq(t-)^T*M(q(t-))*dq(t-))
 // as dE = -1/2*(J/(J^T/M*J)*J^T*dq(t-)) (8)
 ////////////////////////////////////////////////////////////////////////////////
+// _s -- space frame, _b -- body frame, _l -- leg shoulder frame, _f -- leg contact frame (feet)
+// U_sf -- velocity of feet frame relative to space frame
+// [w_sb] - skew-symmetry matrix from rotational velocity of body frame relative to space frame
+// p_bl -- distance from body frame to leg frame
+
+// Let's calculate Twist_sf from Twist_sb = [w_sb U_sb]' and Twist_lf = [w_lf; U_lf] - 6x1
+// Twist_sf = Twist_sb + Ad[T_sb]*Ad[T_bl]*Twist_lf , R_bl = I(3)
+// where Ad[T_bl] = [R_bl 0; [p_bl]*R_bl] -- adjoint matrix 6x6 for the homogeneous
+// transformation T_bl from body to leg frame
+// Twist_sf - Twist_sb = [R_sb*w_lf; [p_sb]*R_sb*w_lf + R_sb*([p_bl]*w_lf + U_lf]
+// Twist_23 = [w_3; -[p_3]*R_3*w_3]
+// w_lf = w_1 + R_1*(w_2 + R_2*w_3), where 1,2,3 -- leg joints from shoulder to feet
+// U_lf = [p_1]*R_1*(w_2 + R_2*w3) + [p_2]*R_2*w_3
+
+// U_sf = -([w_sb] + [R_sb*w_lf])*p_sb + R_sb*[w_lf]*(p_lf + p_bl) + R_sb*dp_lf + dp_sb
+// 2*E_kin = U_b^T*M_b*U_b + U_l
+////////////////////////////////////////////////////////////////////////////////
 
 Vec4<float> ContactEnergy::getFinalLegCost()
 {
@@ -79,7 +96,7 @@ Vec4<float> ContactEnergy::getFinalLegCost()
     Quadruped<float> &quadruped = *this->_data->_quadruped;
     // compute velocities and positions of the leg COM in the local fixed hip frame 
     Metric::computeCenterLegVelAndPos(quadruped,this->_data->_legController->datas[i].q,this->_data->_legController->datas[i].qd,&(Jacobi),&(globalCOMp_leg),&(globalCOMv_leg),&(globalCOMw_leg),i);
-    
+    computeLegJacobianAndPosition();
     // Body COM velocity and position in the global frame
     _position = this->_data->_stateEstimator->getResult().position;
     _vBody = this->_data->_stateEstimator->getResult().vBody;

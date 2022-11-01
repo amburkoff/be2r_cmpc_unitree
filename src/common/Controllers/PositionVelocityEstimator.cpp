@@ -132,7 +132,8 @@ void LinearKFPositionVelocityEstimator<T>::run()
       Quadruped<T>& quadruped = *(this->_stateEstimatorData.legControllerData->quadruped);
       Vec3<T> ph = quadruped.getHipLocation(i); // hip positions relative to CoM
       // hw_i->leg_controller->leg_datas[i].p;
-      Vec3<T> p_rel = ph + this->_stateEstimatorData.legControllerData[i].p; // Local frame distance from COM to leg(i)
+      Vec3<T> p_rel = ph + this->_stateEstimatorData.legControllerData[i].p; 
+      // Local frame distance from COM to leg(i)
       // hw_i->leg_controller->leg_datas[i].v;
 
       // Local frame velocity of leg(i) relative to COM
