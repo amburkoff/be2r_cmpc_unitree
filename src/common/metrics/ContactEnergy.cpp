@@ -1,10 +1,9 @@
-#include "SystemEnergy.h"
+#include "ContactEnergy.h"
 
 
-// template <typename float>
-SystemEnergy::SystemEnergy()
+
+ContactEnergy::ContactEnergy()
 {
-  // This class calculates current Energy value
   g = Vec3<float>(0, 0, -9.81);
   _KinLinEnergy = float(0);
   _KinRotEnergy = float(0);
@@ -13,31 +12,73 @@ SystemEnergy::SystemEnergy()
   _PotEnergyLeg.setZero();
 };
 
-Vec4<float> SystemEnergy::getFinalCost()
+Vec4<float> ContactEnergy::getFinalCost()
 {
-  // Calculates Total Energy
-  return Vec4<float>(getFinalBodyCost().operator()(3) + getFinalLegCost().sum(),0,0,0);
+  
+//   return Vec4<float>(getFinalBodyCost().operator()(3) + getFinalLegCost().sum(),0,0,0);
 }
 
-Vec4<float> SystemEnergy::getFinalBodyCost()
+Vec4<float> ContactEnergy::getFinalBodyCost()
 {
-  // Calculates body Energy as [KinLinEnergy, _KinRotEnergy, _PotEnergy, _TotalEnergy]
-  _vBody = this->_data->_stateEstimator->getResult().vBody;
-  _KinLinEnergy = _vBody.dot(_vBody) * this->_data->_quadruped->_bodyMass * float(0.5);
-  _position = this->_data->_stateEstimator->getResult().position;
-  _PotEnergy = this->_data->_quadruped->_bodyMass * _position[2] * g[2];
-  Vec4<float> Result;
-  _KinRotEnergy = float(0.5)*this->_data->_stateEstimator->getResult().omegaBody.dot(this->_data->_quadruped->_bodyInertia.getInertiaTensor()*this->_data->_stateEstimator->getResult().omegaBody);
-  Result.setZero();
-  Result.operator()(0) = _KinLinEnergy;
-  Result.operator()(1) = _KinRotEnergy;
-  Result.operator()(2) = _PotEnergy;
-  Result.operator()(3) = _KinLinEnergy + _KinRotEnergy + _PotEnergy;
-return Result;
+//   _vBody = this->_data->_stateEstimator->getResult().vBody;
+//   _KinLinEnergy = _vBody.dot(_vBody) * this->_data->_quadruped->_bodyMass * float(0.5);
+//   _position = this->_data->_stateEstimator->getResult().position;
+//   _PotEnergy = this->_data->_quadruped->_bodyMass * _position[2] * g[2];
+//   Vec4<float> Result;
+//   _KinRotEnergy = float(0.5)*this->_data->_stateEstimator->getResult().omegaBody.dot(this->_data->_quadruped->_bodyInertia.getInertiaTensor()*this->_data->_stateEstimator->getResult().omegaBody);
+//   Result.setZero();
+//   Result.operator()(0) = _KinLinEnergy;
+//   Result.operator()(1) = _KinRotEnergy;
+//   Result.operator()(2) = _PotEnergy;
+//   Result.operator()(3) = _KinLinEnergy + _KinRotEnergy + _PotEnergy;
+// return Result;
 }
-Vec4<float> SystemEnergy::getFinalLegCost()
+
+/////////////////////////////////////Math review////////////////////////////////////
+// M(q(t))ddq(t) + C(q(t),dq(t))+G(q(t)) = tau + J(q(t))^T*F (1)
+// q -- [q_i,x,y,z]; q_i --joint angles ; x,y,z - body postion
+// F -- reaction force to the end-effector
+// Let's asume that for the small dt that calculates from "t+"-"t-"=dt 
+// so
+// q(t+)= q(t-) and tau(t+)=tau(t-) (2)
+// but dq(t+) <> dq(t-) ddq(t+) <> ddq(t-) (3)
+
+//let's calculate impulse change rule from equation (1)
+//  M(q(t+))*dq(t+)-M(q(t-))*dq(t-) + integarl[G(q(t+))] - integarl[G(q(t-))] = 
+// = integarl[tau(t+)]-integarl[tau(t-)] + integarl[J(q(t+))^T*F(t+)] - integarl[J(q(t+))^T*F(t-)] (4)
+
+// Using eq.(2-3) and facts that:
+//   1) before the contact F(t-) == 0 
+//   2) after contact happend J(q(t+))*dq(t+)=0
+
+// So (4) becames M(q(t+))*dq(t+)-M(q(t+))*dq(t-) = J(q(t+))^T*integarl[F(t+)] (5)
+// From (5) we can find dq(t+) and integarl[F(t+)] as
+// integarl[F(t+)] = -(J(q)^T/M(q)*J(q))\J(q)^T*dq(t-) (6)
+// dq(t+) = (I-M\J/(J^T/M*J)*J^T)*dq(t-) (7)
+// After that let's compute energy change dE = 1/2*(dq(t+)^T*M(q(t+))*dq(t+) - dq(t-)^T*M(q(t-))*dq(t-))
+// as dE = -1/2*(J/(J^T/M*J)*J^T*dq(t-)) (8)
+////////////////////////////////////////////////////////////////////////////////
+// _s -- space frame, _b -- body frame, _l -- leg shoulder frame, _f -- leg contact frame (feet)
+// U_sf -- velocity of feet frame relative to space frame
+// [w_sb] - skew-symmetry matrix from rotational velocity of body frame relative to space frame
+// p_bl -- distance from body frame to leg frame
+
+// Let's calculate Twist_sf from Twist_sb = [w_sb U_sb]' and Twist_lf = [w_lf; U_lf] - 6x1
+// Twist_sf = Twist_sb + Ad[T_sb]*Ad[T_bl]*Twist_lf , R_bl = I(3)
+// where Ad[T_bl] = [R_bl 0; [p_bl]*R_bl] -- adjoint matrix 6x6 for the homogeneous
+// transformation T_bl from body to leg frame
+// Twist_sf - Twist_sb = [R_sb*w_lf; [p_sb]*R_sb*w_lf + R_sb*([p_bl]*w_lf + U_lf]
+// Twist_23 = [w_3; -[p_3]*R_3*w_3]
+// w_lf = w_1 + R_1*(w_2 + R_2*w_3), where 1,2,3 -- leg joints from shoulder to feet
+// U_lf = [p_1]*R_1*(w_2 + R_2*w3) + [p_2]*R_2*w_3
+
+// U_sf = -([w_sb] + [R_sb*w_lf])*p_sb + R_sb*[w_lf]*(p_lf + p_bl) + R_sb*dp_lf + dp_sb
+// 2*E_kin = U_b^T*M_b*U_b + U_l
+////////////////////////////////////////////////////////////////////////////////
+
+Vec4<float> ContactEnergy::getFinalLegCost()
 {
-  // Calculates leg's total Energy as [_leg1_TotalEnergy ...] 
+  
   Mat3<float> Rbod = this->_data->_stateEstimator->getResult().rBody.transpose();
 
   Mat3<float> Jacobi;
@@ -55,7 +96,7 @@ Vec4<float> SystemEnergy::getFinalLegCost()
     Quadruped<float> &quadruped = *this->_data->_quadruped;
     // compute velocities and positions of the leg COM in the local fixed hip frame 
     Metric::computeCenterLegVelAndPos(quadruped,this->_data->_legController->datas[i].q,this->_data->_legController->datas[i].qd,&(Jacobi),&(globalCOMp_leg),&(globalCOMv_leg),&(globalCOMw_leg),i);
-    
+    computeLegJacobianAndPosition();
     // Body COM velocity and position in the global frame
     _position = this->_data->_stateEstimator->getResult().position;
     _vBody = this->_data->_stateEstimator->getResult().vBody;
@@ -122,4 +163,3 @@ Vec4<float> SystemEnergy::getFinalLegCost()
   //  a(_KinLinEnergy +_KinRotEnergy + _PotEnergy, 0, 0, 0);
   return Vec4<float>(_KinEnergyLeg + _PotEnergyLeg);
 };
-// template <typename T>

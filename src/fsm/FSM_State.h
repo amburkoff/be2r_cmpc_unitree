@@ -7,6 +7,8 @@
 #include "Controllers/GaitScheduler.h"
 #include "TransitionData.h"
 #include "common/metrics/SystemEnergy.h"
+#include "common/metrics/EnergyConsume.h"
+
 
 
 #include <dynamic_reconfigure/server.h>
@@ -106,7 +108,9 @@ public:
 
   // Holds all of the relevant control data
   ControlFSMData<T>* _data;
-  SystemEnergy* _metric;
+  // SystemEnergy* _metric;
+  EnergyConsume* _metric;
+
 
   // FSM State info
   FSM_StateName stateName;     // enumerated name of the current state

@@ -6,16 +6,20 @@ using Eigen::Array4f;
 using Eigen::Array4i;
 
 // template <typename T>
-class SystemEnergy : public Metric 
+class ContactEnergy : public Metric 
 {
 public:
-  SystemEnergy();
-  ~SystemEnergy() = default;
+  ContactEnergy();
+  ~ContactEnergy() = default;
 
   Vec4<float> getFinalBodyCost();
   Vec4<float> getFinalCost();
   Vec4<float> getFinalLegCost();
 
+  // void setRobotData(ControlFSMData<T>& data);
+  // void debugPrint();
+//   void earlyContactHandle(Vec4<uint8_t> , int , int ) {}
+//   void restoreDefaults(){}
   Vec3<float> g;
 
 private:
