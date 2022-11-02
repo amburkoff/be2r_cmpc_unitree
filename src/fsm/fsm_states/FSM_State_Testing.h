@@ -25,6 +25,7 @@ public:
   void run();
 
   void test1();
+  void test1_p();
   void test2(float h);
   void gravTest();
   void safeJointTest();

@@ -38,10 +38,11 @@ void Body_Manager::UDPSend() { udp->Send(); }
 
 UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd)
 {
-  UNITREE_LEGGED_SDK::LowCmd udp_low_cmd;
+  // UNITREE_LEGGED_SDK::LowCmd udp_low_cmd = {0};
+  UNITREE_LEGGED_SDK::LowCmd udp_low_cmd = {0};
 
   udp_low_cmd.levelFlag = ros_low_cmd.levelFlag;
-
+  // printf("levelFlag %d \n", udp_low_cmd.levelFlag);
   for (size_t i = 0; i < 12; i++)
   {
     udp_low_cmd.motorCmd[i].mode = ros_low_cmd.motorCmd[i].mode;
@@ -50,7 +51,10 @@ UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCm
     udp_low_cmd.motorCmd[i].Kp = ros_low_cmd.motorCmd[i].Kp;
     udp_low_cmd.motorCmd[i].Kd = ros_low_cmd.motorCmd[i].Kd;
     udp_low_cmd.motorCmd[i].tau = ros_low_cmd.motorCmd[i].tau;
+    // printf("motor=%d mode=%d q=%f dq=%f Kp=%f Kd=%f tau=%f \n", i, udp_low_cmd.motorCmd[i].mode, udp_low_cmd.motorCmd[i].q, udp_low_cmd.motorCmd[i].dq, udp_low_cmd.motorCmd[i].Kp, udp_low_cmd.motorCmd[i].Kd, udp_low_cmd.motorCmd[i].tau);
   }
+  udp_low_cmd.head[0] = 254;
+  udp_low_cmd.head[1] = 239;
 
   return udp_low_cmd;
 }
@@ -507,6 +511,7 @@ void Body_Manager::finalizeStep()
     safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
 
     // put udp struct to udp send transfer process
+    
     udp->SetSend(_udp_low_cmd);
   }
 

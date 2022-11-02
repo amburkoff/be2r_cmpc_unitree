@@ -132,8 +132,19 @@ void FSM_State_Testing<T>::run()
 }
 
 template<typename T>
+void FSM_State_Testing<T>::test1_p()
+{
+  // printf("TEST new");
+  this->_data->legController->commands[0].tauFeedForward(0) = -0.65f;
+  // this->_data->legController->commands[0].qDes(0) = 2.146e+09;
+  // this->_data->legController->commands[0].qdDes(0) = 16000;
+
+}
+
+template<typename T>
 void FSM_State_Testing<T>::test1()
 {
+  // printf("TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
   static bool start = false;
   static Vec3<T> qInit(0, 0, 0);
   static Vec3<T> qDes(0, 0, 0);

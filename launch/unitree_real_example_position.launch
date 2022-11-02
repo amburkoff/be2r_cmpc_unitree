@@ -1,0 +1,8 @@
+<launch>
+
+
+  <node pkg="be2r_cmpc_unitree" type="example_position" name="example_position" output="screen">
+
+  </node>
+
+</launch> 

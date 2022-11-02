@@ -43,6 +43,7 @@ set(EXTRA_LIBS -pthread libunitree_legged_sdk.so)
 # вынести пути к исходникам отдельных частей mit контроллера в отдельные паременные и уже их кидать в include_directories. Для наглядности
 
 include_directories(
+  include
   src
   src/be2r_cmpc_unitree
   src/common
@@ -103,3 +104,8 @@ add_dependencies(unitree_ctrl unitree_legged_msgs_generate_messages_cpp)
 #линкуем либы к бинарнику
 target_link_libraries(unitree_ctrl ${catkin_LIBRARIES} ${EXTRA_LIBS} be2r_cmpc_unitree_lib Eigen3::Eigen)
 add_dependencies(unitree_ctrl ${PROJECT_NAME}_gencfg)
+
+#test
+add_executable(example_position src/example_position.cpp)
+target_link_libraries(example_position ${EXTRA_LIBS} ${catkin_LIBRARIES})
+add_dependencies(example_position ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

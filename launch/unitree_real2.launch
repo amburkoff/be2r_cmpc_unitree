@@ -14,7 +14,7 @@
   </group>
 
   <group if="$(eval arg('robot_type') == 'go1')">
-    <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find go1_description)/urdf/go1.urdf' " />
+    <param name = "robot_description" command = "$(find xacro)/xacro  '$(find go1_description)/urdf/go1.urdf' " />
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_go1.yaml"/>
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_go1_real.yaml"/>
   </group>
@@ -34,8 +34,6 @@
     <param name="robot_type" type="string" value="$(arg robot_type)" />
   </node>
 
-  <arg name="joy_input" default="2"  />
-  <param name="joy/dev" value="/dev/input/js$(arg joy_input)"   />
   <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>
 
   <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>
