@@ -1,10 +1,12 @@
 #include "SystemEnergy.h"
 
 
-// template <typename float>
+/*!
+ * This class calculates current Energy value.
+ */
 SystemEnergy::SystemEnergy()
 {
-  // This class calculates current Energy value
+
   g = Vec3<float>(0, 0, -9.81);
   _KinLinEnergy = float(0);
   _KinRotEnergy = float(0);
@@ -12,10 +14,11 @@ SystemEnergy::SystemEnergy()
   _KinEnergyLeg.setZero();
   _PotEnergyLeg.setZero();
 };
-
+/*!
+* Calculates Total Energy
+*/
 Vec4<float> SystemEnergy::getFinalCost()
 {
-  // Calculates Total Energy
   return Vec4<float>(getFinalBodyCost().operator()(3) + getFinalLegCost().sum(),0,0,0);
 }
 

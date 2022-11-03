@@ -4,12 +4,21 @@
 
 ContactEnergy::ContactEnergy()
 {
-  g = Vec3<float>(0, 0, -9.81);
-  _KinLinEnergy = float(0);
-  _KinRotEnergy = float(0);
-  _PotEnergy = float(0);
-  _KinEnergyLeg.setZero();
-  _PotEnergyLeg.setZero();
+  Total_mass_matrix.setZero();
+  Total_Jacobi.setZero();
+  Contact_matrix.setZero();
+  Leg_Jacobi.setZero();
+
+  Total_Jacobi.block(0,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
+  Total_Jacobi.block(3,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
+  Total_Jacobi.block(6,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
+  Total_Jacobi.block(9,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
+  // g = Vec3<float>(0, 0, -9.81);
+  // _KinLinEnergy = float(0);
+  // _KinRotEnergy = float(0);
+  // _PotEnergy = float(0);
+  // _KinEnergyLeg.setZero();
+  // _PotEnergyLeg.setZero();
 };
 
 Vec4<float> ContactEnergy::getFinalCost()
@@ -56,7 +65,7 @@ Vec4<float> ContactEnergy::getFinalBodyCost()
 // integarl[F(t+)] = -(J(q)^T/M(q)*J(q))\J(q)^T*dq(t-) (6)
 // dq(t+) = (I-M\J/(J^T/M*J)*J^T)*dq(t-) (7)
 // After that let's compute energy change dE = 1/2*(dq(t+)^T*M(q(t+))*dq(t+) - dq(t-)^T*M(q(t-))*dq(t-))
-// as dE = -1/2*(J/(J^T/M*J)*J^T*dq(t-)) (8)
+// as dE = -1/2*dq(t-)^T*(J/(J^T/M*J)*J^T*dq(t-)) (8)
 ////////////////////////////////////////////////////////////////////////////////
 // _s -- space frame, _b -- body frame, _l -- leg shoulder frame, _f -- leg contact frame (feet)
 // U_sf -- velocity of feet frame relative to space frame
@@ -73,12 +82,13 @@ Vec4<float> ContactEnergy::getFinalBodyCost()
 // U_lf = [p_1]*R_1*(w_2 + R_2*w3) + [p_2]*R_2*w_3
 
 // U_sf = -([w_sb] + [R_sb*w_lf])*p_sb + R_sb*[w_lf]*(p_lf + p_bl) + R_sb*dp_lf + dp_sb
-// 2*E_kin = U_b^T*M_b*U_b + U_l
+// P_kin(t) = M_b*Twist_sb + Sum(for legs that are not in contact)sum(i=1..3)(M_i*Twist_sli)= M(q,U_b,w_b)*[q,U_b,w_b]
+// 
 ////////////////////////////////////////////////////////////////////////////////
 
 Vec4<float> ContactEnergy::getFinalLegCost()
 {
-  
+  Eigen::Matrix<float, 6, 3> J_v;
   Mat3<float> Rbod = this->_data->_stateEstimator->getResult().rBody.transpose();
 
   Mat3<float> Jacobi;
@@ -91,12 +101,20 @@ Vec4<float> ContactEnergy::getFinalLegCost()
   globalCOMw_leg.setZero();
   _KinEnergyLeg.setZero();
   _PotEnergyLeg.setZero();
+  J_v.block(0,0,3,3) = coordinateRotation(CoordinateAxis::Y,float(0));
+  J_v.block(3,3,3,3) = coordinateRotation(CoordinateAxis::Y,float(0));
+  Leg_Jacobi.block(0,0,6,1) = J_v.block(0,1,6,1);
+
   for (int i = 0; i < 4; i++)
   {
     Quadruped<float> &quadruped = *this->_data->_quadruped;
+    Vec3<float> q = _data->_legController->datas[i].q;
+    J_v.block(0,0,3,3) = coordinateRotation(CoordinateAxis::X,q[0]);
+    J_v.block(3,3,3,3) = coordinateRotation(CoordinateAxis::Y,q[1])*coordinateRotation(CoordinateAxis::Y,q[1]);
+    Leg_Jacobi.block(0,0,6,1) = J_v.block(0,1,6,1);
     // compute velocities and positions of the leg COM in the local fixed hip frame 
     Metric::computeCenterLegVelAndPos(quadruped,this->_data->_legController->datas[i].q,this->_data->_legController->datas[i].qd,&(Jacobi),&(globalCOMp_leg),&(globalCOMv_leg),&(globalCOMw_leg),i);
-    computeLegJacobianAndPosition();
+
     // Body COM velocity and position in the global frame
     _position = this->_data->_stateEstimator->getResult().position;
     _vBody = this->_data->_stateEstimator->getResult().vBody;
@@ -133,8 +151,8 @@ Vec4<float> ContactEnergy::getFinalLegCost()
     // Rotated, World leg(i) COM positions and velocities are expressed 
     // // in Aligned with World frame body frame
     globalCOMv_leg.block(0,0,3,3) = Rbod * globalCOMv_leg;
-    globalCOMp_leg.block(0,0,3,3) = Rbod * globalCOMv_leg;
-    globalCOMw_leg.block(0,0,3,3) = Rbod * globalCOMv_leg;
+    globalCOMp_leg.block(0,0,3,3) = Rbod * globalCOMp_leg;
+    globalCOMw_leg.block(0,0,3,3) = Rbod * globalCOMw_leg;
     
     // Expressed in the global frame
     globalCOMv_leg.block(0,0,3,1) += _vBody;

@@ -25,7 +25,7 @@ using namespace std;
 template <typename T>
 FSM_State_Stairs<T>::FSM_State_Stairs(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::STAIRS, "STAIRS")
 {
-  cMPCOld = new ConvexMPCStairsLocomotion(_controlFSMData->controlParameters->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
+  cMPCOld = new ConvexMPCStairsLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData->userParameters);
   // cMPCOld = new ConvexMPCLocomotion(_controlFSMData->controlParameters->controller_dt,
   //                                   //30 / (1000. * _controlFSMData->controlParameters->controller_dt),
   //                                   //22 / (1000. * _controlFSMData->controlParameters->controller_dt),
@@ -91,7 +91,7 @@ FSM_StateName FSM_State_Stairs<T>::checkTransition()
   iter++;
 
   // Switch FSM control mode
-  switch ((int)this->_data->controlParameters->control_mode)
+  switch ((int)this->_data->userParameters->FSM_State )
   {
   case K_STAIRS:
     break;
@@ -138,7 +138,7 @@ FSM_StateName FSM_State_Stairs<T>::checkTransition()
   default:
     std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
               << K_STAIRS << " to "
-              << this->_data->controlParameters->control_mode << std::endl;
+              << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -325,8 +325,12 @@ void FSM_State_Stairs<T>::LocomotionControlStep()
 template <typename T>
 void FSM_State_Stairs<T>::StanceLegImpedanceControl(int leg)
 {
+  // // Impedance control for the stance leg
+  // this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(), this->_data->userParameters->stand_kp_cartesian, this->_data->userParameters->stand_kd_cartesian);
+  Vec3<double> stand_kp_cartesian(50, 50, 50);
+  Vec3<double> stand_kd_cartesian(2.5, 2.5, 2.5);
   // Impedance control for the stance leg
-  this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(), this->_data->controlParameters->stand_kp_cartesian, this->_data->controlParameters->stand_kd_cartesian);
+  this->cartesianImpedanceControl(leg, this->footstepLocations.col(leg), Vec3<T>::Zero(), stand_kp_cartesian, stand_kd_cartesian);
 }
 
 // template class FSM_State_Stairs<double>;

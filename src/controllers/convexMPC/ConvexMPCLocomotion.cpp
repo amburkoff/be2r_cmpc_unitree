@@ -465,6 +465,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
+      Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data._legController->datas[foot].v) + seResult.vWorld;
+
       //cout << "Foot " << foot << " relative position desired: " << pDesLeg.transpose() << "\n";
       //cout << "Foot " << foot << " relative velocity desired: " << vDesLeg.transpose() << "\n";
       //for RViz

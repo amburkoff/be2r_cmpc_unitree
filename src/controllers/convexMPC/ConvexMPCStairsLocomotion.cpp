@@ -734,6 +734,8 @@ void ConvexMPCStairsLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<floa
   float Q[12] = {2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1};
 
   // float Q[12] = {0.25, 0.25, 10, 2, 2, 40, 0, 0, 0.3, 0.2, 0.2, 0.2};
+  float roll = seResult.rpy[0];
+  float pitch = seResult.rpy[1];
   float yaw = seResult.rpy[2];
   float* weights = Q; //Matrix 12*12 of MPC Q weights, this is her diagonal values
   float alpha = 4e-5; // MPC R weights
@@ -786,7 +788,8 @@ void ConvexMPCStairsLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<floa
 
   Timer t2;
   // cout << "dtMPC: " << dtMPC << "\n";
-  update_problem_data_floats(p, v, q, w, r, yaw, weights, trajAll, alpha, mpcTable);
+  // float* p, float* v, float* q, float* w, float* r, float roll, float pitch, float yaw, float* weights, float* state_trajectory, float alpha, int* gait
+  update_problem_data_floats(p, v, q, w, r, roll, pitch, yaw, weights, trajAll, alpha, mpcTable);
   // t2.stopPrint("Run MPC");
   // printf("MPC Solve time %f ms\n", t2.getMs());
 
