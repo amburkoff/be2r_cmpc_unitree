@@ -57,7 +57,21 @@ struct StaticParams
     readRosParam("/static_params/max_vel_x", max_vel_x);
     readRosParam("/static_params/max_vel_y", max_vel_y);
     readRosParam("/static_params/max_turn_rate", max_turn_rate);
+
+    readRosParam("/bigpid_params/Px", Px);
+    readRosParam("/bigpid_params/Py", Py);
+    readRosParam("/bigpid_params/Pz", Pz);
+    readRosParam("/bigpid_params/Dx", Dx);
+    readRosParam("/bigpid_params/Dy", Dy);
+    readRosParam("/bigpid_params/Dz", Dz);
+    readRosParam("/bigpid_params/P_roll", P_roll);
+    readRosParam("/bigpid_params/P_pitch", P_pitch);
+    readRosParam("/bigpid_params/P_yaw", P_yaw);
+    readRosParam("/bigpid_params/D_roll", D_roll);
+    readRosParam("/bigpid_params/D_pitch", D_pitch);
+    readRosParam("/bigpid_params/D_yaw", D_yaw);
   }
+
   double controller_dt;
   bool cheater_mode;
   double foot_height_sensor_noise;
@@ -84,6 +98,20 @@ struct StaticParams
   float max_vel_x = 0.5;
   float max_vel_y = 0.4;
   float max_turn_rate = 2.5;
+
+  float Px = 1;
+  float Py = 1;
+  float Pz = 1;
+  float Dx = 1;
+  float Dy = 1;
+  float Dz = 1;
+
+  float P_roll = 1;
+  float P_pitch = 100;
+  float P_yaw = 1;
+  float D_roll = 1;
+  float D_pitch = 1;
+  float D_yaw = 1;
 };
 
 #endif // ROS_READ_PARAM_H

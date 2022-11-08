@@ -297,7 +297,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
     _pitch_des =
       pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
-    // _pitch_des = data.stateEstimator->getResult().est_pitch_plane;
   }
 
   for (int i = 0; i < 4; i++)
@@ -321,7 +320,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-      // footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
       footSwingTrajectories[i].setHeight(_swing_trajectory_hight);
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
@@ -405,14 +403,10 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       last_q_body = data.stateEstimator->getResult().rpy;
     }
 
-    // float Kf = 0.5;
     float Kf = 1;
-    // float Kf = 0.8;
 
     delta_p_bw[foot] += seResult.vBody * dt * Kf;
     delta_yaw[foot] += seResult.omegaBody(2) * dt * Kf;
-    // delta_p_bw[foot] = data.stateEstimator->getResult().position - last_p_body;
-    // delta_yaw[foot] = data.stateEstimator->getResult().rpy[2] - last_q_body(2);
     data.debug->last_p_local_stance[foot] =
       ros::toMsg(ori::rpyToRotMat(Vec3<float>(0, 0, delta_yaw[foot])) * (p_fl[foot] - delta_p_bw[foot]));
 
@@ -435,7 +429,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
         swingTimeRemaining[foot] -= dt;
       }
 
-      // footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
       footSwingTrajectories[foot].setHeight(_swing_trajectory_hight);
 
       //

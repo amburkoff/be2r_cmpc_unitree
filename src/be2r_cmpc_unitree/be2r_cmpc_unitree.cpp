@@ -217,22 +217,6 @@ void Body_Manager::_readRobotData()
     }
   }
 
-  // // Датчики контакта на лапах
-  // for (size_t leg = 0; leg < 4; leg++)
-  // {
-  //   footContactState(leg) = msg.footForce[leg];
-
-  //   //    if
-  //   //    ((_stateEstimator->getResult().contactEstimate[leg]
-  //   //    <= 0.001) &&
-  //   //      (footContactState(leg) == 1) )
-  //   //    {
-  //   ////      std::cout << "EARLY CONTACT" <<
-  //   /// std::endl;
-
-  //   //    }
-  // }
-
   _stateEstimator->setContactSensorData(footContactState);
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
@@ -485,7 +469,7 @@ void Body_Manager::finalizeStep()
     // position limit safety check
     safe.PositionLimit(_udp_low_cmd);
     // power protection safety check
-    safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
+    safe.PowerProtect(_udp_low_cmd, _udp_low_state, _power_limit);
 
     // put udp struct to udp send transfer process
     udp->SetSend(_udp_low_cmd);

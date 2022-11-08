@@ -34,3 +34,17 @@ static_params:
   Q_vx: 15
   Q_vy: 15
   Q_vz: 15
+
+bigpid_params:
+  Px: 100
+  Py: 100
+  Pz: 1
+  Dx: 5
+  Dy: 5
+  Dz: 5
+  P_roll: 500
+  P_pitch: 500
+  P_yaw: 1
+  D_roll: 50
+  D_pitch: 50
+  D_yaw: 1
