@@ -60,8 +60,7 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFS
     standing(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "Standing"),
     walking(GAIT_PERIOD_WALKING, Vec4<int>(2 * GAIT_PERIOD_WALKING / 4., 0, GAIT_PERIOD_WALKING / 4., 3 * GAIT_PERIOD_WALKING / 4.), Vec4<int>(0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING, 0.75 * GAIT_PERIOD_WALKING), "Walking"),
     two_leg_balance(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, 0), "Two legs balance"),
-    give_hand(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "GiveHand"), // for real
-    trot_long(_gait_period_long, Vec4<int>(0, _gait_period_long / 2.0, _gait_period_long / 2.0, 0), Vec4<int>(24, 24, 24, 24), "Trotting long")
+    give_hand(_gait_period, Vec4<int>(0, 0, 0, 0), Vec4<int>(_gait_period, _gait_period, _gait_period, _gait_period), "GiveHand") 
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
@@ -348,9 +347,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   float interleave_gain = -0.2;
   float v_abs = std::fabs(v_des_robot[0]);
 
-  // cout << "iter: " << iterationCounter << " first swing leg 0" <<
-  // firstSwing[0] << endl;
-
   // gait
   // trot leg 0 starts in stance because offset is 0
   Vec4<float> contactStates = gait->getContactState();
@@ -370,8 +366,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 
   Vec4<float> se_contactState(0, 0, 0, 0);
   se_contactState = data.stateEstimator->getContactSensorData().cast<float>();
-
-  // ROS_INFO_STREAM("is contact: " << se_contactState(0));
 
   static bool is_stance[4] = { 0, 0, 0, 0 };
   static Vec3<float> p_fw[4] = {};
