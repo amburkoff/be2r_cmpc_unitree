@@ -54,6 +54,9 @@ struct StaticParams
     readRosParam("/static_params/Q_vy", Q_vy);
     readRosParam("/static_params/Q_vz", Q_vz);
 
+    readRosParam("/static_params/mpc_alpha", mpc_alpha);
+    std::cout << "mpc alfa: " << mpc_alpha << std::endl;
+
     readRosParam("/static_params/max_vel_x", max_vel_x);
     readRosParam("/static_params/max_vel_y", max_vel_y);
     readRosParam("/static_params/max_turn_rate", max_turn_rate);
@@ -80,6 +83,8 @@ struct StaticParams
   float Q_vx = 0.4;
   float Q_vy = 0.4;
   float Q_vz = 0.2;
+
+  float mpc_alpha = 4e-5;
 
   float max_vel_x = 0.5;
   float max_vel_y = 0.4;

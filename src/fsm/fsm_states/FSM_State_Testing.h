@@ -8,6 +8,7 @@
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
 
 #define ITERATIONS_BETWEEN_MPC 13
+// #define ITERATIONS_BETWEEN_MPC 1
 
 /**
  *

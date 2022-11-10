@@ -88,8 +88,7 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
     K_solution = (P.transpose() * P).inverse() * P.transpose() * Vec4<float>(1, 1, 1, 1);
   }
 
-  static float filter = 0.5;
-  static float f = 0.1;
+  static float filter = 0.7;
   float A = K_solution(0);
   float B = K_solution(1);
   float C = K_solution(2);
@@ -110,7 +109,7 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   static float z_prev = z;
   // z = (1.0 - f) * z_prev + f * z;
 
-  //if NaN
+  // if NaN
   if ((z * 5) == z)
   {
     // ROS_ERROR("NAN");
@@ -251,11 +250,10 @@ void LinearKFPositionVelocityEstimator<T>::run()
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
 
   // my local body height based on least square plane
-  this->_stateEstimatorData.result->position(2) = my_z;
+  // this->_stateEstimatorData.result->position(2) = my_z;
 }
 
 template class LinearKFPositionVelocityEstimator<float>;
-template class LinearKFPositionVelocityEstimator<double>;
 
 /*!
  * Run cheater estimator to copy cheater state into state estimate
@@ -264,10 +262,8 @@ template<typename T>
 void CheaterPositionVelocityEstimator<T>::run()
 {
   this->_stateEstimatorData.result->position = this->_stateEstimatorData.cheaterState->position.template cast<T>();
-  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
-                                             this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() * this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
 }
 
 template class CheaterPositionVelocityEstimator<float>;
-template class CheaterPositionVelocityEstimator<double>;

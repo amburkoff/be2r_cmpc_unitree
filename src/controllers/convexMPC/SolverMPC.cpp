@@ -5,14 +5,14 @@
 #include <cmath>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
-//#include <unsupported/Eigen/MatrixFunctions>
+// #include <unsupported/Eigen/MatrixFunctions>
 #include <JCQP/QpProblem.h>
 #include <Utilities/Timer.h>
 #include <qpOASES/include/qpOASES.hpp>
 #include <stdio.h>
 #include <sys/time.h>
 
-//#define K_PRINT_EVERYTHING
+// #define K_PRINT_EVERYTHING
 #define BIG_NUMBER 5e10
 // big enough to act like infinity, small enough to avoid numerical weirdness.
 
@@ -56,11 +56,20 @@ u8 real_allocated = 0;
 char var_elim[2000];
 char con_elim[2000];
 
-mfp* get_q_soln() { return q_soln; }
+mfp* get_q_soln()
+{
+  return q_soln;
+}
 
-s8 near_zero(fpt a) { return (a < 0.01 && a > -.01); }
+s8 near_zero(fpt a)
+{
+  return (a < 0.01 && a > -.01);
+}
 
-s8 near_one(fpt a) { return near_zero(a - 1); }
+s8 near_one(fpt a)
+{
+  return near_zero(a - 1);
+}
 void matrix_to_real(qpOASES::real_t* dst, Matrix<fpt, Dynamic, Dynamic> src, s16 rows, s16 cols)
 {
   s32 a = 0;
@@ -85,9 +94,7 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   Bdt = expmm.block(0, 13, 13, 12);
 
 #ifdef K_PRINT_EVERYTHING
-  cout << "Adt: \n"
-       << Adt << "\nBdt:\n"
-       << Bdt << endl;
+  cout << "Adt: \n" << Adt << "\nBdt:\n" << Bdt << endl;
 #endif
 
   if (horizon > 19)
@@ -118,9 +125,7 @@ void c2qp(Matrix<fpt, 13, 13> Ac, Matrix<fpt, 13, 12> Bc, fpt dt, s16 horizon)
   }
 
 #ifdef K_PRINT_EVERYTHING
-  cout << "AQP:\n"
-       << A_qp << "\nBQP:\n"
-       << B_qp << endl;
+  cout << "AQP:\n" << A_qp << "\nBQP:\n" << B_qp << endl;
 #endif
 }
 
@@ -229,8 +234,7 @@ inline Matrix<fpt, 3, 3> cross_mat(Matrix<fpt, 3, 3> I_inv, Matrix<fpt, 3, 1> r)
 }
 
 // continuous time state space matrices.
-void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matrix<fpt, 3, 3> R_yaw,
-                Matrix<fpt, 13, 13>& A, Matrix<fpt, 13, 12>& B, float x_drag)
+void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matrix<fpt, 3, 3> R_yaw, Matrix<fpt, 13, 13>& A, Matrix<fpt, 13, 12>& B, float x_drag)
 {
   A.setZero();
   A(3, 9) = 1.f;
@@ -257,11 +261,9 @@ void quat_to_rpy(Quaternionf q, Matrix<fpt, 3, 1>& rpy)
 
   // edge case!
   fpt as = t_min(-2. * (q.x() * q.z() - q.w() * q.y()), .99999);
-  rpy(0) =
-    atan2(2.f * (q.x() * q.y() + q.w() * q.z()), sq(q.w()) + sq(q.x()) - sq(q.y()) - sq(q.z()));
+  rpy(0) = atan2(2.f * (q.x() * q.y() + q.w() * q.z()), sq(q.w()) + sq(q.x()) - sq(q.y()) - sq(q.z()));
   rpy(1) = asin(as);
-  rpy(2) =
-    atan2(2.f * (q.y() * q.z() + q.w() * q.x()), sq(q.w()) - sq(q.x()) - sq(q.y()) + sq(q.z()));
+  rpy(2) = atan2(2.f * (q.y() * q.z() + q.w() * q.x()), sq(q.w()) - sq(q.x()) - sq(q.y()) + sq(q.z()));
 }
 
 void print_problem_setup(problem_setup* setup)
@@ -320,14 +322,10 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   ct_ss_mats(I_world, rs.m, rs.r_feet, rs.R_yaw, A_ct, B_ct_r, update->x_drag);
 
 #ifdef K_PRINT_EVERYTHING
-  cout << "Initial state: \n"
-       << x_0 << endl;
-  cout << "World Inertia: \n"
-       << I_world << endl;
-  cout << "A CT: \n"
-       << A_ct << endl;
-  cout << "B CT (simplified): \n"
-       << B_ct_r << endl;
+  cout << "Initial state: \n" << x_0 << endl;
+  cout << "World Inertia: \n" << I_world << endl;
+  cout << "A CT: \n" << A_ct << endl;
+  cout << "B CT (simplified): \n" << B_ct_r << endl;
 #endif
 
   // QP matrices
@@ -335,11 +333,14 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
 
   // weights
   Matrix<fpt, 13, 1> full_weight;
+
   for (u8 i = 0; i < 12; i++)
   {
     full_weight(i) = update->weights[i];
   }
+
   full_weight(12) = 0.f;
+
   S.diagonal() = full_weight.replicate(setup->horizon, 1);
 
   // trajectory
@@ -381,6 +382,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   qg = 2 * B_qp.transpose() * S * (A_qp * x_0 - X_d);
 
   QpProblem<double> jcqp(setup->horizon * 12, setup->horizon * 20);
+
   // use jcqp = 0
   if (update->use_jcqp == 1)
   {
@@ -457,12 +459,14 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
         }
       }
     }
+
     // if(new_vars != num_variables)
     if (1 == 1)
     {
       int var_ind[new_vars];
       int con_ind[new_cons];
       int vc = 0;
+
       for (int i = 0; i < num_variables; i++)
       {
         if (!var_elim[i])
@@ -471,11 +475,14 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
           {
             printf("BAD ERROR 1\n");
           }
+
           var_ind[vc] = i;
           vc++;
         }
       }
+
       vc = 0;
+
       for (int i = 0; i < num_constraints; i++)
       {
         if (!con_elim[i])
@@ -488,6 +495,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
           vc++;
         }
       }
+
       for (int i = 0; i < new_vars; i++)
       {
         int olda = var_ind[i];
@@ -507,6 +515,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
           A_red[con * new_vars + st] = cval;
         }
       }
+
       for (int i = 0; i < new_cons; i++)
       {
         int old = con_ind[i];
@@ -524,6 +533,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
         problem_red.setOptions(op);
         // int_t nWSR = 50000;
 
+        // H g A lb ub lbA ubA nWSR
         int rval = problem_red.init(H_red, g_red, A_red, NULL, NULL, lb_red, ub_red, nWSR);
         (void)rval;
         int rval2 = problem_red.getPrimalSolution(q_red);

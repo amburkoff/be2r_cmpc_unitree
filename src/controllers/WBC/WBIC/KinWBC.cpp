@@ -18,6 +18,7 @@ bool KinWBC<T>::FindConfiguration(const DVec<T>& curr_config, const std::vector<
   // Contact Jacobian Setup
   DMat<T> Nc(num_qdot_, num_qdot_);
   Nc.setIdentity();
+
   if (contact_list.size() > 0)
   {
     DMat<T> Jc, Jc_i;
@@ -75,11 +76,13 @@ bool KinWBC<T>::FindConfiguration(const DVec<T>& curr_config, const std::vector<
     prev_delta_q = delta_q;
     prev_qdot = qdot;
   }
+
   for (size_t i(0); i < num_act_joint_; ++i)
   {
     jpos_cmd[i] = curr_config[i + 6] + delta_q[i + 6];
     jvel_cmd[i] = qdot[i + 6];
   }
+
   return true;
 }
 

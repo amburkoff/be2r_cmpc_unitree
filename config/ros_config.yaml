@@ -24,13 +24,13 @@ dynamic_loader:
   Kd_ori_1: 10.0
   Kd_ori_2: 10.0
 
-  Kp_body_0: 100.0
-  Kp_body_1: 100.0
-  Kp_body_2: 100.0
+  Kp_body_0: 200.0
+  Kp_body_1: 200.0
+  Kp_body_2: 200.0
 
-  Kd_body_0: 10.0
-  Kd_body_1: 10.0
-  Kd_body_2: 10.0
+  Kd_body_0: 20.0
+  Kd_body_1: 20.0
+  Kd_body_2: 20.0
 
   Kp_foot_0: 500.0
   Kp_foot_1: 500.0
@@ -57,12 +57,12 @@ dynamic_loader:
   Kd_cartesian_1: 15
   Kd_cartesian_2: 15
 
-  body_height: 0.33
-  Swing_traj_height  : 0.14   # Set swing traj top point
+  body_height: 0.29
+  Swing_traj_height  : 0.09   # Set swing traj top point
 
   # safety
-  joint_limits: 1
-  # joint_limits: 0
+  # joint_limits: 1
+  joint_limits: 0
 
 
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC
@@ -70,12 +70,12 @@ dynamic_loader:
   cmpc_bonus_swing  : 0       # addition to pfx_rel variable in cmpc_locomotion
 
   # solver params
+  use_jcqp          : 0
   jcqp_alpha        : 1.5
   jcqp_max_iter     : 10000
   jcqp_rho          : 1e-07
   jcqp_sigma        : 1e-08
   jcqp_terminate    : 0.1
-  use_jcqp          : 0
 
   # For balance controller
   stance_legs       : 4
@@ -83,6 +83,8 @@ dynamic_loader:
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
   gait_period           : 18
+  # gait_period           : 234 # 18*13
+  # gait_period           : 260
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4

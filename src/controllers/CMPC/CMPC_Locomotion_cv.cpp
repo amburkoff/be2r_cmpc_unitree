@@ -13,8 +13,8 @@
 
 #include "Gait.h"
 
-//оригинальные параметры MPC+WBC
-// #define GAIT_PERIOD 14
+// оригинальные параметры MPC+WBC
+//  #define GAIT_PERIOD 14
 
 #define GAIT_PERIOD 14
 // #define GAIT_PERIOD 22
@@ -23,8 +23,8 @@
 // #define GAIT_PERIOD_WALKING 26
 #define GAIT_PERIOD_WALKING 32
 
-//лучшие параметры для только MPC
-// #define GAIT_PERIOD 18
+// лучшие параметры для только MPC
+//  #define GAIT_PERIOD 18
 
 #define STEP_HEIGHT 0.06
 #define BODY_HEIGHT 0.24
