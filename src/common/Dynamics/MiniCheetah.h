@@ -39,7 +39,7 @@ Quadruped<T> buildMiniCheetah(RobotType robot_type)
       cheetah._kneeLinkLength = 0.2;
       cheetah._maxLegLength = 0.4;
 
-      cheetah._motorTauMax = 3.f;
+      cheetah._motorTauMax = 33.f;
       cheetah._batteryV = 24;
       cheetah._motorKT = .05; // this is flux linkage * pole pairs
       cheetah._motorR = 0.173;

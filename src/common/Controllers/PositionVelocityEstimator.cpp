@@ -88,7 +88,8 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
     K_solution = (P.transpose() * P).inverse() * P.transpose() * Vec4<float>(1, 1, 1, 1);
   }
 
-  static float filter = 0.7;
+  static float filter = 0.5;
+  static float f = 0.1;
   float A = K_solution(0);
   float B = K_solution(1);
   float C = K_solution(2);
@@ -109,10 +110,9 @@ float LinearKFPositionVelocityEstimator<T>::_getLocalBodyHeight()
   static float z_prev = z;
   // z = (1.0 - f) * z_prev + f * z;
 
-  // if NaN
-  if ((z * 5) == z)
+  if (std::isinf(z))
   {
-    // ROS_ERROR("NAN");
+    // ROS_ERROR("INF");
     z = 0;
   }
 

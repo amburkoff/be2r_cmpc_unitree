@@ -198,7 +198,8 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
   // binary contact
-  int16_t force_threshold = 70;
+  // int16_t force_threshold = 70;
+  int16_t force_threshold = 15;
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -466,7 +467,7 @@ void Body_Manager::finalizeStep()
     // position limit safety check
     safe.PositionLimit(_udp_low_cmd);
     // power protection safety check
-    safe.PowerProtect(_udp_low_cmd, _udp_low_state, 5);
+    safe.PowerProtect(_udp_low_cmd, _udp_low_state, _power_limit);
 
     // put udp struct to udp send transfer process
     udp->SetSend(_udp_low_cmd);
