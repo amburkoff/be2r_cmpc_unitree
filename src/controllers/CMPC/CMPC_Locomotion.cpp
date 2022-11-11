@@ -111,10 +111,6 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   x_vel_cmd = data.gamepad_command->left_stick_analog[1];
   y_vel_cmd = data.gamepad_command->left_stick_analog[0];
 
-  // _yaw_turn_rate *= data.gamepad_command->max_turn_rate;
-  // x_vel_cmd *= data.gamepad_command->max_vel_x;
-  // y_vel_cmd *= data.gamepad_command->max_vel_y;
-
   _yaw_turn_rate *= data.staticParams->max_turn_rate;
   x_vel_cmd *= data.staticParams->max_vel_x;
   y_vel_cmd *= data.staticParams->max_vel_y;
@@ -123,9 +119,6 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 
   _x_vel_des = _x_vel_des * (1 - filter_x) + x_vel_cmd * filter_x;
   _y_vel_des = _y_vel_des * (1 - filter_y) + y_vel_cmd * filter_y;
-
-  // _yaw_des = data.stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
-  // _yaw_des += dt * _yaw_turn_rate;
 
   if ((M_PI - abs(_yaw_des)) <= 0.1)
   {
@@ -147,28 +140,21 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   }
 
   _body_height = _parameters->body_height;
-  _swing_trajectory_hight = _parameters->Swing_traj_height;
+  _swing_trajectory_height = _parameters->Swing_traj_height;
 
   if (data.gamepad_command->triangle && (gaitNumber == 15))
   {
     data.gamepad_command->stairs_mode = StairsMode::UP;
     _body_height = 0.3;
-    _swing_trajectory_hight = 0.17;
+    _swing_trajectory_height = 0.17;
   }
 
   if (data.gamepad_command->cross && (gaitNumber == 15))
   {
     data.gamepad_command->stairs_mode = StairsMode::DOWN;
     _body_height = 0.26;
-    _swing_trajectory_hight = 0.06;
+    _swing_trajectory_height = 0.06;
   }
-
-  // Update PD coefs
-  Kp = Vec3<float>(_parameters->Kp_cartesian_0, _parameters->Kp_cartesian_1, _parameters->Kp_cartesian_2).asDiagonal();
-  Kp_stance = Kp;
-
-  Kd = Vec3<float>(_parameters->Kd_cartesian_0, _parameters->Kd_cartesian_1, _parameters->Kd_cartesian_2).asDiagonal();
-  Kd_stance = Kd;
 }
 
 void CMPCLocomotion::run(ControlFSMData<float>& data)
@@ -309,7 +295,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     for (int i = 0; i < 4; i++)
     {
       // footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
-      footSwingTrajectories[i].setHeight(_swing_trajectory_hight);
+      footSwingTrajectories[i].setHeight(_swing_trajectory_height);
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -422,7 +408,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       }
 
       // footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
-      footSwingTrajectories[foot].setHeight(_swing_trajectory_hight);
+      footSwingTrajectories[foot].setHeight(_swing_trajectory_height);
 
       //
       Vec3<float> offset(0, side_sign[foot] * data.quadruped->_abadLinkLength, 0);
@@ -613,6 +599,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 {
   bool omniMode = false;
 
+  // Command Setup
   _SetupCommand(data);
   gaitNumber = data.userParameters->cmpc_gait;
 
@@ -633,52 +620,12 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
   // pick gait
   Gait_contact* gait = &trotting;
-  // if (gaitNumber == 1)
-  // {
-  //   gait = &bounding;
-  // }
-  // else if (gaitNumber == 2)
-  // {
-  //   gait = &pronking;
-  // }
-  // else if (gaitNumber == 3)
-  // {
-  //   gait = &jumping;
-  // }
-  // else if (gaitNumber == 4)
-  // {
-  //   gait = &standing;
-  // }
-  // else if (gaitNumber == 5)
-  // {
-  //   gait = &trotRunning;
-  // }
-  // else if (gaitNumber == 6)
-  // {
-  //   gait = &galloping;
-  // }
-  // else if (gaitNumber == 7)
-  // {
-  //   gait = &random2;
-  // }
-  // else if (gaitNumber == 8) {
-  //   gait = &pacing;
-  // }
-  // else if (gaitNumber == 10)
-  // {
-  //   gait = &walking;
-  // }
-  // else if (gaitNumber == 11)
-  // {
-  //   gait = &walking2;
-  // }
   current_gait = gaitNumber;
 
   // gait->updatePeriod(_dyn_params->gait_period);
-   gait->restoreDefaults();
+  gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
-   gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
-  //  std::cout << "iterationCounter " << iterationCounter << std::endl;
+  gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
 
   recompute_timing(default_iterations_between_mpc);
 
@@ -720,6 +667,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   {
     world_position_desired[0] = seResult.position[0];
     world_position_desired[1] = seResult.position[1];
+    world_position_desired[2] = _body_height;
     _yaw_des = seResult.rpy[2];
 
     for (int i = 0; i < 4; i++)
@@ -939,7 +887,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
   pBody_RPY_des[0] = 0.;
   // pBody_RPY_des[1] = _pitch_des;
-  pBody_RPY_des[1] = 0;
+  pBody_RPY_des[1] = 0.0;
   pBody_RPY_des[2] = _yaw_des;
 
   vBody_Ori_des[0] = 0.;
@@ -1080,9 +1028,6 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   Q[9] = Q_vx;
   Q[10] = Q_vy;
   Q[11] = Q_vz;
-
-  // from sparse
-  //  float Q[12] = { 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2 };
 
   float roll = seResult.rpy[0];
   float pitch = seResult.rpy[1];

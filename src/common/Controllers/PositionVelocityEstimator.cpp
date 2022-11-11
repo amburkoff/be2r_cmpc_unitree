@@ -247,7 +247,6 @@ void LinearKFPositionVelocityEstimator<T>::run()
 }
 
 template class LinearKFPositionVelocityEstimator<float>;
-template class LinearKFPositionVelocityEstimator<double>;
 
 /*!
  * Run cheater estimator to copy cheater state into state estimate
@@ -262,4 +261,3 @@ void CheaterPositionVelocityEstimator<T>::run()
 }
 
 template class CheaterPositionVelocityEstimator<float>;
-template class CheaterPositionVelocityEstimator<double>;

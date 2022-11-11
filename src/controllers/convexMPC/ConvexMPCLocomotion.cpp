@@ -204,34 +204,34 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   //  gait->earlyContactHandle(seResult.contactSensor, _iterationsBetweenMPC, iterationCounter);
   //  std::cout << "iterationCounter " << iterationCounter << std::endl;
 
-  jumping.setIterations(_iterationsBetweenMPC, iterationCounter);
+  // jumping.setIterations(_iterationsBetweenMPC, iterationCounter);
 
-  jumping.setIterations(27 / 2, iterationCounter);
+  // jumping.setIterations(27 / 2, iterationCounter);
 
-  // printf("[%d] [%d]\n", jumping.get_current_gait_phase(),
-  // gait->get_current_gait_phase());
-  // check jump trigger
-  // jump_state.trigger_pressed(jump_state.should_jump(jumping.getCurrentGaitPhase()), data.gamepad_command->trigger_pressed);
+  // // printf("[%d] [%d]\n", jumping.get_current_gait_phase(),
+  // // gait->get_current_gait_phase());
+  // // check jump trigger
+  // // jump_state.trigger_pressed(jump_state.should_jump(jumping.getCurrentGaitPhase()), data.gamepad_command->trigger_pressed);
 
-  // bool too_high = seResult.position[2] > 0.29;
-  // check jump action
-  if (jump_state.should_jump(jumping.getCurrentGaitPhase()))
-  {
-    gait = &jumping;
-    recompute_timing(27 / 2);
-    _body_height = _body_height_jumping;
-    currently_jumping = true;
-  }
-  else
-  {
-    recompute_timing(default_iterations_between_mpc);
-    currently_jumping = false;
-  }
+  // // bool too_high = seResult.position[2] > 0.29;
+  // // check jump action
+  // if (jump_state.should_jump(jumping.getCurrentGaitPhase()))
+  // {
+  //   gait = &jumping;
+  //   recompute_timing(27 / 2);
+  //   _body_height = _body_height_jumping;
+  //   currently_jumping = true;
+  // }
+  // else
+  // {
+  recompute_timing(default_iterations_between_mpc);
+  //   currently_jumping = false;
+  // }
 
-  if (_body_height < 0.02)
-  {
-    _body_height = 0.24;
-  }
+  // if (_body_height < 0.02)
+  // {
+  //   _body_height = 0.24;
+  // }
 
   // integrate position setpoint
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
@@ -271,7 +271,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   {
     world_position_desired[0] = seResult.position[0];
     world_position_desired[1] = seResult.position[1];
-    world_position_desired[2] = seResult.rpy[2];
+    // world_position_desired[2] = seResult.rpy[2];
+    world_position_desired[2] = _body_height;
+    _yaw_des = seResult.rpy[2];
 
     for (int i = 0; i < 4; i++)
     {
@@ -599,6 +601,7 @@ void ConvexMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>
         }
       }
     }
+
     Timer solveTimer;
 
     if (_dyn_params->cmpc_use_sparse > 0.5)
