@@ -53,6 +53,7 @@ struct StaticParams
     readRosParam("/static_params/Q_vx", Q_vx);
     readRosParam("/static_params/Q_vy", Q_vy);
     readRosParam("/static_params/Q_vz", Q_vz);
+    readRosParam("/static_params/aplha", alpha);
 
     readRosParam("/static_params/max_vel_x", max_vel_x);
     readRosParam("/static_params/max_vel_y", max_vel_y);
@@ -68,6 +69,7 @@ struct StaticParams
   double imu_process_noise_velocity;
   int horizon;
 
+  float alpha = 4e-5;
   float Q_roll = 10;
   float Q_pitch = 10;
   float Q_yaw = 15;

@@ -104,8 +104,8 @@ void CMPCLocomotion::recompute_timing(int iterations_per_mpc)
 void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 {
   float x_vel_cmd, y_vel_cmd;
-  float filter_x(0.005);
-  float filter_y(0.005);
+  float filter_x(0.05);
+  float filter_y(0.05);
 
   _yaw_turn_rate = data.gamepad_command->right_stick_analog[0];
   x_vel_cmd = data.gamepad_command->left_stick_analog[1];
@@ -145,14 +145,14 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   if (data.gamepad_command->triangle && (gaitNumber == 15))
   {
     data.gamepad_command->stairs_mode = StairsMode::UP;
-    _body_height = 0.3;
+    _body_height = 0.28;
     _swing_trajectory_height = 0.17;
   }
 
   if (data.gamepad_command->cross && (gaitNumber == 15))
   {
     data.gamepad_command->stairs_mode = StairsMode::DOWN;
-    _body_height = 0.26;
+    _body_height = 0.25;
     _swing_trajectory_height = 0.06;
   }
 }
@@ -611,6 +611,15 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   Gait_contact* gait = &trotting;
   current_gait = gaitNumber;
 
+  if (current_gait == 9)
+  {
+    gait = &trotting;
+  }
+  else if (current_gait == 15)
+  {
+    gait = &trot_long;
+  }
+
   // gait->updatePeriod(_dyn_params->gait_period);
   gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
@@ -673,7 +682,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+      footSwingTrajectories[i].setHeight(_swing_trajectory_height);
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -713,7 +722,8 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
       swingTimeRemaining[i] -= dt;
     }
 
-    footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+    // footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+    footSwingTrajectories[i].setHeight(_swing_trajectory_height);
 
     Vec3<float> offset(0, side_sign[i] * data.quadruped->_abadLinkLength, 0);
 
@@ -1070,7 +1080,8 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   float pitch = seResult.rpy[1];
   float yaw = seResult.rpy[2];
   float* weights = Q;
-  float alpha = 4e-5; // make setting eventually
+  // float alpha = 4e-5; // make setting eventually
+  float alpha = data.staticParams->alpha;
   // float alpha = 4e-7; // make setting eventually: DH
   float* p = seResult.position.data();
   float* v = seResult.vWorld.data();
