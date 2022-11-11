@@ -34,6 +34,7 @@ void Debug::_initPublishers()
   _pub_vis_leg_force[1] = _nh.advertise<visualization_msgs::Marker>("/visual/leg1/force", 1);
   _pub_vis_leg_force[2] = _nh.advertise<visualization_msgs::Marker>("/visual/leg2/force", 1);
   _pub_vis_leg_force[3] = _nh.advertise<visualization_msgs::Marker>("/visual/leg3/force", 1);
+  _pub_vis_local_body_height = _nh.advertise<visualization_msgs::Marker>("/visual/local_body_height", 1);
 
 #ifdef PUB_IMU_AND_ODOM
   _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
@@ -55,6 +56,8 @@ void Debug::updatePlot()
     all_legs_info.leg.at(leg_num).v_error.x = all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
     all_legs_info.leg.at(leg_num).v_error.y = all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
     all_legs_info.leg.at(leg_num).v_error.z = all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
+
+    all_legs_info.leg.at(leg_num).mpc_force = leg_force[leg_num];
   }
 
   body_info.state_error.p.x = body_info.pos_des.x - body_info.pos_act.x;
@@ -143,6 +146,7 @@ void Debug::updateVisualization()
   _drawEstimatedStancePLane();
   _drawLegsDesiredTrajectory();
   _drawLegsForce();
+  _drawLocalBodyHeight();
 }
 
 void Debug::tfOdomPublish(ros::Time stamp)
@@ -153,13 +157,14 @@ void Debug::tfOdomPublish(ros::Time stamp)
   odom_trans.header.frame_id = "odom";
   odom_trans.child_frame_id = "base";
 
-  // odom_trans.transform.translation.x = body_info.pos_act.x;
-  // odom_trans.transform.translation.y = body_info.pos_act.y;
-  // odom_trans.transform.translation.z = body_info.pos_act.z;
-  odom_trans.transform.translation.x = ground_truth_odom.pose.pose.position.x;
-  odom_trans.transform.translation.y = ground_truth_odom.pose.pose.position.y;
-  // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
+  odom_trans.transform.translation.x = body_info.pos_act.x;
+  odom_trans.transform.translation.y = body_info.pos_act.y;
   odom_trans.transform.translation.z = body_info.pos_act.z;
+
+  // odom_trans.transform.translation.x = ground_truth_odom.pose.pose.position.x;
+  // odom_trans.transform.translation.y = ground_truth_odom.pose.pose.position.y;
+  // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
+  // odom_trans.transform.translation.z = body_info.pos_act.z;
 
   geometry_msgs::Quaternion odom_quat;
   // TODO почему результаты естиматора приходится менять местами?
@@ -323,12 +328,8 @@ void Debug::_drawEstimatedStancePLane()
   float C = mnk_plane.z;
 
   float del = sqrt(A * A + B * B + C * C);
-  // float roll = -acos(B / del) + M_PI / 2.0;
-  // float pitch = acos(A / del) - M_PI / 2.0;
   float roll = -acos(B / del) + M_PI / 2.0;
   float pitch = acos(A / del) - M_PI / 2.0;
-
-  // body_info.pos_z_global = abs(De) / sqrt(A * A + B * B + C * C);
 
   Eigen::Vector3f p[4];
   p[0].setZero();
@@ -353,9 +354,6 @@ void Debug::_drawEstimatedStancePLane()
   marker.id = 0;
   marker.type = visualization_msgs::Marker::CUBE;
   marker.action = visualization_msgs::Marker::ADD;
-  // pose and orientation must be zero, except orientation.w = 1
-  // marker.pose.position.x = 0;
-  // marker.pose.position.y = 0;
   marker.pose.position.x = p_avr(0);
   marker.pose.position.y = p_avr(1);
   marker.pose.position.z = 1.0 / C;
@@ -423,4 +421,53 @@ void Debug::_drawLegsForce()
     marker.points.push_back(p2);
     _pub_vis_leg_force[i].publish(marker);
   }
+}
+
+void Debug::_drawLocalBodyHeight()
+{
+  visualization_msgs::Marker marker;
+
+  float A = mnk_plane.x;
+  float B = mnk_plane.y;
+  float C = mnk_plane.z;
+
+  float del = sqrt(A * A + B * B + C * C);
+  float roll = -acos(B / del) + M_PI / 2.0;
+  float pitch = acos(A / del) - M_PI / 2.0;
+  float z = -1.0 / sqrt(A * A + B * B + C * C);
+
+  Eigen::Vector3f p(0, 0, z);
+
+  marker.header.frame_id = "base";
+  marker.header.stamp = ros::Time::now();
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::ARROW;
+  marker.action = visualization_msgs::Marker::ADD;
+  // pose and orientation must be zero, except orientation.w = 1
+  marker.pose.position.x = 0;
+  marker.pose.position.y = 0;
+  marker.pose.position.z = 0;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.005; // shaft diameter
+  marker.scale.y = 0.01;  // head diameter
+  marker.scale.z = 0.0;   // if not zero, specifies head length
+  marker.color.a = 1.0;   // Don't forget to set the alpha!
+  marker.color.r = 0.65;
+  marker.color.g = 0.32;
+  marker.color.b = 0.58;
+  geometry_msgs::Point p1, p2;
+  // start point
+  p1.x = 0;
+  p1.y = 0;
+  // finish point
+  p2.x = 0;
+  p2.y = 0;
+  p2.z = 1.0 / mnk_plane.z;
+  marker.points.clear();
+  marker.points.push_back(p1);
+  marker.points.push_back(p2);
+  _pub_vis_local_body_height.publish(marker);
 }

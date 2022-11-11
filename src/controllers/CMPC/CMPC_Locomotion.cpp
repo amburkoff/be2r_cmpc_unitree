@@ -104,8 +104,8 @@ void CMPCLocomotion::recompute_timing(int iterations_per_mpc)
 void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 {
   float x_vel_cmd, y_vel_cmd;
-  float filter_x(0.05);
-  float filter_y(0.05);
+  float filter_x(0.01);
+  float filter_y(0.01);
 
   _yaw_turn_rate = data.gamepad_command->right_stick_analog[0];
   x_vel_cmd = data.gamepad_command->left_stick_analog[1];
@@ -155,6 +155,13 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
     _body_height = 0.25;
     _swing_trajectory_height = 0.06;
   }
+
+  // Update PD coefs
+  Kp = Vec3<float>(_parameters->Kp_cartesian_0, _parameters->Kp_cartesian_1, _parameters->Kp_cartesian_2).asDiagonal();
+  Kp_stance = Kp;
+
+  Kd = Vec3<float>(_parameters->Kd_cartesian_0, _parameters->Kd_cartesian_1, _parameters->Kd_cartesian_2).asDiagonal();
+  Kd_stance = Kd;
 }
 
 void CMPCLocomotion::run(ControlFSMData<float>& data)
@@ -599,7 +606,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   {
     stand_traj[0] = seResult.position[0];
     stand_traj[1] = seResult.position[1];
-    stand_traj[2] = 0.21;
+    stand_traj[2] = seResult.position[2];
     stand_traj[3] = 0;
     stand_traj[4] = 0;
     stand_traj[5] = seResult.rpy[2];
@@ -618,6 +625,10 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   else if (current_gait == 15)
   {
     gait = &trot_long;
+  }
+  else if (current_gait == 4)
+  {
+    gait = &standing;
   }
 
   // gait->updatePeriod(_dyn_params->gait_period);
@@ -644,7 +655,19 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   else if (current_gait != 11)
   {
     // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane - 0.07 * _x_vel_des;
+    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
+    // _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane;
+
+    // _pitch_des += -0.25 * _x_vel_des / data.staticParams->max_vel_x + 0.1;
+
+    if (_x_vel_des > 0)
+    {
+      _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
+    }
+    else
+    {
+      _pitch_des += -0.2 * _x_vel_des / data.staticParams->max_vel_x;
+    }
   }
 
   // Integral-esque pitche and roll compensation
@@ -853,7 +876,6 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
       if (!data.userParameters->use_wbc)
       {
-        // Update leg control command regardless of the usage of WBIC
         data.legController->commands[foot].pDes = pDesLeg;
         data.legController->commands[foot].vDes = vDesLeg;
         data.legController->commands[foot].kpCartesian = Kp;
@@ -868,6 +890,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
       // for visual ---------------------------------------------------------
       data.debug->leg_traj_des[foot].poses.clear();
       data.debug->leg_traj_des[foot].header.stamp = ros::Time::now();
+      data.debug->all_legs_info.leg[foot].swing_pf = ros::toMsg(pFoot[foot]);
       // for visual ---------------------------------------------------------
 
       geometry_msgs::Point point;
