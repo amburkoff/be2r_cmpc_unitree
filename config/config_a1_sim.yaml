@@ -32,6 +32,6 @@ static_params:
   Q_w_roll: 0
   Q_w_pitch: 0
   Q_w_yaw: 0.3
-  Q_vx: 0.2
-  Q_vy: 0.2
+  Q_vx: 1
+  Q_vy: 1
   Q_vz: 10

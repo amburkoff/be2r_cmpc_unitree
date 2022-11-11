@@ -23,6 +23,17 @@
 
   <param name = "stairs_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/stairs.urdf' " />
 
+  <!-- <node name="robot_state_publisher1" pkg="robot_state_publisher" type="robot_state_publisher" >
+    <param name="robot_description" value="stairs_description"/>
+    <param name='robot_description' value="$(find xacro)/xacro -inorder '$(find a1_description)/urdf/stairs.urdf' "/>
+    <remap from="robot_description" to="my_robot_description" />
+  </node> -->
+
+  <!-- <node pkg="tf" type="static_transform_publisher" name="step_1_broadcaster" args="0 0 0 0 0 0 1 odom step_1 1" /> -->
+  <node pkg="tf" type="static_transform_publisher" name="step_1_broadcaster" args="0 0 0 0 0 0 1 world step_1 1" />
+  <node pkg="tf" type="static_transform_publisher" name="step_2_broadcaster" args="0 0 0 0 0 0 1 step_1 step_2 1" />
+  <node pkg="tf" type="static_transform_publisher" name="step_3_broadcaster" args="0 0 0 0 0 0 1 step_2 step_3 1" />
+
   <!--     <arg name="rvizconfig" default="$(find unitree_ros_driver)/rviz/unitree.rviz" />
       <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
    -->

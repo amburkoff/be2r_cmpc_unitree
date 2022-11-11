@@ -153,10 +153,13 @@ void Debug::tfOdomPublish(ros::Time stamp)
   odom_trans.header.frame_id = "odom";
   odom_trans.child_frame_id = "base";
 
-  odom_trans.transform.translation.x = body_info.pos_act.x;
-  odom_trans.transform.translation.y = body_info.pos_act.y;
+  // odom_trans.transform.translation.x = body_info.pos_act.x;
+  // odom_trans.transform.translation.y = body_info.pos_act.y;
+  // odom_trans.transform.translation.z = body_info.pos_act.z;
+  odom_trans.transform.translation.x = ground_truth_odom.pose.pose.position.x;
+  odom_trans.transform.translation.y = ground_truth_odom.pose.pose.position.y;
   // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
-  odom_trans.transform.translation.z = body_info.pos_act.z + z_offset;
+  odom_trans.transform.translation.z = body_info.pos_act.z;
 
   geometry_msgs::Quaternion odom_quat;
   // TODO почему результаты естиматора приходится менять местами?
@@ -171,31 +174,19 @@ void Debug::tfOdomPublish(ros::Time stamp)
 
 void Debug::tfPublish()
 {
-  // bool use_map = false;
-  // geometry_msgs::TransformStamped odom_corr_transform;
-  // if (use_map)
-  // {
-  //   try
-  //   {
-  //     odom_corr_transform = _tf_buffer.lookupTransform("corrected_odom", "odom", ros::Time(0));
-  //   }
-  //   catch (tf2::TransformException& ex)
-  //   {
-  //     ROS_WARN("%s", ex.what());
-  //   }
-  // }
-
-  // geometry_msgs::TransformStamped odom_trans_world;
+  geometry_msgs::TransformStamped odom_trans_world;
 
   // odom_trans_world.header.stamp = time_stamp_udp_get;
-  // odom_trans_world.header.frame_id = "world";
-  // odom_trans_world.child_frame_id = "odom";
+  odom_trans_world.header.stamp = ros::Time::now();
+  odom_trans_world.header.frame_id = "world";
+  odom_trans_world.child_frame_id = "odom";
 
-  // // z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
+  z_offset = ground_truth_odom.pose.pose.position.z - body_info.pos_act.z;
   // odom_trans_world.transform.translation.z = 0;
-  // odom_trans_world.transform.rotation.w = 1.;
+  odom_trans_world.transform.translation.z = z_offset;
+  odom_trans_world.transform.rotation.w = 1.;
 
-  // world_odom_broadcaster.sendTransform(odom_trans_world);
+  world_odom_broadcaster.sendTransform(odom_trans_world);
 }
 
 Vec3<float> Debug::_getHipLocation(uint8_t leg_num)
@@ -339,6 +330,20 @@ void Debug::_drawEstimatedStancePLane()
 
   // body_info.pos_z_global = abs(De) / sqrt(A * A + B * B + C * C);
 
+  Eigen::Vector3f p[4];
+  p[0].setZero();
+  p[1].setZero();
+  p[2].setZero();
+  p[3].setZero();
+
+  p[0] = ros::fromMsg(last_p_local_stance[0]);
+  p[1] = ros::fromMsg(last_p_local_stance[1]);
+  p[2] = ros::fromMsg(last_p_local_stance[2]);
+  p[3] = ros::fromMsg(last_p_local_stance[3]);
+
+  Eigen::Vector3f p_avr;
+  p_avr = (p[0] + p[1] + p[2] + p[3]) / 4.0;
+
   tf::Quaternion quat;
   quat.setRPY(roll, pitch, 0.0);
   quat.normalize();
@@ -349,8 +354,10 @@ void Debug::_drawEstimatedStancePLane()
   marker.type = visualization_msgs::Marker::CUBE;
   marker.action = visualization_msgs::Marker::ADD;
   // pose and orientation must be zero, except orientation.w = 1
-  marker.pose.position.x = 0;
-  marker.pose.position.y = 0;
+  // marker.pose.position.x = 0;
+  // marker.pose.position.y = 0;
+  marker.pose.position.x = p_avr(0);
+  marker.pose.position.y = p_avr(1);
   marker.pose.position.z = 1.0 / C;
   marker.pose.orientation.x = quat.x();
   marker.pose.orientation.y = quat.y();
