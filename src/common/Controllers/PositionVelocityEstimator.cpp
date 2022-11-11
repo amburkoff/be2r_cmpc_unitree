@@ -243,7 +243,7 @@ void LinearKFPositionVelocityEstimator<T>::run()
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.result->rBody * this->_stateEstimatorData.result->vWorld;
 
   // my local body height based on least square plane
-  // this->_stateEstimatorData.result->position(2) = my_z;
+  this->_stateEstimatorData.result->position(2) = my_z;
 }
 
 template class LinearKFPositionVelocityEstimator<float>;
