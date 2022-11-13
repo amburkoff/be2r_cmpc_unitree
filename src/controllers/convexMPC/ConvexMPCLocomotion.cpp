@@ -13,7 +13,7 @@
 //  #define GAIT_PERIOD 14
 #define HORIZON 16
 
-#define GAIT_PERIOD 20
+#define GAIT_PERIOD 18
 // #define GAIT_PERIOD 34 //1000 Hz
 
 // лучшие параметры для только MPC
@@ -328,7 +328,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
   updateMPCIfNeeded(mpcTable, data, omniMode);
 
-  //  StateEstimator* se = hw_i->state_estimator;
   Vec4<float> se_contactState(0, 0, 0, 0);
   static bool is_stance[4] = { 0, 0, 0, 0 };
   static Vec3<float> p_fw[4] = {};

@@ -13,6 +13,8 @@
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_a1_sim.yaml"/>
   </group>
 
+  <param name = "stairs_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/stairs.urdf' " />
+
   <group if="$(eval arg('robot_type') == 'go1')">
     <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find go1_description)/urdf/go1.urdf' " />
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_go1.yaml"/>
@@ -38,7 +40,8 @@
       <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
    -->
 
-  <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen">
+  <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@' ">
+  <!-- <node pkg="be2r_cmpc_unitree" type="unitree_ctrl" name="unitree_ctrl" output="screen"> -->
     <param name="map_topic" value="/elevation_mapping/elevation_map"/>
     <param name="is_low_level" type="bool" value="$(arg is_low_level)" />
     <param name="torque_safe_limit" type="bool" value="$(arg torque_safe_limit)" />

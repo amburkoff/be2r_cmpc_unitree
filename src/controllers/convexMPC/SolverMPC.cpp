@@ -392,11 +392,14 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
 
   // weights
   Matrix<fpt, 13, 1> full_weight;
+
   for (u8 i = 0; i < 12; i++)
   {
     full_weight(i) = update->weights[i];
   }
+
   full_weight(12) = 0.f;
+
   S.diagonal() = full_weight.replicate(setup->horizon, 1);
 
   // trajectory
@@ -438,6 +441,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   qg = 2 * B_qp.transpose() * S * (A_qp * x_0 - X_d);
 
   QpProblem<double> jcqp(setup->horizon * 12, setup->horizon * 20);
+
   // use jcqp = 0
   if (update->use_jcqp == 1)
   {
@@ -514,12 +518,14 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
         }
       }
     }
+
     // if(new_vars != num_variables)
     if (1 == 1)
     {
       int var_ind[new_vars];
       int con_ind[new_cons];
       int vc = 0;
+
       for (int i = 0; i < num_variables; i++)
       {
         if (!var_elim[i])
@@ -528,11 +534,14 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
           {
             printf("BAD ERROR 1\n");
           }
+
           var_ind[vc] = i;
           vc++;
         }
       }
+
       vc = 0;
+
       for (int i = 0; i < num_constraints; i++)
       {
         if (!con_elim[i])
@@ -545,6 +554,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
           vc++;
         }
       }
+
       for (int i = 0; i < new_vars; i++)
       {
         int olda = var_ind[i];
@@ -564,6 +574,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
           A_red[con * new_vars + st] = cval;
         }
       }
+
       for (int i = 0; i < new_cons; i++)
       {
         int old = con_ind[i];
@@ -581,6 +592,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
         problem_red.setOptions(op);
         // int_t nWSR = 50000;
 
+        // H g A lb ub lbA ubA nWSR
         int rval = problem_red.init(H_red, g_red, A_red, NULL, NULL, lb_red, ub_red, nWSR);
         (void)rval;
         int rval2 = problem_red.getPrimalSolution(q_red);

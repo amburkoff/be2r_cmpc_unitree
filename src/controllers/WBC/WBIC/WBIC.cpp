@@ -3,8 +3,10 @@
 #include <eigen3/Eigen/LU>
 #include <eigen3/Eigen/SVD>
 
-template <typename T>
-WBIC<T>::WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list, const std::vector<Task<T>*>* task_list) : WBC<T>(num_qdot), _dim_floating(6)
+template<typename T>
+WBIC<T>::WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list, const std::vector<Task<T>*>* task_list)
+  : WBC<T>(num_qdot),
+    _dim_floating(6)
 {
   _contact_list = contact_list;
   _task_list = task_list;
@@ -13,7 +15,7 @@ WBIC<T>::WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list,
   _eye_floating = DMat<T>::Identity(_dim_floating, _dim_floating);
 }
 
-template <typename T>
+template<typename T>
 void WBIC<T>::MakeTorque(DVec<T>& cmd, void* extra_input)
 {
   if (!WB::b_updatesetting_)
@@ -21,7 +23,9 @@ void WBIC<T>::MakeTorque(DVec<T>& cmd, void* extra_input)
     printf("[Wanning] WBIC setting is not done\n");
   }
   if (extra_input)
+  {
     _data = static_cast<WBIC_ExtraData<T>*>(extra_input);
+  }
 
   // resize G, g0, CE, ce0, CI, ci0
   _SetOptimizationSize();
@@ -101,13 +105,14 @@ void WBIC<T>::MakeTorque(DVec<T>& cmd, void* extra_input)
   _GetSolution(qddot_pre, cmd);
 
   _data->_opt_result = DVec<T>(_dim_opt);
+
   for (size_t i(0); i < _dim_opt; ++i)
   {
     _data->_opt_result[i] = z[i];
   }
 
   // std::cout << "f: " << f << std::endl;
-  //std::cout << "x: " << z << std::endl;
+  // std::cout << "x: " << z << std::endl;
 
   // DVec<T> check_eq = _dyn_CE * _data->_opt_result + _dyn_ce0;
   // pretty_print(check_eq, std::cout, "equality constr");
@@ -134,7 +139,7 @@ void WBIC<T>::MakeTorque(DVec<T>& cmd, void* extra_input)
   // std::cout<<ci0<<std::endl;
 }
 
-template <typename T>
+template<typename T>
 void WBIC<T>::_SetEqualityConstraint(const DVec<T>& qddot)
 {
   if (_dim_rf > 0)
@@ -163,7 +168,7 @@ void WBIC<T>::_SetEqualityConstraint(const DVec<T>& qddot)
   // pretty_print(_dyn_ce0, std::cout, "WBIC: ce0");
 }
 
-template <typename T>
+template<typename T>
 void WBIC<T>::_SetInEqualityConstraint()
 {
   _dyn_CI.block(0, _dim_floating, _dim_Uf, _dim_rf) = _Uf;
@@ -183,7 +188,7 @@ void WBIC<T>::_SetInEqualityConstraint()
   // pretty_print(_dyn_ci0, std::cout, "WBIC: ci0");
 }
 
-template <typename T>
+template<typename T>
 void WBIC<T>::_ContactBuilding()
 {
   DMat<T> Uf;
@@ -231,19 +236,18 @@ void WBIC<T>::_ContactBuilding()
     _Uf_ieq_vec.segment(dim_accumul_uf, dim_new_uf) = Uf_ieq_vec;
 
     // Fr desired
-    _Fr_des.segment(dim_accumul_rf, dim_new_rf) =
-        (*_contact_list)[i]->getRFDesired();
+    _Fr_des.segment(dim_accumul_rf, dim_new_rf) = (*_contact_list)[i]->getRFDesired();
     dim_accumul_rf += dim_new_rf;
     dim_accumul_uf += dim_new_uf;
   }
 
-  //pretty_print(_Fr_des, std::cout, "[WBIC] Fr des");
-  // pretty_print(_Jc, std::cout, "[WBIC] Jc");
-  // pretty_print(_JcDotQdot, std::cout, "[WBIC] JcDot Qdot");
-  // pretty_print(_Uf, std::cout, "[WBIC] Uf");
+  // pretty_print(_Fr_des, std::cout, "[WBIC] Fr des");
+  //  pretty_print(_Jc, std::cout, "[WBIC] Jc");
+  //  pretty_print(_JcDotQdot, std::cout, "[WBIC] JcDot Qdot");
+  //  pretty_print(_Uf, std::cout, "[WBIC] Uf");
 }
 
-template <typename T>
+template<typename T>
 void WBIC<T>::_GetSolution(const DVec<T>& qddot, DVec<T>& cmd)
 {
   DVec<T> tot_tau;
@@ -279,7 +283,7 @@ void WBIC<T>::_GetSolution(const DVec<T>& qddot, DVec<T>& cmd)
   // pretty_print(_Fr_des, std::cout, "Fr des");
 }
 
-template <typename T>
+template<typename T>
 void WBIC<T>::_SetCost()
 {
   // Set Cost
@@ -300,10 +304,8 @@ void WBIC<T>::_SetCost()
   // pretty_print(_data->_W_rf, std::cout, "W rf");
 }
 
-template <typename T>
-void WBIC<T>::UpdateSetting(const DMat<T>& A, const DMat<T>& Ainv,
-                            const DVec<T>& cori, const DVec<T>& grav,
-                            void* extra_setting)
+template<typename T>
+void WBIC<T>::UpdateSetting(const DMat<T>& A, const DMat<T>& Ainv, const DVec<T>& cori, const DVec<T>& grav, void* extra_setting)
 {
   WB::A_ = A;
   WB::Ainv_ = Ainv;
@@ -314,7 +316,7 @@ void WBIC<T>::UpdateSetting(const DMat<T>& A, const DMat<T>& Ainv,
   (void)extra_setting;
 }
 
-template <typename T>
+template<typename T>
 void WBIC<T>::_SetOptimizationSize()
 {
   // Dimension

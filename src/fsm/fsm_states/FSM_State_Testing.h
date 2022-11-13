@@ -1,5 +1,4 @@
-#ifndef FSM_STATE_TESTING_H
-#define FSM_STATE_TESTING_H
+#pragma once
 
 #include "CMPC/CMPC_Locomotion.h"
 #include "FSM_State.h"
@@ -8,6 +7,7 @@
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
 
 #define ITERATIONS_BETWEEN_MPC 13
+// #define ITERATIONS_BETWEEN_MPC 1
 
 /**
  *
@@ -26,6 +26,7 @@ public:
 
   void test1();
   void test2(float h);
+  void bigPID();
   void gravTest();
   void safeJointTest();
 
@@ -57,5 +58,3 @@ private:
   bool firstSwing[4];
   Vec3<float> pFoot[4];
 };
-
-#endif // FSM_STATE_TESTING_H
