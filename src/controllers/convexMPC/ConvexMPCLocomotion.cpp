@@ -104,9 +104,10 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _yaw_turn_rate = data.gamepad_command->right_stick_analog[0];
   x_vel_cmd = data.gamepad_command->left_stick_analog[1];
   y_vel_cmd = data.gamepad_command->left_stick_analog[0];
-  // _yaw_turn_rate = 0;
-  // x_vel_cmd = 0;
-  // y_vel_cmd = 0;
+
+  _yaw_turn_rate *= data.staticParams->max_turn_rate;
+  x_vel_cmd *= data.staticParams->max_vel_x;
+  y_vel_cmd *= data.staticParams->max_vel_y;
 
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
@@ -131,11 +132,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   // Command Setup
   _SetupCommand(data);
   gaitNumber = data.userParameters->cmpc_gait;
-  // if (gaitNumber >= 10)
-  // {
-  //   gaitNumber -= 10;
-  //   omniMode = true;
-  // }
 
   auto& seResult = data.stateEstimator->getResult();
 
@@ -202,36 +198,8 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
   //  gait->restoreDefaults();
   gait->setIterations(_iterationsBetweenMPC, iterationCounter);
   //  gait->earlyContactHandle(seResult.contactSensor, _iterationsBetweenMPC, iterationCounter);
-  //  std::cout << "iterationCounter " << iterationCounter << std::endl;
 
-  // jumping.setIterations(_iterationsBetweenMPC, iterationCounter);
-
-  // jumping.setIterations(27 / 2, iterationCounter);
-
-  // // printf("[%d] [%d]\n", jumping.get_current_gait_phase(),
-  // // gait->get_current_gait_phase());
-  // // check jump trigger
-  // // jump_state.trigger_pressed(jump_state.should_jump(jumping.getCurrentGaitPhase()), data.gamepad_command->trigger_pressed);
-
-  // // bool too_high = seResult.position[2] > 0.29;
-  // // check jump action
-  // if (jump_state.should_jump(jumping.getCurrentGaitPhase()))
-  // {
-  //   gait = &jumping;
-  //   recompute_timing(27 / 2);
-  //   _body_height = _body_height_jumping;
-  //   currently_jumping = true;
-  // }
-  // else
-  // {
   recompute_timing(default_iterations_between_mpc);
-  //   currently_jumping = false;
-  // }
-
-  // if (_body_height < 0.02)
-  // {
-  //   _body_height = 0.24;
-  // }
 
   // integrate position setpoint
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);

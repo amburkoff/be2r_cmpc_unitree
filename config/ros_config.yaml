@@ -4,8 +4,8 @@ dynamic_loader:
   FSM_State: 0
   use_wbc: true
   # use_wbc: false
-  # cmpc_gait: 9 # trot
-  cmpc_gait: 15 # trot long
+  cmpc_gait: 9 # trot
+  # cmpc_gait: 15 # trot long
   # cmpc_gait: 4 # stand
   test: 0
 
@@ -65,7 +65,6 @@ dynamic_loader:
   # joint_limits: 1
   joint_limits: 0
 
-
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC
   cmpc_use_sparse   : 0       # switch between sparce and dense mpc
   cmpc_bonus_swing  : 0       # addition to pfx_rel variable in cmpc_locomotion
@@ -92,6 +91,7 @@ static_params:
   controller_dt     : 0.002
   cheater_mode      : false
   horizon           : 16
+
   # Estimators
   foot_height_sensor_noise      :  0.001
   foot_process_noise_position   :  0.002

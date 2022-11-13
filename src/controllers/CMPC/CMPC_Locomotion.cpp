@@ -167,7 +167,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 void CMPCLocomotion::run(ControlFSMData<float>& data)
 {
   // myVersion(data);
-  original(data);
+  myNewVersion(data);
 }
 
 void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
@@ -355,8 +355,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   static Vec3<float> p_fl[4] = {};
   static float delta_yaw[4] = {};
   static Vec3<float> delta_p_bw[4] = {};
-  static Vec3<float> last_p_body = data.stateEstimator->getResult().position;
-  static Vec3<float> last_q_body = data.stateEstimator->getResult().rpy;
   static uint32_t stand_iterator[4] = { 0, 0, 0, 0 };
   static float z_stand_avr[4] = { 0, 0, 0, 0 };
 
@@ -376,8 +374,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       p_fl[foot] = data.legController->datas[foot].p + data.quadruped->getHipLocation(foot);
       delta_p_bw[foot] << 0, 0, 0;
       delta_yaw[foot] = 0;
-      last_p_body = data.stateEstimator->getResult().position;
-      last_q_body = data.stateEstimator->getResult().rpy;
     }
 
     float Kf = 1;
@@ -544,9 +540,6 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
     }
   }
 
-  last_p_body = data.stateEstimator->getResult().position;
-  last_q_body = data.stateEstimator->getResult().rpy;
-
   data.stateEstimator->setContactPhase(se_contactState);
   data.stateEstimator->setSwingPhase(gait->getSwingState());
 
@@ -591,7 +584,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   iterationCounter++;
 }
 
-void CMPCLocomotion::original(ControlFSMData<float>& data)
+void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
 {
   bool omniMode = false;
 
@@ -643,33 +636,6 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
   Vec3<float> v_robot = seResult.vWorld;
 
-  static float z_des[4] = { 0 };
-
-  //                      Pitch compensation
-  static Vec3<float> pDesFootWorldStance[4] = { pFoot[0], pFoot[1], pFoot[2], pFoot[3] };
-
-  if (current_gait == 4 || current_gait == 13)
-  {
-    _pitch_des = 0.0;
-  }
-  else if (current_gait != 11)
-  {
-    // estimated pitch of plane and 0.07 rad pitch correction on 1 m/s Vdes
-    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
-    // _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane;
-
-    // _pitch_des += -0.25 * _x_vel_des / data.staticParams->max_vel_x + 0.1;
-
-    if (_x_vel_des > 0)
-    {
-      _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
-    }
-    else
-    {
-      _pitch_des += -0.2 * _x_vel_des / data.staticParams->max_vel_x;
-    }
-  }
-
   // Integral-esque pitche and roll compensation
   if (fabs(v_robot[0]) > .2) // avoid dividing by zero
   {
@@ -684,6 +650,27 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   rpy_int[1] = fminf(fmaxf(rpy_int[1], -.25), .25);
   rpy_comp[1] = v_robot[0] * rpy_int[1];
   rpy_comp[0] = v_robot[1] * rpy_int[0] * (gaitNumber != 8); // turn off for pronking
+
+  static float z_des[4] = { 0 };
+
+  if (current_gait == 4 || current_gait == 13)
+  {
+    _pitch_des = 0.0;
+  }
+  else if (current_gait != 11)
+  {
+    // estimated pitch of plane and pitch correction depends on Vdes
+    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
+
+    if (_x_vel_des > 0)
+    {
+      _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
+    }
+    else
+    {
+      _pitch_des += -0.2 * _x_vel_des / data.staticParams->max_vel_x;
+    }
+  }
 
   for (int i = 0; i < 4; i++)
   {
@@ -734,6 +721,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
   float interleave_gain = -0.2;
   float v_abs = std::fabs(v_des_robot[0]);
 
+  // calculate swing pf
   for (int i = 0; i < 4; i++)
   {
     if (firstSwing[i])
@@ -745,7 +733,6 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
       swingTimeRemaining[i] -= dt;
     }
 
-    // footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
     footSwingTrajectories[i].setHeight(_swing_trajectory_height);
 
     Vec3<float> offset(0, side_sign[i] * data.quadruped->_abadLinkLength, 0);
@@ -773,7 +760,6 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
-    // Pf[2] = 0.0;
     Pf[2] = z_des[i];
 
     footSwingTrajectories[i].setFinalPosition(Pf);
@@ -792,15 +778,12 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
   updateMPCIfNeeded(mpcTable, data, omniMode);
 
-  //  StateEstimator* se = hw_i->state_estimator;
   Vec4<float> se_contactState(0, 0, 0, 0);
   static bool is_stance[4] = { 0, 0, 0, 0 };
   static Vec3<float> p_fw[4] = {};
   static Vec3<float> p_fl[4] = {};
   static float delta_yaw[4] = {};
   static Vec3<float> delta_p_bw[4] = {};
-  static Vec3<float> last_p_body = data.stateEstimator->getResult().position;
-  static Vec3<float> last_q_body = data.stateEstimator->getResult().rpy;
 
   for (int foot = 0; foot < 4; foot++)
   {
@@ -811,8 +794,6 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
     {
       is_stance[foot] = 1;
 
-      // foot position in world frame at contanct
-      pDesFootWorldStance[foot] = pFoot[foot];
       data.debug->last_p_stance[foot] = ros::toMsg(pFoot[foot]);
       p_fw[foot] = pFoot[foot];
 
@@ -885,7 +866,6 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
     else // foot is in stance
     {
       firstSwing[foot] = true;
-      pDesFootWorldStance[foot] = pFoot[foot];
 
       // for visual ---------------------------------------------------------
       data.debug->leg_traj_des[foot].poses.clear();
@@ -939,9 +919,6 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
     }
   }
 
-  last_p_body = data.stateEstimator->getResult().position;
-  last_q_body = data.stateEstimator->getResult().rpy;
-
   data.stateEstimator->setContactPhase(se_contactState);
   data.stateEstimator->setSwingPhase(gait->getSwingState());
 
@@ -956,8 +933,10 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
   aBody_des.setZero();
 
-  pBody_RPY_des[0] = 0.;
+  // pBody_RPY_des[0] = 0.;
   pBody_RPY_des[1] = _pitch_des;
+  pBody_RPY_des[0] = rpy_comp[0];
+  // pBody_RPY_des[1] = rpy_comp[1];
   pBody_RPY_des[2] = _yaw_des;
 
   vBody_Ori_des[0] = 0.;
@@ -1050,18 +1029,8 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
 
     Timer solveTimer;
 
-    // use sparse = 0
-    if (_parameters->cmpc_use_sparse > 0.5)
-    {
-      // sparse matrix - contain mostly zero values
-      // solveSparseMPC(mpcTable, data);
-    }
-    else
-    {
-      // dense matrix - contain mostly NON zero values
-      solveDenseMPC(mpcTable, data);
-    }
-    // printf("TOTAL SOLVE TIME: %.3f\n", solveTimer.getMs());
+    // dense matrix - contain mostly NON zero values
+    solveDenseMPC(mpcTable, data);
   }
 }
 
@@ -1105,7 +1074,6 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   float* weights = Q;
   // float alpha = 4e-5; // make setting eventually
   float alpha = data.staticParams->alpha;
-  // float alpha = 4e-7; // make setting eventually: DH
   float* p = seResult.position.data();
   float* v = seResult.vWorld.data();
   float* w = seResult.omegaWorld.data();
@@ -1133,12 +1101,8 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 
   if (vxy[0] > 0.3 || vxy[0] < -0.3)
   {
-    // x_comp_integral += _parameters->cmpc_x_drag * pxy_err[0] * dtMPC /
-    // vxy[0];
     x_comp_integral += _parameters->cmpc_x_drag * pz_err * dtMPC / vxy[0];
   }
-
-  // printf("pz err: %.3f, pz int: %.3f\n", pz_err, x_comp_integral);
 
   update_solver_settings(_parameters->jcqp_max_iter, _parameters->jcqp_rho, _parameters->jcqp_sigma, _parameters->jcqp_alpha, _parameters->jcqp_terminate, _parameters->use_jcqp);
   // t1.stopPrint("Setup MPC");
@@ -1159,9 +1123,8 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
       f[axis] = get_solution(leg * 3 + axis);
     }
 
-    // printf("[%d] %7.3f %7.3f %7.3f\n", leg, f[0], f[1], f[2]);
-
     f_ff[leg] = -seResult.rBody * f;
+
     // Update for WBC
     Fr_des[leg] = f;
   }

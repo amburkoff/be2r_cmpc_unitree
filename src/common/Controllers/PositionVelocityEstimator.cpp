@@ -55,6 +55,9 @@ void LinearKFPositionVelocityEstimator<T>::setup()
   _Q0.block(3, 3, 3, 3) = (dt * 9.8f / 20.f) * Eigen::Matrix<T, 3, 3>::Identity();
   _Q0.block(6, 6, 12, 12) = dt * Eigen::Matrix<T, 12, 12>::Identity();
   _R0.setIdentity();
+
+  this->_stateEstimatorData.result->position.setZero();
+  this->_stateEstimatorData.result->vWorld.setZero();
 }
 
 template<typename T>
@@ -244,6 +247,9 @@ void LinearKFPositionVelocityEstimator<T>::run()
 
   // my local body height based on least square plane
   this->_stateEstimatorData.result->position(2) = my_z;
+
+  // cout << "p: " << this->_stateEstimatorData.result->position << endl;
+  // cout << "v: " << this->_stateEstimatorData.result->vWorld << endl;
 }
 
 template class LinearKFPositionVelocityEstimator<float>;
@@ -255,8 +261,7 @@ template<typename T>
 void CheaterPositionVelocityEstimator<T>::run()
 {
   this->_stateEstimatorData.result->position = this->_stateEstimatorData.cheaterState->position.template cast<T>();
-  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() *
-                                             this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
+  this->_stateEstimatorData.result->vWorld = this->_stateEstimatorData.result->rBody.transpose().template cast<T>() * this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
   this->_stateEstimatorData.result->vBody = this->_stateEstimatorData.cheaterState->vBody.template cast<T>();
 }
 
