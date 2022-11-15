@@ -8,23 +8,72 @@
  * frame").
  */
 
-#ifndef PROJECT_LEGCONTROLLER_H
-#define PROJECT_LEGCONTROLLER_H
+#pragma once
 
 #include "Dynamics/Quadruped.h"
-#include "SimUtilities/SpineBoard.h"
+// #include "SimUtilities/SpineBoard.h"
 #include "cppTypes.h"
 #include <iostream>
 #include <ros/ros.h>
 
 /*!
+ * Command to spine board
+ */
+struct SpiCommand
+{
+  float q_des_abad[4];
+  float q_des_hip[4];
+  float q_des_knee[4];
+
+  float qd_des_abad[4];
+  float qd_des_hip[4];
+  float qd_des_knee[4];
+
+  float kp_abad[4];
+  float kp_hip[4];
+  float kp_knee[4];
+
+  float kd_abad[4];
+  float kd_hip[4];
+  float kd_knee[4];
+
+  float tau_abad_ff[4];
+  float tau_hip_ff[4];
+  float tau_knee_ff[4];
+
+  float tau_abad_safe[4];
+  float tau_hip_safe[4];
+  float tau_knee_safe[4];
+
+  int32_t flags[4];
+};
+
+/*!
+ * Data from spine board
+ */
+struct SpiData
+{
+  float q_abad[4];
+  float q_hip[4];
+  float q_knee[4];
+  float qd_abad[4];
+  float qd_hip[4];
+  float qd_knee[4];
+  int32_t flags[4];
+  int32_t spi_driver_status;
+};
+
+/*!
  * Data sent from the control algorithm to the legs.
  */
-template <typename T>
+template<typename T>
 struct LegControllerCommand
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  LegControllerCommand() { zero(); }
+  LegControllerCommand()
+  {
+    zero();
+  }
 
   void zero();
 
@@ -36,13 +85,19 @@ struct LegControllerCommand
 /*!
  * Data returned from the legs to the control code.
  */
-template <typename T>
+template<typename T>
 struct LegControllerData
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  LegControllerData() { zero(); }
+  LegControllerData()
+  {
+    zero();
+  }
 
-  void setQuadruped(Quadruped<T>& quad) { quadruped = &quad; }
+  void setQuadruped(Quadruped<T>& quad)
+  {
+    quadruped = &quad;
+  }
 
   void zero();
 
@@ -55,11 +110,12 @@ struct LegControllerData
 /*!
  * Controller for 4 legs of a quadruped.  Works for both Mini Cheetah and Cheetah 3
  */
-template <typename T>
+template<typename T>
 class LegController
 {
 public:
-  LegController(Quadruped<T>& quad) : quadruped(quad)
+  LegController(Quadruped<T>& quad)
+    : quadruped(quad)
   {
     for (auto& data : datas)
       data.setQuadruped(quadruped);
@@ -85,14 +141,12 @@ public:
   LegControllerCommand<T> commands[4];
   LegControllerData<T> datas[4];
   Quadruped<T>& quadruped;
-  bool _legEnabled[4] = {false};
+  bool _legEnabled[4] = { false };
   T _maxTorque = 0;
   bool _zeroEncoders = false;
   u32 _calibrateEncoders = 0;
   bool is_low_level = false;
 };
 
-template <typename T>
+template<typename T>
 void computeLegJacobianAndPosition(Quadruped<T>& quad, Vec3<T>& q, Mat3<T>* J, Vec3<T>* p, int leg);
-
-#endif // PROJECT_LEGCONTROLLER_H

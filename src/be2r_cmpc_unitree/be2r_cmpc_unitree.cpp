@@ -8,7 +8,6 @@ using namespace std;
 Body_Manager::Body_Manager()
   : _zero_time(0),
     safe(UNITREE_LEGGED_SDK::LeggedType::A1)
-// udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
