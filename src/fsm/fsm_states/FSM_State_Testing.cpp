@@ -95,38 +95,28 @@ void FSM_State_Testing<T>::run()
       break;
 
     case 1:
-      // joint test
-      //  test1();
-      LocomotionControlStep();
+      //joint test
+      test1();
       break;
 
     case 2:
       // impedance test
-      // test2(0.05);
-      LocomotionControlStep();
+      test2(0.05);
       break;
 
     case 3:
       // impedance test
-      // test2(0);
-      LocomotionControlStep();
+      test2(0);
       break;
 
     case 4:
       gravTest();
       break;
-  }
 
-  // if (this->_data->userParameters->test == 0)
-  // {
-  // }
-  // else if (!this->_data->userParameters->test && !this->_data->userParameters->test1)
-  // {
-  // }
-  // else if (this->_data->userParameters->test1)
-  // {
-  //   test2(0);
-  // }
+    case 5:
+      bigPID();
+      break;
+  }
 
   // safeJointTest();
 }
@@ -346,14 +336,8 @@ void FSM_State_Testing<T>::test2(float h)
     footSwingTrajectories[foot].setFinalPosition(p0);
   }
 
-  this->_data->legController->commands[foot].kpCartesian =
-    Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1,
-                this->_data->userParameters->Kp_cartesian_2)
-      .asDiagonal();
-  this->_data->legController->commands[foot].kdCartesian =
-    Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1,
-                this->_data->userParameters->Kd_cartesian_2)
-      .asDiagonal();
+  this->_data->legController->commands[foot].kpCartesian = Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1, this->_data->userParameters->Kp_cartesian_2).asDiagonal();
+  this->_data->legController->commands[foot].kdCartesian = Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1, this->_data->userParameters->Kd_cartesian_2).asDiagonal();
 
   // this->_data->legController->commands[foot].pDes = pDes;
   // this->_data->legController->commands[foot].vDes = Vec3<float>::Constant(0);
@@ -418,10 +402,7 @@ void FSM_State_Testing<T>::test2(float h)
   Vec3<T> C = _coriolis.block(6, 0, 3, 1);
   Vec3<T> G = _grav.block(6, 0, 3, 1);
   Vec3<T> tau_final(0, 0, 0);
-  tau_final =
-    tau + this->_data->legController->datas[0].J.transpose() *
-            (this->_data->legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->legController->datas[0].p) +
-             this->_data->legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->legController->datas[0].v));
+  tau_final = tau + this->_data->legController->datas[0].J.transpose() * (this->_data->legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->legController->datas[0].p) + this->_data->legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->legController->datas[0].v));
 
   ddq = M.inverse() * (tau_final - C - G);
   dq = dq + ddq * dt;
@@ -504,6 +485,106 @@ void FSM_State_Testing<T>::gravTest()
   }
 }
 
+template<typename T>
+void FSM_State_Testing<T>::bigPID()
+{
+  // roll pitch yaw x y z v_roll v_pitch v_yaw dx dy dz
+  Eigen::Matrix<float, 12, 1> x;
+  Eigen::Matrix<float, 12, 1> x_des;
+  Eigen::Matrix<float, 12, 1> e;
+  Eigen::Matrix<float, 12, 1> u;
+  x.setZero();
+  x_des.setZero();
+  u.setZero();
+
+  auto& seResult = this->_data->stateEstimator->getResult();
+
+  x.block<3, 1>(0, 0) = seResult.rpy;
+  x.block<3, 1>(3, 0) = seResult.position;
+  x.block<3, 1>(6, 0) = seResult.omegaBody;
+  x.block<3, 1>(9, 0) = seResult.vBody;
+
+  x_des.block<3, 1>(0, 0) = Eigen::Vector3f(0, 0, 0);
+  x_des.block<3, 1>(3, 0) = Eigen::Vector3f(0, 0, 0.25);
+  x_des.block<3, 1>(6, 0) = Eigen::Vector3f(0, 0, 0);
+  x_des.block<3, 1>(9, 0) = Eigen::Vector3f(0, 0, 0);
+
+  float m = 13.9;
+
+  float Px = this->_data->staticParams->Px;
+  float Py = this->_data->staticParams->Py;
+  float Pz = this->_data->staticParams->Pz;
+  float Dx = this->_data->staticParams->Dx;
+  float Dy = this->_data->staticParams->Dy;
+  float Dz = this->_data->staticParams->Dz;
+
+  float P_roll = this->_data->staticParams->P_roll;
+  float P_pitch = this->_data->staticParams->P_pitch;
+  float P_yaw = this->_data->staticParams->P_yaw;
+  float D_roll = this->_data->staticParams->D_roll;
+  float D_pitch = this->_data->staticParams->D_pitch;
+  float D_yaw = this->_data->staticParams->D_yaw;
+
+  float Fx = 0;
+  float Fy = 0;
+  float Fz = 0;
+
+  float Mx = 0;
+  float My = 0;
+  float Mz = 0;
+
+  Eigen::Vector3f r[4];
+
+  r[0] = Eigen::Vector3f(0, 0, 0);
+  r[1] = Eigen::Vector3f(0, 0, 0);
+  r[2] = Eigen::Vector3f(0, 0, 0);
+  r[2] = Eigen::Vector3f(0, 0, 0);
+
+  r[0] = this->_data->legController->datas[0].p + this->_data->quadruped->getHipLocation(0);
+  r[1] = this->_data->legController->datas[1].p + this->_data->quadruped->getHipLocation(1);
+  r[2] = this->_data->legController->datas[2].p + this->_data->quadruped->getHipLocation(2);
+  r[3] = this->_data->legController->datas[3].p + this->_data->quadruped->getHipLocation(3);
+
+  e = x_des - x;
+
+  Mx = P_roll * e(0, 0) + D_pitch * e(6, 0);
+  My = P_pitch * e(1, 0) + D_pitch * e(7, 0);
+
+  cout << "pitch err: " << e(1, 0) << endl;
+
+  Fx = Px * e(3, 0);
+  Fy = Py * e(4, 0);
+  Fz = m * 9.81 + Pz * e(5, 0) + Dz * e(11, 0);
+
+  Fx /= -4.0;
+  Fy /= -4.0;
+  Fz /= -4.0;
+
+  Mx /= -1.0;
+  My /= -1.0;
+
+  // u.block<3,1>(0,0); // F0x
+  // cout << "Fx: " << Fx << endl;
+  // cout << "Fy: " << Fy << endl;
+  // cout << "Fz: " << Fz << endl;
+
+  u.block<3, 1>(0, 0) = Eigen::Vector3f(Fx, Fy, Fz - My / 2.0 - Mx / 2.0);
+  u.block<3, 1>(3, 0) = Eigen::Vector3f(Fx, Fy, Fz - My / 2.0 + Mx / 2.0);
+  u.block<3, 1>(6, 0) = Eigen::Vector3f(Fx, Fy, Fz + My / 2.0 + Mx / 2.0);
+  u.block<3, 1>(9, 0) = Eigen::Vector3f(Fx, Fy, Fz + My / 2.0 - Mx / 2.0);
+
+  this->_data->legController->commands[0].forceFeedForward = u.block<3, 1>(0, 0);
+  this->_data->legController->commands[1].forceFeedForward = u.block<3, 1>(3, 0);
+  this->_data->legController->commands[2].forceFeedForward = u.block<3, 1>(6, 0);
+  this->_data->legController->commands[3].forceFeedForward = u.block<3, 1>(9, 0);
+
+  for (uint8_t leg = 0; leg < 4; leg++)
+  {
+    cout << "Leg " << (int)leg << ": "
+         << " Fz = " << this->_data->legController->commands[leg].forceFeedForward(2) << endl;
+  }
+}
+
 /**
  * Manages which states can be transitioned into either by the user
  * commands or state event triggers.
@@ -544,8 +625,7 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
       break;
 
     default:
-      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
-                << this->_data->userParameters->FSM_State << std::endl;
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to " << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state

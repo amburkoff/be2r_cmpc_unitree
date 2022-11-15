@@ -1,5 +1,4 @@
-#ifndef BALANCECONTROLLER_H
-#define BALANCECONTROLLER_H
+#pragma once
 /*
 
 References:
@@ -21,7 +20,6 @@ Cheetah-3-Documentation-Control:
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "Utilities/sim_command_t.hpp"
 #include "Utilities/qp_controller_data_t.hpp"
 #include <eigen3/Eigen/Dense>
 #include <qpOASES.hpp>
@@ -45,8 +43,7 @@ public:
   ~BalanceController(){};
 
   // use new kinematics measurements to update QP
-  void updateProblemData(double* xfb_in, double* p_feet_in, double* p_des, double* p_act,
-                         double* v_des, double* v_act, double* O_err, double yaw_act_in);
+  void updateProblemData(double* xfb_in, double* p_feet_in, double* p_des, double* p_act, double* v_des, double* v_act, double* O_err, double yaw_act_in);
 
   void SetContactData(double* contact_state_in, double* min_forces_in, double* max_forces_in);
 
@@ -55,8 +52,7 @@ public:
   void solveQP_nonThreaded(double* xOpt);
 
   // update desired COM and orientation setpoints
-  void set_desiredTrajectoryData(double* rpy_des_in, double* p_des_in, double* omegab_des_in,
-                                 double* v_des_in);
+  void set_desiredTrajectoryData(double* rpy_des_in, double* p_des_in, double* omegab_des_in, double* v_des_in);
   void set_PDgains(double* Kp_COM_in, double* Kd_COM_in, double* Kp_Base_in, double* Kd_Base_in);
   void set_QP_options(double use_hard_constraint_pitch_in);
 
@@ -79,7 +75,6 @@ public:
 
 private:
   qp_controller_data_t qp_controller_data, qp_controller_data_publish;
-  sim_command_t command;
 
   /* Fixed-Size qpOASES data */
   QProblem QProblemObj_qpOASES;
@@ -211,8 +206,7 @@ private:
   void calc_g_qpOASES();
   void calc_lb_ub_qpOASES();
   void calc_lbA_ubA_qpOASES();
-  void update_log_variables(double* p_des, double* p_act, double* v_des, double* v_act,
-                            double* O_err);
+  void update_log_variables(double* p_des, double* p_act, double* v_des, double* v_act, double* O_err);
   void calc_constraint_check();
 
   /* Utility Functions */
@@ -231,5 +225,3 @@ private:
 
   void rpyToR(Eigen::MatrixXd& R, double* rpy_in);
 };
-
-#endif
