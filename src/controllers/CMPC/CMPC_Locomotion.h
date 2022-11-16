@@ -101,7 +101,7 @@ public:
   void initialize();
 
   void run(ControlFSMData<float>& data);
-  void original(ControlFSMData<float>& data);
+  void myNewVersion(ControlFSMData<float>& data);
   void myVersion(ControlFSMData<float>& data);
   bool currently_jumping = false;
 
@@ -133,7 +133,7 @@ private:
   float _y_vel_des = 0.;
 
   float _body_height = 0.29;
-  float _swing_trajectory_hight = 0.09;
+  float _swing_trajectory_height = 0.09;
 
   float _body_height_running = 0.29;
   float _body_height_jumping = 0.36;

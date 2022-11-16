@@ -189,7 +189,7 @@ void BalanceControllerVBL::updateProblemData(double* xfb_in, double* p_feet_in,
   calc_A_qpOASES();
   calc_g_qpOASES();
 
-  update_log_variables(rpy_des_in, rpy_act_in);
+  // update_log_variables(rpy_des_in, rpy_act_in);
 
   cpu_time = cpu_time_fixed;
   nWSR_qpOASES = nWSR_fixed;
@@ -199,7 +199,6 @@ void BalanceControllerVBL::SetContactData(double* contact_state_in, double* min_
                                           double* max_forces_in, double threshold_in,
                                           int stance_legs_in)
 {
-
   if (stance_legs_in == 5)
   {
     max_forces_in[0] = 10;
@@ -334,7 +333,7 @@ void BalanceControllerVBL::update_A_LQR()
   }
   A_LQR.block<3, 3>(9, 6) << tempBlock;
 
-  cout << "A: " << A_LQR << endl;
+  // cout << "A: " << A_LQR << endl;
 
   /* NOTE: WE ASSUME THAT DESIRED ANGULAR VELOCITY IS ZERO
   if desired angular velocity of the body is nonzero, an additional block needs to be
@@ -408,7 +407,7 @@ void BalanceControllerVBL::update_B_LQR()
     }
   }
 
-  cout << "B: " << B_LQR << endl;
+  // cout << "B: " << B_LQR << endl;
 }
 
 void BalanceControllerVBL::update_P_LQR()
@@ -450,11 +449,11 @@ void BalanceControllerVBL::update_P_LQR()
   U21 = U.block<vblNUM_VARIABLES_QP, vblNUM_VARIABLES_QP>(vblNUM_VARIABLES_QP, 0);
   P_complex = -U21 * U11.inverse();
   P_LQR = P_complex.real();
-  cout << "P: " << P_LQR << endl;
+  // cout << "P: " << P_LQR << endl;
 
   // Optimal control policy
   f_unc = -R1_QP.inverse() * B_QP.transpose() * P_LQR * s_LQR;
-  cout << "R1_QP: " << R1_QP << endl;
+  // cout << "R1_QP: " << R1_QP << endl;
   cost_to_go = s_LQR.transpose() * P_LQR * s_LQR;
 }
 
@@ -619,7 +618,7 @@ Eigen::VectorXd BalanceControllerVBL::getFunc()
 void BalanceControllerVBL::set_RobotLimits()
 {
   minNormalForces_feet << 10, 10, 10, 10;
-  maxNormalForces_feet << 160, 160, 160, 160;
+  maxNormalForces_feet << 70, 70, 70, 70;
 }
 
 /* ------------ Utilities -------------- */
