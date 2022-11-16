@@ -1,0 +1,8 @@
+<launch>
+  <arg name="joy_input" default="2"  />
+  <param name="joy/dev" value="/dev/input/js$(arg joy_input)"   />
+  <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>
+
+  <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>
+
+</launch> 
