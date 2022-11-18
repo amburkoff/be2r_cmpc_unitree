@@ -668,14 +668,18 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
   else if (current_gait != 11)
   {
     // estimated pitch of plane and pitch correction depends on Vdes
-    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
+    // _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
+    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane;
 
+    // esli chto zakom
     if (_x_vel_des > 0)
     {
+      //forward
       _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
     }
     else
     {
+      //backward
       _pitch_des += -0.2 * _x_vel_des / data.staticParams->max_vel_x;
     }
   }
@@ -943,7 +947,8 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
 
   // pBody_RPY_des[0] = 0.;
   pBody_RPY_des[1] = _pitch_des;
-  pBody_RPY_des[0] = rpy_comp[0];
+  //pBody_RPY_des[0] = rpy_comp[0];
+  pBody_RPY_des[0] = -0.08;
   // pBody_RPY_des[1] = rpy_comp[1];
   pBody_RPY_des[2] = _yaw_des;
 
@@ -1121,6 +1126,7 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   // cout << "dtMPC: " << dtMPC << "\n";
   update_problem_data_floats(p, v, q, w, r, roll, pitch, yaw, weights, trajAll, alpha, mpcTable);
   // t2.stopPrint("Run MPC");
+  // SKOKO VREME 2ms>
   // printf("MPC Solve time %f ms\n", t2.getMs());
 
   for (int leg = 0; leg < 4; leg++)
