@@ -35,9 +35,10 @@ void Debug::_initPublishers()
   _pub_vis_leg_force[2] = _nh.advertise<visualization_msgs::Marker>("/visual/leg2/force", 1);
   _pub_vis_leg_force[3] = _nh.advertise<visualization_msgs::Marker>("/visual/leg3/force", 1);
   _pub_vis_local_body_height = _nh.advertise<visualization_msgs::Marker>("/visual/local_body_height", 1);
+  _pub_odom2base_pose = _nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("base_pose", 1);
 
 #ifdef PUB_IMU_AND_ODOM
-  _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
+  // _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
   _pub_imu = _nh.advertise<sensor_msgs::Imu>("/imu", 1);
 #endif
 }
@@ -78,34 +79,6 @@ void Debug::updatePlot()
 
   _pub_all_legs_info.publish(all_legs_info);
   _pub_body_info.publish(body_info);
-
-#ifdef PUB_IMU_AND_ODOM
-  nav_msgs::Odometry odom;
-
-  odom.header.stamp = time_stamp_udp_get;
-  odom.header.frame_id = "odom";
-  odom.child_frame_id = "base";
-
-  odom.pose.pose.position = body_info.pos_act;
-  odom.pose.pose.position.z += z_offset;
-
-  geometry_msgs::Quaternion odom_quat;
-  odom_quat.x = body_info.quat_act.y;
-  odom_quat.y = body_info.quat_act.z;
-  odom_quat.z = body_info.quat_act.w;
-  odom_quat.w = body_info.quat_act.x;
-  odom.pose.pose.orientation = odom_quat;
-  odom.twist.twist.linear = body_info.vel_act.linear;
-  odom.twist.twist.angular = body_info.vel_act.angular;
-
-  imu.header.frame_id = "imu_link";
-  imu.header.stamp = time_stamp_udp_get;
-
-  imu.orientation = odom_quat;
-
-  _pub_odom.publish(odom);
-  _pub_imu.publish(imu);
-#endif
 }
 
 void Debug::updateVisualization()
@@ -175,6 +148,48 @@ void Debug::tfOdomPublish(ros::Time stamp)
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
+
+  geometry_msgs::PoseWithCovarianceStamped pose_msg;
+
+  pose_msg.header.frame_id = "odom";
+  pose_msg.header.stamp = stamp;
+
+  pose_msg.pose.pose.position.x = body_info.pos_act.x;
+  pose_msg.pose.pose.position.y = body_info.pos_act.y;
+  pose_msg.pose.pose.position.z = body_info.pos_act.z;
+
+  pose_msg.pose.pose.orientation.x = body_info.quat_act.y;
+  pose_msg.pose.pose.orientation.y = body_info.quat_act.z;
+  pose_msg.pose.pose.orientation.z = body_info.quat_act.w;
+  pose_msg.pose.pose.orientation.w = body_info.quat_act.x;
+
+  _pub_odom2base_pose.publish(pose_msg);
+
+#ifdef PUB_IMU_AND_ODOM
+  // nav_msgs::Odometry odom;
+
+  // odom.header.stamp = time_stamp_udp_get;
+  // odom.header.frame_id = "odom";
+  // odom.child_frame_id = "base";
+
+  // odom.pose.pose.position = body_info.pos_act;
+  // odom.pose.pose.position.z += z_offset;
+
+  // geometry_msgs::Quaternion odom_quat;
+  // odom_quat.x = body_info.quat_act.y;
+  // odom_quat.y = body_info.quat_act.z;
+  // odom_quat.z = body_info.quat_act.w;
+  // odom_quat.w = body_info.quat_act.x;
+  // odom.pose.pose.orientation = odom_quat;
+  // odom.twist.twist.linear = body_info.vel_act.linear;
+  // odom.twist.twist.angular = body_info.vel_act.angular;
+
+  imu.header.frame_id = "imu_link";
+  imu.header.stamp = stamp;
+
+  // _pub_odom.publish(odom);
+  _pub_imu.publish(imu);
+#endif
 }
 
 void Debug::tfPublish()

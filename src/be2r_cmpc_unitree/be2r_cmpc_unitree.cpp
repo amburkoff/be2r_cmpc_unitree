@@ -250,6 +250,19 @@ void Body_Manager::_odomPublish()
   _debug->body_info.quat_act.z = _stateEstimator->getResult().orientation.z();
   _debug->body_info.quat_act.w = _stateEstimator->getResult().orientation.w();
 
+  _debug->imu.angular_velocity.x = _low_state.imu.gyroscope[0];
+  _debug->imu.angular_velocity.y = _low_state.imu.gyroscope[1];
+  _debug->imu.angular_velocity.z = _low_state.imu.gyroscope[2];
+
+  _debug->imu.linear_acceleration.x = _low_state.imu.accelerometer[0];
+  _debug->imu.linear_acceleration.y = _low_state.imu.accelerometer[1];
+  _debug->imu.linear_acceleration.z = _low_state.imu.accelerometer[2];
+
+  _debug->imu.orientation.w = _low_state.imu.quaternion[0];
+  _debug->imu.orientation.x = _low_state.imu.quaternion[1];
+  _debug->imu.orientation.y = _low_state.imu.quaternion[2];
+  _debug->imu.orientation.z = _low_state.imu.quaternion[3];
+
   if (is_udp_connection)
   {
     _debug->tfOdomPublish(_debug->time_stamp_udp_get);
@@ -323,7 +336,7 @@ void Body_Manager::run()
 
   _debug->updateVisualization();
   _debug->updatePlot();
-  _debug->tfPublish();
+  // _debug->tfPublish();
 }
 
 void Body_Manager::setupStep()
@@ -364,14 +377,6 @@ void Body_Manager::finalizeStep()
   _debug->body_info.vel_act.angular.x = _stateEstimator->getResult().omegaBody[0];
   _debug->body_info.vel_act.angular.y = _stateEstimator->getResult().omegaBody[1];
   _debug->body_info.vel_act.angular.z = _stateEstimator->getResult().omegaBody[2];
-
-  _debug->imu.angular_velocity.x = _low_state.imu.gyroscope[0];
-  _debug->imu.angular_velocity.y = _low_state.imu.gyroscope[1];
-  _debug->imu.angular_velocity.z = _low_state.imu.gyroscope[2];
-
-  _debug->imu.linear_acceleration.x = _low_state.imu.accelerometer[0];
-  _debug->imu.linear_acceleration.y = _low_state.imu.accelerometer[1];
-  _debug->imu.linear_acceleration.z = _low_state.imu.accelerometer[2];
 
   _debug->ground_truth_odom = ground_truth;
 

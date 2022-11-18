@@ -104,7 +104,7 @@ public:
 
   void run(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   void original(ControlFSMData<float>& data);
-  void myVersion(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void run_vision(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -156,15 +156,17 @@ private:
   int iterationsBetweenMPC;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
   int _gait_period;
+  int _gait_period_long;
   int horizonLength;
   int default_iterations_between_mpc;
   float dt;
   float dtMPC;
   int iterationCounter = 0;
+  float pitch_cmd = 0;
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGaitContact trotting, trot_contact, standing, walking, two_leg_balance;
+  OffsetDurationGaitContact trotting, trot_long, standing, walking;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];

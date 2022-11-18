@@ -20,7 +20,7 @@
 using std::cout;
 using std::endl;
 
-// #define PUB_IMU_AND_ODOM
+#define PUB_IMU_AND_ODOM
 
 class Debug
 {
@@ -77,6 +77,7 @@ private:
   ros::Publisher _pub_vis_leg_des_traj[4];
   ros::Publisher _pub_vis_leg_force[4];
   ros::Publisher _pub_vis_local_body_height;
+  ros::Publisher _pub_odom2base_pose;
   tf2_ros::TransformBroadcaster odom_broadcaster;
   tf2_ros::TransformBroadcaster world_odom_broadcaster;
   tf2_ros::Buffer _tf_buffer;

@@ -67,4 +67,7 @@
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
   </group>
 
+  <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>
+
+
 </launch> 
