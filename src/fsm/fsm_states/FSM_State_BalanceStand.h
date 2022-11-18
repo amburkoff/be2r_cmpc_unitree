@@ -42,6 +42,7 @@ private:
   void BalanceStandStepWave();
   void BalanceStandStepCircle();
   void BalanceStandGiveHand();
+  void twoLegBalance();
 
   WBC_Ctrl<T>* _wbc_ctrl;
   LocomotionCtrlData<T>* _wbc_data;

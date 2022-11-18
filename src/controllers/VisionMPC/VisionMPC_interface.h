@@ -34,7 +34,7 @@ struct vision_mpc_update_data_t
   float x_drag;
 };
 
-EXTERNC void vision_setup_problem(double dt, int horizon, double mu, double f_max);
+EXTERNC void vision_setup_problem(double dt, int horizon, double mu, double f_max, float mass);
 EXTERNC void vision_update_problem_data(double* p, double* v, double* q, double* w, double* r,
                                         double yaw, double* weights, double* state_trajectory,
                                         double alpha, int* gait);

@@ -101,7 +101,7 @@ public:
   void initialize();
 
   void run(ControlFSMData<float>& data);
-  void original(ControlFSMData<float>& data);
+  void myNewVersion(ControlFSMData<float>& data);
   void myVersion(ControlFSMData<float>& data);
   bool currently_jumping = false;
 

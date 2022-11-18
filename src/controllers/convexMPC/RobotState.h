@@ -8,10 +8,11 @@ using Eigen::Matrix;
 using Eigen::Quaternionf;
 
 #include "common_types.h"
+
 class RobotState
 {
 public:
-  void set(flt* p, flt* v, flt* q, flt* w, flt* r, flt roll, flt pitch, flt yaw);
+  void set(flt* p, flt* v, flt* q, flt* w, flt* r, flt roll, flt pitch, flt yaw, fpt mass);
   // void compute_rotations();
   void print();
   Matrix<fpt, 3, 1> p, v, w;
@@ -23,6 +24,7 @@ public:
   fpt roll;
   fpt pitch;
   fpt yaw;
+  // fpt m = 13.9; //a1
   fpt m = 16.0;
   // fpt m = 50.236; //DH
 };

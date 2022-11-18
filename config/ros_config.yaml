@@ -65,18 +65,17 @@ dynamic_loader:
   # joint_limits: 1
   joint_limits: 0
 
-
   cmpc_x_drag       : 3       # x comp param in solveDenseMPC
   cmpc_use_sparse   : 0       # switch between sparce and dense mpc
   cmpc_bonus_swing  : 0       # addition to pfx_rel variable in cmpc_locomotion
 
   # solver params
+  use_jcqp          : 0
   jcqp_alpha        : 1.5
   jcqp_max_iter     : 10000
   jcqp_rho          : 1e-07
   jcqp_sigma        : 1e-08
   jcqp_terminate    : 0.1
-  use_jcqp          : 0
 
   # For balance controller
   stance_legs       : 4
@@ -84,6 +83,8 @@ dynamic_loader:
   # GaitScheduler params (from common/controllers)
   gait_type             : 4
   gait_period           : 18
+  # gait_period           : 234 # 18*13
+  # gait_period           : 260
   gait_period_time      : 0.5
   gait_switching_phase  : 0.5
   gait_override         : 4
@@ -92,6 +93,7 @@ static_params:
   controller_dt     : 0.002
   cheater_mode      : false
   horizon           : 16
+
   # Estimators
   foot_height_sensor_noise      :  0.001
   foot_process_noise_position   :  0.002
