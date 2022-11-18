@@ -58,7 +58,7 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* quadruped,
   statesList.recoveryStand = new FSM_State_RecoveryStand<T>(&data);
   // statesList.backflip = new FSM_State_BackFlip<T>(&data);
   statesList.balance_vbl = new FSM_State_BalanceVBL<T>(&data);
-  // statesList.testingCV = new FSM_State_Testing_Cv<T>(&data);
+  statesList.testingCV = new FSM_State_Testing_Cv<T>(&data);
 
   // statesList.jointPD = new FSM_State_JointPD<T>(&data);
   // statesList.impedanceControl = new FSM_State_ImpedanceControl<T>(&data);
@@ -157,7 +157,7 @@ void ControlFSM<T>::runFSM()
         t1 = new std::thread(execBash, "12");
         ROS_WARN("TESTING");
       }
-      
+
       if (data.gamepad_command->right && (FSM_StateName::BALANCE_STAND != currentState->stateName))
       {
         data.userParameters->FSM_State = 3;

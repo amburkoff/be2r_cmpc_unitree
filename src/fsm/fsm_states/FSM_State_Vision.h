@@ -4,7 +4,7 @@
 #include "FSM_State.h"
 #include <Utilities/Timer.h>
 #include <Utilities/ros_read_param.h>
-#include <controllers/VisionMPC/VisionMPCLocomotion.h>
+#include <controllers/CMPC/CMPC_Locomotion_cv.h>
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
 #include <controllers/convexMPC/ConvexMPCLocomotion.h>
 #include <fstream>
@@ -65,7 +65,7 @@ private:
   geometry_msgs::PoseWithCovarianceStamped _robot_pose;
   // Keep track of the control iterations
   int iter = 0;
-  VisionMPCLocomotion vision_MPC;
+  CMPCLocomotion_Cv vision_MPC;
   ConvexMPCLocomotion cMPCOld;
 
   WBC_Ctrl<T>* _wbc_ctrl;

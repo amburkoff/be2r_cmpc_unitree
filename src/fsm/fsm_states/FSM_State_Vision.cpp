@@ -679,7 +679,7 @@ void FSM_State_Vision<T>::onExit()
 template<typename T>
 void FSM_State_Vision<T>::_LocomotionControlStep(const Vec3<T>& des_vel)
 {
-  vision_MPC.run(des_vel, _grid_map, _grid_map_raw, _grid_map_plane);
+  vision_MPC.run(_grid_map, _grid_map_raw);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];

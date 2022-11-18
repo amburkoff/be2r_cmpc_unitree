@@ -64,7 +64,7 @@ CMPCLocomotion_Cv::CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, Con
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
   // setup_problem(dtMPC, horizonLength, 0.4, 150); // original
-  setup_problem(dtMPC, horizonLength, 0.4, 300); // original
+  setup_problem(dtMPC, horizonLength, 0.4, 150, _data->quadruped->_whole_mass); // original
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -155,17 +155,16 @@ void CMPCLocomotion_Cv::_SetupCommand(ControlFSMData<float>& data)
   Kd_stance = Kd;
 }
 
-void CMPCLocomotion_Cv::run(ControlFSMData<float>& data,
-                            const grid_map::GridMap& height_map,
-                            const grid_map::GridMap& height_map_raw)
+void CMPCLocomotion_Cv::run(const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw)
 {
-  run_vision(data, height_map, height_map_raw);
+  run_vision(*_data, height_map, height_map_raw);
 }
 
 void CMPCLocomotion_Cv::run_vision(ControlFSMData<float>& data,
                                    const grid_map::GridMap& height_map,
                                    const grid_map::GridMap& height_map_raw)
 {
+  ROS_INFO_ONCE("Run vision-based MPC");
   bool omniMode = false;
 
   // Command Setup
@@ -745,8 +744,8 @@ void CMPCLocomotion_Cv::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data
   Vec3<float> vxy(seResult.vWorld[0], seResult.vWorld[1], 0);
 
   Timer t1;
-  dtMPC = dt * iterationsBetweenMPC;
-  setup_problem(dtMPC, horizonLength, 0.4, 120);
+  setup_problem(this->dtMPC, horizonLength, 0.4, 150, _data->quadruped->_whole_mass); // original
+
   update_x_drag(x_comp_integral);
 
   if (vxy[0] > 0.3 || vxy[0] < -0.3)

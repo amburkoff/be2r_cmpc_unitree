@@ -102,7 +102,7 @@ public:
   CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void run(const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   void original(ControlFSMData<float>& data);
   void run_vision(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   bool currently_jumping = false;
