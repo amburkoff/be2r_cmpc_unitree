@@ -34,9 +34,15 @@ MixedFrequncyGait::MixedFrequncyGait(int nSegment, Vec4<int> periods, float duty
   _phase.setZero();
 }
 
-OffsetDurationGait::~OffsetDurationGait() { delete[] _mpc_table; }
+OffsetDurationGait::~OffsetDurationGait()
+{
+  delete[] _mpc_table;
+}
 
-MixedFrequncyGait::~MixedFrequncyGait() { delete[] _mpc_table; }
+MixedFrequncyGait::~MixedFrequncyGait()
+{
+  delete[] _mpc_table;
+}
 
 Vec4<float> OffsetDurationGait::getContactState()
 {
@@ -233,9 +239,15 @@ void MixedFrequncyGait::setIterations(int iterationsBetweenMPC, int currentItera
   // printf("phase: %.3f %.3f %.3f %.3f\n", _phase[0], _phase[1], _phase[2], _phase[3]);
 }
 
-int OffsetDurationGait::getCurrentGaitPhase() { return _iteration; }
+int OffsetDurationGait::getCurrentGaitPhase()
+{
+  return _iteration;
+}
 
-int MixedFrequncyGait::getCurrentGaitPhase() { return 0; }
+int MixedFrequncyGait::getCurrentGaitPhase()
+{
+  return 0;
+}
 
 float OffsetDurationGait::getCurrentSwingTime(float dtMPC, int leg)
 {
@@ -243,7 +255,10 @@ float OffsetDurationGait::getCurrentSwingTime(float dtMPC, int leg)
   return dtMPC * _swing;
 }
 
-float MixedFrequncyGait::getCurrentSwingTime(float dtMPC, int leg) { return dtMPC * (1. - _duty_cycle) * _periods[leg]; }
+float MixedFrequncyGait::getCurrentSwingTime(float dtMPC, int leg)
+{
+  return dtMPC * (1. - _duty_cycle) * _periods[leg];
+}
 
 float OffsetDurationGait::getCurrentStanceTime(float dtMPC, int leg)
 {
@@ -251,11 +266,18 @@ float OffsetDurationGait::getCurrentStanceTime(float dtMPC, int leg)
   return dtMPC * _stance;
 }
 
-float MixedFrequncyGait::getCurrentStanceTime(float dtMPC, int leg) { return dtMPC * _duty_cycle * _periods[leg]; }
+float MixedFrequncyGait::getCurrentStanceTime(float dtMPC, int leg)
+{
+  return dtMPC * _duty_cycle * _periods[leg];
+}
 
-void OffsetDurationGait::debugPrint() {}
+void OffsetDurationGait::debugPrint()
+{
+}
 
-void MixedFrequncyGait::debugPrint() {}
+void MixedFrequncyGait::debugPrint()
+{
+}
 
 void OffsetDurationGait::earlyContactHandle(Vec4<uint8_t> footSensorState, int iterationsBetweenMPC, int currentIteration)
 {

@@ -56,9 +56,9 @@ ControlFSM<T>::ControlFSM(Quadruped<T>* quadruped,
   statesList.vision = new FSM_State_Vision<T>(&data);
   statesList.testing = new FSM_State_Testing<T>(&data);
   statesList.recoveryStand = new FSM_State_RecoveryStand<T>(&data);
-  statesList.backflip = new FSM_State_BackFlip<T>(&data);
+  // statesList.backflip = new FSM_State_BackFlip<T>(&data);
   statesList.balance_vbl = new FSM_State_BalanceVBL<T>(&data);
-  statesList.testingCV = new FSM_State_Testing_Cv<T>(&data);
+  // statesList.testingCV = new FSM_State_Testing_Cv<T>(&data);
 
   // statesList.jointPD = new FSM_State_JointPD<T>(&data);
   // statesList.impedanceControl = new FSM_State_ImpedanceControl<T>(&data);

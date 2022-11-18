@@ -58,6 +58,7 @@ private:
   void _drawEstimatedStancePLane();
   void _drawLegsDesiredTrajectory();
   void _drawLegsForce();
+  void _drawLocalBodyHeight();
 
   ros::NodeHandle _nh;
   const ros::Time _zero_time;
@@ -75,6 +76,7 @@ private:
   ros::Publisher _pub_vis_estimated_stance_plane;
   ros::Publisher _pub_vis_leg_des_traj[4];
   ros::Publisher _pub_vis_leg_force[4];
+  ros::Publisher _pub_vis_local_body_height;
   tf2_ros::TransformBroadcaster odom_broadcaster;
   tf2_ros::TransformBroadcaster world_odom_broadcaster;
   tf2_ros::Buffer _tf_buffer;
