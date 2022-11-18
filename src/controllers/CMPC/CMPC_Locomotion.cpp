@@ -1120,14 +1120,14 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 
   update_solver_settings(_parameters->jcqp_max_iter, _parameters->jcqp_rho, _parameters->jcqp_sigma, _parameters->jcqp_alpha, _parameters->jcqp_terminate, _parameters->use_jcqp);
   // t1.stopPrint("Setup MPC");
-  // printf("MPC Setup time %f ms\n", t1.getMs());
+  printf("MPC Setup time %f ms\n", t1.getMs());
 
   Timer t2;
   // cout << "dtMPC: " << dtMPC << "\n";
   update_problem_data_floats(p, v, q, w, r, roll, pitch, yaw, weights, trajAll, alpha, mpcTable);
   // t2.stopPrint("Run MPC");
   // SKOKO VREME 2ms>
-  // printf("MPC Solve time %f ms\n", t2.getMs());
+  printf("MPC Solve time %f ms\n", t2.getMs());
 
   for (int leg = 0; leg < 4; leg++)
   {

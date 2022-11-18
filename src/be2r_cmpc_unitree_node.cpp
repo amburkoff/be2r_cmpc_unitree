@@ -43,10 +43,10 @@ int main(int argc, char* argv[])
 
   while (ros::ok())
   {
-    // t2.start();
+    t2.start();
     unitree.run();
 
-    // cout << t2.getMs() << endl;
+    cout << t2.getMs() << endl;
 
     ros::spinOnce();
     rate.sleep();
