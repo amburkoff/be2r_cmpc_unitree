@@ -629,6 +629,10 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
       this->nextStateName = FSM_StateName::VISION;
       break;
 
+    case K_TESTING_CV:
+      this->nextStateName = FSM_StateName::TESTING_CV;
+      break;
+
     default:
       std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
                 << this->_data->userParameters->FSM_State << std::endl;

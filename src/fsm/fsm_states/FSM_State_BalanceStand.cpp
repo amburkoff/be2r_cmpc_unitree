@@ -222,6 +222,11 @@ FSM_StateName FSM_State_BalanceStand<T>::checkTransition()
       this->transitionDuration = 0.;
       break;
 
+    case K_TESTING_CV:
+      this->nextStateName = FSM_StateName::TESTING_CV;
+      this->transitionDuration = 0.;
+      break;
+
     case K_LAY_DOWN:
       this->nextStateName = FSM_StateName::LAYDOWN;
       break;
