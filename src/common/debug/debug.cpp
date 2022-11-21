@@ -37,6 +37,7 @@ void Debug::_initPublishers()
   _pub_vis_leg_force[2] = _nh.advertise<visualization_msgs::Marker>("/visual/leg2/force", 1);
   _pub_vis_leg_force[3] = _nh.advertise<visualization_msgs::Marker>("/visual/leg3/force", 1);
   _pub_vis_local_body_height = _nh.advertise<visualization_msgs::Marker>("/visual/local_body_height", 1);
+  _pub_odom2base_pose = _nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/base_pose", 1);
 
 #ifdef PUB_IMU_AND_ODOM
   _pub_odom = _nh.advertise<nav_msgs::Odometry>("/odom", 1);
@@ -178,6 +179,22 @@ void Debug::tfOdomPublish(ros::Time stamp)
   odom_trans.transform.rotation = odom_quat;
 
   odom_broadcaster.sendTransform(odom_trans);
+
+  geometry_msgs::PoseWithCovarianceStamped pose_msg;
+
+  pose_msg.header.frame_id = "odom";
+  pose_msg.header.stamp = stamp;
+
+  pose_msg.pose.pose.position.x = body_info.pos_act.x;
+  pose_msg.pose.pose.position.y = body_info.pos_act.y;
+  pose_msg.pose.pose.position.z = body_info.pos_act.z;
+
+  pose_msg.pose.pose.orientation.x = body_info.quat_act.y;
+  pose_msg.pose.pose.orientation.y = body_info.quat_act.z;
+  pose_msg.pose.pose.orientation.z = body_info.quat_act.w;
+  pose_msg.pose.pose.orientation.w = body_info.quat_act.x;
+
+  _pub_odom2base_pose.publish(pose_msg);
 }
 
 void Debug::tfPublish()

@@ -49,9 +49,9 @@ FSM_State_Testing_Cv<T>::FSM_State_Testing_Cv(ControlFSMData<T>* _controlFSMData
 template<typename T>
 void FSM_State_Testing_Cv<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg)
 {
-  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map);
-  if (!_grid_map.isDefaultStartIndex())
-    _grid_map.convertToDefaultStartIndex();
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_filter);
+  if (!_grid_map_filter.isDefaultStartIndex())
+    _grid_map_filter.convertToDefaultStartIndex();
 }
 
 template<typename T>
@@ -101,45 +101,8 @@ T LinearInterpolation(T initPos, T targetPos, double rate)
 template<typename T>
 void FSM_State_Testing_Cv<T>::run()
 {
-  switch (this->_data->userParameters->test)
-  {
-    case 0:
-      // test locomotion with CMPC controller
-      LocomotionControlStep();
-      break;
 
-    case 1:
-      // joint test
-      test1();
-      break;
-
-    case 2:
-      // impedance test
-      test2(0.05);
-      break;
-
-    case 3:
-      // impedance test
-      test2(0);
-      break;
-
-    case 4:
-      gravTest();
-      break;
-  }
-
-  // if (this->_data->userParameters->test == 0)
-  // {
-  // }
-  // else if (!this->_data->userParameters->test && !this->_data->userParameters->test1)
-  // {
-  // }
-  // else if (this->_data->userParameters->test1)
-  // {
-  //   test2(0);
-  // }
-
-  // safeJointTest();
+  LocomotionControlStep();
 }
 
 template<typename T>
@@ -613,7 +576,7 @@ void FSM_State_Testing_Cv<T>::LocomotionControlStep()
   // Contact state logic
   // estimateContact();
 
-  CMPC->run(*this->_data, _grid_map, _grid_map_raw);
+  CMPC->run(*this->_data, _grid_map_filter, _grid_map_raw);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];

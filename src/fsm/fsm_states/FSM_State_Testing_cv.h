@@ -59,7 +59,7 @@ private:
   ros::Subscriber _robot_pose_sub;
   ros::Subscriber _map_plane_sub;
 
-  grid_map::GridMap _grid_map;
+  grid_map::GridMap _grid_map_filter;
   grid_map::GridMap _grid_map_raw;
   // Keep track of the control iterations
   int iter = 0;
