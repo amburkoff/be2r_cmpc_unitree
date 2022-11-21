@@ -330,7 +330,6 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
 
     _updateFoothold(Pf, seResult.position, _grid_map_filter, _grid_map_raw, i);
 
-
     footSwingTrajectories[i].setFinalPosition(Pf);
     data.debug->all_legs_info.leg[i].swing_pf.x = Pf(0);
     data.debug->all_legs_info.leg[i].swing_pf.y = Pf(1);
@@ -849,13 +848,12 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
   int p0_x_idx = col_idx_body_com - floor(local_p0[0] / _grid_map_raw.getResolution());
   int p0_y_idx = row_idx_body_com - floor(local_p0[1] / _grid_map_raw.getResolution());
   auto p0_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, p0_x_idx, p0_y_idx));
-  cout << "pf_h = " << pf_h << endl;
 
   // ЕВРИСТИКА
-  static double start_offset = 0.7;
+  static double start_offset = 0.6;
   if (_data->stateEstimator->getResult().position(0) > start_offset)
   {
-    static double step_length = 0.6;
+    static double step_length = 0.8;
     double x = _data->stateEstimator->getResult().position(0) - start_offset;
     double k = x / step_length;
     if (k >= 1.0)
