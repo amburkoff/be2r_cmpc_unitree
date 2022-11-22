@@ -9,10 +9,10 @@ ContactEnergy::ContactEnergy()
   Contact_matrix.setZero();
   Leg_Jacobi.setZero();
 
-  Total_Jacobi.block(0,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
-  Total_Jacobi.block(3,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
-  Total_Jacobi.block(6,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
-  Total_Jacobi.block(9,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
+  Total_Jacobi.block(0,0,6,6) = Eigen::Matrix<float, 6, 6>::Identity();
+  //Total_Jacobi.block(3,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
+  //Total_Jacobi.block(6,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
+  //Total_Jacobi.block(9,0,3,3) = Eigen::Matrix<float, 3, 3>::Identity();
   // g = Vec3<float>(0, 0, -9.81);
   // _KinLinEnergy = float(0);
   // _KinRotEnergy = float(0);
@@ -90,7 +90,9 @@ Vec4<float> ContactEnergy::getFinalLegCost()
 {
   Eigen::Matrix<float, 6, 3> J_v;
   Mat3<float> Rbod = this->_data->_stateEstimator->getResult().rBody.transpose();
-
+  Vec6<float> Twist_B;
+  Twist_B.block(0,0,3,1) = this->_data->_stateEstimator->getResult().omegaBody;
+  Twist_B.block(3,0,3,1) = this->_data->_stateEstimator->getResult().vBody;
   Mat3<float> Jacobi;
   Mat3<float> globalCOMp_leg;
   Mat3<float> globalCOMv_leg;
@@ -105,23 +107,55 @@ Vec4<float> ContactEnergy::getFinalLegCost()
   J_v.block(3,3,3,3) = coordinateRotation(CoordinateAxis::Y,float(0));
   Leg_Jacobi.block(0,0,6,1) = J_v.block(0,1,6,1);
 
+
   for (int i = 0; i < 4; i++)
   {
     Quadruped<float> &quadruped = *this->_data->_quadruped;
+    Vec6<float> _S1;
+    Vec6<float> _S2;
+    Vec6<float> _S3;
+    _S1.setZero();
+    _S2.setZero();
+    _S3.setZero();
+
+    _S1.block(0,0,3,1)= Vec3<float>(1,0,0);
+    _S2.block(0,0,3,1)= Vec3<float>(0,1,0);
+    _S3.block(0,0,3,1)= Vec3<float>(0,1,0);
+    Mat3<float> _w1 = vectorToSkewMat(_S1.block(0,0,3,1));
+    Mat3<float> _w2 = vectorToSkewMat(_S2.block(0,0,3,1));
+    Mat3<float> _w3 = vectorToSkewMat(_S3.block(0,0,3,1));
+    Vec3<float> _r1(0,0,-quadruped._abadLinkLength);
+    Vec3<float> _r2(0,0,-quadruped._hipLinkLength);
+    Vec3<float> _r3(0,0,-quadruped._kneeLinkLength);
+    
+    _S1.block(3,0,3,1) = -_w1*_r1;
+    _S2.block(3,0,3,1) = -_w2*_r2;
+    _S3.block(3,0,3,1) = -_w3*_r3;
     Vec3<float> q = _data->_legController->datas[i].q;
-    J_v.block(0,0,3,3) = coordinateRotation(CoordinateAxis::X,q[0]);
-    J_v.block(3,3,3,3) = coordinateRotation(CoordinateAxis::Y,q[1])*coordinateRotation(CoordinateAxis::Y,q[1]);
-    Leg_Jacobi.block(0,0,6,1) = J_v.block(0,1,6,1);
+    Mat3<float> _R1 = Eigen::Matrix<float, 3, 3>::Identity() + _w1*sin(q[0]) + _w1*_w1*(1-cos(q[0]));
+    Vec3<float> _p1 = (Eigen::Matrix<float, 3, 3>::Identity()*q[0] + _w1*(1-cos(q[0])) - _w1*_w1*sin(q[0]))*_S1.block(3,0,3,1);
+    Mat3<float> _R2 = Eigen::Matrix<float, 3, 3>::Identity() + _w2*sin(q[1]) + _w2*_w2*(1-cos(q[1]));
+    Vec3<float> _p2 = (Eigen::Matrix<float, 3, 3>::Identity()*q[1] + _w2*(1-cos(q[1])) - _w2*_w2*sin(q[1]))*_S2.block(3,0,3,1);
+    Mat3<float> _R3 = Eigen::Matrix<float, 3, 3>::Identity() + _w3*sin(q[2]) + _w3*_w3*(1-cos(q[2]));
+    Vec3<float> _p3 = (Eigen::Matrix<float, 3, 3>::Identity()*q[2] + _w3*(1-cos(q[2])) - _w3*_w3*sin(q[2]))*_S3.block(3,0,3,1);
+   
+    Leg_Jacobi.block(0,0,6,1) = _S1;//coordinateRotation(CoordinateAxis::X,q[0]);
+    Leg_Jacobi.block(0,1,6,1) = createSXform(_R1,_p1)*_S2; // coordinateRotation(CoordinateAxis::Y,q[1])*coordinateRotation(CoordinateAxis::Y,q[1]);
+    Leg_Jacobi.block(0,2,6,1) = createSXform(_R1*_R2,_R1*_p2 + _p1)*_S3;
+
+    Vec3<float> _ph = quadruped.getHipLocation(i); // hip positions relative to CoM
     // compute velocities and positions of the leg COM in the local fixed hip frame 
     Metric::computeCenterLegVelAndPos(quadruped,this->_data->_legController->datas[i].q,this->_data->_legController->datas[i].qd,&(Jacobi),&(globalCOMp_leg),&(globalCOMv_leg),&(globalCOMw_leg),i);
+    Total_Jacobi.block(0,6,6,3) = createSXform(Eigen::Matrix<float, 3, 3>::Identity(),_ph)*Leg_Jacobi;
+
 
     // Body COM velocity and position in the global frame
     _position = this->_data->_stateEstimator->getResult().position;
     _vBody = this->_data->_stateEstimator->getResult().vBody;
 
-    Vec3<float> ph = quadruped.getHipLocation(i); // hip positions relative to CoM
 
-    Vec3<float> p_rel = ph + this->_data->_legController->datas[i].p; // Local frame distance from COM to leg(i)
+
+    Vec3<float> p_rel = _ph + this->_data->_legController->datas[i].p; // Local frame distance from COM to leg(i)
     
     // Local frame velocity of leg(i) relative to COM
     Vec3<float> dp_rel = this->_data->_legController->datas[i].v;
