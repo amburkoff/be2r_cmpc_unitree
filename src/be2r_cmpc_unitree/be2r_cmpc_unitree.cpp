@@ -31,9 +31,15 @@ Body_Manager::~Body_Manager()
   delete _stateEstimator;
 }
 
-void Body_Manager::UDPRecv() { udp->Recv(); }
+void Body_Manager::UDPRecv()
+{
+  udp->Recv();
+}
 
-void Body_Manager::UDPSend() { udp->Send(); }
+void Body_Manager::UDPSend()
+{
+  udp->Send();
+}
 
 UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd)
 {
@@ -639,9 +645,7 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num
   if (_legController->is_low_level == false)
   {
     _low_cmd.motorCmd[leg_num * 3 + 0].tau = cmd->kp_abad[leg_num] * (cmd->q_des_abad[leg_num] - data->q_abad[leg_num]) + cmd->kd_abad[leg_num] * (cmd->qd_des_abad[leg_num] - data->qd_abad[leg_num]) + cmd->tau_abad_ff[leg_num];
-
     _low_cmd.motorCmd[leg_num * 3 + 1].tau = cmd->kp_hip[leg_num] * (cmd->q_des_hip[leg_num] - data->q_hip[leg_num]) + cmd->kd_hip[leg_num] * (cmd->qd_des_hip[leg_num] - data->qd_hip[leg_num]) + cmd->tau_hip_ff[leg_num];
-
     _low_cmd.motorCmd[leg_num * 3 + 2].tau = cmd->kp_knee[leg_num] * (cmd->q_des_knee[leg_num] - data->q_knee[leg_num]) + cmd->kd_knee[leg_num] * (cmd->qd_des_knee[leg_num] - data->qd_knee[leg_num]) + cmd->tau_knee_ff[leg_num];
   }
   else
@@ -713,4 +717,6 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
   // cout << "[Dynamic Callback] Gait period: " << config.gait_period << endl;
 }
 
-void Body_Manager::_filterInput() {}
+void Body_Manager::_filterInput()
+{
+}

@@ -9,12 +9,12 @@
 #include <Utilities/Timer.h>
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
 
-//оригинальный параметр для MPC+WBC
+// оригинальный параметр для MPC+WBC
 #define ITERATIONS_BETWEEN_MPC 13
 // #define ITERATIONS_BETWEEN_MPC 26 //1000 Hz
 
-//лучший для только MPC
-// #define ITERATIONS_BETWEEN_MPC 10
+// лучший для только MPC
+//  #define ITERATIONS_BETWEEN_MPC 10
 
 using namespace std;
 
@@ -128,8 +128,7 @@ FSM_StateName FSM_State_Locomotion<T>::checkTransition()
         break;
 
       default:
-        std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_LOCOMOTION << " to "
-                  << this->_data->userParameters->FSM_State << std::endl;
+        std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_LOCOMOTION << " to " << this->_data->userParameters->FSM_State << std::endl;
     }
   }
   else

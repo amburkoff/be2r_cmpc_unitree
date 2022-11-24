@@ -144,7 +144,7 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
       }
     }
 
-    // cartesian PID
+    // cartesian PID (impedance)
     footForce += commands[leg].kpCartesian * (commands[leg].pDes - datas[leg].p);
     footForce += commands[leg].kiCartesian * commands[leg].integral;
     footForce += commands[leg].kdCartesian * (commands[leg].vDes - datas[leg].v);
