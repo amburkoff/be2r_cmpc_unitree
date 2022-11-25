@@ -53,7 +53,7 @@ struct StaticParams
     readRosParam("/static_params/Q_vx", Q_vx);
     readRosParam("/static_params/Q_vy", Q_vy);
     readRosParam("/static_params/Q_vz", Q_vz);
-    readRosParam("/static_params/aplha", alpha);
+    readRosParam("/static_params/alpha", alpha);
 
     readRosParam("/static_params/mpc_alpha", mpc_alpha);
     std::cout << "mpc alfa: " << mpc_alpha << std::endl;

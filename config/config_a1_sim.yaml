@@ -38,19 +38,19 @@ static_params:
 #   Q_vz: 15
 
 # LQR
-  mpc_alpha: 4.e-6
-  Q_roll: 2.5
-  Q_pitch: 2.5
+  mpc_alpha: 1.e-2
+  Q_roll: 100
+  Q_pitch: 200
   Q_yaw: 1
-  Q_x: 5
-  Q_y: 5
-  Q_z: 50
-  Q_w_roll: 1
-  Q_w_pitch: 1
+  Q_x: 10 
+  Q_y: 10 
+  Q_z: 1
+  Q_w_roll: 100
+  Q_w_pitch: 200
   Q_w_yaw: 1
-  Q_vx: 20
-  Q_vy: 20
-  Q_vz: 15
+  Q_vx: 2000 
+  Q_vy: 2000 
+  Q_vz: 10 
 
   # osqp
   # mpc_alpha: 0.7e-5

@@ -1009,12 +1009,14 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   Q(10, 10) = Q_vy;
   Q(11, 11) = Q_vz;
 
-  double alpha = data.staticParams->alpha;
+  double alpha = data.staticParams->mpc_alpha;
 
   R = alpha * R;
 
   // cout << "A: " << A << endl;
   // cout << "B: " << B << endl;
+  // cout << "Q: " << Q << endl;
+  // cout << "R: " << R << endl;
 
   /* Solve the continuous time algebraic Ricatti equation via the Schur method */
 
@@ -1162,7 +1164,9 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   {
     f = f_unc.block<3, 1>(3 * i, 0).cast<float>();
     f_ff[leg_contact_num[i]] = f;
-    Fr_des[leg_contact_num[i]] = -seResult.rBody.transpose().cast<float>() * f;
+    // Fr_des[leg_contact_num[i]] = -seResult.rBody.transpose().cast<float>() * f;
+    // Fr_des[leg_contact_num[i]] = -seResult.rBody.cast<float>() * f;
+    Fr_des[leg_contact_num[i]] = -f;
   }
 
   //---------------- LQR --------------------------
