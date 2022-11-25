@@ -459,7 +459,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         pose[foot] = Emptypose;
       }
 
-      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
+      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot],data._quadruped->getSideSign(foot));
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();

@@ -454,7 +454,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
       for (size_t i = 0; i < 21; i++)
       {
         footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + ((1.0 - swingState) / 21.0 * (float)i),
-                                                                 swingTimes[foot]);
+                                                                 swingTimes[foot],data._quadruped->getSideSign(foot));
         p_des_traj = footSwingTrajectories[foot].getPosition();
 
         pose_traj.pose.position = ros::toMsg(p_des_traj);
@@ -462,7 +462,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
         data.debug->leg_traj_des[foot].poses.push_back(pose_traj);
       }
 
-      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
+      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot],data._quadruped->getSideSign(foot));
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
@@ -848,7 +848,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       for (size_t i = 0; i < 21; i++)
       {
         footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState + ((1.0 - swingState) / 21.0 * (float)i),
-                                                                 swingTimes[foot]);
+                                                                 swingTimes[foot],data._quadruped->getSideSign(foot));
         p_des_traj = footSwingTrajectories[foot].getPosition();
 
         pose_traj.pose.position = ros::toMsg(p_des_traj);
@@ -856,7 +856,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
         data.debug->leg_traj_des[foot].poses.push_back(pose_traj);
       }
 
-      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
+      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot],data._quadruped->getSideSign(foot));
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
@@ -900,7 +900,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 
       data.debug->last_p_local_stance[foot] = ros::toMsg(data._legController->datas[foot].p + data._quadruped->getHipLocation(foot));
 
-      footSwingTrajectories[foot].computeSwingTrajectoryBezier(1.0, swingTimes[foot]);
+      footSwingTrajectories[foot].computeSwingTrajectoryBezier(1.0, swingTimes[foot],data._quadruped->getSideSign(foot));
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> vDesFootWorld(0, 0, 0);

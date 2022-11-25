@@ -14,30 +14,40 @@
  * @param swingTime : How long the swing should take (seconds)
  */
 template <typename T>
-void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime)
+void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, T legside)
 {
-  _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _pf, phase);
-  _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0, _pf, phase) / swingTime;
-  _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0, _pf, phase) / (swingTime * swingTime);
+  // _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _pf, phase);
+  // _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0, _pf, phase) / swingTime;
+  // _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0, _pf, phase) / (swingTime * swingTime);
 
-  T zp, zv, za;
-
+  // T zp, zv, za;
+  // T yp, yv, ya;
+  Vec3<T> _shifted_extr(0,legside*0.3,_height);
   if (phase < T(0.5))
   {
-    zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _height, phase * 2);
-    zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2], _p0[2] + _height, phase * 2) * 2 / swingTime;
-    za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2], _p0[2] + _height, phase * 2) * 4 / (swingTime * swingTime);
+    // zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _shifted_extr[3] phase * 2);
+    // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 2 / swingTime;
+    // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 4 / (swingTime * swingTime);
+    _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _p0 + _shifted_extr, phase * 2);
+    _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0, _p0 + _shifted_extr, phase * 2) * 2 / swingTime;
+    _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0, _p0 + _shifted_extr, phase * 2) * 4 / (swingTime * swingTime);
   }
   else
   {
-    zp = Interpolate::cubicBezier<T>(_p0[2] + _height, _pf[2], phase * 2 - 1);
-    zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2] + _height, _pf[2], phase * 2 - 1) * 2 / swingTime;
-    za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2] + _height, _pf[2], phase * 2 - 1) * 4 / (swingTime * swingTime);
-  }
+    // zp = Interpolate::cubicBezier<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1);
+    // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 2 / swingTime;
+    // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 4 / (swingTime * swingTime);
+    _p = Interpolate::cubicBezier<Vec3<T>>(_p0 + _shifted_extr, _pf, phase * 2 - 1);
+    _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0+ _shifted_extr, _pf, phase * 2 - 1) * 2 / swingTime;
+    _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0 + legside*_shifted_extr, _pf, phase * 2 - 1) * 4 / (swingTime * swingTime);
+ }
 
-  _p[2] = zp;
-  _v[2] = zv;
-  _a[2] = za;
+  // _p[2] = zp;
+  // _v[2] = zv;
+  // _a[2] = za;
+  // _p[1] = yp;
+  // _v[1] = yv;
+  // _a[1] = ya;
 }
 
 template <typename T>

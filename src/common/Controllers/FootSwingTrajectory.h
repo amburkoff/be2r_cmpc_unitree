@@ -10,6 +10,9 @@
 
 #include "cppTypes.h"
 #include <iostream>
+// #include "Controllers/PositionVelocityEstimator.h"
+#include "Controllers/StateEstimatorContainer.h"
+
 
 /*!
  * A foot swing trajectory for a single foot
@@ -38,6 +41,11 @@ public:
    */
   void setInitialPosition(Vec3<T> p0) { _p0 = p0; }
 
+  /*!
+   * Set the starting location of the foot
+   * @param stateEstimator stateEstimator  : reference to the estimator data
+   */
+  // void setStateEstimatorAdress(StateEstimatorData<T>& stateEstimator) { _stateEstimator = stateEstimator; }
 
     /*!
    * Set the mode for the basis function: 
@@ -62,7 +70,7 @@ public:
    */
   void setHeight(T h) { _height = h; }
 
-  void computeSwingTrajectoryBezier(T phase, T swingTime);
+  void computeSwingTrajectoryBezier(T phase, T swingTime, T legside);
   void computeSwingTrajectoryModified(T phase, T swingTime,int mode);
   void computeStairsSwingTrajectoryBezier(T phase, T swingTime);
 
@@ -86,6 +94,7 @@ public:
 
 private:
   Vec3<T> _p0, _pf, _p, _v, _a;
+  StateEstimatorData<T>* _stateEstimator = nullptr;
   T _height;
   int _mode;
 };

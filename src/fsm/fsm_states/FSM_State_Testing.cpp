@@ -355,7 +355,7 @@ void FSM_State_Testing<T>::test2(float h)
     }
   }
 
-  footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 2);
+  footSwingTrajectories[foot].computeSwingTrajectoryBezier(progress, 2,this->_data->_quadruped->getSideSign(foot));
 
   Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
   Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();

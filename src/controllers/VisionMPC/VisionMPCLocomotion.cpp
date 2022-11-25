@@ -370,7 +370,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       // if (foot == 0)
       // std::cout << "step height = " << swing_height << std::endl;
       footSwingTrajectories[foot].setHeight(_data->userParameters->Swing_traj_height);
-      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
+      footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot],_data->_quadruped->getSideSign(foot));
       // footSwingTrajectories[foot].computeStairsSwingTrajectoryBezier(swingState,
       // swingTimes[foot]);
 
