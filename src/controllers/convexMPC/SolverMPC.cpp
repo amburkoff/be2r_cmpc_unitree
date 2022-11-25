@@ -2,11 +2,11 @@
 #include "RobotState.h"
 #include "common_types.h"
 #include "convexMPC_interface.h"
+#include <JCQP/QpProblem.h>
+#include <Utilities/Timer.h>
 #include <cmath>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
-#include <JCQP/QpProblem.h>
-#include <Utilities/Timer.h>
 #include <qpOASES/include/qpOASES.hpp>
 #include <stdio.h>
 #include <sys/time.h>
@@ -20,8 +20,8 @@ using std::endl;
 
 Matrix<fpt, Dynamic, 13> A_qp;
 Matrix<fpt, Dynamic, Dynamic> B_qp;
-Matrix<fpt, 13, 12> Bdt;
 Matrix<fpt, 13, 13> Adt;
+Matrix<fpt, 13, 12> Bdt;
 Matrix<fpt, 25, 25> ABc, expmm;
 Matrix<fpt, Dynamic, Dynamic> S;
 Matrix<fpt, Dynamic, 1> X_d;
@@ -369,7 +369,7 @@ void solve_mpc(update_data_t* update, problem_setup* setup)
   print_update_data(update, setup->horizon);
 #endif
 
-  // roll pitch yaw
+  // yaw pitch roll !!!
   Matrix<fpt, 3, 1> rpy;
   quat_to_rpy(rs.q, rpy);
 

@@ -336,14 +336,8 @@ void FSM_State_Testing<T>::test2(float h)
     footSwingTrajectories[foot].setFinalPosition(p0);
   }
 
-  this->_data->legController->commands[foot].kpCartesian =
-    Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1,
-                this->_data->userParameters->Kp_cartesian_2)
-      .asDiagonal();
-  this->_data->legController->commands[foot].kdCartesian =
-    Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1,
-                this->_data->userParameters->Kd_cartesian_2)
-      .asDiagonal();
+  this->_data->legController->commands[foot].kpCartesian = Vec3<float>(this->_data->userParameters->Kp_cartesian_0, this->_data->userParameters->Kp_cartesian_1, this->_data->userParameters->Kp_cartesian_2).asDiagonal();
+  this->_data->legController->commands[foot].kdCartesian = Vec3<float>(this->_data->userParameters->Kd_cartesian_0, this->_data->userParameters->Kd_cartesian_1, this->_data->userParameters->Kd_cartesian_2).asDiagonal();
 
   // this->_data->legController->commands[foot].pDes = pDes;
   // this->_data->legController->commands[foot].vDes = Vec3<float>::Constant(0);
@@ -408,10 +402,7 @@ void FSM_State_Testing<T>::test2(float h)
   Vec3<T> C = _coriolis.block(6, 0, 3, 1);
   Vec3<T> G = _grav.block(6, 0, 3, 1);
   Vec3<T> tau_final(0, 0, 0);
-  tau_final =
-    tau + this->_data->legController->datas[0].J.transpose() *
-            (this->_data->legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->legController->datas[0].p) +
-             this->_data->legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->legController->datas[0].v));
+  tau_final = tau + this->_data->legController->datas[0].J.transpose() * (this->_data->legController->commands[0].kpCartesian * (pDesFootWorld - this->_data->legController->datas[0].p) + this->_data->legController->commands[0].kdCartesian * (vDesFootWorld - this->_data->legController->datas[0].v));
 
   ddq = M.inverse() * (tau_final - C - G);
   dq = dq + ddq * dt;
@@ -634,8 +625,7 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
       break;
 
     default:
-      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
-                << this->_data->userParameters->FSM_State << std::endl;
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to " << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state
@@ -731,6 +721,7 @@ void FSM_State_Testing<T>::LocomotionControlStep()
       _wbc_data->aFoot_des[i] = CMPC->aFoot_des[i];
       _wbc_data->Fr_des[i] = CMPC->Fr_des[i];
     }
+
     _wbc_data->contact_state = CMPC->contact_state;
     _wbc_ctrl->run(_wbc_data, *this->_data);
   }

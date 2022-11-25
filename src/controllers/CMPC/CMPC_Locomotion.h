@@ -16,82 +16,6 @@
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-template<typename T>
-struct CMPC_result
-{
-  LegControllerCommand<T> commands[4];
-  Vec4<T> contactPhase;
-};
-
-struct CMPC_jump
-{
-  static constexpr int START_SEG = 6;
-  static constexpr int END_SEG = 0;
-  static constexpr int END_COUNT = 2;
-  bool jump_pending = false;
-  bool jump_in_progress = false;
-  bool pressed = false;
-  int seen_end_count = 0;
-  int last_seg_seen = 0;
-  int jump_wait_counter = 0;
-
-  void debug(int seg)
-  {
-    (void)seg;
-    // printf("[%d] pending %d running %d\n", seg, jump_pending, jump_in_progress);
-  }
-
-  void trigger_pressed(int seg, bool trigger)
-  {
-    (void)seg;
-    if (!pressed && trigger)
-    {
-      if (!jump_pending && !jump_in_progress)
-      {
-        jump_pending = true;
-        // printf("jump pending @ %d\n", seg);
-      }
-    }
-    pressed = trigger;
-  }
-
-  bool should_jump(int seg)
-  {
-    debug(seg);
-
-    if (jump_pending && seg == START_SEG)
-    {
-      jump_pending = false;
-      jump_in_progress = true;
-      // printf("jump begin @ %d\n", seg);
-      seen_end_count = 0;
-      last_seg_seen = seg;
-      return true;
-    }
-
-    if (jump_in_progress)
-    {
-      if (seg == END_SEG && seg != last_seg_seen)
-      {
-        seen_end_count++;
-        if (seen_end_count == END_COUNT)
-        {
-          seen_end_count = 0;
-          jump_in_progress = false;
-          // printf("jump end @ %d\n", seg);
-          last_seg_seen = seg;
-          return false;
-        }
-      }
-      last_seg_seen = seg;
-      return true;
-    }
-
-    last_seg_seen = seg;
-    return false;
-  }
-};
-
 class CMPCLocomotion
 {
 public:
@@ -102,6 +26,7 @@ public:
 
   void run(ControlFSMData<float>& data);
   void myNewVersion(ControlFSMData<float>& data);
+  void myLQRVersion(ControlFSMData<float>& data);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -145,11 +70,13 @@ private:
   DVec<float> _coriolis;
   ControlFSMData<float>* _data;
 
+  //----------------------- LQR -------------------------
+  Eigen::Matrix<double, 3, 3> cross_mat(Eigen::Matrix<double, 3, 3> I_inv, Eigen::Matrix<double, 3, 1> r);
+  //----------------------- LQR -------------------------
+
   void recompute_timing(int iterations_per_mpc);
   void updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
   void solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
-  void solveSparseMPC(int* mpcTable, ControlFSMData<float>& data);
-  void initSparseMPC();
   void _updateModel(const StateEstimate<float>& state_est, const LegControllerData<float>* leg_data);
   int iterationsBetweenMPC;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
@@ -178,11 +105,8 @@ private:
   float pitch_cmd = 0;
   float x_comp_integral = 0;
   Vec3<float> pFoot[4];
-  CMPC_result<float> result;
   float trajAll[12 * 36];
   ros::NodeHandle _nh;
-
-  CMPC_jump jump_state;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
 

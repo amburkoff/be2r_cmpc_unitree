@@ -304,6 +304,7 @@ void FSM_State_Locomotion<T>::LocomotionControlStep()
       _wbc_data->aFoot_des[i] = cMPCOld->aFoot_des[i];
       _wbc_data->Fr_des[i] = cMPCOld->Fr_des[i];
     }
+
     _wbc_data->contact_state = cMPCOld->contact_state;
     _wbc_ctrl->run(_wbc_data, *this->_data);
   }

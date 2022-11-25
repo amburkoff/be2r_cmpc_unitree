@@ -86,16 +86,7 @@ int has_solved = 0;
 //  solve_mpc(&update, &problem_configuration);
 //}
 // safely copies problem data and starts the solver
-void update_problem_data(double* p,
-                         double* v,
-                         double* q,
-                         double* w,
-                         double* r,
-                         double yaw,
-                         double* weights,
-                         double* state_trajectory,
-                         double alpha,
-                         int* gait)
+void update_problem_data(double* p, double* v, double* q, double* w, double* r, double yaw, double* weights, double* state_trajectory, double alpha, int* gait)
 {
   mfp_to_flt(update.p, p, 3);
   mfp_to_flt(update.v, v, 3);
@@ -136,18 +127,7 @@ void update_solver_settings(int max_iter, double rho, double sigma, double solve
   }
 }
 
-void update_problem_data_floats(float* p,
-                                float* v,
-                                float* q,
-                                float* w,
-                                float* r,
-                                float roll,
-                                float pitch,
-                                float yaw,
-                                float* weights,
-                                float* state_trajectory,
-                                float alpha,
-                                int* gait)
+void update_problem_data_floats(float* p, float* v, float* q, float* w, float* r, float roll, float pitch, float yaw, float* weights, float* state_trajectory, float alpha, int* gait)
 {
   update.alpha = alpha;
   update.roll = roll;
@@ -165,7 +145,10 @@ void update_problem_data_floats(float* p,
   has_solved = 1;
 }
 
-void update_x_drag(float x_drag) { update.x_drag = x_drag; }
+void update_x_drag(float x_drag)
+{
+  update.x_drag = x_drag;
+}
 
 double get_solution(int index)
 {
