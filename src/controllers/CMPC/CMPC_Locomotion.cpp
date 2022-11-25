@@ -346,7 +346,7 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
   Vec4<float> swingStates = gait->getSwingState();
   int* mpcTable = gait->getMpcTable();
 
-  updateMPCIfNeeded(mpcTable, data, omniMode);
+  // updateMPCIfNeeded(mpcTable, data, omniMode);
 
   Vec4<float> se_contactState(0, 0, 0, 0);
   static bool is_stance[4] = { 0, 0, 0, 0 };
@@ -425,9 +425,9 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(pDesFootWorld);
       data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
 
-      // Eigen::Vector3f f = Eigen::Vector3f(0, 0, 0.0);
-      // Fr_des[foot] = -seResult.rBody * f;
-      // f_ff[foot] = Fr_des[foot];
+      Eigen::Vector3f f = Eigen::Vector3f(0, 0, 0.0);
+      Fr_des[foot] = -seResult.rBody * f;
+      f_ff[foot] = Fr_des[foot];
 
       data.debug->leg_force[foot] = ros::toMsg(f_ff[foot]);
 
@@ -605,8 +605,6 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
         trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + dtMPC * v_des_world[1];
       }
     }
-
-    Timer solveTimer;
 
     // dense matrix - contain mostly NON zero values
     solveDenseMPC(mpcTable, data);
@@ -938,11 +936,11 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
     }
   }
 
-  cout << "contacts: " << (int)contacts << endl;
-  cout << "contacts leg: " << (int)leg_contact_num[0] << endl;
-  cout << "contacts leg: " << (int)leg_contact_num[1] << endl;
-  cout << "contacts leg: " << (int)leg_contact_num[2] << endl;
-  cout << "contacts leg: " << (int)leg_contact_num[3] << endl;
+  // cout << "contacts: " << (int)contacts << endl;
+  // cout << "contacts leg: " << (int)leg_contact_num[0] << endl;
+  // cout << "contacts leg: " << (int)leg_contact_num[1] << endl;
+  // cout << "contacts leg: " << (int)leg_contact_num[2] << endl;
+  // cout << "contacts leg: " << (int)leg_contact_num[3] << endl;
 
   //---------------- LQR --------------------------
 
@@ -984,6 +982,36 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
     B.block<3, 3>(6, i * 3) = cross_mat(I_world.inverse(), r[leg_contact_num[i]]);
     B.block<3, 3>(9, i * 3) = Eigen::Matrix3d::Identity() / mass;
   }
+
+  double Q_roll = data.staticParams->Q_roll;
+  double Q_pitch = data.staticParams->Q_pitch;
+  double Q_yaw = data.staticParams->Q_yaw;
+  double Q_x = data.staticParams->Q_x;
+  double Q_y = data.staticParams->Q_y;
+  double Q_z = data.staticParams->Q_z;
+  double Q_w_roll = data.staticParams->Q_w_roll;
+  double Q_w_pitch = data.staticParams->Q_w_pitch;
+  double Q_w_yaw = data.staticParams->Q_w_yaw;
+  double Q_vx = data.staticParams->Q_vx;
+  double Q_vy = data.staticParams->Q_vy;
+  double Q_vz = data.staticParams->Q_vz;
+
+  Q(0, 0) = Q_roll;
+  Q(1, 1) = Q_pitch;
+  Q(2, 2) = Q_yaw;
+  Q(3, 3) = Q_x;
+  Q(4, 4) = Q_y;
+  Q(5, 5) = Q_z;
+  Q(6, 6) = Q_w_roll;
+  Q(7, 7) = Q_w_pitch;
+  Q(8, 8) = Q_w_yaw;
+  Q(9, 9) = Q_vx;
+  Q(10, 10) = Q_vy;
+  Q(11, 11) = Q_vz;
+
+  double alpha = data.staticParams->alpha;
+
+  R = alpha * R;
 
   // cout << "A: " << A << endl;
   // cout << "B: " << B << endl;
@@ -1077,8 +1105,10 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   s_LQR(8) = _yaw_turn_rate - seResult.omegaWorld[2];
 
   s_LQR(9) = v_des_world[0] - seResult.vWorld[0];
-  s_LQR(10) = v_des_world[0] - seResult.vWorld[1];
+  s_LQR(10) = v_des_world[1] - seResult.vWorld[1];
   s_LQR(11) = 0 - seResult.vWorld[2];
+
+  cout << "error: " << s_LQR << endl;
 
   static Eigen::VectorXd f_prev;
   // Optimal control policy
@@ -1103,29 +1133,36 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
 
   if (std::isnan(f_unc(0)))
   {
-    cout << "-------------------------------force nan" << endl;
+    // cout << "-------------------------------force nan" << endl;
     f_unc = fg;
   }
 
-  cout << "f: " << f_unc << endl;
+  float f_max = 150;
+
+  for (size_t i = 0; i < size(f_unc); i++)
+  {
+    if (f_unc[i] > f_max)
+    {
+      f_unc[i] = f_max;
+    }
+
+    if (f_unc[i] < -f_max)
+    {
+      f_unc[i] = -f_max;
+    }
+  }
+
+  // cout << "f: " << f_unc << endl;
 
   uint8_t leg_number = 0;
 
-  // Eigen::Vector3f f = Eigen::Vector3f(0, 0, 6.0 * 9.81);
   Eigen::Vector3f f(0, 0, 0);
-  // f_ff[foot] = -seResult.rBody * f;
-
-  // cout << "leg num: " << (int)leg_number << endl;
-  // if (leg_number < contacts)
-  // {
-  //   leg_number++;
-  // }
 
   for (size_t i = 0; i < contacts; i++)
   {
     f = f_unc.block<3, 1>(3 * i, 0).cast<float>();
     f_ff[leg_contact_num[i]] = f;
-    Fr_des[leg_contact_num[i]] = f;
+    Fr_des[leg_contact_num[i]] = -seResult.rBody.transpose().cast<float>() * f;
   }
 
   //---------------- LQR --------------------------
@@ -1258,20 +1295,10 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
         data.legController->commands[foot].kdCartesian = Kd_stance;
       }
 
-      Eigen::Vector3f f = Eigen::Vector3f(0, 0, 6.0 * 9.81);
-      // Eigen::Vector3f f(0, 0, 0);
-      f_ff[foot] = -seResult.rBody * f;
-
-      // cout << "leg num: " << (int)leg_number << endl;
-      // if (leg_number < contacts)
-      // {
-      //   f = f_unc.block<3, 1>(3 * leg_number, 0).cast<float>();
-      //   leg_number++;
-      // }
-
-      // f_ff[foot] = f;
+      // Eigen::Vector3f f = Eigen::Vector3f(0, 0, 6.0 * 9.81);
+      // // Eigen::Vector3f f(0, 0, 0);
+      // f_ff[foot] = -seResult.rBody * f;
       // Fr_des[foot] = f;
-      Fr_des[foot] = f_ff[foot];
 
       data.debug->all_legs_info.leg.at(foot).p_des = ros::toMsg(pDesLeg);
       data.debug->all_legs_info.leg.at(foot).v_des = ros::toMsg(vDesLeg);

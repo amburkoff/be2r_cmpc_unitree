@@ -52,7 +52,9 @@ class CheaterPositionVelocityEstimator : public GenericEstimator<T>
 {
 public:
   virtual void run();
-  virtual void setup() {}
+  virtual void setup()
+  {
+  }
 };
 
 #endif // PROJECT_POSITIONVELOCITYESTIMATOR_H

@@ -13,7 +13,7 @@
  * @param phase : How far along we are in the swing (0 to 1)
  * @param swingTime : How long the swing should take (seconds)
  */
-template <typename T>
+template<typename T>
 void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime)
 {
   _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _pf, phase);
@@ -45,7 +45,7 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime)
  * @param phase : How far along we are in the swing (0 to 1)
  * @param swingTime : How long the swing should take (seconds)
  */
-template <typename T>
+template<typename T>
 void FootSwingTrajectory<T>::computeStairsSwingTrajectoryBezier(T phase, T swingTime)
 {
   _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _pf, phase);

@@ -52,7 +52,6 @@ include_directories(
   src/fsm
   src/fsm/fsm_states
   src/third_party
-  src/third_party/ParamHandler
   src/third_party/qpOASES/include
   ${catkin_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}

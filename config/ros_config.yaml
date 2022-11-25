@@ -17,53 +17,27 @@ dynamic_loader:
   Kd_joint_1: 1.0
   Kd_joint_2: 1.0
 
-  # Kp_ori_0: 100.0
-  # Kp_ori_1: 100.0
+  Kp_ori_0: 100.0
+  Kp_ori_1: 100.0
   # Kp_ori_0: 100.0
   # Kp_ori_1: 500.0
-  # Kp_ori_2: 100.0
+  Kp_ori_2: 100.0
 
-  # Kd_ori_0: 10.0
-  # Kd_ori_1: 10.0
-  # Kd_ori_0: 10.0
+  Kd_ori_0: 10.0
+  Kd_ori_1: 10.0
+  Kd_ori_0: 10.0
   # Kd_ori_1: 10.0
   # Kd_ori_2: 10.0
 
-  # Kp_body_0: 100.0
-  # Kp_body_1: 100.0
-  # Kp_body_2: 100.0
-  # Kp_body_2: 100.0
-  
-  # Kd_body_0: 10.0
-  # Kd_body_1: 10.0
-  # Kd_body_2: 10.0
-  # Kd_body_2: 1.0
-
-  # Kp_foot_0: 500.0
-  # Kp_foot_1: 500.0
-  # Kp_foot_2: 500.0
-
-  # Kd_foot_0: 10.0
-  # Kd_foot_1: 10.0
-  # Kd_foot_2: 10.0
-  # Kd_foot_2: 10.0
-
-# no mpc
-  Kp_ori_0: 1000.0
-  Kp_ori_1: 1000.0
-  Kp_ori_2: 1000.0
-
-  Kd_ori_0: 100.0
-  Kd_ori_1: 100.0
-  Kd_ori_2: 100.0
-
   Kp_body_0: 100.0
   Kp_body_1: 100.0
-  Kp_body_2: 100000.0
-
-  Kd_body_0: 1000.0
-  Kd_body_1: 1000.0
-  Kd_body_2: 1000.0
+  Kp_body_2: 100.0
+  # Kp_body_2: 100.0
+  
+  Kd_body_0: 10.0
+  Kd_body_1: 10.0
+  Kd_body_2: 10.0
+  # Kd_body_2: 1.0
 
   Kp_foot_0: 500.0
   Kp_foot_1: 500.0
@@ -72,6 +46,32 @@ dynamic_loader:
   Kd_foot_0: 10.0
   Kd_foot_1: 10.0
   Kd_foot_2: 10.0
+  # Kd_foot_2: 10.0
+
+# no mpc
+  # Kp_ori_0: 1000.0
+  # Kp_ori_1: 1000.0
+  # Kp_ori_2: 1000.0
+
+  # Kd_ori_0: 100.0
+  # Kd_ori_1: 100.0
+  # Kd_ori_2: 100.0
+
+  # Kp_body_0: 100.0
+  # Kp_body_1: 100.0
+  # Kp_body_2: 100000.0
+
+  # Kd_body_0: 1000.0
+  # Kd_body_1: 1000.0
+  # Kd_body_2: 1000.0
+
+  # Kp_foot_0: 500.0
+  # Kp_foot_1: 500.0
+  # Kp_foot_2: 500.0
+
+  # Kd_foot_0: 10.0
+  # Kd_foot_1: 10.0
+  # Kd_foot_2: 10.0
 
   # Swing leg parameters
   # work when WBC turned off

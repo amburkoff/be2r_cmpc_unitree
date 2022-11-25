@@ -1,6 +1,5 @@
 include_directories("../third-party")
 include_directories(SYSTEM "../third-party/qpOASES/include")
-include_directories("../third-party/ParamHandler")
 include_directories("fsm_states")
 include_directories("../controllers/convexMPC")
 include_directories("../controllers")

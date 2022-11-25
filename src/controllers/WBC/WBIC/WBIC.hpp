@@ -7,7 +7,7 @@
 #include <WBC/Task.hpp>
 #include <WBC/WBC.hpp>
 
-template <typename T>
+template<typename T>
 class WBIC_ExtraData
 {
 public:
@@ -20,21 +20,24 @@ public:
   DVec<T> _W_floating;
   DVec<T> _W_rf;
 
-  WBIC_ExtraData() {}
-  ~WBIC_ExtraData() {}
+  WBIC_ExtraData()
+  {
+  }
+  ~WBIC_ExtraData()
+  {
+  }
 };
 
-template <typename T>
+template<typename T>
 class WBIC : public WBC<T>
 {
 public:
-  WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list,
-       const std::vector<Task<T>*>* task_list);
-  virtual ~WBIC() {}
+  WBIC(size_t num_qdot, const std::vector<ContactSpec<T>*>* contact_list, const std::vector<Task<T>*>* task_list);
+  virtual ~WBIC()
+  {
+  }
 
-  virtual void UpdateSetting(const DMat<T>& A, const DMat<T>& Ainv,
-                             const DVec<T>& cori, const DVec<T>& grav,
-                             void* extra_setting = NULL);
+  virtual void UpdateSetting(const DMat<T>& A, const DMat<T>& Ainv, const DVec<T>& cori, const DVec<T>& grav, void* extra_setting = NULL);
 
   virtual void MakeTorque(DVec<T>& cmd, void* extra_input = NULL);
 
