@@ -497,9 +497,9 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
         data.legController->commands[foot].kdCartesian = Kd_stance;
       }
 
-      Eigen::Vector3f f = Eigen::Vector3f(0, 0, -6.0 * 9.81);
-      Fr_des[foot] = -seResult.rBody * f;
-      f_ff[foot] = Fr_des[foot];
+      Eigen::Vector3f f = Eigen::Vector3f(0, 0, 6.0 * 9.81);
+      f_ff[foot] = -seResult.rBody * f;
+      Fr_des[foot] = f;
 
       se_contactState[foot] = contactState;
 
