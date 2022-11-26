@@ -32,6 +32,7 @@ void Debug::_initPublishers()
   _pub_vis_leg_des_traj[1] = _nh.advertise<nav_msgs::Path>("/visual/leg1/des_traj", 1);
   _pub_vis_leg_des_traj[2] = _nh.advertise<nav_msgs::Path>("/visual/leg2/des_traj", 1);
   _pub_vis_leg_des_traj[3] = _nh.advertise<nav_msgs::Path>("/visual/leg3/des_traj", 1);
+  _pub_vis_body_des_traj = _nh.advertise<nav_msgs::Path>("/visual/body/des_traj", 1);
   _pub_vis_leg_force[0] = _nh.advertise<visualization_msgs::Marker>("/visual/leg0/force", 1);
   _pub_vis_leg_force[1] = _nh.advertise<visualization_msgs::Marker>("/visual/leg1/force", 1);
   _pub_vis_leg_force[2] = _nh.advertise<visualization_msgs::Marker>("/visual/leg2/force", 1);

@@ -3,11 +3,20 @@
 using namespace std;
 // using namespace USDK;
 
+static float controller_dt = 0.002;
+static float controller_freq = 500;
+
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "unitree_ctrl");
   ros::NodeHandle n;
-  ros::Rate rate(MAIN_LOOP_RATE);
+
+  readRosParam("/static_params/controller_dt", controller_dt);
+  controller_freq = 1.0 / controller_dt;
+  cout << "[main] Controller dt: " << controller_dt << " main loop frequency: " << controller_freq << endl;
+
+  // ros::Rate rate(MAIN_LOOP_RATE);
+  ros::Rate rate(controller_freq);
 
   ROS_INFO("Initialization...");
 
@@ -15,7 +24,8 @@ int main(int argc, char* argv[])
 
   unsigned long tick = 0;
 
-  while (tick < MAIN_LOOP_RATE / 3)
+  // while (tick < MAIN_LOOP_RATE / 3)
+  while (tick < controller_freq / 3.0)
   {
     tick++;
     ROS_INFO_ONCE("WAIT ROS Init");

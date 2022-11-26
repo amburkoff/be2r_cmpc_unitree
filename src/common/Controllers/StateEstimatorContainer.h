@@ -1,3 +1,5 @@
+#pragma once
+
 /*!
  * @file StateEstimator.h
  * @brief Implementation of State Estimator Interface
@@ -6,9 +8,6 @@
  *
  * When the state estimator is run, it runs all estimators.
  */
-
-#ifndef PROJECT_STATEESTIMATOR_H
-#define PROJECT_STATEESTIMATOR_H
 
 #include "Controllers/LegController.h"
 #include "SimUtilities/IMUTypes.h"
@@ -241,5 +240,3 @@ private:
   std::vector<GenericEstimator<T>*> _estimators;
   Vec4<T> _phase;
 };
-
-#endif // PROJECT_STATEESTIMATOR_H

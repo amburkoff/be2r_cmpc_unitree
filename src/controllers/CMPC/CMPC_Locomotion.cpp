@@ -1051,19 +1051,8 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
     lambda = es.eigenvalues()[i];
 
     if (lambda.real() < 0 && j < 12)
-    // if (lambda.real() < 0)
     {
-      // cout << "j: " << j << endl;
-
-      // if (j < 12)
-      // {
       U.block<2 * 12, 1>(0, j) << es.eigenvectors().col(i);
-      // }
-      // else
-      // {
-      //   U.block<2 * 12, 1>(12, j - 12) << es.eigenvectors().col(i);
-      // }
-
       j = j + 1;
     }
   }
@@ -1075,27 +1064,11 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   P_LQR = P_complex.real();
   // cout << "P: " << P_LQR << endl;
 
-  // pBody_des[0] = world_position_desired[0];
-  // pBody_des[1] = world_position_desired[1];
-  // pBody_des[2] = _body_height;
-
-  // vBody_des[0] = v_des_world[0];
-  // vBody_des[1] = v_des_world[1];
-  // vBody_des[2] = 0.;
-
-  // aBody_des.setZero();
-
-  // pBody_RPY_des[0] = 0.0;
-  // pBody_RPY_des[1] = 0.0;
-  // // pBody_RPY_des[1] = _pitch_des;
-  // pBody_RPY_des[2] = _yaw_des;
-
-  // vBody_Ori_des[0] = 0.;
-  // vBody_Ori_des[1] = 0.;
-  // vBody_Ori_des[2] = _yaw_turn_rate;
+  _pitch_des = 0;
 
   s_LQR(0) = 0.0 - seResult.rpy[0];
-  s_LQR(1) = 0.0 - seResult.rpy[1];
+  // s_LQR(1) = 0.0 - seResult.rpy[1];
+  s_LQR(1) = _pitch_des - seResult.rpy[1];
   s_LQR(2) = _yaw_des - seResult.rpy[2];
 
   s_LQR(3) = world_position_desired[0] - seResult.position[0];
@@ -1110,9 +1083,8 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   s_LQR(10) = v_des_world[1] - seResult.vWorld[1];
   s_LQR(11) = 0 - seResult.vWorld[2];
 
-  cout << "error: " << s_LQR << endl;
+  // cout << "error: " << s_LQR << endl;
 
-  static Eigen::VectorXd f_prev;
   // Optimal control policy
   Eigen::VectorXd f_unc;
   f_unc.resize(3 * contacts, 1);
@@ -1153,6 +1125,41 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
       f_unc[i] = -f_max;
     }
   }
+
+  // float mu = 0.4;
+
+  // for (size_t i = 0; i < contacts; i++)
+  // {
+  //   double Fx = 0;
+  //   double Fy = 0;
+  //   double Fz = 0;
+
+  //   Fx = f_unc(3 * i + 0);
+  //   Fy = f_unc(3 * i + 1);
+  //   Fz = f_unc(3 * i + 2);
+
+  //   if (Fx > mu * Fz)
+  //   {
+  //     Fx = mu * Fz;
+  //   }
+  //   if (Fx < -mu * Fz)
+  //   {
+  //     Fx = -mu * Fz;
+  //   }
+
+  //   if (Fy > mu * Fz)
+  //   {
+  //     Fy = mu * Fz;
+  //   }
+  //   if (Fy < -mu * Fz)
+  //   {
+  //     Fy = -mu * Fz;
+  //   }
+
+  //   f_unc(3 * i + 0) = Fx;
+  //   f_unc(3 * i + 1) = Fy;
+  //   f_unc(3 * i + 2) = Fz;
+  // }
 
   // cout << "f: " << f_unc << endl;
 
@@ -1330,8 +1337,8 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.0;
-  pBody_RPY_des[1] = 0.0;
-  // pBody_RPY_des[1] = _pitch_des;
+  // pBody_RPY_des[1] = 0.0;
+  pBody_RPY_des[1] = _pitch_des;
   pBody_RPY_des[2] = _yaw_des;
 
   vBody_Ori_des[0] = 0.;

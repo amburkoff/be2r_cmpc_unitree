@@ -36,19 +36,12 @@
 
 // BE2R
 #include "Controllers/be2rPositionVelocityEstimator.h"
+#include "common/reference_trajectory_generator/reference_trajectory_generator.h"
 #include "debug.hpp"
 
 // Unitree sdk
-// namespace USDK
-// {
+
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
-// }
-// using namespace USDK;
-
-#define MAIN_LOOP_RATE 500
-
-// #define FSM 3
-// #define FSM_AUTO
 
 #define MOTOR_BREAK 0x00
 #define MOTOR_ON 0x0A
@@ -99,9 +92,14 @@ private:
   ros::ServiceServer _srv_start_map;
   ros::Time _time_start;
   const ros::Time _zero_time;
+
   bool _is_param_updated = false;
   bool _is_do_step = false;
   float _do_step_vel = 0;
+  bool _is_low_level = false;
+  int _power_limit = 0;
+  bool _is_torque_safe = true;
+  string _robot_type = "a1";
 
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig> server;
   dynamic_reconfigure::Server<be2r_cmpc_unitree::ros_dynamic_paramsConfig>::CallbackType f;
@@ -112,6 +110,7 @@ private:
   void _initParameters();
   void _odomPublish();
 
+  void _readRobotData();
   void _lowStateCallback(unitree_legged_msgs::LowState msg);
   void _cmdVelCallback(geometry_msgs::Twist msg);
   void _torqueCalculator(SpiCommand* cmd, SpiData* data, int leg_num);
@@ -124,7 +123,6 @@ private:
   // Unitree sdk
   UNITREE_LEGGED_SDK::Safety safe;
   UNITREE_LEGGED_SDK::UDP* udp;
-  void _readRobotData();
   UNITREE_LEGGED_SDK::LowCmd _udp_low_cmd = {};
   UNITREE_LEGGED_SDK::LowState _udp_low_state = {};
   nav_msgs::Odometry ground_truth = {};
@@ -138,13 +136,10 @@ private:
   StateEstimate<float> _stateEstimate;
   CheaterState<float> _cheater_state;
   Debug* _debug = nullptr;
+  RTG* _rtg = nullptr;
   GamepadCommand* _gamepad_command = nullptr;
   unitree_legged_msgs::LowState _low_state;
   unitree_legged_msgs::LowCmd _low_cmd;
-  bool _is_low_level = false;
-  int _power_limit = 0;
-  bool _is_torque_safe = true;
-  string _robot_type = "a1";
 
   // Gait Scheduler controls the nominal contact schedule for the feet
   GaitScheduler<float>* _gaitScheduler;

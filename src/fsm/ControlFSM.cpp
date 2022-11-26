@@ -19,12 +19,6 @@ void execBash(string msg)
  * Constructor for the Control FSM. Passes in all of the necessary
  * data and stores it in a struct. Initializes the FSM with a starting
  * state and operating mode.
- *
- * @param quadruped the quadruped information
- * @param stateEstimator contains the estimated states
- * @param legController interface to the leg controllers
- * @param _gaitScheduler controls scheduled foot contact modes
- * @param controlParameters passes in the control parameters from the GUI
  */
 template<typename T>
 ControlFSM<T>::ControlFSM(Quadruped<T>* quadruped,

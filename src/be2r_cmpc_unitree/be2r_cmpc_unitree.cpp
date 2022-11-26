@@ -3,7 +3,6 @@
 #include "ros/time.h"
 
 using namespace std;
-// using namespace USDK;
 
 Body_Manager::Body_Manager()
   : _zero_time(0),
@@ -143,8 +142,7 @@ void Body_Manager::init()
     udp = nullptr;
   }
 
-  _rosStaticParams.controller_dt = 1.0 / (double)MAIN_LOOP_RATE;
-  cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << " (" << MAIN_LOOP_RATE << " Hz)" << endl;
+  cout << "[Body_Manager] Controller dt = " << _rosStaticParams.controller_dt << " (" << 1.0 / _rosStaticParams.controller_dt << " Hz)" << endl;
 
   // Always initialize the leg controller and state estimator
   _legController = new LegController<float>(_quadruped);
@@ -152,6 +150,7 @@ void Body_Manager::init()
   initializeStateEstimator();
 
   _gamepad_command = new GamepadCommand;
+  _rtg = new RTG(_legController->datas, &_stateEstimate); // reference trajectory generator
 
   // Initialize a new GaitScheduler object
   _gaitScheduler = new GaitScheduler<float>(&_rosParameters, _rosStaticParams.controller_dt);
@@ -210,12 +209,10 @@ void Body_Manager::_readRobotData()
   {
     if (_low_state.footForce[i] > force_threshold)
     {
-      // _debug->all_legs_info.leg[i].is_contact = 1;
       footContactState(i) = 1;
     }
     else
     {
-      // _debug->all_legs_info.leg[i].is_contact = 0;
       footContactState(i) = 0;
     }
   }
@@ -290,23 +287,6 @@ void Body_Manager::run()
 
   // Sets the leg controller commands for the robot appropriate commands
   finalizeStep();
-
-#ifdef FSM_AUTO
-  // оставляю эту часть для автоматического
-  // перехода между режимами, если понадобится
-  if (count_ini > 100 && count_ini < 1500)
-  {
-    ROS_INFO_STREAM_ONCE("Stand up " << count_ini);
-
-    controlParameters.control_mode = 1;
-  }
-  else if (count_ini > 1500)
-  {
-    ROS_INFO_STREAM_ONCE("Locomotion " << count_ini);
-
-    controlParameters.control_mode = FSM;
-  }
-#endif
 
   _debug->updateVisualization();
   _debug->updatePlot();

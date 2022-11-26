@@ -1,5 +1,4 @@
-#ifndef CONTROLFSMDATA_H
-#define CONTROLFSMDATA_H
+#pragma once
 
 #include "Controllers/GaitScheduler.h"
 #include "Controllers/LegController.h"
@@ -29,5 +28,3 @@ struct ControlFSMData
 };
 
 template struct ControlFSMData<float>;
-
-#endif // CONTROLFSM_H

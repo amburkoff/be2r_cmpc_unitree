@@ -18,6 +18,7 @@ standup:
 
 #-------------------------------
 static_params:
+  controller_frequency: 500
   max_vel_x: 0.7
   max_vel_y: 0.4
   max_turn_rate: 2.5

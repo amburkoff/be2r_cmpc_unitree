@@ -1,9 +1,5 @@
 #pragma once
 
-/*! @file GamepadCommand.h
- *  @brief The GamepadCommand type containing joystick information
- */
-
 /* * * BUTTONS * * * * * * * * * *
 0 - X
 1 - O

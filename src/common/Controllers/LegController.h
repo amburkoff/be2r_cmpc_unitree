@@ -11,7 +11,6 @@
 #pragma once
 
 #include "Dynamics/Quadruped.h"
-// #include "SimUtilities/SpineBoard.h"
 #include "cppTypes.h"
 #include <iostream>
 #include <ros/ros.h>
