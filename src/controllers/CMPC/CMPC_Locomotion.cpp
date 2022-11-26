@@ -130,13 +130,13 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   {
     data.gamepad_command->stairs_mode = StairsMode::UP;
     _body_height = 0.28;
-    _swing_trajectory_height = 0.17;
+    _swing_trajectory_height = 0.18;
   }
 
   if (data.gamepad_command->cross && (gaitNumber == 15))
   {
     data.gamepad_command->stairs_mode = StairsMode::DOWN;
-    _body_height = 0.25;
+    _body_height = 0.21;
     _swing_trajectory_height = 0.06;
   }
 
@@ -801,17 +801,18 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   else if (current_gait != 11)
   {
     // estimated pitch of plane and pitch correction depends on Vdes
-    // _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
     _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane;
+    // _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1; // mpc sim
+    // _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.03; //lqr sim
 
-    if (_x_vel_des > 0)
-    {
-      _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
-    }
-    else
-    {
-      _pitch_des += -0.2 * _x_vel_des / data.staticParams->max_vel_x;
-    }
+    // if (_x_vel_des > 0)
+    // {
+    //   _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
+    // }
+    // else
+    // {
+    //   _pitch_des += -0.2 * _x_vel_des / data.staticParams->max_vel_x;
+    // }
   }
 
   for (int i = 0; i < 4; i++)
@@ -957,6 +958,7 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   I << 15853, 0, 0, 0, 37799, 0, 0, 0, 45654;
   I = I * 1e-6;
   I_world = seResult.rBody.cast<double>() * I * seResult.rBody.transpose().cast<double>();
+  // I_world = seResult.rBody.transpose().cast<double>() * I * seResult.rBody.cast<double>();
   double mass = 13.9;
 
   Eigen::Vector3d r[4];
@@ -1064,20 +1066,31 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   P_LQR = P_complex.real();
   // cout << "P: " << P_LQR << endl;
 
-  _pitch_des = 0;
+  // _pitch_des = 0;
 
-  s_LQR(0) = 0.0 - seResult.rpy[0];
-  // s_LQR(1) = 0.0 - seResult.rpy[1];
-  s_LQR(1) = _pitch_des - seResult.rpy[1];
-  s_LQR(2) = _yaw_des - seResult.rpy[2];
+  Eigen::Vector3f rpy_des_world(0, 0, 0);
+  Eigen::Vector3f rpy_act_world(0, 0, 0);
+  Eigen::Vector3f omega_des_world(0, 0, 0);
+
+  rpy_des_world << 0, _pitch_des, _yaw_des;
+  rpy_act_world = seResult.rpy;
+  omega_des_world << 0, 0, _yaw_turn_rate;
+
+  rpy_des_world = seResult.rBody.transpose() * rpy_des_world;
+  rpy_act_world = seResult.rBody.transpose() * rpy_act_world;
+  omega_des_world = seResult.rBody.transpose() * omega_des_world;
+
+  s_LQR(0) = rpy_des_world[0] - rpy_act_world[0];
+  s_LQR(1) = rpy_des_world[1] - rpy_act_world[1];
+  s_LQR(2) = rpy_des_world[2] - rpy_act_world[2];
 
   s_LQR(3) = world_position_desired[0] - seResult.position[0];
   s_LQR(4) = world_position_desired[1] - seResult.position[1];
   s_LQR(5) = _body_height - seResult.position[2];
 
-  s_LQR(6) = 0 - seResult.omegaWorld[0];
-  s_LQR(7) = 0 - seResult.omegaWorld[1];
-  s_LQR(8) = _yaw_turn_rate - seResult.omegaWorld[2];
+  s_LQR(6) = omega_des_world[0] - seResult.omegaWorld[0];
+  s_LQR(7) = omega_des_world[1] - seResult.omegaWorld[1];
+  s_LQR(8) = omega_des_world[2] - seResult.omegaWorld[2];
 
   s_LQR(9) = v_des_world[0] - seResult.vWorld[0];
   s_LQR(10) = v_des_world[1] - seResult.vWorld[1];
@@ -1126,7 +1139,7 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
     }
   }
 
-  float mu = 0.4;
+  float mu = 0.35;
 
   for (size_t i = 0; i < contacts; i++)
   {
@@ -1327,7 +1340,6 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.0;
-  // pBody_RPY_des[1] = 0.0;
   pBody_RPY_des[1] = _pitch_des;
   pBody_RPY_des[2] = _yaw_des;
 
