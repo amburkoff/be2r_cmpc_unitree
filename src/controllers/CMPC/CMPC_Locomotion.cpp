@@ -1126,40 +1126,32 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
     }
   }
 
-  // float mu = 0.4;
+  float mu = 0.4;
 
-  // for (size_t i = 0; i < contacts; i++)
-  // {
-  //   double Fx = 0;
-  //   double Fy = 0;
-  //   double Fz = 0;
+  for (size_t i = 0; i < contacts; i++)
+  {
+    double Fx = 0;
+    double Fy = 0;
+    double Fz = 0;
 
-  //   Fx = f_unc(3 * i + 0);
-  //   Fy = f_unc(3 * i + 1);
-  //   Fz = f_unc(3 * i + 2);
+    Fx = f_unc(3 * i + 0);
+    Fy = f_unc(3 * i + 1);
+    Fz = f_unc(3 * i + 2);
 
-  //   if (Fx > mu * Fz)
-  //   {
-  //     Fx = mu * Fz;
-  //   }
-  //   if (Fx < -mu * Fz)
-  //   {
-  //     Fx = -mu * Fz;
-  //   }
+    if (abs(Fx) > abs(mu * Fz))
+    {
+      Fx = abs(mu * Fz) * sgn(Fx);
+    }
 
-  //   if (Fy > mu * Fz)
-  //   {
-  //     Fy = mu * Fz;
-  //   }
-  //   if (Fy < -mu * Fz)
-  //   {
-  //     Fy = -mu * Fz;
-  //   }
+    if (abs(Fy) > abs(mu * Fz))
+    {
+      Fy = abs(mu * Fz) * sgn(Fy);
+    }
 
-  //   f_unc(3 * i + 0) = Fx;
-  //   f_unc(3 * i + 1) = Fy;
-  //   f_unc(3 * i + 2) = Fz;
-  // }
+    f_unc(3 * i + 0) = Fx;
+    f_unc(3 * i + 1) = Fy;
+    f_unc(3 * i + 2) = Fz;
+  }
 
   // cout << "f: " << f_unc << endl;
 
@@ -1171,8 +1163,6 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   {
     f = f_unc.block<3, 1>(3 * i, 0).cast<float>();
     f_ff[leg_contact_num[i]] = f;
-    // Fr_des[leg_contact_num[i]] = -seResult.rBody.transpose().cast<float>() * f;
-    // Fr_des[leg_contact_num[i]] = -seResult.rBody.cast<float>() * f;
     Fr_des[leg_contact_num[i]] = -f;
   }
 
