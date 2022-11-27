@@ -49,7 +49,7 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _SetupCommand(ControlFSMData<float>& data);
+  void _SetupCommand(float cmd_vel_x, float cmd_vel_y);
   void _recompute_timing(int iterations_per_mpc);
   void _updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
   void _solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
@@ -72,21 +72,27 @@ private:
                        const grid_map::GridMap& height_map_raw,
                        const int& leg);
 
-  void _findPF(Gait_contact* gait,
-               Vec3<float>& v_des_world,
+  void _findPF(Vec3<float>& v_des_world,
                const grid_map::GridMap& _grid_map_filter,
                const grid_map::GridMap& _grid_map_raw,
                size_t foot);
 
   float _updateTrajHeight(size_t foot);
 
-  double _findMaxinMapLine(const grid_map::GridMap& map, grid_map::Index start, grid_map::Index end);
+  double _findMaxInMapByLine(const grid_map::GridMap& map,
+                             grid_map::Index start,
+                             grid_map::Index end,
+                             const grid_map::Index* cell_idx = nullptr);
+
+  void _longStep(const grid_map::GridMap& map, int foot);
+  std::vector<float> calcDesVel();
 
   // Parameters
   ControlFSMData<float>* _data;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 
   // Gait
+  Gait_contact* _gait;
   int _gait_period;
   int _gait_period_long;
   OffsetDurationGaitContact trotting, trot_long, standing, walking;
@@ -143,6 +149,9 @@ private:
   SparseCMPC _sparseCMPC;
 
   double _max_cell;
+  bool long_step_run = false;
+  bool long_step_trigger = false;
+  bool long_step_vel = false;
 };
 
 Eigen::Array2i checkBoundariess(const grid_map::GridMap& map, int col, int row);

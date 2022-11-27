@@ -72,6 +72,7 @@ CMPCLocomotion_Cv::CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, Con
 
   _doorstep_case = true;
   _max_cell = 0;
+  _gait = nullptr;
 }
 
 void CMPCLocomotion_Cv::initialize()
@@ -92,29 +93,29 @@ void CMPCLocomotion_Cv::_recompute_timing(int iterations_per_mpc)
   dtMPC = dt * iterations_per_mpc;
 }
 
-void CMPCLocomotion_Cv::_SetupCommand(ControlFSMData<float>& data)
+void CMPCLocomotion_Cv::_SetupCommand(float cmd_vel_x, float cmd_vel_y)
 {
   _body_height = _parameters->body_height;
-
-  float x_vel_cmd, y_vel_cmd;
+  float x_vel_cmd;
+  float y_vel_cmd;
   float filter_x(0.005);
   float filter_y(0.005);
 
-  _yaw_turn_rate = data.gamepad_command->right_stick_analog[0] * data.staticParams->max_turn_rate;
-  x_vel_cmd = data.gamepad_command->left_stick_analog[1] * data.staticParams->max_vel_x;
-  y_vel_cmd = data.gamepad_command->left_stick_analog[0] * data.staticParams->max_vel_y;
+  _yaw_turn_rate = _data->gamepad_command->right_stick_analog[0] * _data->staticParams->max_turn_rate;
+  x_vel_cmd = cmd_vel_x * _data->staticParams->max_vel_x;
+  y_vel_cmd = cmd_vel_y * _data->staticParams->max_vel_y;
 
-  _pitch_cmd = 0.4 * data.gamepad_command->right_stick_analog[1];
+  _pitch_cmd = 0.4 * _data->gamepad_command->right_stick_analog[1];
 
   _x_vel_des = _x_vel_des * (1 - filter_x) + x_vel_cmd * filter_x;
   _y_vel_des = _y_vel_des * (1 - filter_y) + y_vel_cmd * filter_y;
 
-  // _yaw_des = data.stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  // _yaw_des = _data->stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   // _yaw_des += dt * _yaw_turn_rate;
 
   if ((M_PI - abs(_yaw_des)) <= 0.1)
   {
-    _yaw_des = data.stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+    _yaw_des = _data->stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   }
   else
   {
@@ -123,12 +124,12 @@ void CMPCLocomotion_Cv::_SetupCommand(ControlFSMData<float>& data)
 
   if (current_gait == 13 || current_gait == 4 || current_gait == 11)
   {
-    world_position_desired[0] = stand_traj[0] + 0.05 * data.gamepad_command->left_stick_analog[1];
-    world_position_desired[1] = stand_traj[1] + 0.05 * data.gamepad_command->left_stick_analog[0];
+    world_position_desired[0] = stand_traj[0] + 0.05 * cmd_vel_x;
+    world_position_desired[1] = stand_traj[1] + 0.05 * cmd_vel_y;
     _body_height = stand_traj[2];
 
-    _pitch_des = 0.2 * data.gamepad_command->right_stick_analog[1];
-    _yaw_des = stand_traj[5] + 0.2 * data.gamepad_command->right_stick_analog[0];
+    _pitch_des = 0.2 * _data->gamepad_command->right_stick_analog[1];
+    _yaw_des = stand_traj[5] + 0.2 * _data->gamepad_command->right_stick_analog[0];
   }
 
   _body_height = _parameters->body_height;
@@ -153,9 +154,17 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
                                   const grid_map::GridMap& _grid_map_raw)
 {
   bool omniMode = false;
+  long_step_vel = _data->userParameters->cmpc_use_sparse;
+  // long_step_trigger = _data->userParameters->cmpc_use_sparse;
 
   // Command Setup
-  _SetupCommand(data);
+  if (!long_step_vel)
+    _SetupCommand(_data->gamepad_command->left_stick_analog[1], _data->gamepad_command->left_stick_analog[0]);
+  else
+  {
+    std::vector<float> vel = calcDesVel();
+    _SetupCommand(vel[0], vel[1]);
+  }
   _gait_des = data.userParameters->cmpc_gait;
 
   auto& seResult = data.stateEstimator->getResult();
@@ -174,26 +183,26 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
   }
 
   // pick gait
-  Gait_contact* gait = &trotting;
+  _gait = &trotting;
   current_gait = _gait_des;
 
   if (current_gait == 9)
   {
-    gait = &trotting;
+    _gait = &trotting;
   }
   else if (current_gait == 15)
   {
-    gait = &trot_long;
+    _gait = &trot_long;
   }
   else if (current_gait == 4)
   {
-    gait = &standing;
+    _gait = &standing;
   }
 
-  // gait->updatePeriod(_dyn_params->gait_period);
-  gait->restoreDefaults();
-  gait->setIterations(iterationsBetweenMPC, iterationCounter);
-  gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
+  // _gait->updatePeriod(_dyn_params->gait_period);
+  _gait->restoreDefaults();
+  _gait->setIterations(iterationsBetweenMPC, iterationCounter);
+  _gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
 
   _recompute_timing(default_iterations_between_mpc);
 
@@ -226,8 +235,8 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
   else if (current_gait != 11)
   {
     // estimated pitch of plane and pitch correction depends on Vdes
-    // _pitch_des = _pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane;
-    _pitch_des = _pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
+    _pitch_des = _pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane;
+    // _pitch_des = _pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
 
     if (_x_vel_des > 0)
     {
@@ -245,7 +254,7 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
       seResult.position + seResult.rBody.transpose() * (data.quadruped->getHipLocation(i) + data.legController->datas[i].p);
   }
 
-  if (gait != &standing)
+  if (_gait != &standing)
   {
     world_position_desired += dt * Vec3<float>(v_des_world[0], v_des_world[1], 0);
   }
@@ -281,8 +290,8 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
   // foot placement
   for (int l = 0; l < 4; l++)
   {
-    swingTimes[l] = gait->getCurrentSwingTime(dtMPC, l);
-    _findPF(gait, v_des_world, _grid_map_filter, _grid_map_raw, l);
+    swingTimes[l] = _gait->getCurrentSwingTime(dtMPC, l);
+    _findPF(v_des_world, _grid_map_filter, _grid_map_raw, l);
   }
 
   // Calculate PF
@@ -291,9 +300,9 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
   iterationCounter++;
 
   // gait
-  Vec4<float> contactStates = gait->getContactState();
-  Vec4<float> swingStates = gait->getSwingState();
-  int* mpcTable = gait->getMpcTable();
+  Vec4<float> contactStates = _gait->getContactState();
+  Vec4<float> swingStates = _gait->getSwingState();
+  int* mpcTable = _gait->getMpcTable();
 
   _updateMPCIfNeeded(mpcTable, data, omniMode);
 
@@ -339,9 +348,12 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
       }
 
       // Update PF
-      Vec3<float> pf = footSwingTrajectories[foot].getFinalPosition();
-      _updateFoothold(pf, seResult.position, _grid_map_filter, _grid_map_raw, foot);
-      footSwingTrajectories[foot].setFinalPosition(pf);
+      if (!long_step_vel)
+      {
+        Vec3<float> pf = footSwingTrajectories[foot].getFinalPosition();
+        _updateFoothold(pf, seResult.position, _grid_map_filter, _grid_map_raw, foot);
+        footSwingTrajectories[foot].setFinalPosition(pf);
+      }
 
       // for visual -----------------------------------------------------------------------
       geometry_msgs::PoseStamped pose_traj;
@@ -448,7 +460,7 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
   }
 
   data.stateEstimator->setContactPhase(se_contactState);
-  data.stateEstimator->setSwingPhase(gait->getSwingState());
+  data.stateEstimator->setSwingPhase(_gait->getSwingState());
 
   // Update For WBC
   pBody_des[0] = world_position_desired[0];
@@ -487,7 +499,7 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
   data.debug->body_info.vel_des.angular.y = vBody_Ori_des[1];
   data.debug->body_info.vel_des.angular.z = vBody_Ori_des[2];
 
-  contact_state = gait->getContactState();
+  contact_state = _gait->getContactState();
   // END of WBC Update
 }
 
@@ -796,17 +808,21 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
   int x_idx_selected = x_idx;
   int y_idx_selected = y_idx;
 
+  int p0_x_idx = col_idx_body_com - floor(local_p0[0] / _grid_map_raw.getResolution());
+  int p0_y_idx = row_idx_body_com - floor(local_p0[1] / _grid_map_raw.getResolution());
+
+  auto p0_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, p0_x_idx, p0_y_idx));
+
   _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, _grid_map_raw, _grid_map_raw, leg);
 
   // Минус для преобразования координат
   pf[0] = -(x_idx_selected - col_idx_body_com) * _grid_map_raw.getResolution() + body_pos[0];
   pf[1] = -(y_idx_selected - row_idx_body_com) * _grid_map_raw.getResolution() + body_pos[1];
   auto pf_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, x_idx_selected, y_idx_selected));
-  int p0_x_idx = col_idx_body_com - floor(local_p0[0] / _grid_map_raw.getResolution());
-  int p0_y_idx = row_idx_body_com - floor(local_p0[1] / _grid_map_raw.getResolution());
-  auto p0_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, p0_x_idx, p0_y_idx));
-  // _max_cell =
-  //   _findMaxinMapLine(height_map_filter, grid_map::Index(x_idx_selected, y_idx_selected), grid_map::Index(p0_x_idx, p0_y_idx));
+  _max_cell =
+    _findMaxInMapByLine(height_map_filter, grid_map::Index(x_idx_selected, y_idx_selected), grid_map::Index(p0_x_idx, p0_y_idx));
+
+  // cout << "max cell = " << _max_cell << endl;
 
   // ЕВРИСТИКА
   // static double start_offset = 0.6;
@@ -864,12 +880,35 @@ void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
   //  std::cout << "Can`t find foothold from map!" << std::endl;
 }
 
-void CMPCLocomotion_Cv::_findPF(Gait_contact* gait,
-                                Vec3<float>& v_des_world,
+void CMPCLocomotion_Cv::_findPF(Vec3<float>& v_des_world,
                                 const grid_map::GridMap& _grid_map_filter,
                                 const grid_map::GridMap& _grid_map_raw,
                                 size_t foot)
 {
+
+  // auto swing_state = (_gait->getSwingState())[foot];
+
+  // if (long_step_trigger && firstSwing[foot])
+  // {
+  //   long_step_run = true;
+  // }
+
+  // if (long_step_run)
+  // {
+  //   _longStep(_grid_map_filter, foot);
+  //   if (swing_state <= 0) // stance
+  //   {
+  //     long_step_run = false;
+  //     long_step_trigger = false;
+  //   }
+  //   return;
+  // }
+
+  if (long_step_vel)
+  {
+    _longStep(_grid_map_filter, foot);
+    return;
+  }
 
   float side_sign[4] = { -1, 1, -1, 1 };
   float interleave_y[4] = { -0.08, 0.08, 0.02, -0.02 };
@@ -894,7 +933,7 @@ void CMPCLocomotion_Cv::_findPF(Gait_contact* gait,
   Vec3<float> pRobotFrame = (_data->quadruped->getHipLocation(foot) + offset);
 
   pRobotFrame[1] += interleave_y[foot] * v_abs * interleave_gain;
-  float stance_time = gait->getCurrentStanceTime(dtMPC, foot);
+  float stance_time = _gait->getCurrentStanceTime(dtMPC, foot);
 
   Vec3<float> pYawCorrected = coordinateRotation(CoordinateAxis::Z, -_yaw_turn_rate * stance_time / 2) * pRobotFrame;
 
@@ -944,14 +983,91 @@ float CMPCLocomotion_Cv::_updateTrajHeight(size_t foot)
   return out;
 }
 
-double CMPCLocomotion_Cv::_findMaxinMapLine(const grid_map::GridMap& map, grid_map::Index start, grid_map::Index end)
+double CMPCLocomotion_Cv::_findMaxInMapByLine(const grid_map::GridMap& map,
+                                              grid_map::Index start,
+                                              grid_map::Index end,
+                                              const grid_map::Index* cell_idx)
 {
-  double max = 0;
+  double max = 0.0;
+  bool first_time = true;
   for (grid_map::LineIterator iterator(map, start, end); !iterator.isPastEnd(); ++iterator)
   {
     double cell = map.at("elevation", *iterator);
-    if (cell >= max)
+    if ((cell >= max) && !std::isnan(cell))
       max = cell;
+    if (cell_idx != nullptr && cell > 0.05 && first_time)
+    {
+      first_time = false;
+      cell_idx = &(*iterator);
+    }
   }
   return max;
+}
+
+void CMPCLocomotion_Cv::_longStep(const grid_map::GridMap& map, int foot)
+{
+  Vec3<float> p0 = footSwingTrajectories[foot].getInitialPosition();
+  Vec3<float> body_pos = _data->stateEstimator->getResult().position;
+  Vec3<float> local_p0 = p0 - body_pos;
+
+  int row_idx_body_com = map.getSize()(0) / 2;
+  int col_idx_body_com = map.getSize()(1) / 2;
+  int p0_x_idx = col_idx_body_com - floor(local_p0[0] / map.getResolution());
+  int p0_y_idx = row_idx_body_com - floor(local_p0[1] / map.getResolution());
+  grid_map::Index p0_index(p0_x_idx, p0_y_idx);
+
+  grid_map::Index cell_search_coord(p0_index);
+  cell_search_coord.x() += 10; // 20cm
+  grid_map::Index obst_map_idx;
+  // double h = _findMaxInMapByLine(map, p0_index, cell_search_coord, &obst_map_idx);
+  double h = 0.1;
+  cout << "[DEBUG]: Obstacle height = " << h << endl;
+
+  grid_map::Index d(10, 0);
+  // grid_map::Index d = obst_map_idx - p0_index;
+  Eigen::Array2i dist = d * Eigen::Array2i(map.getResolution());
+  footSwingTrajectories[foot].setHeight(h + 0.03);
+  Vec3<float> pf = body_pos + local_p0 + Vec3<float>(-2 * dist.x(), -2 * dist.y(), 0);
+  footSwingTrajectories[foot].setFinalPosition(pf);
+}
+
+std::vector<float> CMPCLocomotion_Cv::calcDesVel()
+{
+  std::vector<float> out = { 0, 0 };
+  if (_gait == nullptr)
+    return out;
+
+  static std::vector<bool> progress(4, false);
+  static std::vector<bool> swing_start(4, false);
+  static std::vector<bool> stance_start(4, false);
+
+  auto swing_state = _gait->getSwingState();
+  for (size_t leg = 0; leg < 4; leg++)
+  {
+    if (firstSwing[leg])
+      swing_start[leg] = true;
+    if (swing_state[leg] <= 0 && swing_start[leg] == true) // stance
+      stance_start[leg] = true;
+
+    if (swing_start[leg] && stance_start[leg])
+      progress[leg] = true;
+  }
+
+  size_t cnt = 0;
+  for (auto it : progress)
+  {
+    if (it != false)
+      cnt++;
+  }
+  if (cnt == 4)
+  {
+    long_step_vel = false;
+    _data->userParameters->cmpc_use_sparse = false;
+    progress = std::vector<bool>(4, false);
+    swing_start = std::vector<bool>(4, false);
+    stance_start = std::vector<bool>(4, false);
+  }
+
+  out[0] = 1.0;
+  return out;
 }

@@ -95,8 +95,8 @@ void FSM_State_Testing<T>::run()
       break;
 
     case 1:
-      //joint test
-      // test1();
+      // joint test
+      //  test1();
       LocomotionControlStep();
       break;
 
@@ -539,6 +539,10 @@ FSM_StateName FSM_State_Testing<T>::checkTransition()
       this->nextStateName = FSM_StateName::VISION;
       break;
 
+    case K_TESTING_CV:
+      this->nextStateName = FSM_StateName::TESTING_CV;
+      break;
+
     default:
       std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING << " to "
                 << this->_data->userParameters->FSM_State << std::endl;
@@ -573,6 +577,10 @@ TransitionData<T> FSM_State_Testing<T>::transition()
       break;
 
     case FSM_StateName::VISION:
+      this->transitionData.done = true;
+      break;
+
+    case FSM_StateName::TESTING_CV:
       this->transitionData.done = true;
       break;
 
