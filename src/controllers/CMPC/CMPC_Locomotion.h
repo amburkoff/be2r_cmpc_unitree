@@ -72,6 +72,23 @@ private:
 
   //----------------------- LQR -------------------------
   Eigen::Matrix<double, 3, 3> cross_mat(Eigen::Matrix<double, 3, 3> I_inv, Eigen::Matrix<double, 3, 1> r);
+  Eigen::Matrix<double, 12, 1> calcLinError();
+  void inverseCrossMatrix(const Eigen::MatrixXd& R, Eigen::VectorXd& omega);
+  void matrixLogRot(const Eigen::MatrixXd& R, Eigen::VectorXd& omega);
+
+  Eigen::VectorXd _x_COM_world;
+  Eigen::VectorXd _x_COM_world_desired;
+  Eigen::VectorXd _xdot_COM_world;
+  Eigen::VectorXd _xdot_COM_world_desired;
+  Eigen::Matrix<double, 3, 3> _R_b_world;
+  Eigen::Matrix<double, 3, 3> _R_b_world_desired;
+  Eigen::VectorXd _omega_b_body;
+  Eigen::VectorXd _omega_b_body_desired;
+
+  Eigen::VectorXd _error_x_lin;
+  Eigen::VectorXd _error_dx_lin;
+  Eigen::VectorXd _error_R_lin;
+  Eigen::VectorXd _error_omega_lin;
   //----------------------- LQR -------------------------
 
   void recompute_timing(int iterations_per_mpc);

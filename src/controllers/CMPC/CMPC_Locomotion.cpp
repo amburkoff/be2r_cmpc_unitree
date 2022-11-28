@@ -1071,6 +1071,9 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   Eigen::Vector3f rpy_des_world(0, 0, 0);
   Eigen::Vector3f rpy_act_world(0, 0, 0);
   Eigen::Vector3f omega_des_world(0, 0, 0);
+  Eigen::Vector4f quat_des(0, 0, 0, 0);
+  Eigen::Matrix3f R_des;
+  R_des.setZero();
 
   rpy_des_world << 0, _pitch_des, _yaw_des;
   rpy_act_world = seResult.rpy;
@@ -1079,6 +1082,9 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   rpy_des_world = seResult.rBody.transpose() * rpy_des_world;
   rpy_act_world = seResult.rBody.transpose() * rpy_act_world;
   omega_des_world = seResult.rBody.transpose() * omega_des_world;
+
+  quat_des = rpyToQuat(rpy_des_world);
+  R_des = ori::quaternionToRotationMatrix(quat_des);
 
   s_LQR(0) = rpy_des_world[0] - rpy_act_world[0];
   s_LQR(1) = rpy_des_world[1] - rpy_act_world[1];
@@ -1095,6 +1101,32 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   s_LQR(9) = v_des_world[0] - seResult.vWorld[0];
   s_LQR(10) = v_des_world[1] - seResult.vWorld[1];
   s_LQR(11) = 0 - seResult.vWorld[2];
+
+  _x_COM_world.resize(3, 1);
+  _x_COM_world_desired.resize(3, 1);
+  _xdot_COM_world.resize(3, 1);
+  _xdot_COM_world_desired.resize(3, 1);
+  _omega_b_body.resize(3, 1);
+  _omega_b_body_desired.resize(3, 1);
+  _error_x_lin.resize(3, 1);
+  _error_dx_lin.resize(3, 1);
+  _error_R_lin.resize(3, 1);
+  _error_omega_lin.resize(3, 1);
+
+  _x_COM_world = seResult.position.cast<double>();
+  _x_COM_world_desired = world_position_desired.cast<double>();
+  _x_COM_world_desired[2] = _body_height;
+  _xdot_COM_world = seResult.vWorld.cast<double>();
+  _xdot_COM_world_desired = v_des_world.cast<double>();
+  _xdot_COM_world_desired[2] = 0.0;
+  _R_b_world = seResult.rBody.cast<double>();
+  _R_b_world_desired = R_des.cast<double>();
+  _omega_b_body = seResult.omegaBody.cast<double>();
+  _omega_b_body_desired[0] = 0;
+  _omega_b_body_desired[1] = 0;
+  _omega_b_body_desired[2] = _yaw_turn_rate;
+
+  s_LQR = calcLinError();
 
   // cout << "error: " << s_LQR << endl;
 
@@ -1374,4 +1406,58 @@ Eigen::Matrix<double, 3, 3> CMPCLocomotion::cross_mat(Eigen::Matrix<double, 3, 3
   cm << 0.f, -r(2), r(1), r(2), 0.f, -r(0), -r(1), r(0), 0.f;
 
   return I_inv * cm;
+}
+
+Eigen::Matrix<double, 12, 1> CMPCLocomotion::calcLinError()
+{
+  Eigen::Matrix<double, 12, 1> s;
+  s.setZero();
+
+  // Linear error for LQR
+  // _error_x_lin = _x_COM_world - _x_COM_world_desired;
+  // _error_dx_lin = _xdot_COM_world - _xdot_COM_world_desired;
+  // inverseCrossMatrix(0.5 * (_R_b_world_desired.transpose() * _R_b_world - _R_b_world.transpose() * _R_b_world_desired), _error_R_lin);
+  // _error_omega_lin = _omega_b_body - _R_b_world.transpose() * _R_b_world_desired * _omega_b_body_desired;
+  // s << _error_x_lin(0), _error_x_lin(1), _error_x_lin(2), _error_dx_lin(0), _error_dx_lin(1), _error_dx_lin(2), _error_R_lin(0), _error_R_lin(1), _error_R_lin(2), _error_omega_lin(0), _error_omega_lin(1), _error_omega_lin(2);
+
+  cout << "s: " << s << endl;
+}
+
+void CMPCLocomotion::inverseCrossMatrix(const Eigen::MatrixXd& R, Eigen::VectorXd& omega)
+{
+  omega(0) = R(2, 1);
+  omega(1) = R(0, 2);
+  omega(2) = R(1, 0);
+}
+
+void CMPCLocomotion::matrixLogRot(const Eigen::MatrixXd& R, Eigen::VectorXd& omega)
+{
+  // theta = acos( (Trace(R) - 1)/2 )
+  double theta;
+  double tmp = (R(0, 0) + R(1, 1) + R(2, 2) - 1) / 2;
+
+  if (tmp >= 1.)
+  {
+    theta = 0;
+  }
+  else if (tmp <= -1.)
+  {
+    theta = M_PI;
+  }
+  else
+  {
+    theta = acos(tmp);
+  }
+
+  // Matrix3F omegaHat = (R-R.transpose())/(2 * sin(theta));
+  // crossExtract(omegaHat,omega);
+  omega << R(2, 1) - R(1, 2), R(0, 2) - R(2, 0), R(1, 0) - R(0, 1);
+  if (theta > 10e-5)
+  {
+    omega *= theta / (2 * sin(theta));
+  }
+  else
+  {
+    omega /= 2;
+  }
 }

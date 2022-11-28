@@ -11,28 +11,50 @@ standup:
   Kp_cartesian_x: 1000
   Kp_cartesian_y: 1000
   Kp_cartesian_z: 1000
+  # Kp_cartesian_z: 1200
 
   Kd_cartesian_x: 15
   Kd_cartesian_y: 15
   Kd_cartesian_z: 15
+  # Kd_cartesian_x: 35
+  # Kd_cartesian_y: 35
+  # Kd_cartesian_z: 35
 
 #-------------------------------
 static_params:
+  controller_frequency: 500
   max_vel_x: 0.7
   max_vel_y: 0.4
   max_turn_rate: 2.5
 
-  mpc_alpha: 4.e-5
-  Q_roll: 0.25
-  Q_pitch: 0.25
-  Q_yaw: 10
-  Q_x: 2
-  Q_y: 2
-  Q_z: 10
-  Q_w_roll: 0.2
-  Q_w_pitch: 0.2
-  Q_w_yaw: 0.3
-  Q_vx: 1
-  Q_vy: 1
-  Q_vz: 15
+# MPC qpOases
+  # mpc_alpha: 4.e-5
+  # Q_roll: 0.25
+  # Q_pitch: 0.25
+  # Q_yaw: 10
+  # Q_x: 2
+  # Q_y: 2
+  # Q_z: 10
+  # Q_w_roll: 0.2
+  # Q_w_pitch: 0.2
+  # Q_w_yaw: 0.3
+  # Q_vx: 1
+  # Q_vy: 1
+  # Q_vz: 15
+
+# LQR
+  # mpc_alpha: 1.e-0
+  mpc_alpha: 5.e+0
+  Q_roll: 1.e+5
+  Q_pitch: 1.e+6
+  Q_yaw: 20000
+  Q_x: 20000 
+  Q_y: 20000 
+  Q_z: 20000
+  Q_w_roll: 1000
+  Q_w_pitch: 1000
+  Q_w_yaw: 20000
+  Q_vx: 1000000 
+  Q_vy: 1000000 
+  Q_vz: 10000
 
