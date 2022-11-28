@@ -5,6 +5,7 @@ using namespace std;
 
 static float controller_dt = 0.002;
 static float controller_freq = 500;
+static bool show_loop_time = false;
 
 int main(int argc, char* argv[])
 {
@@ -12,6 +13,7 @@ int main(int argc, char* argv[])
   ros::NodeHandle n;
 
   readRosParam("/static_params/controller_dt", controller_dt);
+  readRosParam("/static_params/show_loop_time", show_loop_time);
   controller_freq = 1.0 / controller_dt;
   cout << "[main] Controller dt: " << controller_dt << " main loop frequency: " << controller_freq << endl;
 
@@ -41,8 +43,8 @@ int main(int argc, char* argv[])
   if (unitree.is_udp_connection)
   {
     ROS_WARN("UDP CONNECTION");
-    loop_udpSend = new UNITREE_LEGGED_SDK::LoopFunc("udp_send", 0.002, 3, boost::bind(&Body_Manager::UDPSend, &unitree));
-    loop_udpRecv = new UNITREE_LEGGED_SDK::LoopFunc("udp_recv", 0.002, 3, boost::bind(&Body_Manager::UDPRecv, &unitree));
+    loop_udpSend = new UNITREE_LEGGED_SDK::LoopFunc("udp_send", controller_dt, 3, boost::bind(&Body_Manager::UDPSend, &unitree));
+    loop_udpRecv = new UNITREE_LEGGED_SDK::LoopFunc("udp_recv", controller_dt, 3, boost::bind(&Body_Manager::UDPRecv, &unitree));
     loop_udpSend->start();
     loop_udpRecv->start();
   }
@@ -53,10 +55,17 @@ int main(int argc, char* argv[])
 
   while (ros::ok())
   {
-    // t2.start();
+    if (show_loop_time)
+    {
+      t2.start();
+    }
+
     unitree.run();
 
-    // cout << t2.getMs() << endl;
+    if (show_loop_time)
+    {
+      cout << "Whole loop time: " << t2.getMs() << endl;
+    }
 
     ros::spinOnce();
     rate.sleep();

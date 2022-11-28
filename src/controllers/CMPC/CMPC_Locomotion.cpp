@@ -1126,7 +1126,7 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   _omega_b_body_desired[1] = 0;
   _omega_b_body_desired[2] = _yaw_turn_rate;
 
-  s_LQR = calcLinError();
+  // s_LQR = calcLinError();
 
   // cout << "error: " << s_LQR << endl;
 
@@ -1414,13 +1414,15 @@ Eigen::Matrix<double, 12, 1> CMPCLocomotion::calcLinError()
   s.setZero();
 
   // Linear error for LQR
-  // _error_x_lin = _x_COM_world - _x_COM_world_desired;
-  // _error_dx_lin = _xdot_COM_world - _xdot_COM_world_desired;
-  // inverseCrossMatrix(0.5 * (_R_b_world_desired.transpose() * _R_b_world - _R_b_world.transpose() * _R_b_world_desired), _error_R_lin);
-  // _error_omega_lin = _omega_b_body - _R_b_world.transpose() * _R_b_world_desired * _omega_b_body_desired;
-  // s << _error_x_lin(0), _error_x_lin(1), _error_x_lin(2), _error_dx_lin(0), _error_dx_lin(1), _error_dx_lin(2), _error_R_lin(0), _error_R_lin(1), _error_R_lin(2), _error_omega_lin(0), _error_omega_lin(1), _error_omega_lin(2);
+  _error_x_lin = _x_COM_world - _x_COM_world_desired;
+  _error_dx_lin = _xdot_COM_world - _xdot_COM_world_desired;
+  inverseCrossMatrix(0.5 * (_R_b_world_desired.transpose() * _R_b_world - _R_b_world.transpose() * _R_b_world_desired), _error_R_lin);
+  _error_omega_lin = _omega_b_body - _R_b_world.transpose() * _R_b_world_desired * _omega_b_body_desired;
+  s << _error_x_lin(0), _error_x_lin(1), _error_x_lin(2), _error_dx_lin(0), _error_dx_lin(1), _error_dx_lin(2), _error_R_lin(0), _error_R_lin(1), _error_R_lin(2), _error_omega_lin(0), _error_omega_lin(1), _error_omega_lin(2);
 
-  cout << "s: " << s << endl;
+  // cout << "s: " << s << endl;
+
+  return s;
 }
 
 void CMPCLocomotion::inverseCrossMatrix(const Eigen::MatrixXd& R, Eigen::VectorXd& omega)

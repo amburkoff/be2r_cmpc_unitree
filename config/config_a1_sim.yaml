@@ -47,7 +47,7 @@ static_params:
   Q_y: 20000 
   Q_z: 20000
   Q_w_roll: 1000
-  Q_w_pitch: 1000
+  Q_w_pitch: 50000
   Q_w_yaw: 20000
   Q_vx: 500000 
   Q_vy: 500000 
