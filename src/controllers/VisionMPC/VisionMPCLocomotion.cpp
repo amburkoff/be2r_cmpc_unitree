@@ -218,7 +218,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(_dyn_params->Swing_traj_height);
+      footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_dyn_params->Swing_traj_height));
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       _data->debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -260,7 +260,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       swingTimeRemaining[i] -= dt;
     }
 
-    footSwingTrajectories[i].setHeight(_dyn_params->Swing_traj_height);
+    footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_dyn_params->Swing_traj_height));
 
     Vec3<float> offset(0, side_sign[i] * _data->_quadruped->_abadLinkLength, 0);
 
@@ -369,7 +369,7 @@ void VisionMPCLocomotion::run(const Vec3<float>& vel_cmd_world,
       // double swing_height = _updateTrajHeight(foot);
       // if (foot == 0)
       // std::cout << "step height = " << swing_height << std::endl;
-      footSwingTrajectories[foot].setHeight(_data->userParameters->Swing_traj_height);
+      footSwingTrajectories[foot].setHeight(Vec3<float>(0,0.05,_dyn_params->Swing_traj_height));
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot],_data->_quadruped->getSideSign(foot));
       // footSwingTrajectories[foot].computeStairsSwingTrajectoryBezier(swingState,
       // swingTimes[foot]);

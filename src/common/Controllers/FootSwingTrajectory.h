@@ -31,7 +31,7 @@ public:
     _p.setZero();
     _v.setZero();
     _a.setZero();
-    _height = 0;
+    _highestpoint.setZero();
     _mode = 0;
   }
 
@@ -45,7 +45,7 @@ public:
    * Set the starting location of the foot
    * @param stateEstimator stateEstimator  : reference to the estimator data
    */
-  // void setStateEstimatorAdress(StateEstimatorData<T>& stateEstimator) { _stateEstimator = stateEstimator; }
+  void setStateEstimatorAdress(StateEstimatorContainer<T>* stateEstimator) { _stateEstimator = stateEstimator; }
 
     /*!
    * Set the mode for the basis function: 
@@ -68,7 +68,7 @@ public:
    * @param h : the maximum height of the swing, achieved halfway through the
    * swing
    */
-  void setHeight(T h) { _height = h; }
+  void setHeight(Vec3<T> h) { _highestpoint = h; }
 
   void computeSwingTrajectoryBezier(T phase, T swingTime, T legside);
   void computeSwingTrajectoryModified(T phase, T swingTime,int mode);
@@ -94,8 +94,8 @@ public:
 
 private:
   Vec3<T> _p0, _pf, _p, _v, _a;
-  StateEstimatorData<T>* _stateEstimator = nullptr;
-  T _height;
+  StateEstimatorContainer<T>* _stateEstimator = nullptr;
+  Vec3<T> _highestpoint;
   int _mode;
 };
 

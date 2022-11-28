@@ -293,7 +293,7 @@ void ConvexMPCStairsLocomotion::run(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+      footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_parameters->Swing_traj_height));
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       footSwingTrajectories[i].setFinalPosition(pFoot[i]);
     }
@@ -325,7 +325,7 @@ void ConvexMPCStairsLocomotion::run(ControlFSMData<float>& data)
       swingTimeRemaining[i] -= dt;
     }
 
-    footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+    footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_parameters->Swing_traj_height));
 
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
 

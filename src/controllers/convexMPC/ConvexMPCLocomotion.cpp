@@ -134,6 +134,7 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 
   Kd = Vec3<float>(_dyn_params->Kd_cartesian_0, _dyn_params->Kd_cartesian_1, _dyn_params->Kd_cartesian_2).asDiagonal();
   Kd_stance = Kd;
+  footSwingTrajectories->setStateEstimatorAdress(data._stateEstimator);
 }
 
 template<>
@@ -315,7 +316,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(_dyn_params->Swing_traj_height);
+      footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_dyn_params->Swing_traj_height));
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -355,7 +356,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
       swingTimeRemaining[i] -= dt;
     }
 
-    footSwingTrajectories[i].setHeight(_dyn_params->Swing_traj_height);
+    footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_dyn_params->Swing_traj_height));
 
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
 

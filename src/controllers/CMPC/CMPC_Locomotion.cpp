@@ -294,7 +294,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+      footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_parameters->Swing_traj_height));
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -338,7 +338,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
 
     // cout << "leg: " << i << " " << swingTimeRemaining[i] << endl;
 
-    footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+    footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_parameters->Swing_traj_height));
 
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
 
@@ -687,7 +687,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(_parameters->Swing_traj_height);
+      footSwingTrajectories[i].setHeight(Vec3<float>(0,0.05,_parameters->Swing_traj_height));
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -799,7 +799,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
         swingTimeRemaining[foot] -= dt;
       }
 
-      footSwingTrajectories[foot].setHeight(_parameters->Swing_traj_height);
+      footSwingTrajectories[foot].setHeight(Vec3<float>(0,0.05,_parameters->Swing_traj_height));
 
       Vec3<float> offset(0, side_sign[foot] * data._quadruped->_abadLinkLength, 0);
 

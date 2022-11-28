@@ -329,7 +329,7 @@ void FSM_State_Testing<T>::test2(float h)
   if (firstSwing[foot])
   {
     firstSwing[foot] = false;
-    footSwingTrajectories[foot].setHeight(h);
+    footSwingTrajectories[foot].setHeight(Vec3<float>(0,0.05,h));
     footSwingTrajectories[foot].setInitialPosition(_ini_foot_pos[foot]);
     footSwingTrajectories[foot].setFinalPosition(p0);
   }

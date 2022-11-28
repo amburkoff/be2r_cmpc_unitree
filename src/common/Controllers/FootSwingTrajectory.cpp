@@ -22,7 +22,7 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, 
 
   // T zp, zv, za;
   // T yp, yv, ya;
-  Vec3<T> _shifted_extr(0,legside*0.3,_height);
+  Vec3<T> _shifted_extr= this->_stateEstimator->getResult().rBody.transpose()* Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[3]);
   if (phase < T(0.5))
   {
     // zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _shifted_extr[3] phase * 2);
@@ -60,9 +60,9 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryModified(T phase, T swingTime
     _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _pf, phase);
     _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0, _pf, phase) / swingTime;
     _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0, _pf, phase) / (swingTime * swingTime);
-    zp = Interpolate::ShiftedSine<T>(_p0[2],  _pf[2], _height, phase);
-    zv = Interpolate::ShiftedSineFirstDerivative<T>(_p0[2],  _pf[2], _height, phase) /swingTime;
-    za = Interpolate::ShiftedSineSecondDerivative<T>(_p0[2],  _pf[2], _height, phase)/ (swingTime * swingTime);
+    zp = Interpolate::ShiftedSine<T>(_p0[2],  _pf[2], _highestpoint[3], phase);
+    zv = Interpolate::ShiftedSineFirstDerivative<T>(_p0[2],  _pf[2], _highestpoint[3], phase) /swingTime;
+    za = Interpolate::ShiftedSineSecondDerivative<T>(_p0[2],  _pf[2], _highestpoint[3], phase)/ (swingTime * swingTime);
 
   _p[2] = zp;
   _v[2] = zv;
@@ -73,9 +73,9 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryModified(T phase, T swingTime
     _v = Interpolate::cubicBezierFirstDerivativeSQRT<Vec3<T>>(_p0, _pf, phase) / swingTime;
     _a = Interpolate::cubicBezierSecondDerivativeSQRT<Vec3<T>>(_p0, _pf, phase) / (swingTime * swingTime);
 
-    zp = Interpolate::ShiftedSineSQRT<T>(_p0[2],  _pf[2], _height, phase);
-    zv = Interpolate::ShiftedSineFirstDerivativeSQRT<T>(_p0[2],  _pf[2], _height, phase) /swingTime;
-    za = Interpolate::ShiftedSineSecondDerivativeSQRT<T>(_p0[2],  _pf[2], _height, phase)/ (swingTime * swingTime);
+    zp = Interpolate::ShiftedSineSQRT<T>(_p0[2],  _pf[2], _highestpoint[3], phase);
+    zv = Interpolate::ShiftedSineFirstDerivativeSQRT<T>(_p0[2],  _pf[2], _highestpoint[3], phase) /swingTime;
+    za = Interpolate::ShiftedSineSecondDerivativeSQRT<T>(_p0[2],  _pf[2], _highestpoint[3], phase)/ (swingTime * swingTime);
 
     _p[2] = zp;
     _v[2] = zv;
@@ -101,9 +101,9 @@ void FootSwingTrajectory<T>::computeStairsSwingTrajectoryBezier(T phase, T swing
 
   if (phase < T(0.5))
   {
-    zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _height, phase * 2);
-    zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2], _p0[2] + _height, phase * 2) * 2 / swingTime;
-    za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2], _p0[2] + _height, phase * 2) * 4 / (swingTime * swingTime);
+    zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _highestpoint[3], phase * 2);
+    zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2], _p0[2] + _highestpoint[3], phase * 2) * 2 / swingTime;
+    za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2], _p0[2] + _highestpoint[3], phase * 2) * 4 / (swingTime * swingTime);
 
     xp = Interpolate::cubicBezier<T>(_p0[0], _p0[0], phase * 2);
     xv = Interpolate::cubicBezierFirstDerivative<T>(_p0[0], _p0[0] + (_pf[0] - _p0[0]) / 3, phase * 2) * 2 / swingTime;
@@ -115,9 +115,9 @@ void FootSwingTrajectory<T>::computeStairsSwingTrajectoryBezier(T phase, T swing
   }
   else
   {
-    zp = Interpolate::cubicBezier<T>(_p0[2] + _height, _pf[2], phase * 2 - 1);
-    zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2] + _height, _pf[2], phase * 2 - 1) * 2 / swingTime;
-    za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2] + _height, _pf[2], phase * 2 - 1) * 4 / (swingTime * swingTime);
+    zp = Interpolate::cubicBezier<T>(_p0[2] + _highestpoint[3], _pf[2], phase * 2 - 1);
+    zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2] + _highestpoint[3], _pf[2], phase * 2 - 1) * 2 / swingTime;
+    za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2] + _highestpoint[3], _pf[2], phase * 2 - 1) * 4 / (swingTime * swingTime);
 
     xp = Interpolate::cubicBezier<T>(_p0[0], _p0[0], phase * 2 - 1);
     xv = Interpolate::cubicBezierFirstDerivative<T>(_p0[0] + (_pf[0] - _p0[0]) / 3, _pf[0], phase * 2 - 1) * 2 / swingTime;
