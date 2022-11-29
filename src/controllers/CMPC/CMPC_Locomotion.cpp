@@ -927,7 +927,11 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   static Vec3<float> delta_p_bw[4] = {};
 
   uint8_t contacts = 0;
-  uint8_t leg_contact_num[4] = { 0, 0, 0, 0 };
+  leg_contact_num[0] = 0;
+  leg_contact_num[1] = 0;
+  leg_contact_num[2] = 0;
+  leg_contact_num[3] = 0;
+
   for (uint8_t i = 0; i < 4; i++)
   {
     if (contactStates[i] > 0)
@@ -945,8 +949,8 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
 
   //---------------- LQR --------------------------
 
-  Eigen::Matrix<double, 12, 12> A;
-  Eigen::MatrixXd B;
+  // Eigen::Matrix<double, 12, 12> A;
+  // Eigen::MatrixXd B;
   B.resize(12, 3 * contacts);
   Eigen::Matrix<double, 12, 12> Q;
   Eigen::MatrixXd R;
@@ -1020,8 +1024,61 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
   // cout << "Q: " << Q << endl;
   // cout << "R: " << R << endl;
 
-  /* Solve the continuous time algebraic Ricatti equation via the Schur method */
+  Eigen::Vector3f rpy_des_world(0, 0, 0);
+  Eigen::Vector3f rpy_act_world(0, 0, 0);
+  Eigen::Vector3f omega_des_world(0, 0, 0);
+  Eigen::Vector4f quat_des(0, 0, 0, 0);
+  Eigen::Matrix3f R_des;
+  R_des.setZero();
 
+  // rpy_des_world << 0, _pitch_des, _yaw_des;
+  rpy_des_world << 0, 0, _yaw_des;
+  rpy_act_world = seResult.rpy;
+  omega_des_world << 0, 0, _yaw_turn_rate;
+
+  // rpy_des_world = seResult.rBody.transpose() * rpy_des_world;
+  // rpy_act_world = seResult.rBody.transpose() * rpy_act_world;
+  rpy_des_world = seResult.rBody * rpy_des_world;
+  rpy_act_world = seResult.rBody * rpy_act_world;
+  omega_des_world = seResult.rBody.transpose() * omega_des_world;
+
+  quat_des = rpyToQuat(rpy_des_world);
+  R_des = ori::quaternionToRotationMatrix(quat_des);
+
+  _x_COM_world.resize(3, 1);
+  _x_COM_world_desired.resize(3, 1);
+  _xdot_COM_world.resize(3, 1);
+  _xdot_COM_world_desired.resize(3, 1);
+  _omega_b_body.resize(3, 1);
+  _omega_b_body_desired.resize(3, 1);
+  _error_x_lin.resize(3, 1);
+  _error_dx_lin.resize(3, 1);
+  _error_R_lin.resize(3, 1);
+  _error_omega_lin.resize(3, 1);
+  p_feet_desired.resize(3, 4);
+
+  p_feet_desired.block<3, 1>(0, 0) = r[0];
+  p_feet_desired.block<3, 1>(0, 1) = r[1];
+  p_feet_desired.block<3, 1>(0, 2) = r[2];
+  p_feet_desired.block<3, 1>(0, 3) = r[3];
+
+  _x_COM_world = seResult.position.cast<double>();
+  _x_COM_world_desired = world_position_desired.cast<double>();
+  _x_COM_world_desired[2] = _body_height;
+  _xdot_COM_world = seResult.vWorld.cast<double>();
+  _xdot_COM_world_desired = v_des_world.cast<double>();
+  _xdot_COM_world_desired[2] = 0.0;
+  _R_b_world = seResult.rBody.cast<double>();
+  _R_b_world_desired = R_des.cast<double>();
+  _omega_b_body = seResult.omegaBody.cast<double>();
+  _omega_b_body_desired[0] = 0;
+  _omega_b_body_desired[1] = 0;
+  _omega_b_body_desired[2] = _yaw_turn_rate;
+
+  updateALQR(contacts);
+  updateBLQR(contacts);
+
+  /* Solve the continuous time algebraic Ricatti equation via the Schur method */
   Eigen::MatrixXd H_LQR;
   Eigen::MatrixXd P_LQR;
   Eigen::MatrixXd s_LQR;
@@ -1068,65 +1125,24 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
 
   // _pitch_des = 0;
 
-  Eigen::Vector3f rpy_des_world(0, 0, 0);
-  Eigen::Vector3f rpy_act_world(0, 0, 0);
-  Eigen::Vector3f omega_des_world(0, 0, 0);
-  Eigen::Vector4f quat_des(0, 0, 0, 0);
-  Eigen::Matrix3f R_des;
-  R_des.setZero();
+  // s_LQR(0) = rpy_des_world[0] - rpy_act_world[0];
+  // s_LQR(1) = rpy_des_world[1] - rpy_act_world[1];
+  // s_LQR(2) = rpy_des_world[2] - rpy_act_world[2];
 
-  rpy_des_world << 0, _pitch_des, _yaw_des;
-  rpy_act_world = seResult.rpy;
-  omega_des_world << 0, 0, _yaw_turn_rate;
+  // s_LQR(3) = world_position_desired[0] - seResult.position[0];
+  // s_LQR(4) = world_position_desired[1] - seResult.position[1];
+  // s_LQR(5) = _body_height - seResult.position[2];
 
-  rpy_des_world = seResult.rBody.transpose() * rpy_des_world;
-  rpy_act_world = seResult.rBody.transpose() * rpy_act_world;
-  omega_des_world = seResult.rBody.transpose() * omega_des_world;
+  // s_LQR(6) = omega_des_world[0] - seResult.omegaWorld[0];
+  // s_LQR(7) = omega_des_world[1] - seResult.omegaWorld[1];
+  // s_LQR(8) = omega_des_world[2] - seResult.omegaWorld[2];
 
-  quat_des = rpyToQuat(rpy_des_world);
-  R_des = ori::quaternionToRotationMatrix(quat_des);
+  // s_LQR(9) = v_des_world[0] - seResult.vWorld[0];
+  // s_LQR(10) = v_des_world[1] - seResult.vWorld[1];
+  // s_LQR(11) = 0 - seResult.vWorld[2];
 
-  s_LQR(0) = rpy_des_world[0] - rpy_act_world[0];
-  s_LQR(1) = rpy_des_world[1] - rpy_act_world[1];
-  s_LQR(2) = rpy_des_world[2] - rpy_act_world[2];
-
-  s_LQR(3) = world_position_desired[0] - seResult.position[0];
-  s_LQR(4) = world_position_desired[1] - seResult.position[1];
-  s_LQR(5) = _body_height - seResult.position[2];
-
-  s_LQR(6) = omega_des_world[0] - seResult.omegaWorld[0];
-  s_LQR(7) = omega_des_world[1] - seResult.omegaWorld[1];
-  s_LQR(8) = omega_des_world[2] - seResult.omegaWorld[2];
-
-  s_LQR(9) = v_des_world[0] - seResult.vWorld[0];
-  s_LQR(10) = v_des_world[1] - seResult.vWorld[1];
-  s_LQR(11) = 0 - seResult.vWorld[2];
-
-  _x_COM_world.resize(3, 1);
-  _x_COM_world_desired.resize(3, 1);
-  _xdot_COM_world.resize(3, 1);
-  _xdot_COM_world_desired.resize(3, 1);
-  _omega_b_body.resize(3, 1);
-  _omega_b_body_desired.resize(3, 1);
-  _error_x_lin.resize(3, 1);
-  _error_dx_lin.resize(3, 1);
-  _error_R_lin.resize(3, 1);
-  _error_omega_lin.resize(3, 1);
-
-  _x_COM_world = seResult.position.cast<double>();
-  _x_COM_world_desired = world_position_desired.cast<double>();
-  _x_COM_world_desired[2] = _body_height;
-  _xdot_COM_world = seResult.vWorld.cast<double>();
-  _xdot_COM_world_desired = v_des_world.cast<double>();
-  _xdot_COM_world_desired[2] = 0.0;
-  _R_b_world = seResult.rBody.cast<double>();
-  _R_b_world_desired = R_des.cast<double>();
-  _omega_b_body = seResult.omegaBody.cast<double>();
-  _omega_b_body_desired[0] = 0;
-  _omega_b_body_desired[1] = 0;
-  _omega_b_body_desired[2] = _yaw_turn_rate;
-
-  // s_LQR = calcLinError();
+  // calcLinError();
+  s_LQR = calcLinError();
 
   // cout << "error: " << s_LQR << endl;
 
@@ -1196,6 +1212,10 @@ void CMPCLocomotion::myLQRVersion(ControlFSMData<float>& data)
     f_unc(3 * i + 0) = Fx;
     f_unc(3 * i + 1) = Fy;
     f_unc(3 * i + 2) = Fz;
+
+    f_ref_world[3 * i + 0] = Fx;
+    f_ref_world[3 * i + 1] = Fy;
+    f_ref_world[3 * i + 2] = Fz;
   }
 
   // cout << "f: " << f_unc << endl;
@@ -1414,13 +1434,20 @@ Eigen::Matrix<double, 12, 1> CMPCLocomotion::calcLinError()
   s.setZero();
 
   // Linear error for LQR
-  _error_x_lin = _x_COM_world - _x_COM_world_desired;
-  _error_dx_lin = _xdot_COM_world - _xdot_COM_world_desired;
-  inverseCrossMatrix(0.5 * (_R_b_world_desired.transpose() * _R_b_world - _R_b_world.transpose() * _R_b_world_desired), _error_R_lin);
-  _error_omega_lin = _omega_b_body - _R_b_world.transpose() * _R_b_world_desired * _omega_b_body_desired;
-  s << _error_x_lin(0), _error_x_lin(1), _error_x_lin(2), _error_dx_lin(0), _error_dx_lin(1), _error_dx_lin(2), _error_R_lin(0), _error_R_lin(1), _error_R_lin(2), _error_omega_lin(0), _error_omega_lin(1), _error_omega_lin(2);
+  // _error_x_lin = _x_COM_world - _x_COM_world_desired;
+  // _error_dx_lin = _xdot_COM_world - _xdot_COM_world_desired;
+  // inverseCrossMatrix(0.5 * (_R_b_world_desired.transpose() * _R_b_world - _R_b_world.transpose() * _R_b_world_desired), _error_R_lin);
+  // _error_omega_lin = _omega_b_body - _R_b_world.transpose() * _R_b_world_desired * _omega_b_body_desired;
 
-  // cout << "s: " << s << endl;
+  _error_x_lin = _x_COM_world_desired - _x_COM_world;
+  _error_dx_lin = _xdot_COM_world_desired - _xdot_COM_world;
+  inverseCrossMatrix(0.5 * (_R_b_world.transpose() * _R_b_world_desired - _R_b_world_desired.transpose() * _R_b_world), _error_R_lin);
+  _error_omega_lin = -_omega_b_body + _R_b_world.transpose() * _R_b_world_desired * _omega_b_body_desired;
+
+  // s << _error_x_lin(0), _error_x_lin(1), _error_x_lin(2), _error_dx_lin(0), _error_dx_lin(1), _error_dx_lin(2), _error_R_lin(0), _error_R_lin(1), _error_R_lin(2), _error_omega_lin(0), _error_omega_lin(1), _error_omega_lin(2);
+  s << _error_x_lin(0), _error_x_lin(1), _error_x_lin(2), _error_dx_lin(0), _error_dx_lin(1), _error_dx_lin(2), -_error_R_lin(0), -_error_R_lin(1), -_error_R_lin(2), -_error_omega_lin(0), -_error_omega_lin(1), -_error_omega_lin(2);
+
+  cout << "s: " << s << endl;
 
   return s;
 }
@@ -1430,6 +1457,17 @@ void CMPCLocomotion::inverseCrossMatrix(const Eigen::MatrixXd& R, Eigen::VectorX
   omega(0) = R(2, 1);
   omega(1) = R(0, 2);
   omega(2) = R(1, 0);
+}
+
+void CMPCLocomotion::crossMatrix(Eigen::MatrixXd& R, const Eigen::VectorXd& omega)
+{
+  R.setZero();
+  R(0, 1) = -omega(2);
+  R(0, 2) = omega(1);
+  R(1, 0) = omega(2);
+  R(1, 2) = -omega(0);
+  R(2, 0) = -omega(1);
+  R(2, 1) = omega(0);
 }
 
 void CMPCLocomotion::matrixLogRot(const Eigen::MatrixXd& R, Eigen::VectorXd& omega)
@@ -1462,4 +1500,97 @@ void CMPCLocomotion::matrixLogRot(const Eigen::MatrixXd& R, Eigen::VectorXd& ome
   {
     omega /= 2;
   }
+}
+
+void CMPCLocomotion::updateALQR(uint16_t contacts)
+{
+  // Temporary variables for block assignment
+  Eigen::MatrixXd tempBlock;
+  tempBlock.setZero(3, 3);
+  Eigen::VectorXd rd;
+  rd.resize(3, 1);
+  Eigen::MatrixXd rd_hat;
+  rd_hat.resize(3, 3);
+  Eigen::MatrixXd tempSkewMatrix3;
+  Eigen::VectorXd tempVector3;
+  Eigen::Matrix<double, 3, 3> Ig;
+  Ig << 15853, 0, 0, 0, 37799, 0, 0, 0, 45654;
+  Ig = Ig * 1e-6;
+
+  tempSkewMatrix3.resize(3, 3);
+  tempVector3.resize(3, 1);
+
+  tempSkewMatrix3.setZero();
+  tempVector3.setZero();
+
+  f_ref_world.resize(3 * contacts, 1);
+
+  // Update the A matrix in sdot = A*s+B*df
+  tempSkewMatrix3.setIdentity();
+  A.block<3, 3>(0, 3) << tempSkewMatrix3;
+  A.block<3, 3>(6, 9) << tempSkewMatrix3;
+  crossMatrix(tempSkewMatrix3, -_omega_b_body_desired);
+  A.block<3, 3>(6, 6) << tempSkewMatrix3;
+
+  for (int i = 0; i < contacts; i++)
+  {
+    tempVector3 << f_ref_world(3 * i), f_ref_world(3 * i + 1), f_ref_world(3 * i + 2);
+    crossMatrix(tempSkewMatrix3, tempVector3);
+    tempBlock << tempBlock + Ig.inverse() * _R_b_world_desired.transpose() * tempSkewMatrix3;
+  }
+
+  // A4,1
+  A.block<3, 3>(9, 0) << tempBlock;
+
+  tempBlock.setZero();
+  for (int i = 0; i < contacts; i++)
+  {
+    tempVector3 << f_ref_world(3 * i), f_ref_world(3 * i + 1), f_ref_world(3 * i + 2);
+    // rd << p_feet_desired.col(i);
+    rd << p_feet_desired.col(leg_contact_num[i]);
+    crossMatrix(rd_hat, rd);
+    crossMatrix(tempSkewMatrix3, rd_hat * tempVector3);
+    tempBlock << tempBlock + Ig.inverse() * _R_b_world_desired.transpose() * tempSkewMatrix3;
+  }
+
+  // A4,3
+  A.block<3, 3>(9, 6) << tempBlock;
+
+  // cout << "A: " << A << endl;
+
+  /* NOTE: WE ASSUME THAT DESIRED ANGULAR VELOCITY IS ZERO
+  if desired angular velocity of the body is nonzero, an additional block needs to be
+  added at A_LQR.block<3,3>(9,9) too account for Coriolis term */
+}
+
+void CMPCLocomotion::updateBLQR(uint16_t contacts)
+{
+  // Determine size of B based on number of legs on the ground
+  float mass = 13.9;
+  Eigen::Matrix<double, 3, 3> Ig;
+  Ig << 15853, 0, 0, 0, 37799, 0, 0, 0, 45654;
+  Ig = Ig * 1e-6;
+  Eigen::MatrixXd tempSkewMatrix3;
+  tempSkewMatrix3.resize(3, 3);
+
+  B.resize(12, 3 * contacts);
+  B.setZero();
+
+  // Build B matrix accordingly
+
+  for (size_t i = 0; i < contacts; i++)
+  {
+    // Compute B_LQR using only legs in contact
+    Eigen::VectorXd rd;
+    rd.resize(3, 1);
+
+    tempSkewMatrix3.setIdentity();
+    B.block<3, 3>(3, 3 * i) << 1 / mass * tempSkewMatrix3;
+
+    rd << p_feet_desired.col(leg_contact_num[i]);
+    crossMatrix(tempSkewMatrix3, rd);
+    B.block<3, 3>(9, 3 * i) << Ig.inverse() * _R_b_world_desired.transpose() * tempSkewMatrix3;
+  }
+
+  // cout << "B: " << B << endl;
 }

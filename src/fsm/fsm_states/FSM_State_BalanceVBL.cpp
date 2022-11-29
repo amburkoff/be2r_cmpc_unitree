@@ -16,7 +16,8 @@ using std::endl;
  * @param _controlFSMData holds all of the relevant control data
  */
 template<typename T>
-FSM_State_BalanceVBL<T>::FSM_State_BalanceVBL(ControlFSMData<T>* _controlFSMData) : FSM_State<T>(_controlFSMData, FSM_StateName::BALANCE_VBL, "BALANCE_VBL")
+FSM_State_BalanceVBL<T>::FSM_State_BalanceVBL(ControlFSMData<T>* _controlFSMData)
+  : FSM_State<T>(_controlFSMData, FSM_StateName::BALANCE_VBL, "BALANCE_VBL")
 {
   _data = _controlFSMData;
   balanceController = new BalanceController();
@@ -150,7 +151,7 @@ template<typename T>
 void FSM_State_BalanceVBL<T>::runBalanceControllerVBL()
 {
   double minForce = 25;
-  double maxForce = 500;
+  double maxForce = 150;
   double contactStateScheduled[4];
   float mass = 12.0;
 
@@ -167,8 +168,8 @@ void FSM_State_BalanceVBL<T>::runBalanceControllerVBL()
     maxForces[leg] = contactStateScheduled[leg] * maxForce;
   }
 
-  double COM_weights_stance[3] = { 1, 1, 10 };
-  double Base_weights_stance[3] = { 20, 10, 10 };
+  double COM_weights_stance[3] = { 1, 1, 1 };
+  double Base_weights_stance[3] = { 1, 1, 1 };
   double pFeet[12], p_des[3], p_act[3], v_des[3], v_act[3], O_err[3], rpy_act[3], rpy[3], omegaDes[3];
   double se_xfb[13];
   double kpCOM[3], kdCOM[3], kpBase[3], kdBase[3];
@@ -192,10 +193,10 @@ void FSM_State_BalanceVBL<T>::runBalanceControllerVBL()
     se_xfb[10 + i] = (double)_data->stateEstimator->getResult().vBody(i);
 
     // Set the translational and orientation gains
-    kpCOM[i] = 5.0;
+    kpCOM[i] = 1.0;
     kdCOM[i] = 1.0;
-    kpBase[i] = 20;
-    kdBase[i] = 2;
+    kpBase[i] = 1;
+    kdBase[i] = 1;
   }
 
   p_des[0] = 0.0;
@@ -206,20 +207,36 @@ void FSM_State_BalanceVBL<T>::runBalanceControllerVBL()
   v_des[1] = 0.0;
   v_des[2] = 0.0;
 
-  cout << "pz act: " << p_act[2] << endl;
+  // cout << "pz act: " << p_act[2] << endl;
 
   Vec3<T> pFeetVec;
   Vec3<T> pFeetVecCOM;
+
+  static double pFeetStart[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  static bool is_start = true;
+
   // Get the foot locations relative to COM
   for (int leg = 0; leg < 4; leg++)
   {
     computeLegJacobianAndPosition(**&_data->quadruped, _data->legController->datas[leg].q, (Mat3<T>*)nullptr, &pFeetVec, leg);
-    pFeetVecCOM = _data->stateEstimator->getResult().rBody.transpose() * (_data->quadruped->getHipLocation(leg) + _data->legController->datas[leg].p);
+    // pFeetVecCOM = _data->stateEstimator->getResult().rBody.transpose() * (_data->quadruped->getHipLocation(leg) + _data->legController->datas[leg].p);
+    pFeetVecCOM = _data->stateEstimator->getResult().rBody.transpose() * (_data->quadruped->getHipLocation(leg) + pFeetVec);
 
     pFeet[leg * 3] = (double)pFeetVecCOM[0];
     pFeet[leg * 3 + 1] = (double)pFeetVecCOM[1];
     pFeet[leg * 3 + 2] = (double)pFeetVecCOM[2];
   }
+
+  if (is_start)
+  {
+    is_start = false;
+
+    for (size_t i = 0; i < 12; i++)
+    {
+      pFeetStart[i] = pFeet[i];
+    }
+  }
+
   double f_ref_in[12] = { 0 };
   double f = 9.81 * 13.9;
   f_ref_in[2] = f / 4.0;
@@ -265,7 +282,11 @@ void FSM_State_BalanceVBL<T>::runBalanceControllerVBL()
   balance_controller_vbl->set_LQR_weights(Q_x, Q_dx, Q_w, Q_dw, 1.0e-2, 1.0e-2);
   balance_controller_vbl->set_RobotLimits();
   balance_controller_vbl->set_reference_GRF(f_ref_in);
-  balance_controller_vbl->updateProblemData(se_xfb, pFeet, pFeet, rpy, rpy_act);
+  balance_controller_vbl->updateProblemData(se_xfb, pFeet, pFeetStart, rpy, rpy_act);
+
+  // cout << "pfeet 0: " << pFeet[0] << endl;
+  // cout << "pfeet 1: " << pFeet[1] << endl;
+  // cout << "pfeet 2: " << pFeet[2] << endl;
 
   double fOpt[12];
   Eigen::VectorXd f_unc = balance_controller_vbl->getFunc();
@@ -291,6 +312,7 @@ void FSM_State_BalanceVBL<T>::runBalanceControllerVBL()
     _data->legController->commands[leg].forceFeedForward = -f_ff;
   }
 
+  cout << "fopt: " << endl;
   cout << fOpt[0] << endl;
   cout << fOpt[1] << endl;
   cout << fOpt[2] << endl;
@@ -346,9 +368,7 @@ FSM_StateName FSM_State_BalanceVBL<T>::checkTransition()
       break;
 
     default:
-      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from "
-                << K_BALANCE_VBL << " to "
-                << this->_data->userParameters->FSM_State << std::endl;
+      std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_BALANCE_VBL << " to " << this->_data->userParameters->FSM_State << std::endl;
   }
 
   // Get the next state

@@ -73,8 +73,18 @@ private:
   //----------------------- LQR -------------------------
   Eigen::Matrix<double, 3, 3> cross_mat(Eigen::Matrix<double, 3, 3> I_inv, Eigen::Matrix<double, 3, 1> r);
   Eigen::Matrix<double, 12, 1> calcLinError();
+  void updateALQR(uint16_t contacts);
+  void updateBLQR(uint16_t contacts);
   void inverseCrossMatrix(const Eigen::MatrixXd& R, Eigen::VectorXd& omega);
+  void crossMatrix(Eigen::MatrixXd& R, const Eigen::VectorXd& omega);
   void matrixLogRot(const Eigen::MatrixXd& R, Eigen::VectorXd& omega);
+
+  uint8_t leg_contact_num[4] = { 0, 0, 0, 0 };
+
+  Eigen::Matrix<double, 12, 12> A;
+  Eigen::MatrixXd B;
+  Eigen::VectorXd f_ref_world;
+  Eigen::MatrixXd p_feet_desired; // new
 
   Eigen::VectorXd _x_COM_world;
   Eigen::VectorXd _x_COM_world_desired;
