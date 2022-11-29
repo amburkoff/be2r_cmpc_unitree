@@ -88,8 +88,8 @@ void CMPCLocomotion::recompute_timing(int iterations_per_mpc)
 void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 {
   float x_vel_cmd, y_vel_cmd;
-  float filter_x(0.01);
-  float filter_y(0.01);
+  float filter_x(_data->staticParams->gamepad_filter);
+  float filter_y(_data->staticParams->gamepad_filter);
 
   _yaw_turn_rate = data.gamepad_command->right_stick_analog[0];
   x_vel_cmd = data.gamepad_command->left_stick_analog[1];
@@ -150,8 +150,8 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 
 void CMPCLocomotion::run(ControlFSMData<float>& data)
 {
-  // myNewVersion(data);
-  myLQRVersion(data);
+  myNewVersion(data);
+  // myLQRVersion(data);
 }
 
 void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
@@ -205,21 +205,6 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
   Vec3<float> v_des_world = omniMode ? v_des_robot : seResult.rBody.transpose() * v_des_robot;
   Vec3<float> v_robot = seResult.vWorld;
 
-  // Integral-esque pitche and roll compensation
-  if (fabs(v_robot[0]) > .2) // avoid dividing by zero
-  {
-    rpy_int[1] += dt * (_pitch_des - seResult.rpy[1]) / v_robot[0];
-  }
-  if (fabs(v_robot[1]) > 0.1)
-  {
-    rpy_int[0] += dt * (_roll_des - seResult.rpy[0]) / v_robot[1];
-  }
-
-  rpy_int[0] = fminf(fmaxf(rpy_int[0], -.25), .25);
-  rpy_int[1] = fminf(fmaxf(rpy_int[1], -.25), .25);
-  rpy_comp[1] = v_robot[0] * rpy_int[1];
-  rpy_comp[0] = v_robot[1] * rpy_int[0] * (gaitNumber != 8); // turn off for pronking
-
   static float z_des[4] = { 0 };
 
   if (current_gait == 4 || current_gait == 13)
@@ -230,15 +215,16 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
   {
     // estimated pitch of plane and pitch correction depends on Vdes
     // _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + 0.1;
-    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane;
+    _pitch_des = pitch_cmd + data.stateEstimator->getResult().rpy[1] + data.stateEstimator->getResult().est_pitch_plane + data.staticParams->pitch_cor;
 
     if (_x_vel_des > 0)
     {
-      _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
+      // _pitch_des += -0.3 * _x_vel_des / data.staticParams->max_vel_x;
+      _pitch_des += data.staticParams->pitch_cor_max * _x_vel_des / data.staticParams->max_vel_x;
     }
     else
     {
-      _pitch_des += -0.2 * _x_vel_des / data.staticParams->max_vel_x;
+      _pitch_des += data.staticParams->pitch_cor_min * _x_vel_des / data.staticParams->max_vel_x;
     }
   }
 
@@ -346,7 +332,7 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
   Vec4<float> swingStates = gait->getSwingState();
   int* mpcTable = gait->getMpcTable();
 
-  // updateMPCIfNeeded(mpcTable, data, omniMode);
+  updateMPCIfNeeded(mpcTable, data, omniMode);
 
   Vec4<float> se_contactState(0, 0, 0, 0);
   static bool is_stance[4] = { 0, 0, 0, 0 };
@@ -425,9 +411,9 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(pDesFootWorld);
       data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
 
-      Eigen::Vector3f f = Eigen::Vector3f(0, 0, 0.0);
-      Fr_des[foot] = -seResult.rBody * f;
-      f_ff[foot] = Fr_des[foot];
+      // Eigen::Vector3f f = Eigen::Vector3f(0, 0, 0.0);
+      // Fr_des[foot] = -seResult.rBody * f;
+      // f_ff[foot] = Fr_des[foot];
 
       data.debug->leg_force[foot] = ros::toMsg(f_ff[foot]);
 
@@ -482,9 +468,9 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
         data.legController->commands[foot].kdCartesian = Kd_stance;
       }
 
-      Eigen::Vector3f f = Eigen::Vector3f(0, 0, 6.0 * 9.81);
-      f_ff[foot] = -seResult.rBody * f;
-      Fr_des[foot] = f;
+      // Eigen::Vector3f f = Eigen::Vector3f(0, 0, 6.0 * 9.81);
+      // f_ff[foot] = -seResult.rBody * f;
+      // Fr_des[foot] = f;
 
       se_contactState[foot] = contactState;
 
@@ -514,8 +500,7 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
   aBody_des.setZero();
 
   pBody_RPY_des[0] = 0.0;
-  pBody_RPY_des[1] = 0.0;
-  // pBody_RPY_des[1] = _pitch_des;
+  pBody_RPY_des[1] = _pitch_des;
   pBody_RPY_des[2] = _yaw_des;
 
   vBody_Ori_des[0] = 0.;
@@ -577,18 +562,47 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
     world_position_desired[0] = xStart;
     world_position_desired[1] = yStart;
 
-    float trajInitial[12] = { pBody_RPY_des[0], // 0 roll des
-                              pBody_RPY_des[1], // 1 pitch des
-                              pBody_RPY_des[2], // 2 yaw des
-                              pBody_des[0],     // 3 x body des
-                              pBody_des[1],     // 4 y body des
-                              pBody_des[2],     // 5 z body des
-                              vBody_Ori_des[0], // 6 velocity roll des
-                              vBody_Ori_des[1], // 7 velocity pitch des
-                              vBody_Ori_des[2], // 8 velocity yaw des
-                              vBody_des[0],     // 9 vx body des
-                              vBody_des[1],     // 10 vy body des
-                              vBody_des[2] };   // 11 vz body des
+    Eigen::Vector3f rpy_des_world(0, 0, 0);
+    Eigen::Vector3f rpy_act_world(0, 0, 0);
+    Eigen::Vector3f omega_des_world(0, 0, 0);
+    Eigen::Vector4f quat_des(0, 0, 0, 0);
+    Eigen::Matrix3f R_des;
+    R_des.setZero();
+
+    rpy_des_world << 0, _pitch_des, _yaw_des;
+    // rpy_des_world << 0, 0, _yaw_des;
+    rpy_act_world = seResult.rpy;
+    omega_des_world << 0, 0, _yaw_turn_rate;
+
+    rpy_des_world = seResult.rBody.transpose() * rpy_des_world;
+    rpy_act_world = seResult.rBody.transpose() * rpy_act_world;
+    omega_des_world = seResult.rBody.transpose() * omega_des_world;
+
+    // float trajInitial[12] = { pBody_RPY_des[0], // 0 roll des
+    //                           pBody_RPY_des[1], // 1 pitch des
+    //                           pBody_RPY_des[2], // 2 yaw des
+    //                           pBody_des[0],     // 3 x body des
+    //                           pBody_des[1],     // 4 y body des
+    //                           pBody_des[2],     // 5 z body des
+    //                           vBody_Ori_des[0], // 6 velocity roll des
+    //                           vBody_Ori_des[1], // 7 velocity pitch des
+    //                           vBody_Ori_des[2], // 8 velocity yaw des
+    //                           vBody_des[0],     // 9 vx body des
+    //                           vBody_des[1],     // 10 vy body des
+    //                           vBody_des[2] };   // 11 vz body des
+
+    float trajInitial[12] = { rpy_des_world[0],   // 0 roll des
+                              rpy_des_world[1],   // 1 pitch des
+                              rpy_des_world[2],   // 2 yaw des
+                              pBody_des[0],       // 3 x body des
+                              pBody_des[1],       // 4 y body des
+                              pBody_des[2],       // 5 z body des
+                              omega_des_world[0], // 6 velocity roll des
+                              omega_des_world[1], // 7 velocity pitch des
+                              omega_des_world[2], // 8 velocity yaw des
+                              vBody_des[0],       // 9 vx body des
+                              vBody_des[1],       // 10 vy body des
+                              vBody_des[2] };     // 11 vz body des
 
     // i - horizon step, j - traj element
     for (int i = 0; i < horizonLength; i++)
@@ -597,13 +611,29 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
       {
         trajAll[12 * i + j] = trajInitial[j];
       }
+    }
 
-      if (i > 0)
+    for (int i = 1; i < horizonLength; i++)
+    {
+      Eigen::Vector3f rpy_hat(0, 0, 0);
+
+      trajAll[12 * i + 2] = trajAll[12 * (i - 1) + 2] + dtMPC * _yaw_turn_rate;
+      rpy_hat(2) = trajAll[12 * i + 2];
+
+      tf::Quaternion quat(tf::Vector3(0, 0, 1), rpy_hat(2));
+      tf::Matrix3x3 Rot(quat);
+      Eigen::Matrix<float, 3, 3> R;
+
+      for (uint8_t i = 0; i < 3; i++)
       {
-        trajAll[12 * i + 2] = trajAll[12 * (i - 1) + 2] + dtMPC * _yaw_turn_rate;
-        trajAll[12 * i + 3] = trajAll[12 * (i - 1) + 3] + dtMPC * v_des_world[0];
-        trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + dtMPC * v_des_world[1];
+        for (uint8_t j = 0; j < 3; j++)
+        {
+          R(i, j) = Rot[i][j];
+        }
       }
+
+      trajAll[12 * i + 3] = trajAll[12 * (i - 1) + 3] + (R * dtMPC * v_des_world)[0];
+      trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + (R * dtMPC * v_des_world)[1];
     }
 
     // dense matrix - contain mostly NON zero values
@@ -650,7 +680,6 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   float pitch = seResult.rpy[1];
   float yaw = seResult.rpy[2];
   float* weights = Q;
-  // float alpha = 4e-5; // make setting eventually
   float alpha = data.staticParams->alpha;
   float* p = seResult.position.data();
   float* v = seResult.vWorld.data();
@@ -663,24 +692,12 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
     r[i] = pFoot[i % 4][i / 4] - seResult.position[i / 4];
   }
 
-  if (alpha > 1e-4)
-  {
-    std::cout << "Alpha was set too high (" << alpha << ") adjust to 1e-5\n";
-    alpha = 1e-5;
-  }
-
   float pz_err = p[2] - _body_height;
   Vec3<float> vxy(seResult.vWorld[0], seResult.vWorld[1], 0);
 
   Timer t1;
   dtMPC = dt * iterationsBetweenMPC;
   setup_problem(dtMPC, horizonLength, 0.4, 120);
-  update_x_drag(x_comp_integral);
-
-  if (vxy[0] > 0.3 || vxy[0] < -0.3)
-  {
-    x_comp_integral += _parameters->cmpc_x_drag * pz_err * dtMPC / vxy[0];
-  }
 
   update_solver_settings(_parameters->jcqp_max_iter, _parameters->jcqp_rho, _parameters->jcqp_sigma, _parameters->jcqp_alpha, _parameters->jcqp_terminate, _parameters->use_jcqp);
   // t1.stopPrint("Setup MPC");

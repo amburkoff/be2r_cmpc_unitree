@@ -231,14 +231,21 @@ inline Matrix<fpt, 3, 3> cross_mat(Matrix<fpt, 3, 3> I_inv, Matrix<fpt, 3, 1> r)
 // continuous time state space matrices.
 void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matrix<fpt, 3, 3> R_yaw, Matrix<fpt, 13, 13>& A, Matrix<fpt, 13, 12>& B, float x_drag)
 {
-  A.setZero();
-  A(3, 9) = 1.f;
-  A(11, 9) = x_drag;
-  A(4, 10) = 1.f;
-  A(5, 11) = 1.f;
+  // A.setZero();
+  // A(3, 9) = 1.f;
+  // A(11, 9) = x_drag;
+  // A(4, 10) = 1.f;
+  // A(5, 11) = 1.f;
 
+  // A(11, 12) = 1.f;
+  // A.block(0, 6, 3, 3) = R_yaw.transpose();
+
+  A.setZero();
+  Eigen::Matrix<float, 3, 3> Id;
+  Id.setIdentity();
+  A.block<3, 3>(0, 6) = Id;
+  A.block<3, 3>(3, 9) = Id;
   A(11, 12) = 1.f;
-  A.block(0, 6, 3, 3) = R_yaw.transpose();
 
   B.setZero();
   Matrix<fpt, 3, 3> I_inv = I_world.inverse();
@@ -248,6 +255,12 @@ void ct_ss_mats(Matrix<fpt, 3, 3> I_world, fpt m, Matrix<fpt, 3, 4> r_feet, Matr
     B.block(6, b * 3, 3, 3) = cross_mat(I_inv, r_feet.col(b));
     B.block(9, b * 3, 3, 3) = Matrix<fpt, 3, 3>::Identity() / m;
   }
+
+  // for (size_t i = 0; i < contacts; i++)
+  // {
+  //   B.block<3, 3>(6, i * 3) = cross_mat(I_world.inverse(), r[leg_contact_num[i]]);
+  //   B.block<3, 3>(9, i * 3) = Eigen::Matrix3d::Identity() / mass;
+  // }
 
   // Eigen::MatrixXd tempSkewMatrix3;
   // Eigen::MatrixXd A_LQR;

@@ -26,7 +26,7 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   this->checkPDesFoot = false;
   this->checkForceFeedForward = false;
 
-  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, ITERATIONS_BETWEEN_MPC, _controlFSMData);
+  CMPC = new CMPCLocomotion(_controlFSMData->staticParams->controller_dt, _controlFSMData->staticParams->iterations_between_mpc, _controlFSMData);
 
   this->turnOnAllSafetyChecks();
 

@@ -22,21 +22,26 @@ static_params:
   max_vel_x: 0.7
   max_vel_y: 0.4
   max_turn_rate: 2.5
+  gamepad_filter: 0.006
 
-# # qpOASES
-#   mpc_alpha: 4.e-6
-#   Q_roll: 0.25
-#   Q_pitch: 0.25
-#   Q_yaw: 10
-#   Q_x: 2
-#   Q_y: 2
-#   Q_z: 50
-#   Q_w_roll: 0
-#   Q_w_pitch: 0
-#   Q_w_yaw: 0.3
-#   Q_vx: 1
-#   Q_vy: 1
-#   Q_vz: 15
+  pitch_cor_max: -0.0
+  pitch_cor: 0.05
+  pitch_cor_min: -0.0
+
+# qpOASES
+  mpc_alpha: 4.e-4
+  Q_roll: 6
+  Q_pitch: 6
+  Q_yaw: 10
+  Q_x: 3
+  Q_y: 3
+  Q_z: 10000
+  Q_w_roll: 5
+  Q_w_pitch: 5
+  Q_w_yaw: 0.3
+  Q_vx: 5
+  Q_vy: 5
+  Q_vz: 1
 
 # LQR
   # mpc_alpha: 1.e-0
@@ -53,19 +58,19 @@ static_params:
   # Q_vy: 500000 
   # Q_vz: 10000
 
-  mpc_alpha: 1.e+2
-  Q_roll: 1.e+1
-  Q_pitch: 1.e+3
-  Q_yaw: 1.e+1
-  Q_x: 1.e+1 
-  Q_y: 1.e+1 
-  Q_z: 1.e+1
-  Q_w_roll: 1.e+1
-  Q_w_pitch: 1.e+3
-  Q_w_yaw: 1.e+1
-  Q_vx: 1.e+2 
-  Q_vy: 1.e+2 
-  Q_vz: 1.e+1
+  # mpc_alpha: 1.e+2
+  # Q_roll: 1.e+1
+  # Q_pitch: 1.e+3
+  # Q_yaw: 1.e+1
+  # Q_x: 1.e+1 
+  # Q_y: 1.e+1 
+  # Q_z: 1.e+1
+  # Q_w_roll: 1.e+1
+  # Q_w_pitch: 1.e+3
+  # Q_w_yaw: 1.e+1
+  # Q_vx: 1.e+2 
+  # Q_vy: 1.e+2 
+  # Q_vz: 1.e+1
 
   # osqp
   # mpc_alpha: 0.7e-5

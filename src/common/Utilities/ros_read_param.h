@@ -61,19 +61,24 @@ struct StaticParams
     readRosParam("/static_params/max_vel_x", max_vel_x);
     readRosParam("/static_params/max_vel_y", max_vel_y);
     readRosParam("/static_params/max_turn_rate", max_turn_rate);
+    readRosParam("/static_params/pitch_cor_max", pitch_cor_max);
+    readRosParam("/static_params/pitch_cor", pitch_cor);
+    readRosParam("/static_params/pitch_cor_min", pitch_cor_min);
+    readRosParam("/static_params/iterations_between_mpc", iterations_between_mpc);
+    readRosParam("/static_params/gamepad_filter", gamepad_filter);
 
-    readRosParam("/bigpid_params/Px", Px);
-    readRosParam("/bigpid_params/Py", Py);
-    readRosParam("/bigpid_params/Pz", Pz);
-    readRosParam("/bigpid_params/Dx", Dx);
-    readRosParam("/bigpid_params/Dy", Dy);
-    readRosParam("/bigpid_params/Dz", Dz);
-    readRosParam("/bigpid_params/P_roll", P_roll);
-    readRosParam("/bigpid_params/P_pitch", P_pitch);
-    readRosParam("/bigpid_params/P_yaw", P_yaw);
-    readRosParam("/bigpid_params/D_roll", D_roll);
-    readRosParam("/bigpid_params/D_pitch", D_pitch);
-    readRosParam("/bigpid_params/D_yaw", D_yaw);
+    // readRosParam("/bigpid_params/Px", Px);
+    // readRosParam("/bigpid_params/Py", Py);
+    // readRosParam("/bigpid_params/Pz", Pz);
+    // readRosParam("/bigpid_params/Dx", Dx);
+    // readRosParam("/bigpid_params/Dy", Dy);
+    // readRosParam("/bigpid_params/Dz", Dz);
+    // readRosParam("/bigpid_params/P_roll", P_roll);
+    // readRosParam("/bigpid_params/P_pitch", P_pitch);
+    // readRosParam("/bigpid_params/P_yaw", P_yaw);
+    // readRosParam("/bigpid_params/D_roll", D_roll);
+    // readRosParam("/bigpid_params/D_pitch", D_pitch);
+    // readRosParam("/bigpid_params/D_yaw", D_yaw);
   }
 
   double controller_dt;
@@ -105,6 +110,11 @@ struct StaticParams
   float max_vel_x = 0.5;
   float max_vel_y = 0.4;
   float max_turn_rate = 2.5;
+  float pitch_cor_max = -0.3;
+  float pitch_cor = 0;
+  float pitch_cor_min = -0.3;
+  int iterations_between_mpc = 13;
+  float gamepad_filter = 0.001;
 
   float Px = 1;
   float Py = 1;
