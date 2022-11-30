@@ -6,6 +6,8 @@
 #include <FootSwingTrajectory.h>
 #include <Utilities/Timer.h>
 #include <controllers/WBC_Ctrl/LocomotionCtrl/LocomotionCtrl.hpp>
+#include <grid_map_msgs/GridMap.h>
+#include <grid_map_ros/grid_map_ros.hpp>
 
 #define ITERATIONS_BETWEEN_MPC 13
 
@@ -47,8 +49,13 @@ public:
   void LocomotionControlStep();
 
   bool locomotionSafe();
+  std::string map_topic_raw;
+  std::string map_topic_filter;
 
 private:
+  void _elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg);
+  void _elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg);
+
   // Keep track of the control iterations
   int iter = 0;
   std::vector<Vec3<T>> _ini_foot_pos;
@@ -56,6 +63,16 @@ private:
   FootSwingTrajectory<float> footSwingTrajectories[4];
   bool firstSwing[4];
   Vec3<float> pFoot[4];
+
+  // GridMap
+  ros::NodeHandle _nh;
+  ros::Subscriber _map_sub;
+  ros::Subscriber _map_raw_sub;
+
+  grid_map::GridMap _grid_map;
+  grid_map::GridMap _grid_map_raw;
+
+  bool _is_gridmap_exist;
 };
 
 #endif // FSM_STATE_TESTING_H
