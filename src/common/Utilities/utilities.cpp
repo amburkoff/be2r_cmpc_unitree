@@ -54,3 +54,9 @@ Vec3<float> ros::fromMsg(const geometry_msgs::Point& data)
   out(2) = data.z;
   return out;
 }
+
+void execBash(std::string msg)
+{
+  std::string str = "rosrun dynamic_reconfigure dynparam set /unitree_ctrl FSM_State " + msg;
+  system(str.c_str());
+}

@@ -179,10 +179,10 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   Kd_stance = Kd;
 }
 
-void CMPCLocomotion::run(ControlFSMData<float>& data)
+void CMPCLocomotion::run(ControlFSMData<float>& data, const grid_map::GridMap* map)
 {
   // myVersion(data);
-  myNewVersion(data);
+  myNewVersion(data, map);
 }
 
 void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
@@ -606,7 +606,7 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
   iterationCounter++;
 }
 
-void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
+void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data, const grid_map::GridMap* map)
 {
   bool omniMode = false;
 

@@ -9,12 +9,6 @@
 
 using namespace std;
 
-void execBash(string msg)
-{
-  string str = "rosrun dynamic_reconfigure dynparam set /unitree_ctrl FSM_State " + msg;
-  system(str.c_str());
-}
-
 /**
  * Constructor for the Control FSM. Passes in all of the necessary
  * data and stores it in a struct. Initializes the FSM with a starting
@@ -157,7 +151,7 @@ void ControlFSM<T>::runFSM()
         t1 = new std::thread(execBash, "12");
         ROS_WARN("TESTING");
       }
-      
+
       if (data.gamepad_command->right && (FSM_StateName::BALANCE_STAND != currentState->stateName))
       {
         data.userParameters->FSM_State = 3;

@@ -108,8 +108,7 @@ int sgn(T val)
  * TODO: is there a way to make this work nicely with normal distributions too?
  */
 template<typename T>
-void fillEigenWithRandom(Eigen::MatrixBase<T>& v, std::mt19937& gen,
-                         std::uniform_real_distribution<typename T::Scalar>& dist)
+void fillEigenWithRandom(Eigen::MatrixBase<T>& v, std::mt19937& gen, std::uniform_real_distribution<typename T::Scalar>& dist)
 {
   for (size_t i = 0; i < T::RowsAtCompileTime; i++)
   {
@@ -217,12 +216,9 @@ template<typename T>
 void EulerZYX_2_SO3(const Vec3<T>& euler_zyx, Mat3<T>& SO3)
 {
   Mat3<T> Mat3_Z, Mat3_Y, Mat3_X;
-  Mat3_Z << cos(euler_zyx[0]), -sin(euler_zyx[0]), 0, sin(euler_zyx[0]), cos(euler_zyx[0]), 0, 0, 0,
-    1;
-  Mat3_Y << cos(euler_zyx[1]), 0, sin(euler_zyx[1]), 0, 1, 0, -sin(euler_zyx[1]), 0,
-    cos(euler_zyx[1]);
-  Mat3_X << 1, 0, 0, 0, cos(euler_zyx[2]), -sin(euler_zyx[2]), 0, sin(euler_zyx[2]),
-    cos(euler_zyx[2]);
+  Mat3_Z << cos(euler_zyx[0]), -sin(euler_zyx[0]), 0, sin(euler_zyx[0]), cos(euler_zyx[0]), 0, 0, 0, 1;
+  Mat3_Y << cos(euler_zyx[1]), 0, sin(euler_zyx[1]), 0, 1, 0, -sin(euler_zyx[1]), 0, cos(euler_zyx[1]);
+  Mat3_X << 1, 0, 0, 0, cos(euler_zyx[2]), -sin(euler_zyx[2]), 0, sin(euler_zyx[2]), cos(euler_zyx[2]);
 
   SO3 = Mat3_Z * Mat3_Y * Mat3_X;
 }
@@ -264,8 +260,7 @@ T smooth_change_acc(T ini, T end, T moving_duration, T curr_time)
   {
     return 0.0;
   }
-  return ((end - ini) * 0.5 * (M_PI / moving_duration) * (M_PI / moving_duration) *
-          cos(curr_time / moving_duration * M_PI));
+  return ((end - ini) * 0.5 * (M_PI / moving_duration) * (M_PI / moving_duration) * cos(curr_time / moving_duration * M_PI));
 }
 
 /*!
@@ -274,8 +269,7 @@ T smooth_change_acc(T ini, T end, T moving_duration, T curr_time)
 template<typename T>
 T stringToNumber(const std::string& str)
 {
-  static_assert(std::is_same<T, double>::value || std::is_same<T, float>::value,
-                "stringToNumber only works for double/float");
+  static_assert(std::is_same<T, double>::value || std::is_same<T, float>::value, "stringToNumber only works for double/float");
 
   if (std::is_same<T, double>::value)
   {
@@ -353,5 +347,7 @@ namespace ros
 geometry_msgs::Point toMsg(const Vec3<float>& data);
 Vec3<float> fromMsg(const geometry_msgs::Point& data);
 } // namespace ros
+
+void execBash(std::string msg);
 
 #endif // PROJECT_UTILITIES_H

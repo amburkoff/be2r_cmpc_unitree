@@ -38,6 +38,29 @@ FSM_State_Testing<T>::FSM_State_Testing(ControlFSMData<T>* _controlFSMData)
   this->footstepLocations = Mat34<T>::Zero();
   _wbc_ctrl = new LocomotionCtrl<T>(_controlFSMData->quadruped->buildModel());
   _wbc_data = new LocomotionCtrlData<T>();
+  ros::readParam("~map_topic_filter", map_topic_filter, std::string("elevation_map_raw"));
+  ros::readParam("~map_topic_raw", map_topic_raw, std::string("elevation_map_raw"));
+  _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_filter, 1, &FSM_State_Testing<T>::_elevMapCallback, this);
+  _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_raw, 1, &FSM_State_Testing<T>::_elevMapRawCallback, this);
+  _is_gridmap_exist = false;
+}
+
+template<typename T>
+void FSM_State_Testing<T>::_elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map);
+  if (!_grid_map.isDefaultStartIndex())
+    _grid_map.convertToDefaultStartIndex();
+  _is_gridmap_exist = true;
+}
+
+template<typename T>
+void FSM_State_Testing<T>::_elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_raw);
+  if (!_grid_map_raw.isDefaultStartIndex())
+    _grid_map_raw.convertToDefaultStartIndex();
+  _is_gridmap_exist = true;
 }
 
 template<typename T>
@@ -609,8 +632,10 @@ void FSM_State_Testing<T>::LocomotionControlStep()
 {
   // Contact state logic
   // estimateContact();
-
-  CMPC->run(*this->_data);
+  if (_is_gridmap_exist)
+    CMPC->run(*this->_data, &_grid_map);
+  else
+    CMPC->run(*this->_data, nullptr);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];

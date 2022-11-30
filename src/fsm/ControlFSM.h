@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <thread>
+#include "Utilities/utilities.h"
 
 // Contains all of the control related data
 #include "ControlFSMData.h"

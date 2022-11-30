@@ -7,6 +7,8 @@
 #include <FootSwingTrajectory.h>
 #include <SparseCMPC/SparseCMPC.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <grid_map_msgs/GridMap.h>
+#include <grid_map_ros/grid_map_ros.hpp>
 #include <nav_msgs/Path.h>
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -100,8 +102,8 @@ public:
   CMPCLocomotion(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  void run(ControlFSMData<float>& data);
-  void myNewVersion(ControlFSMData<float>& data);
+  void run(ControlFSMData<float>& data, const grid_map::GridMap* map);
+  void myNewVersion(ControlFSMData<float>& data, const grid_map::GridMap* map);
   void myVersion(ControlFSMData<float>& data);
   bool currently_jumping = false;
 
