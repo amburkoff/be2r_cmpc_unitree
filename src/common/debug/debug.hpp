@@ -20,7 +20,7 @@
 using std::cout;
 using std::endl;
 
-// #define PUB_IMU_AND_ODOM
+#define PUB_IMU_AND_ODOM
 
 class Debug
 {
