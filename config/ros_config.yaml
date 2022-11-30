@@ -4,8 +4,8 @@ dynamic_loader:
   FSM_State: 0
   use_wbc: true
   # use_wbc: false
-  # cmpc_gait: 9 # trot
-  cmpc_gait: 15 # trot long
+  cmpc_gait: 9 # trot
+  # cmpc_gait: 15 # trot long
   # cmpc_gait: 4 # stand
   test: 0
 
@@ -58,8 +58,8 @@ dynamic_loader:
   Kd_cartesian_1: 15
   Kd_cartesian_2: 15
 
-  body_height: 0.3
-  Swing_traj_height  : 0.17   # Set swing traj top point
+  body_height: 0.25
+  Swing_traj_height  : 0.09   # Set swing traj top point
 
   # safety
   # joint_limits: 1

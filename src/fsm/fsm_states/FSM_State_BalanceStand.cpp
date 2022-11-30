@@ -130,6 +130,10 @@ void FSM_State_BalanceStand<T>::run()
     case 3:
       BalanceStandGiveHand();
       break;
+
+    case 4:
+      BalanceDoorStep();
+      break;
   }
 }
 
@@ -633,10 +637,11 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
 
     p_des = _ini_foot_pos[0];
 
-    p_des(0) += 0.1;
-    p_des(1) += 0.05;
-    // p_des(0) = 0.1;
-    // p_des(1) = 0.05;
+    // p_des(0) += 0.1;
+    // p_des(1) += 0.05;
+    // p_des(2) = -0.13;
+    p_des(0) = 0.11;
+    p_des(1) = -0.11;
     p_des(2) = -0.13;
     p_des = LinearInterpolation(_ini_foot_pos[0], p_des, progress_local);
 
@@ -689,5 +694,138 @@ void FSM_State_BalanceStand<T>::BalanceStandGiveHand()
   this->_data->debug->all_legs_info.leg.at(0).p_des = ros::toMsg(p_des);
 }
 
-// template class FSM_State_BalanceStand<double>;
+template<typename T>
+void FSM_State_BalanceStand<T>::BalanceDoorStep()
+{
+  static uint16_t step = 0;
+  auto& seResult = this->_data->stateEstimator->getResult();
+
+  static unsigned long iter_start = 0;
+  float rate = 0.1;
+
+  Vec3<float> p_body_des(0, 0, 0);
+  Vec3<float> rpy_body_des(0, 0, 0);
+  Vec3<float> rpy_body_start(0, 0, 0);
+  Vec3<float> delta_p_body(0, 0, 0);
+  Vec3<float> p_leg_des[4];
+  p_leg_des[0] << 0, 0, 0;
+  p_leg_des[1] << 0, 0, 0;
+  p_leg_des[2] << 0, 0, 0;
+  p_leg_des[3] << 0, 0, 0;
+
+  _wbc_data->pBody_des = _ini_body_pos;
+  _wbc_data->vBody_des.setZero();
+  _wbc_data->aBody_des.setZero();
+
+  _wbc_data->pBody_RPY_des = _ini_body_ori_rpy; //original
+  _wbc_data->pBody_RPY_des[0] = 0;
+  _wbc_data->pBody_RPY_des[1] = 0;
+
+  for (size_t i(0); i < 4; ++i)
+  {
+    // pFoot in global frame
+    _wbc_data->pFoot_des[i].setZero();
+    _wbc_data->vFoot_des[i].setZero();
+    _wbc_data->aFoot_des[i].setZero();
+    _wbc_data->Fr_des[i].setZero();
+    _wbc_data->Fr_des[i][2] = _body_weight / 4.;
+    _wbc_data->contact_state[i] = true;
+  }
+
+  float progress = rate * (_iter - iter_start) * this->_data->staticParams->controller_dt;
+
+  if (progress > 1)
+  {
+    progress = 1;
+  }
+
+  switch (step)
+  {
+    case 0:
+      delta_p_body << 0.15, 0.08, 0;
+
+      p_body_des = seResult.rBody.transpose() * (delta_p_body) + _ini_body_pos;
+      p_body_des[2] = 0.2;
+
+      _wbc_data->pBody_des = LinearInterpolation(_ini_body_pos, p_body_des, progress);
+
+      float pitch_des = _ini_body_ori_rpy[1] - 0.0;
+      float pitch_start = _ini_body_ori_rpy[1];
+      _wbc_data->pBody_RPY_des[1] = LinearInterpolation(pitch_start, pitch_des, progress);
+
+      float epsilon = 0.005;
+      Vec3<float> p_err = p_body_des - (this->_data->stateEstimator->getResult()).position;
+
+      if (abs(p_err(0) < epsilon) && abs(p_err(1) < epsilon) && (flag == false))
+      {
+        flag = true;
+        iter_start = _iter;
+        _ini_foot_pos[0] = this->_data->legController->datas[0].p;
+        step = 1;
+        ROS_WARN_ONCE("low error");
+      }
+      break;
+
+    case 1:
+      if (flag)
+      {
+        float progress_local = rate * (_iter - iter_start) * this->_data->staticParams->controller_dt;
+
+        if (progress_local > 1)
+        {
+          progress_local = 1;
+        }
+
+        delta_p_body << 0.15, 0.08, 0;
+
+        p_body_des = seResult.rBody.transpose() * (delta_p_body) + _ini_body_pos;
+        p_body_des[2] = 0.2;
+        _wbc_data->pBody_des = p_body_des;
+        _wbc_data->pBody_RPY_des << 0, 0, 0;
+
+        p_leg_des[0](0) = 0.11;
+        p_leg_des[0](1) = -0.11;
+        p_leg_des[0](2) = -0.13;
+        p_leg_des[0] = LinearInterpolation(_ini_foot_pos[0], p_leg_des[0], progress_local);
+
+        Vec3<float> p_w_des(0, 0, 0);
+        p_w_des = seResult.position + seResult.rBody.transpose() * (this->_data->quadruped->getHipLocation(0) + p_leg_des[0]);
+
+        for (size_t i(0); i < 4; ++i)
+        {
+          _wbc_data->Fr_des[i].setZero();
+          _wbc_data->Fr_des[i][2] = _body_weight / 3.;
+          _wbc_data->contact_state[i] = true;
+        }
+
+        _wbc_data->pFoot_des[0] = p_w_des;
+        _wbc_data->contact_state[0] = false;
+        _wbc_data->Fr_des[0][2] = 0;
+      }
+
+      break;
+  }
+
+  _wbc_data->vBody_Ori_des.setZero();
+
+  _wbc_ctrl->run(_wbc_data, *this->_data);
+
+  //update debug
+  this->_data->debug->body_info.pos_des = ros::toMsg(_wbc_data->pBody_des);
+  this->_data->debug->body_info.euler_des.x = _wbc_data->pBody_RPY_des[0];
+  this->_data->debug->body_info.euler_des.y = _wbc_data->pBody_RPY_des[1];
+  this->_data->debug->body_info.euler_des.z = _wbc_data->pBody_RPY_des[2];
+
+  for (uint8_t foot = 0; foot < 4; foot++)
+  {
+    geometry_msgs::Point point;
+    point = ros::toMsg(this->_data->legController->datas[foot].p + this->_data->quadruped->getHipLocation(foot));
+    this->_data->debug->last_p_local_stance[foot] = point;
+    this->_data->debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(_wbc_data->pFoot_des[foot]);
+    this->_data->debug->all_legs_info.leg.at(foot).p_w_act = ros::toMsg(seResult.position + seResult.rBody.transpose() * (this->_data->quadruped->getHipLocation(0) + this->_data->legController->datas[foot].p));
+  }
+
+  this->_data->debug->all_legs_info.leg.at(0).p_des = ros::toMsg(p_leg_des[0]);
+}
+
 template class FSM_State_BalanceStand<float>;

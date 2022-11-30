@@ -405,16 +405,16 @@ void Body_Manager::finalizeStep()
     _debug->all_legs_info.leg.at(leg_num).v_act.y = _legController->datas[leg_num].v[1];
     _debug->all_legs_info.leg.at(leg_num).v_act.z = _legController->datas[leg_num].v[2];
 
-    if ((_rosParameters.FSM_State != K_LOCOMOTION) && (_rosParameters.FSM_State != K_TESTING))
-    {
-      _debug->all_legs_info.leg.at(leg_num).p_des.x = _legController->commands[leg_num].pDes[0];
-      _debug->all_legs_info.leg.at(leg_num).p_des.y = _legController->commands[leg_num].pDes[1];
-      _debug->all_legs_info.leg.at(leg_num).p_des.z = _legController->commands[leg_num].pDes[2];
+    // if ((_rosParameters.FSM_State != K_LOCOMOTION) && (_rosParameters.FSM_State != K_TESTING))
+    // {
+    //   _debug->all_legs_info.leg.at(leg_num).p_des.x = _legController->commands[leg_num].pDes[0];
+    //   _debug->all_legs_info.leg.at(leg_num).p_des.y = _legController->commands[leg_num].pDes[1];
+    //   _debug->all_legs_info.leg.at(leg_num).p_des.z = _legController->commands[leg_num].pDes[2];
 
-      _debug->all_legs_info.leg.at(leg_num).v_des.x = _legController->commands[leg_num].vDes[0];
-      _debug->all_legs_info.leg.at(leg_num).v_des.y = _legController->commands[leg_num].vDes[1];
-      _debug->all_legs_info.leg.at(leg_num).v_des.z = _legController->commands[leg_num].vDes[2];
-    }
+    //   _debug->all_legs_info.leg.at(leg_num).v_des.x = _legController->commands[leg_num].vDes[0];
+    //   _debug->all_legs_info.leg.at(leg_num).v_des.y = _legController->commands[leg_num].vDes[1];
+    //   _debug->all_legs_info.leg.at(leg_num).v_des.z = _legController->commands[leg_num].vDes[2];
+    // }
   }
 
   for (int i = 0; i < 4; i++)
