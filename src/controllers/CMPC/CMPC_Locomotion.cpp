@@ -759,7 +759,7 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
 
     footSwingTrajectories[i].setHeight(_swing_trajectory_height);
 
-    Vec3<float> offset(0, side_sign[i] * (data.quadruped->_abadLinkLength + 0.035), 0);
+    Vec3<float> offset(0, side_sign[i] * (data.quadruped->_abadLinkLength), 0);
 
     Vec3<float> pRobotFrame = (data.quadruped->getHipLocation(i) + offset);
 

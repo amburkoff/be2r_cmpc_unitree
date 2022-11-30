@@ -819,6 +819,21 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
   pf[0] = -(x_idx_selected - col_idx_body_com) * _grid_map_raw.getResolution() + body_pos[0];
   pf[1] = -(y_idx_selected - row_idx_body_com) * _grid_map_raw.getResolution() + body_pos[1];
   auto pf_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, x_idx_selected, y_idx_selected));
+  static std::vector<float> pf_buffer;
+  if (!std::isnan(pf_h) && pf_buffer.size() < 4000)
+  {
+    pf_buffer.push_back(pf_h);
+  }
+  else
+  {
+    double sum = 0.0;
+    for (auto it : pf_buffer)
+    {
+      sum += it;
+    }
+    cout << "Mean pf = " << sum / pf_buffer.size() << endl;
+    pf_buffer.clear();
+  }
   _max_cell =
     _findMaxInMapByLine(height_map_filter, grid_map::Index(x_idx_selected, y_idx_selected), grid_map::Index(p0_x_idx, p0_y_idx));
 

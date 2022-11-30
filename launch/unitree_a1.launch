@@ -63,7 +63,7 @@
   </group>
 
   <group if="$(eval arg('rviz') == true)">
-    <arg name="rvizconfig" default="$(find unitree_ros_driver)/rviz/unitree.rviz" />
+    <arg name="rvizconfig" default="$(find elevation_mapping_demos)/rviz/visualMPC.rviz" />
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
   </group>
 
