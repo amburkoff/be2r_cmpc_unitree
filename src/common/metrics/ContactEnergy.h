@@ -23,11 +23,12 @@ public:
   Vec3<float> g;
 
 private:
-  Eigen::Matrix<float, 9, 9> Total_mass_matrix;
-  Eigen::Matrix<float, 6, 9> Total_Jacobi_body;
-  Eigen::Matrix<float, 6, 9> Total_Jacobi_world;
-  Eigen::Matrix<float, 24, 12> Contact_matrix;
-  Eigen::Matrix<float, 6, 3> Leg_Jacobi;
+  Eigen::Matrix<float, 9, 9> _Total_mass_matrix;
+  Eigen::Matrix<float, 3, 3> _Leg_mass_matrix;
+  Eigen::Matrix<float, 6, 9> _Total_Jacobi_body;
+  Eigen::Matrix<float, 6, 9> _Total_Jacobi_world;
+  Eigen::Matrix<float, 24, 12> _Contact_matrix;
+  Eigen::Matrix<float, 6, 3> _Leg_Jacobi;
   Vec4<float> _test;
   Vec3<float> _vBody;
   Vec3<float> _position;

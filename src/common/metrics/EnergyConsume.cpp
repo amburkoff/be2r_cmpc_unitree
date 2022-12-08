@@ -1,4 +1,5 @@
 #include "EnergyConsume.h"
+// #include "SystemEnergy.h"
 
 // This class calculates estimated cosumed power and energy by motors
 EnergyConsume::EnergyConsume()
