@@ -16,32 +16,42 @@
 template <typename T>
 void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, T legside)
 {
-  // _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _pf, phase);
-  // _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0, _pf, phase) / swingTime;
-  // _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0, _pf, phase) / (swingTime * swingTime);
-
-  // T zp, zv, za;
+  Vec3<float> _flag(0,1,1);
   // T yp, yv, ya;
-  Vec3<T> _shifted_extr= this->_stateEstimator->getResult().rBody.transpose()* Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[3]);
-  if (phase < T(0.5))
+  //  this->_stateEstimator->getResult().rBody.transpose()*
+  Vec3<T> _shifted_extr= Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[2]);
+  for (int i = 0; i < 3; i++)
   {
-    // zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _shifted_extr[3] phase * 2);
-    // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 2 / swingTime;
-    // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 4 / (swingTime * swingTime);
-    _p = Interpolate::cubicBezier<Vec3<T>>(_p0, _p0 + _shifted_extr, phase * 2);
-    _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0, _p0 + _shifted_extr, phase * 2) * 2 / swingTime;
-    _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0, _p0 + _shifted_extr, phase * 2) * 4 / (swingTime * swingTime);
+    if (_flag[i]==1)
+    {
+      if (phase < T(0.5))
+      {
+        // zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _shifted_extr[3] phase * 2);
+        // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 2 / swingTime;
+        // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 4 / (swingTime * swingTime);
+        _p[i] = Interpolate::cubicBezier<T>(_p0[i], _p0[i]+ _shifted_extr[i], phase * 2);
+        _v[i] = Interpolate::cubicBezierFirstDerivative<T>(_p0[i], _p0[i] + _shifted_extr[i], phase * 2) * 2 / swingTime;
+        _a[i] = Interpolate::cubicBezierSecondDerivative<T>(_p0[i], _p0[i] + _shifted_extr[i], phase * 2) * 4 / (swingTime * swingTime);
+      }
+      else
+      {
+        // zp = Interpolate::cubicBezier<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1);
+        // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 2 / swingTime;
+        // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 4 / (swingTime * swingTime);
+        _p[i] = Interpolate::cubicBezier<T>(_p0[i] + _shifted_extr[i], _pf[i], phase * 2 - 1);
+        _v[i] = Interpolate::cubicBezierFirstDerivative<T>(_p0[i] + _shifted_extr[i], _pf[i], phase * 2 - 1) * 2 / swingTime;
+        _a[i] = Interpolate::cubicBezierSecondDerivative<T>(_p0[i] + legside*_shifted_extr[i], _pf[i], phase * 2 - 1) * 4 / (swingTime * swingTime);
+      }
+    }
+    else
+    {
+      _p[i] = Interpolate::cubicBezier<T>(_p0[i], _pf[i], phase);
+      _v[i] = Interpolate::cubicBezierFirstDerivative<T>(_p0[i], _pf[i], phase) / swingTime;
+      _a[i] = Interpolate::cubicBezierSecondDerivative<T>(_p0[i], _pf[i], phase) / (swingTime * swingTime);
+    }
   }
-  else
-  {
-    // zp = Interpolate::cubicBezier<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1);
-    // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 2 / swingTime;
-    // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 4 / (swingTime * swingTime);
-    _p = Interpolate::cubicBezier<Vec3<T>>(_p0 + _shifted_extr, _pf, phase * 2 - 1);
-    _v = Interpolate::cubicBezierFirstDerivative<Vec3<T>>(_p0+ _shifted_extr, _pf, phase * 2 - 1) * 2 / swingTime;
-    _a = Interpolate::cubicBezierSecondDerivative<Vec3<T>>(_p0 + legside*_shifted_extr, _pf, phase * 2 - 1) * 4 / (swingTime * swingTime);
- }
-
+  
+  // T zp, zv, za;
   // _p[2] = zp;
   // _v[2] = zv;
   // _a[2] = za;
