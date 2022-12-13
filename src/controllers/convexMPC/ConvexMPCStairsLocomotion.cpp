@@ -350,7 +350,7 @@ void ConvexMPCStairsLocomotion::run(ControlFSMData<float>& data)
 
     // Using the estimated velocity is correct
     // Vec3<float> des_vel_world = seResult.rBody.transpose() * des_vel;
-    float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time +
+    float pfx_rel = seResult.vWorld[0] * (.5 + _parameters->cmpc_bonus_swing) * stance_time * dtMPC +
                     .03f * (seResult.vWorld[0] - v_des_world[0]) +
                     (0.5f * seResult.position[2] / 9.81f) * (seResult.vWorld[1] * _yaw_turn_rate);
 

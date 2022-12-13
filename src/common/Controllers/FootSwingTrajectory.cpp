@@ -17,9 +17,13 @@ template <typename T>
 void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, T legside)
 {
   Vec3<float> _flag(0,1,1);
-  // T yp, yv, ya;
-  //  this->_stateEstimator->getResult().rBody.transpose()*
-  Vec3<T> _shifted_extr= Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[2]);
+  // T yp, yv, ya;*
+  auto seR = this->_stateEstimator->getResult();
+  T yaw = seR.rpy[2];
+  Mat3<T> R = coordinateRotation(CoordinateAxis::Z,yaw);
+  //  R.transpose()*
+  // std::cout << this->_stateEstimator->getResult().rpy[2] << " " << std::endl;
+  Vec3<T> _shifted_extr= R*Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[2]);
   for (int i = 0; i < 3; i++)
   {
     if (_flag[i]==1)
