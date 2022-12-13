@@ -76,14 +76,6 @@ void FSM_State_Testing_Cv<T>::_elevMapPlaneCallback(const grid_map_msgs::GridMap
 }
 
 template<typename T>
-void FSM_State_Testing_Cv<T>::_elevMapPlaneCallback(const grid_map_msgs::GridMapConstPtr& msg)
-{
-  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_plane);
-  if (!_grid_map_plane.isDefaultStartIndex())
-    _grid_map_plane.convertToDefaultStartIndex();
-}
-
-template<typename T>
 void FSM_State_Testing_Cv<T>::onEnter()
 {
   // Default is to not transition

@@ -11,6 +11,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <ros/ros.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 #include <visualization_msgs/Marker.h>
 
 #include <cstdio>
@@ -65,7 +68,7 @@ private:
 
   void _findPF(Vec3<float>& v_des_world, size_t foot);
 
-  void _body_height_heuristics();
+  void _body_height_heuristics(std::string type);
 
   float _updateTrajHeight(size_t foot);
 
@@ -145,6 +148,9 @@ private:
   grid_map::GridMap _grid_map_raw;
   grid_map::GridMap _grid_map_filter;
   grid_map::GridMap _grid_map_plane;
+
+  tf2_ros::Buffer _tf_buffer;
+  tf2_ros::TransformListener _tf_listener;
 };
 
 Eigen::Array2i checkBoundariess(const grid_map::GridMap& map, int col, int row);

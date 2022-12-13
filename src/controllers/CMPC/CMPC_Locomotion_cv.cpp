@@ -44,7 +44,9 @@ CMPCLocomotion_Cv::CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, Con
     dt(_dt),
     _grid_map_raw(),
     _grid_map_filter(),
-    _grid_map_plane()
+    _grid_map_plane(),
+    _tf_buffer(),
+    _tf_listener(_tf_buffer)
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
@@ -269,7 +271,8 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data)
 
     for (int i = 0; i < 4; i++)
     {
-      footSwingTrajectories[i].setHeight(_data->userParameters->Swing_traj_height);
+      // footSwingTrajectories[i].setHeight(_data->userParameters->Swing_traj_height);
+      footSwingTrajectories[i].setHeight(_updateTrajHeight(i));
 
       footSwingTrajectories[i].setInitialPosition(pFoot[i]);
       data.debug->all_legs_info.leg[i].swing_ps.x = pFoot[i](0);
@@ -277,9 +280,9 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg[i].swing_ps.z = pFoot[i](2);
 
       footSwingTrajectories[i].setFinalPosition(pFoot[i]);
-      data.debug->all_legs_info.leg[i].swing_pf.x = pFoot[i](0);
-      data.debug->all_legs_info.leg[i].swing_pf.y = pFoot[i](1);
-      data.debug->all_legs_info.leg[i].swing_pf.z = pFoot[i](2);
+      // data.debug->all_legs_info.leg[i].swing_pf.x = pFoot[i](0);
+      // data.debug->all_legs_info.leg[i].swing_pf.y = pFoot[i](1);
+      // data.debug->all_legs_info.leg[i].swing_pf.z = pFoot[i](2);
 
       z_des[i] = pFoot[i](2);
     }
@@ -351,13 +354,14 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data)
       }
 
       // Update PF
-      //if (!long_step_vel)
+      // if (!long_step_vel)
       //{
-      Vec3<float> pf = footSwingTrajectories[foot].getFinalPosition();
-      _updateFoothold(pf, seResult.position, foot);
-      footSwingTrajectories[foot].setFinalPosition(pf);
-      data.debug->all_legs_info.leg[foot].swing_pf.y = pf(1);
-      data.debug->all_legs_info.leg[foot].swing_pf.z = pf(2);
+      // Vec3<float> pf = footSwingTrajectories[foot].getFinalPosition();
+      // _updateFoothold(pf, seResult.position, foot);
+      // footSwingTrajectories[foot].setFinalPosition(pf);
+      // data.debug->all_legs_info.leg[foot].swing_pf.x = pf(0);
+      // data.debug->all_legs_info.leg[foot].swing_pf.y = pf(1);
+      // data.debug->all_legs_info.leg[foot].swing_pf.z = pf(2);
       //}
 
       // for visual -----------------------------------------------------------------------
@@ -766,7 +770,15 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf, const Vec3<float>& body
   static bool first = true;
   static Vec3<float> freeze_pose;
   Vec3<float> body_pos;
-  Vec3<float> p0 = footSwingTrajectories[leg].getInitialPosition();
+  Vec3<float> p0;
+  if (firstSwing[leg])
+  {
+    p0 = pFoot[leg];
+  }
+  else
+  {
+    p0 = footSwingTrajectories[leg].getInitialPosition();
+  }
   Vec3<float> local_pf;
   Vec3<float> local_p0;
 
@@ -853,7 +865,7 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf, const Vec3<float>& body
   //     k = 1.0;
   //   _data->debug->z_offset = k * 0.40;
   // }
-  _body_height_heuristics();
+  // _body_height_heuristics("vio");
 
   pf_h -= p0_h;
   pf[2] = (std::isnan(pf_h)) ? 0.0 : pf_h;
@@ -864,11 +876,32 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf, const Vec3<float>& body
   }
 }
 
-void CMPCLocomotion_Cv::_body_height_heuristics()
+void CMPCLocomotion_Cv::_body_height_heuristics(std::string type)
 {
-  grid_map::Index robot_com(_grid_map_plane.getSize()(0) / 2., _grid_map_plane.getSize()(1) / 2.);
-  auto base_footprint_h = _grid_map_plane.at("smooth_planar", robot_com);
-  _data->debug->z_offset = base_footprint_h;
+  if (type == "map")
+  {
+    grid_map::Index robot_com(_grid_map_plane.getSize()(0) / 2., _grid_map_plane.getSize()(1) / 2.);
+    auto base_footprint_h = _grid_map_plane.at("smooth_planar", robot_com);
+    _data->debug->z_offset = base_footprint_h;
+  }
+  else if (type == "vio")
+  {
+    geometry_msgs::TransformStamped odom2camera;
+    static geometry_msgs::Transform camera2base;
+    camera2base.translation.x = -0.055;
+    camera2base.translation.y = 0.055;
+    camera2base.translation.z = -0.13;
+    camera2base.rotation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, 3.14);
+    try
+    {
+      odom2camera = _tf_buffer.lookupTransform("odom", "camera_t265_pose_frame", ros::Time(0));
+    }
+    catch (tf2::TransformException& ex)
+    {
+      ROS_WARN("%s", ex.what());
+    }
+    _data->debug->vio_z = odom2camera.transform.translation.z + camera2base.translation.z;
+  }
 }
 
 void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
@@ -947,7 +980,8 @@ void CMPCLocomotion_Cv::_findPF(Vec3<float>& v_des_world, size_t foot)
     swingTimeRemaining[foot] -= dt;
   }
 
-  footSwingTrajectories[foot].setHeight(_data->userParameters->Swing_traj_height);
+  // footSwingTrajectories[foot].setHeight(_data->userParameters->Swing_traj_height);
+  footSwingTrajectories[foot].setHeight(_updateTrajHeight(foot));
 
   Vec3<float> offset(0, side_sign[foot] * _data->quadruped->_abadLinkLength, 0);
 
@@ -978,30 +1012,32 @@ void CMPCLocomotion_Cv::_findPF(Vec3<float>& v_des_world, size_t foot)
   Pf[1] += pfy_rel;
   Pf[2] = 0.0;
 
+  _updateFoothold(Pf, seResult.position, foot);
   footSwingTrajectories[foot].setFinalPosition(Pf);
-  _data->debug->all_legs_info.leg[foot].swing_pf.x = Pf(0);
-  _data->debug->all_legs_info.leg[foot].swing_pf.y = Pf(1);
-  _data->debug->all_legs_info.leg[foot].swing_pf.z = Pf(2);
+  // _data->debug->all_legs_info.leg[foot].swing_pf.x = Pf(0);
+  // _data->debug->all_legs_info.leg[foot].swing_pf.y = Pf(1);
+  // _data->debug->all_legs_info.leg[foot].swing_pf.z = Pf(2);
 }
 
 float CMPCLocomotion_Cv::_updateTrajHeight(size_t foot)
 {
   double h = 0;
-  double k = 0.03;
+  double k = 0.05;
   double out;
   cout << "MAXELL = " << _max_cell << endl;
-  double obst_h = _max_cell - footSwingTrajectories[foot].getInitialPosition()(2);
+  // double obst_h = _max_cell - footSwingTrajectories[foot].getInitialPosition()(2);
+  double obst_h = std::abs(footSwingTrajectories[foot].getFinalPosition()(2) - footSwingTrajectories[foot].getInitialPosition()(2));
   // double obst_h =
   //   std::abs(footSwingTrajectories[foot].getFinalPosition()(2) - footSwingTrajectories[foot].getInitialPosition()(2));
   h = obst_h + k;
   // Saturate h
   h = std::clamp(h, -_data->userParameters->Swing_traj_height, _data->userParameters->Swing_traj_height);
-  if (obst_h < 0.07)
-    out = _data->userParameters->Swing_traj_height;
-  else
-    out = h;
-  out = std::clamp(out, -MAX_STEP_HEIGHT, MAX_STEP_HEIGHT);
-  return out;
+  // if (obst_h < 0.07)
+  //   out = _data->userParameters->Swing_traj_height;
+  // else
+  //   out = h;
+  // out = std::clamp(out, -MAX_STEP_HEIGHT, MAX_STEP_HEIGHT);
+  return h;
 }
 
 double CMPCLocomotion_Cv::_findMaxInMapByLine(const grid_map::GridMap& map,

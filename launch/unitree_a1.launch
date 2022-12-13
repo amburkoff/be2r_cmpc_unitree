@@ -77,6 +77,6 @@
 
   <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>
 
-
+  <node pkg="tf" type="static_transform_publisher" name="t265_odom_broadcaster" args="-0.055 -0.055 0.20 -1.57 0 0 odom camera_t265_odom_frame 100" />
 
 </launch> 

@@ -8,6 +8,7 @@ Debug::Debug(ros::Time time_start)
 {
   z_offset = 0.f;
   _init();
+  vio_z = 0;
 }
 
 void Debug::_init()
@@ -87,7 +88,9 @@ void Debug::updatePlot()
   odom.child_frame_id = "base";
 
   odom.pose.pose.position = body_info.pos_act;
-  odom.pose.pose.position.z += z_offset;
+
+  // odom.pose.pose.position.z = vio_z;
+  // odom.pose.pose.position.z += z_offset;
   // odom.pose.pose.position.z = ground_truth_odom.pose.pose.position.z;
 
   geometry_msgs::Quaternion odom_quat;
@@ -160,8 +163,23 @@ void Debug::tfOdomPublish(ros::Time stamp)
 
   odom_trans.transform.translation.x = body_info.pos_act.x;
   odom_trans.transform.translation.y = body_info.pos_act.y;
-  odom_trans.transform.translation.z = body_info.pos_act.z;
-  odom_trans.transform.translation.z += z_offset;
+  geometry_msgs::TransformStamped odom2camera;
+  static geometry_msgs::Transform camera2base;
+  camera2base.translation.x = -0.055;
+  camera2base.translation.y = 0.055;
+  camera2base.translation.z = -0.13;
+  camera2base.rotation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, 3.14);
+  try
+  {
+    odom2camera = _tf_buffer.lookupTransform("odom", "camera_t265_pose_frame", ros::Time(0));
+  }
+  catch (tf2::TransformException& ex)
+  {
+    ROS_WARN("%s", ex.what());
+  }
+  odom_trans.transform.translation.z = odom2camera.transform.translation.z + camera2base.translation.z;
+  // odom_trans.transform.translation.z = body_info.pos_act.z;
+  // odom_trans.transform.translation.z += z_offset;
   // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
 
   // odom_trans.transform.translation.x = ground_truth_odom.pose.pose.position.x;

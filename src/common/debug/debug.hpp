@@ -48,6 +48,7 @@ public:
 
   bool is_map_upd_stop;
   ros::Time time_stamp_udp_get;
+  double vio_z;
 
 private:
   void _init();

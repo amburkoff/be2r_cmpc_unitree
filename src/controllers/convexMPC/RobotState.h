@@ -23,7 +23,7 @@ public:
   fpt roll;
   fpt pitch;
   fpt yaw;
-  fpt m = 14.0;
+  fpt m = 17.0;
   // fpt m = 50.236; //DH
 };
 #endif
