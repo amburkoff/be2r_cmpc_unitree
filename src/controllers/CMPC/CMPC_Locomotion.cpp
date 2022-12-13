@@ -840,6 +840,9 @@ void CMPCLocomotion::myNewVersion(ControlFSMData<float>& data)
         firstSwing[foot] = false;
         is_stance[foot] = 0;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
+        data.debug->all_legs_info.leg[foot].swing_ps.x = pFoot[foot](0);
+        data.debug->all_legs_info.leg[foot].swing_ps.y = pFoot[foot](1);
+        data.debug->all_legs_info.leg[foot].swing_ps.z = pFoot[foot](2);
 
         z_des[foot] = pFoot[foot][2];
       }

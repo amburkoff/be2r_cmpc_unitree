@@ -33,6 +33,10 @@ void GamepadCommand::_joyCallback(sensor_msgs::Joy msg)
       down = true;
     }
   }
+  if (msg.buttons[4] && msg.buttons[9])
+  {
+    chord_op_l1 = true;
+  }
 
   cross = msg.buttons[0];
   circle = msg.buttons[1];
@@ -73,6 +77,7 @@ void GamepadCommand::zeroButtons()
   R1 = false;
   L3 = false;
   R3 = false;
+  chord_op_l1 = false;
 
   L2 = 0.0;
   R2 = 0.0;

@@ -30,7 +30,10 @@ public:
 
   void run(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
   void original(ControlFSMData<float>& data);
-  void myVersion(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void myVersion(ControlFSMData<float>& data,
+                 const grid_map::GridMap& _grid_map_filter,
+                 const grid_map::GridMap& _grid_map_raw,
+                 const grid_map::GridMap& _grid_map_plane);
   bool currently_jumping = false;
 
   Vec3<float> pBody_des;
@@ -58,9 +61,10 @@ private:
   void _updateModel(const StateEstimate<float>& state_est, const LegControllerData<float>* leg_data);
 
   void _updateFoothold(Vec3<float>& pf,
-                       const Vec3<float>& body_pos,
-                       const grid_map::GridMap& height_map,
-                       const grid_map::GridMap& height_map_raw,
+                       const Vec3<float>& body_pos_arg,
+                       const grid_map::GridMap& height_map_filter,
+                       const grid_map::GridMap& _grid_map_raw,
+                       const grid_map::GridMap& _grid_map_plane,
                        const int& leg);
 
   void _idxMapChecking(Vec3<float>& Pf,

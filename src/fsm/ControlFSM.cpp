@@ -157,13 +157,21 @@ void ControlFSM<T>::runFSM()
         t1 = new std::thread(execBash, "12");
         ROS_WARN("TESTING");
       }
-      
+
       if (data.gamepad_command->right && (FSM_StateName::BALANCE_STAND != currentState->stateName))
       {
         data.userParameters->FSM_State = 3;
 
         t1 = new std::thread(execBash, "3");
         ROS_WARN("BALANCE STAND");
+      }
+
+      if (data.gamepad_command->chord_op_l1 && (FSM_StateName::TESTING_CV != currentState->stateName))
+      {
+        data.userParameters->FSM_State = 14;
+
+        t1 = new std::thread(execBash, "14");
+        ROS_WARN("TRANSITION TO TESTING CV");
       }
 
       // Check the current state for any transition
