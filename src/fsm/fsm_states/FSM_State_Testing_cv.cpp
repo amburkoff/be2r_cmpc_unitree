@@ -54,6 +54,7 @@ void FSM_State_Testing_Cv<T>::_elevMapCallback(const grid_map_msgs::GridMapConst
   grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map);
   if (!_grid_map.isDefaultStartIndex())
     _grid_map.convertToDefaultStartIndex();
+  CMPC->setGridMapFilter(_grid_map);
 }
 
 template<typename T>
@@ -62,6 +63,16 @@ void FSM_State_Testing_Cv<T>::_elevMapRawCallback(const grid_map_msgs::GridMapCo
   grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_raw);
   if (!_grid_map_raw.isDefaultStartIndex())
     _grid_map_raw.convertToDefaultStartIndex();
+  CMPC->setGridMapRaw(_grid_map_raw);
+}
+
+template<typename T>
+void FSM_State_Testing_Cv<T>::_elevMapPlaneCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_plane);
+  if (!_grid_map_plane.isDefaultStartIndex())
+    _grid_map_plane.convertToDefaultStartIndex();
+  CMPC->setGridMapPlane(_grid_map_plane);
 }
 
 template<typename T>
@@ -593,7 +604,7 @@ void FSM_State_Testing_Cv<T>::LocomotionControlStep()
   // Contact state logic
   // estimateContact();
 
-  CMPC->myVersion(*this->_data, _grid_map, _grid_map_raw, _grid_map_plane);
+  CMPC->myVersion(*this->_data);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];

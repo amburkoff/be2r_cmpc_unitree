@@ -28,13 +28,12 @@ public:
   CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void run(ControlFSMData<float>& data);
   void original(ControlFSMData<float>& data);
-  void myVersion(ControlFSMData<float>& data,
-                 const grid_map::GridMap& _grid_map_filter,
-                 const grid_map::GridMap& _grid_map_raw,
-                 const grid_map::GridMap& _grid_map_plane);
-  bool currently_jumping = false;
+  void myVersion(ControlFSMData<float>& data);
+  void setGridMapRaw(const grid_map::GridMap& map) { _grid_map_raw = map; }
+  void setGridMapFilter(const grid_map::GridMap& map) { _grid_map_filter = map; }
+  void setGridMapPlane(const grid_map::GridMap& map) { _grid_map_plane = map; }
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -60,26 +59,13 @@ private:
   void _initSparseMPC();
   void _updateModel(const StateEstimate<float>& state_est, const LegControllerData<float>* leg_data);
 
-  void _updateFoothold(Vec3<float>& pf,
-                       const Vec3<float>& body_pos_arg,
-                       const grid_map::GridMap& height_map_filter,
-                       const grid_map::GridMap& _grid_map_raw,
-                       const grid_map::GridMap& _grid_map_plane,
-                       const int& leg);
+  void _updateFoothold(Vec3<float>& pf, const Vec3<float>& body_pos, const int& leg);
 
-  void _idxMapChecking(Vec3<float>& Pf,
-                       int x_idx,
-                       int y_idx,
-                       int& x_idx_selected,
-                       int& y_idx_selected,
-                       const grid_map::GridMap& height_map,
-                       const grid_map::GridMap& height_map_raw,
-                       const int& leg);
+  void _idxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected, const int& leg);
 
-  void _findPF(Vec3<float>& v_des_world,
-               const grid_map::GridMap& _grid_map_filter,
-               const grid_map::GridMap& _grid_map_raw,
-               size_t foot);
+  void _findPF(Vec3<float>& v_des_world, size_t foot);
+
+  void _body_height_heuristics();
 
   float _updateTrajHeight(size_t foot);
 
@@ -156,6 +142,9 @@ private:
   bool long_step_run = false;
   bool long_step_trigger = false;
   bool long_step_vel = false;
+  grid_map::GridMap _grid_map_raw;
+  grid_map::GridMap _grid_map_filter;
+  grid_map::GridMap _grid_map_plane;
 };
 
 Eigen::Array2i checkBoundariess(const grid_map::GridMap& map, int col, int row);
