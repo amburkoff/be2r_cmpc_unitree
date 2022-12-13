@@ -829,9 +829,13 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf, const Vec3<float>& body
   _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, leg);
 
   // Минус для преобразования координат
-  pf[0] = -(x_idx_selected - col_idx_body_com) * _grid_map_raw.getResolution() + body_pos[0];
-  pf[1] = -(y_idx_selected - row_idx_body_com) * _grid_map_raw.getResolution() + body_pos[1];
+  pf[0] = (col_idx_body_com - x_idx_selected) * _grid_map_raw.getResolution() + body_pos[0];
+  pf[1] = (row_idx_body_com - y_idx_selected) * _grid_map_raw.getResolution() + body_pos[1];
   auto pf_h = _grid_map_raw.at("elevation", checkBoundariess(_grid_map_raw, x_idx_selected, y_idx_selected));
+  if (leg == 3)
+  {
+    ROS_INFO_STREAM_THROTTLE(1, " Leg 3 height map = " << pf_h);
+  }
   // check map on flat terrain
   // static std::vector<float> pf_buffer;
   // if (!std::isnan(pf_h) && pf_buffer.size() < 4000)
@@ -913,7 +917,7 @@ void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
 {
   grid_map::Index center(x_idx, y_idx);
   // std::cout << " Leg position (x,y) " << pf[0] << " " << pf[1] << std::endl;
-  double radius = 0.09;
+  double radius = 0.10;
   // std::cout << "Normal is " << _grid_map_raw.at("normal_z", Eigen::Array2i(x_idx, y_idx)) <<
   // std::endl;
   for (grid_map_utils::SpiralIterator iterator(_grid_map_raw, center, radius); !iterator.isPastEnd(); ++iterator)
@@ -923,11 +927,11 @@ void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
     // if (leg == 0)
     // std::cout << "traversability = " << traversability << std::endl;
     // If can step
-    if (!std::isnan(traversability) && traversability > 0.98 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
+    if (!std::isnan(traversability) && traversability > 0.99 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
     {
       x_idx_selected = (*iterator)(0);
       // if (!_doorstep_case)
-      y_idx_selected = (*iterator)(1);
+      // y_idx_selected = (*iterator)(1);
       // if ((x_idx != x_idx_selected) && (y_idx != y_idx_selected))
       //   std::cout << "Edit footstep from ( " << x_idx << " " << y_idx << ") to ( " << x_idx_selected << " " << y_idx_selected
       //             << " )" << std::endl;
@@ -1024,9 +1028,10 @@ float CMPCLocomotion_Cv::_updateTrajHeight(size_t foot)
   double h = 0;
   double k = 0.05;
   double out;
-  cout << "MAXELL = " << _max_cell << endl;
+  // cout << "MAXELL = " << _max_cell << endl;
   // double obst_h = _max_cell - footSwingTrajectories[foot].getInitialPosition()(2);
-  double obst_h = std::abs(footSwingTrajectories[foot].getFinalPosition()(2) - footSwingTrajectories[foot].getInitialPosition()(2));
+  double obst_h =
+    std::abs(footSwingTrajectories[foot].getFinalPosition()(2));
   // double obst_h =
   //   std::abs(footSwingTrajectories[foot].getFinalPosition()(2) - footSwingTrajectories[foot].getInitialPosition()(2));
   h = obst_h + k;

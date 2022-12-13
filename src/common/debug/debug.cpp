@@ -153,7 +153,7 @@ void Debug::updateVisualization()
   _drawLocalBodyHeight();
 }
 
-void Debug::tfOdomPublish(ros::Time stamp)
+void Debug::tfOdomPublishRS_t265(ros::Time stamp)
 {
   geometry_msgs::TransformStamped odom_trans;
 
@@ -179,6 +179,36 @@ void Debug::tfOdomPublish(ros::Time stamp)
   }
   odom_trans.transform.translation.z = odom2camera.transform.translation.z + camera2base.translation.z;
   // odom_trans.transform.translation.z = body_info.pos_act.z;
+  // odom_trans.transform.translation.z += z_offset;
+  // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
+
+  // odom_trans.transform.translation.x = ground_truth_odom.pose.pose.position.x;
+  // odom_trans.transform.translation.y = ground_truth_odom.pose.pose.position.y;
+  // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
+  // odom_trans.transform.translation.z = body_info.pos_act.z;
+
+  geometry_msgs::Quaternion odom_quat;
+  // TODO почему результаты естиматора приходится менять местами?
+  odom_quat.x = body_info.quat_act.y;
+  odom_quat.y = body_info.quat_act.z;
+  odom_quat.z = body_info.quat_act.w;
+  odom_quat.w = body_info.quat_act.x;
+  odom_trans.transform.rotation = odom_quat;
+
+  odom_broadcaster.sendTransform(odom_trans);
+}
+
+void Debug::tfOdomPublish(ros::Time stamp)
+{
+  geometry_msgs::TransformStamped odom_trans;
+
+  odom_trans.header.stamp = stamp;
+  odom_trans.header.frame_id = "odom";
+  odom_trans.child_frame_id = "base";
+
+  odom_trans.transform.translation.x = body_info.pos_act.x;
+  odom_trans.transform.translation.y = body_info.pos_act.y;
+  odom_trans.transform.translation.z = body_info.pos_act.z;
   // odom_trans.transform.translation.z += z_offset;
   // odom_trans.transform.translation.z = ground_truth_odom.pose.pose.position.z;
 

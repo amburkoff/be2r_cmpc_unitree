@@ -29,6 +29,7 @@ public:
 
   void updatePlot();
   void updateVisualization();
+  void tfOdomPublishRS_t265(ros::Time stamp);
   void tfOdomPublish(ros::Time stamp);
   void tfPublish();
 
