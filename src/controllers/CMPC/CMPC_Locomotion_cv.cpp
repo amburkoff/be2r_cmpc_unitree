@@ -41,7 +41,10 @@ CMPCLocomotion_Cv::CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, Con
             "Walking"),
     iterationsBetweenMPC(_iterations_between_mpc),
     horizonLength(_data->staticParams->horizon),
-    dt(_dt)
+    dt(_dt),
+    _grid_map_raw(),
+    _grid_map_filter(),
+    _grid_map_plane()
 {
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
@@ -142,16 +145,12 @@ void CMPCLocomotion_Cv::_SetupCommand(float cmd_vel_x, float cmd_vel_y)
   Kd_stance = Kd;
 }
 
-void CMPCLocomotion_Cv::run(ControlFSMData<float>& data,
-                            const grid_map::GridMap& _grid_map_filter,
-                            const grid_map::GridMap& _grid_map_raw)
+void CMPCLocomotion_Cv::run(ControlFSMData<float>& data)
 {
-  myVersion(data, _grid_map_filter, _grid_map_raw);
+  // myVersion(data, _grid_map_filter, _grid_map_raw, _grid_map_plane);
 }
 
-void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
-                                  const grid_map::GridMap& _grid_map_filter,
-                                  const grid_map::GridMap& _grid_map_raw)
+void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data)
 {
   bool omniMode = false;
   long_step_vel = _data->userParameters->cmpc_use_sparse;
@@ -291,7 +290,7 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
   for (int l = 0; l < 4; l++)
   {
     swingTimes[l] = _gait->getCurrentSwingTime(dtMPC, l);
-    _findPF(v_des_world, _grid_map_filter, _grid_map_raw, l);
+    _findPF(v_des_world, l);
   }
 
   // Calculate PF
@@ -351,7 +350,7 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data,
       if (!long_step_vel)
       {
         Vec3<float> pf = footSwingTrajectories[foot].getFinalPosition();
-        _updateFoothold(pf, seResult.position, _grid_map_filter, _grid_map_raw, foot);
+        _updateFoothold(pf, seResult.position, foot);
         footSwingTrajectories[foot].setFinalPosition(pf);
       }
 
@@ -754,11 +753,7 @@ Eigen::Array2i checkBoundariess(const grid_map::GridMap& map, int col, int row)
   return Eigen::Array2i(col, row);
 }
 
-void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
-                                        const Vec3<float>& body_pos_arg,
-                                        const grid_map::GridMap& height_map_filter,
-                                        const grid_map::GridMap& _grid_map_raw,
-                                        const int& leg)
+void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf, const Vec3<float>& body_pos_arg, const int& leg)
 {
   // Положение лапы в СК тела
   //  Vec3<float> scale(1.2, 1, 1);
@@ -811,14 +806,14 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
   int p0_x_idx = col_idx_body_com - floor(local_p0[0] / _grid_map_raw.getResolution());
   int p0_y_idx = row_idx_body_com - floor(local_p0[1] / _grid_map_raw.getResolution());
 
-  auto p0_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, p0_x_idx, p0_y_idx));
+  auto p0_h = _grid_map_raw.at("elevation", checkBoundariess(_grid_map_raw, p0_x_idx, p0_y_idx));
 
-  _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, _grid_map_raw, _grid_map_raw, leg);
+  _idxMapChecking(local_pf, x_idx, y_idx, x_idx_selected, y_idx_selected, leg);
 
   // Минус для преобразования координат
   pf[0] = -(x_idx_selected - col_idx_body_com) * _grid_map_raw.getResolution() + body_pos[0];
   pf[1] = -(y_idx_selected - row_idx_body_com) * _grid_map_raw.getResolution() + body_pos[1];
-  auto pf_h = height_map_filter.at("elevation", checkBoundariess(height_map_filter, x_idx_selected, y_idx_selected));
+  auto pf_h = _grid_map_raw.at("elevation", checkBoundariess(_grid_map_raw, x_idx_selected, y_idx_selected));
   static std::vector<float> pf_buffer;
   if (!std::isnan(pf_h) && pf_buffer.size() < 4000)
   {
@@ -834,8 +829,8 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
     cout << "Mean pf = " << sum / pf_buffer.size() << endl;
     pf_buffer.clear();
   }
-  _max_cell =
-    _findMaxInMapByLine(height_map_filter, grid_map::Index(x_idx_selected, y_idx_selected), grid_map::Index(p0_x_idx, p0_y_idx));
+  // _max_cell =
+  //   _findMaxInMapByLine(_grid_map_raw, grid_map::Index(x_idx_selected, y_idx_selected), grid_map::Index(p0_x_idx, p0_y_idx));
 
   // cout << "max cell = " << _max_cell << endl;
 
@@ -850,6 +845,7 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
   //     k = 1.0;
   //   _data->debug->z_offset = k * 0.40;
   // }
+  _body_height_heuristics();
 
   pf_h -= p0_h;
   pf[2] = (std::isnan(pf_h)) ? 0.0 : pf_h;
@@ -860,13 +856,18 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf,
   }
 }
 
+void CMPCLocomotion_Cv::_body_height_heuristics()
+{
+  grid_map::Index robot_com(_grid_map_plane.getSize()(0) / 2., _grid_map_plane.getSize()(1) / 2.);
+  auto base_footprint_h = _grid_map_plane.at("smooth_planar", robot_com);
+  _data->debug->z_offset = base_footprint_h;
+}
+
 void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
                                         int x_idx,
                                         int y_idx,
                                         int& x_idx_selected,
                                         int& y_idx_selected,
-                                        const grid_map::GridMap& height_map_filter,
-                                        const grid_map::GridMap& _grid_map_raw,
                                         const int& leg)
 {
   grid_map::Index center(x_idx, y_idx);
@@ -874,9 +875,9 @@ void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
   double radius = 0.15;
   // std::cout << "Normal is " << _grid_map_raw.at("normal_z", Eigen::Array2i(x_idx, y_idx)) <<
   // std::endl;
-  for (grid_map_utils::SpiralIterator iterator(height_map_filter, center, radius); !iterator.isPastEnd(); ++iterator)
+  for (grid_map_utils::SpiralIterator iterator(_grid_map_raw, center, radius); !iterator.isPastEnd(); ++iterator)
   {
-    auto traversability = height_map_filter.at("normal_vectors_z", *iterator);
+    auto traversability = _grid_map_raw.at("traversability", *iterator);
     // auto uncertainty_r = height_map_filter.at("uncertainty_range", *iterator);
     // if (leg == 0)
     // std::cout << "traversability = " << traversability << std::endl;
@@ -895,10 +896,7 @@ void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
   //  std::cout << "Can`t find foothold from map!" << std::endl;
 }
 
-void CMPCLocomotion_Cv::_findPF(Vec3<float>& v_des_world,
-                                const grid_map::GridMap& _grid_map_filter,
-                                const grid_map::GridMap& _grid_map_raw,
-                                size_t foot)
+void CMPCLocomotion_Cv::_findPF(Vec3<float>& v_des_world, size_t foot)
 {
 
   // auto swing_state = (_gait->getSwingState())[foot];

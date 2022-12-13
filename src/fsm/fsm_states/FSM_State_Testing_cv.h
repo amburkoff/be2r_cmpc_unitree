@@ -61,12 +61,14 @@ private:
 
   grid_map::GridMap _grid_map;
   grid_map::GridMap _grid_map_raw;
+  grid_map::GridMap _grid_map_plane;
   // Keep track of the control iterations
   int iter = 0;
   std::vector<Vec3<T>> _ini_foot_pos;
   FootSwingTrajectory<float> footSwingTrajectories[4];
   void _elevMapCallback(const grid_map_msgs::GridMapConstPtr& msg);
   void _elevMapRawCallback(const grid_map_msgs::GridMapConstPtr& msg);
+  void _elevMapPlaneCallback(const grid_map_msgs::GridMapConstPtr& msg);
 
   bool firstSwing[4];
   Vec3<float> pFoot[4];
