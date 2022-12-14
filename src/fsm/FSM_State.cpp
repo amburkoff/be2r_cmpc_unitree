@@ -17,7 +17,8 @@ FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateN
 {
   transitionData.zero();
   // _metric = new SystemEnergy();
-  _metric = new EnergyConsume();
+  // _metric = new EnergyConsume();
+  _metric = new ContactEnergy();
 
   _metric->setRobotData(*_controlFSMData);
   std::cout << "[FSM_State] Initialized FSM state: " << stateStringIn << std::endl;

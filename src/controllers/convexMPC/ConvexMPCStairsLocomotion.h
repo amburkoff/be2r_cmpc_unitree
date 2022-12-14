@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <common/metrics/SystemEnergy.h>
 #include <common/metrics/EnergyConsume.h>
-
+#include <common/metrics/ContactEnergy.h>
 
 using Eigen::Array4f;
 using Eigen::Array4i;
@@ -155,7 +155,8 @@ private:
   float dtMPC;
   int iterationCounter = 0;
   // SystemEnergy Energy;
-  EnergyConsume Energy;
+  // EnergyConsume Energy;
+  ContactEnergy Energy;
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];

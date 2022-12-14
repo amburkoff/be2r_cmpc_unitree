@@ -8,6 +8,7 @@
 #include "TransitionData.h"
 #include "common/metrics/SystemEnergy.h"
 #include "common/metrics/EnergyConsume.h"
+#include "common/metrics/ContactEnergy.h"
 
 
 
@@ -109,7 +110,8 @@ public:
   // Holds all of the relevant control data
   ControlFSMData<T>* _data;
   // SystemEnergy* _metric;
-  EnergyConsume* _metric;
+  // EnergyConsume* _metric;
+  ContactEnergy* _metric;
 
 
   // FSM State info

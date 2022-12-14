@@ -26,7 +26,7 @@ ContactEnergy::ContactEnergy()
 Vec4<float> ContactEnergy::getFinalCost()
 {
   
-//   return Vec4<float>(getFinalBodyCost().operator()(3) + getFinalLegCost().sum(),0,0,0);
+  return Vec4<float>(0,0,0,0);
 }
 
 Vec4<float> ContactEnergy::getFinalBodyCost()
@@ -42,7 +42,7 @@ Vec4<float> ContactEnergy::getFinalBodyCost()
 //   Result.operator()(1) = _KinRotEnergy;
 //   Result.operator()(2) = _PotEnergy;
 //   Result.operator()(3) = _KinLinEnergy + _KinRotEnergy + _PotEnergy;
-// return Result;
+return Vec4<float>(0,0,0,0);
 }
 
 /////////////////////////////////////Math review////////////////////////////////////
@@ -90,29 +90,29 @@ Vec4<float> ContactEnergy::getFinalBodyCost()
 
 Vec4<float> ContactEnergy::getFinalLegCost()
 {
-  Eigen::Matrix<float, 6, 3> J_v;
+  // Eigen::Matrix<float, 6, 3> J_v;
   Mat3<float> _Rbod = this->_data->_stateEstimator->getResult().rBody.transpose();
   Vec6<float> _Twist_W;
   _Twist_W.block(0,0,3,1) = this->_data->_stateEstimator->getResult().omegaWorld;
   _Twist_W.block(3,0,3,1) = this->_data->_stateEstimator->getResult().vWorld;
-  Mat3<float> Jacobi;
-  Mat3<float> globalCOMp_leg;
-  Mat3<float> globalCOMv_leg;
-  Mat3<float> globalCOMw_leg;
-  Jacobi.setZero();
-  globalCOMp_leg.setZero();
-  globalCOMv_leg.setZero();
-  globalCOMw_leg.setZero();
-  _KinEnergyLeg.setZero();
-  _PotEnergyLeg.setZero();
-  J_v.block(0,0,3,3) = coordinateRotation(CoordinateAxis::Y,float(0));
-  J_v.block(3,3,3,3) = coordinateRotation(CoordinateAxis::Y,float(0));
-  _Leg_Jacobi.block(0,0,6,1) = J_v.block(0,1,6,1);
+  // Mat3<float> Jacobi;
+  // Mat3<float> globalCOMp_leg;
+  // Mat3<float> globalCOMv_leg;
+  // Mat3<float> globalCOMw_leg;
+  // Jacobi.setZero();
+  // globalCOMp_leg.setZero();
+  // globalCOMv_leg.setZero();
+  // globalCOMw_leg.setZero();
+  // _KinEnergyLeg.setZero();
+  // _PotEnergyLeg.setZero();
+  // J_v.block(0,0,3,3) = coordinateRotation(CoordinateAxis::Y,float(0));
+  // J_v.block(3,3,3,3) = coordinateRotation(CoordinateAxis::Y,float(0));
+  // _Leg_Jacobi.block(0,0,6,1) = J_v.block(0,1,6,1);
   Vec4<uint8_t> contactState = _data->_stateEstimator->getContactSensorData();
-
+  Vec4<float> dE(0,0,0,0);
   for (int i = 0; i < 4; i++)
   {
-    if (contactState[i] == 1)
+    if (contactState[i] == uint8_t(1))
       {
       Quadruped<float> &quadruped = *this->_data->_quadruped;
       Vec6<float> _S1;
@@ -152,80 +152,93 @@ Vec4<float> ContactEnergy::getFinalLegCost()
 
       Vec3<float> _ph = quadruped.getHipLocation(i); // hip positions relative to CoM
       // compute velocities and positions of the leg COM in the local fixed hip frame 
-      Metric::computeCenterLegVelAndPos(quadruped,this->_data->_legController->datas[i].q,this->_data->_legController->datas[i].qd,&(Jacobi),&(globalCOMp_leg),&(globalCOMv_leg),&(globalCOMw_leg),i);
+      // // Metric::computeCenterLegVelAndPos(quadruped,this->_data->_legController->datas[i].q,this->_data->_legController->datas[i].qd,&(Jacobi),&(globalCOMp_leg),&(globalCOMv_leg),&(globalCOMw_leg),i);
       _Total_Jacobi_body.block(0,6,6,3) = createSXform(Eigen::Matrix<float, 3, 3>::Identity(),_ph)*_Leg_Jacobi;
       Vec3<float> _pbod = this->_data->_stateEstimator->getResult().position;
       _Total_Jacobi_world.block(0,6,6,3) = createSXform(_Rbod,_pbod)*_Total_Jacobi_body.block(0,6,6,3);
       _Total_Jacobi_world.block(0,0,6,6) = Eigen::Matrix<float,6,6>::Identity();
 
       _Total_mass_matrix.block(0,0,6,6) = quadruped._bodyInertia.getMatrix();
-    
-      // Total_mass_matrix.block(3,3,3,3) = 
-      // Body COM velocity and position in the global frame
+      _Total_mass_matrix.block(6,6,3,3) = _Leg_mass_matrix;
+      // // Total_mass_matrix.block(3,3,3,3) = 
+      // // Body COM velocity and position in the global frame
       _position = this->_data->_stateEstimator->getResult().position;
       _vBody = this->_data->_stateEstimator->getResult().vBody;
-      // Eigen::Matrix<T, 9, 1>;
-      // this->_data->_legController->datas[i].v;
-
-
-      Vec3<float> p_rel = _ph + this->_data->_legController->datas[i].p; // Local frame distance from COM to leg(i)
+      Eigen::Matrix<float, 9, 1> qV;
+      qV.block(0,0,6,1) = _Twist_W;
+      qV(6,0) = this->_data->_legController->datas[i].qd[0];
+      qV(7,0) = this->_data->_legController->datas[i].qd[1];
+      qV(8,0) = this->_data->_legController->datas[i].qd[2];
+      // // as dE = -1/2*dq(t-)^T*(J/(J^T/M*J)*J^T*dq(t-)) (8)
+      Vec6<float> qV_extr;
+      qV_extr= _Total_Jacobi_world*qV;
+      Eigen::Matrix<float, 6, 1> eqV;
+      eqV.setZero();
+      Eigen::Matrix<float, 9, 6> JT;
+      JT = _Total_Jacobi_world.transpose();
+      Mat6<float> Extr_Mass;
+      Extr_Mass = Eigen::Matrix<float,6,6>::Identity();
+      Extr_Mass = _Total_Jacobi_world*_Total_mass_matrix*JT;
+      eqV = Extr_Mass.lu().solve(qV_extr);
+      dE[i] = qV_extr.dot(eqV);
+  // //     Vec3<float> p_rel = _ph + this->_data->_legController->datas[i].p; // Local frame distance from COM to leg(i)
       
-      // Local frame velocity of leg(i) relative to COM
-      Vec3<float> dp_rel = this->_data->_legController->datas[i].v;
+  // //     // Local frame velocity of leg(i) relative to COM
+  // //     Vec3<float> dp_rel = this->_data->_legController->datas[i].v;
 
-      // Distance to leg(i) from Aligned with World frame body frame
-      Vec3<float> p_f = _Rbod * p_rel;
+  // //     // Distance to leg(i) from Aligned with World frame body frame
+  // //     Vec3<float> p_f = _Rbod * p_rel;
 
-      // World leg(i) velocity in Aligned with World frame body frame
-      Vec3<float> dp_f = _Rbod * (this->_data->_stateEstimator->getResult().omegaBody.cross(p_rel) + dp_rel);
+  // //     // World leg(i) velocity in Aligned with World frame body frame
+  // //     Vec3<float> dp_f = _Rbod * (this->_data->_stateEstimator->getResult().omegaBody.cross(p_rel) + dp_rel);
 
-      // std::cout<< globalCOMp_leg.block(0,0,1,1)<< endl;
-      // Move from i-th leg hip local frame to the body frame
-      globalCOMp_leg.block(0,0,3,1) += _ph;//globalCOMp_leg.block(0,0,3,1) + 
-      globalCOMp_leg.block(0,1,3,1) += _ph;
-      globalCOMp_leg.block(0,2,3,1) += _ph;
+  // //     // std::cout<< globalCOMp_leg.block(0,0,1,1)<< endl;
+  // //     // Move from i-th leg hip local frame to the body frame
+  // //     globalCOMp_leg.block(0,0,3,1) += _ph;//globalCOMp_leg.block(0,0,3,1) + 
+  // //     globalCOMp_leg.block(0,1,3,1) += _ph;
+  // //     globalCOMp_leg.block(0,2,3,1) += _ph;
       
-      // added linear velocity component from body rotations
-      globalCOMv_leg.block(0,0,3,1) += this->_data->_stateEstimator->getResult().omegaBody.cross(Vec3<float>(globalCOMp_leg.block(0,0,3,1)));
-      globalCOMv_leg.block(0,1,3,1) += this->_data->_stateEstimator->getResult().omegaBody.cross(Vec3<float>(globalCOMp_leg.block(0,1,3,1)));
-      globalCOMv_leg.block(0,2,3,1) += this->_data->_stateEstimator->getResult().omegaBody.cross(Vec3<float>(globalCOMp_leg.block(0,2,3,1)));
+  // //     // added linear velocity component from body rotations
+  // //     globalCOMv_leg.block(0,0,3,1) += this->_data->_stateEstimator->getResult().omegaBody.cross(Vec3<float>(globalCOMp_leg.block(0,0,3,1)));
+  // //     globalCOMv_leg.block(0,1,3,1) += this->_data->_stateEstimator->getResult().omegaBody.cross(Vec3<float>(globalCOMp_leg.block(0,1,3,1)));
+  // //     globalCOMv_leg.block(0,2,3,1) += this->_data->_stateEstimator->getResult().omegaBody.cross(Vec3<float>(globalCOMp_leg.block(0,2,3,1)));
       
-      // Added body angular velocity
-      globalCOMw_leg.block(0,0,3,1) = globalCOMw_leg.block(0,0,3,1) + this->_data->_stateEstimator->getResult().omegaBody;
-      globalCOMw_leg.block(0,1,3,1) = globalCOMw_leg.block(0,1,3,1) + this->_data->_stateEstimator->getResult().omegaBody;
-      globalCOMw_leg.block(0,2,3,1) = globalCOMw_leg.block(0,2,3,1) + this->_data->_stateEstimator->getResult().omegaBody;
+  // //     // Added body angular velocity
+  // //     globalCOMw_leg.block(0,0,3,1) = globalCOMw_leg.block(0,0,3,1) + this->_data->_stateEstimator->getResult().omegaBody;
+  // //     globalCOMw_leg.block(0,1,3,1) = globalCOMw_leg.block(0,1,3,1) + this->_data->_stateEstimator->getResult().omegaBody;
+  // //     globalCOMw_leg.block(0,2,3,1) = globalCOMw_leg.block(0,2,3,1) + this->_data->_stateEstimator->getResult().omegaBody;
       
-      // Rotated, World leg(i) COM positions and velocities are expressed 
-      // // in Aligned with World frame body frame
-      globalCOMv_leg.block(0,0,3,3) = _Rbod * globalCOMv_leg;
-      globalCOMp_leg.block(0,0,3,3) = _Rbod * globalCOMp_leg;
-      globalCOMw_leg.block(0,0,3,3) = _Rbod * globalCOMw_leg;
+  // //     // Rotated, World leg(i) COM positions and velocities are expressed 
+  // //     // // in Aligned with World frame body frame
+  // //     globalCOMv_leg.block(0,0,3,3) = _Rbod * globalCOMv_leg;
+  // //     globalCOMp_leg.block(0,0,3,3) = _Rbod * globalCOMp_leg;
+  // //     globalCOMw_leg.block(0,0,3,3) = _Rbod * globalCOMw_leg;
       
-      // Expressed in the global frame
-      globalCOMv_leg.block(0,0,3,1) += _vBody;
-      globalCOMv_leg.block(0,1,3,1) += _vBody;
-      globalCOMv_leg.block(0,2,3,1) += _vBody;
+  // //     // Expressed in the global frame
+  // //     globalCOMv_leg.block(0,0,3,1) += _vBody;
+  // //     globalCOMv_leg.block(0,1,3,1) += _vBody;
+  // //     globalCOMv_leg.block(0,2,3,1) += _vBody;
 
-      // // Global position of the COM for the leg Expressed in the world frame (initial frame)
-      globalCOMp_leg.block(0,0,3,1) += _position;
-      globalCOMp_leg.block(0,1,3,1) += _position;
-      globalCOMp_leg.block(0,2,3,1) += _position;
+  // //     // // Global position of the COM for the leg Expressed in the world frame (initial frame)
+  // //     globalCOMp_leg.block(0,0,3,1) += _position;
+  // //     globalCOMp_leg.block(0,1,3,1) += _position;
+  // //     globalCOMp_leg.block(0,2,3,1) += _position;
 
-      // Sum of the kinetic rotational and linear energy for all leg bodies
-      _KinEnergyLeg.operator()(i) = Vec3<float>(globalCOMw_leg.block(0,0,3,1)).dot(quadruped._abadInertia.getInertiaTensor()*Vec3<float>(globalCOMw_leg.block(0,0,3,1))) + Vec3<float>(globalCOMv_leg.block(0,0,3,1)).dot(Vec3<float>(globalCOMv_leg.block(0,0,3,1)))*quadruped._abadInertia.getMass();
-      _KinEnergyLeg.operator()(i) += Vec3<float>(globalCOMw_leg.block(0,1,3,1)).dot(quadruped._hipInertia.getInertiaTensor()*Vec3<float>(globalCOMw_leg.block(0,1,3,1))) + Vec3<float>(globalCOMv_leg.block(0,1,3,1)).dot(Vec3<float>(globalCOMv_leg.block(0,1,3,1)))*quadruped._hipInertia.getMass();
-      _KinEnergyLeg.operator()(i) += Vec3<float>(globalCOMw_leg.block(0,2,3,1)).dot(quadruped._kneeInertia.getInertiaTensor()*Vec3<float>(globalCOMw_leg.block(0,2,3,1))) + Vec3<float>(globalCOMv_leg.block(0,2,3,1)).dot(Vec3<float>(globalCOMv_leg.block(0,2,3,1)))*quadruped._kneeInertia.getMass();
+  // //     // Sum of the kinetic rotational and linear energy for all leg bodies
+  // //     _KinEnergyLeg.operator()(i) = Vec3<float>(globalCOMw_leg.block(0,0,3,1)).dot(quadruped._abadInertia.getInertiaTensor()*Vec3<float>(globalCOMw_leg.block(0,0,3,1))) + Vec3<float>(globalCOMv_leg.block(0,0,3,1)).dot(Vec3<float>(globalCOMv_leg.block(0,0,3,1)))*quadruped._abadInertia.getMass();
+  // //     _KinEnergyLeg.operator()(i) += Vec3<float>(globalCOMw_leg.block(0,1,3,1)).dot(quadruped._hipInertia.getInertiaTensor()*Vec3<float>(globalCOMw_leg.block(0,1,3,1))) + Vec3<float>(globalCOMv_leg.block(0,1,3,1)).dot(Vec3<float>(globalCOMv_leg.block(0,1,3,1)))*quadruped._hipInertia.getMass();
+  // //     _KinEnergyLeg.operator()(i) += Vec3<float>(globalCOMw_leg.block(0,2,3,1)).dot(quadruped._kneeInertia.getInertiaTensor()*Vec3<float>(globalCOMw_leg.block(0,2,3,1))) + Vec3<float>(globalCOMv_leg.block(0,2,3,1)).dot(Vec3<float>(globalCOMv_leg.block(0,2,3,1)))*quadruped._kneeInertia.getMass();
 
-      // Sum of the potential rot and lin energy for all leg bodies
-      _PotEnergyLeg.operator()(i) = globalCOMp_leg.operator()(2,0)*quadruped._abadInertia.getMass();
-      _PotEnergyLeg.operator()(i) += globalCOMp_leg.operator()(2,1)*quadruped._hipInertia.getMass();
-      _PotEnergyLeg.operator()(i) += globalCOMp_leg.operator()(2,2)*quadruped._kneeInertia.getMass();
+  // //     // Sum of the potential rot and lin energy for all leg bodies
+  // //     _PotEnergyLeg.operator()(i) = globalCOMp_leg.operator()(2,0)*quadruped._abadInertia.getMass();
+  // //     _PotEnergyLeg.operator()(i) += globalCOMp_leg.operator()(2,1)*quadruped._hipInertia.getMass();
+  // //     _PotEnergyLeg.operator()(i) += globalCOMp_leg.operator()(2,2)*quadruped._kneeInertia.getMass();
       }
   }
-  _KinEnergyLeg = float(0.5) * _KinEnergyLeg;
-  _PotEnergyLeg = g[2] * _PotEnergyLeg;
+  // _KinEnergyLeg = float(0.5) * _KinEnergyLeg;
+  // _PotEnergyLeg = g[2] * _PotEnergyLeg;
   // _state_coord = this->_data->._legController->datas.p;
   // std::cout << "Kinetic Energy" << _KinLinEnergy << "\n";
   //  a(_KinLinEnergy +_KinRotEnergy + _PotEnergy, 0, 0, 0);
-  return Vec4<float>(_KinEnergyLeg + _PotEnergyLeg);
+  return dE;
 };
