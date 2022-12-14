@@ -58,6 +58,7 @@ struct StaticParams
     readRosParam("/static_params/max_vel_x", max_vel_x);
     readRosParam("/static_params/max_vel_y", max_vel_y);
     readRosParam("/static_params/max_turn_rate", max_turn_rate);
+    readRosParam("/static_params/r_circle", r_circle);
   }
   double controller_dt;
   bool cheater_mode;
@@ -86,6 +87,7 @@ struct StaticParams
   float max_vel_x = 0.5;
   float max_vel_y = 0.4;
   float max_turn_rate = 2.5;
+  float r_circle = 0;
 };
 
 #endif // ROS_READ_PARAM_H

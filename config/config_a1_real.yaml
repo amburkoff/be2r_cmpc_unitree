@@ -21,6 +21,7 @@ static_params:
   max_vel_x: 0.7
   max_vel_y: 0.4
   max_turn_rate: 2.5
+  r_circle: 0.09
 
   alpha: 4.e-5
   Q_roll: 0.25

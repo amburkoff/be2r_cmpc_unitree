@@ -391,6 +391,8 @@ void CMPCLocomotion_Cv::myVersion(ControlFSMData<float>& data)
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
       Vec3<float> vActFootWorld = seResult.rBody.inverse() * (data.legController->datas[foot].v) + seResult.vWorld;
 
+      _hipSefetyCircle(pDesLeg, pDesFootWorld, foot);
+
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;
       vFoot_des[foot] = vDesFootWorld;
@@ -805,24 +807,24 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf, const Vec3<float>& body
   int col_idx_body_com = _grid_map_raw.getSize()(1) / 2;
   if (_data->debug->is_map_upd_stop)
   {
-    col_idx_body_com -= floor((body_pos_arg[0] - freeze_pose[0]) / _grid_map_raw.getResolution());
-    row_idx_body_com += floor((body_pos_arg[1] - freeze_pose[1]) / _grid_map_raw.getResolution());
+    col_idx_body_com -= ceil((body_pos_arg[0] - freeze_pose[0]) / _grid_map_raw.getResolution());
+    row_idx_body_com += ceil((body_pos_arg[1] - freeze_pose[1]) / _grid_map_raw.getResolution());
     col_idx_body_com = std::clamp(col_idx_body_com, 0, _grid_map_raw.getSize()(1) - 1);
     row_idx_body_com = std::clamp(row_idx_body_com, 0, _grid_map_raw.getSize()(0) - 1);
     // TODO:Call enable update service when touch map edge
   }
 
   // Минус для преобразования координат
-  int x_idx = col_idx_body_com - floor(local_pf[0] / _grid_map_raw.getResolution());
-  int y_idx = row_idx_body_com - floor(local_pf[1] / _grid_map_raw.getResolution());
+  int x_idx = col_idx_body_com - ceil(local_pf[0] / _grid_map_raw.getResolution());
+  int y_idx = row_idx_body_com - ceil(local_pf[1] / _grid_map_raw.getResolution());
   x_idx = std::clamp(x_idx, 0, _grid_map_raw.getSize()(1) - 1);
   y_idx = std::clamp(y_idx, 0, _grid_map_raw.getSize()(0) - 1);
 
   int x_idx_selected = x_idx;
   int y_idx_selected = y_idx;
 
-  int p0_x_idx = col_idx_body_com - floor(local_p0[0] / _grid_map_raw.getResolution());
-  int p0_y_idx = row_idx_body_com - floor(local_p0[1] / _grid_map_raw.getResolution());
+  int p0_x_idx = col_idx_body_com - ceil(local_p0[0] / _grid_map_raw.getResolution());
+  int p0_y_idx = row_idx_body_com - ceil(local_p0[1] / _grid_map_raw.getResolution());
 
   auto p0_h = _grid_map_raw.at("elevation", checkBoundariess(_grid_map_raw, p0_x_idx, p0_y_idx));
 
@@ -876,7 +878,7 @@ void CMPCLocomotion_Cv::_updateFoothold(Vec3<float>& pf, const Vec3<float>& body
   if (pf[2] > MAX_STEP_HEIGHT)
   {
     pf[2] = MAX_STEP_HEIGHT;
-    std::cout << "Leg height limit" << std::endl;
+    ROS_INFO_STREAM_THROTTLE(1, " Leg " << leg << " height limit = " << pf_h);
   }
 }
 
@@ -922,12 +924,13 @@ void CMPCLocomotion_Cv::_idxMapChecking(Vec3<float>& pf,
   // std::endl;
   for (grid_map_utils::SpiralIterator iterator(_grid_map_raw, center, radius); !iterator.isPastEnd(); ++iterator)
   {
-    auto traversability = _grid_map_raw.at("traversability", *iterator);
+    // auto traversability = _grid_map_raw.at("traversability", *iterator);
+    auto traversability = _grid_map_plane.at("plane_classification", *iterator);
     // auto uncertainty_r = height_map_filter.at("uncertainty_range", *iterator);
     // if (leg == 0)
     // std::cout << "traversability = " << traversability << std::endl;
     // If can step
-    if (!std::isnan(traversability) && traversability > 0.99 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
+    if (!std::isnan(traversability) && traversability > 0.8 /*&& !std::isnan(uncertainty_r) && uncertainty_r < 0.7*/)
     {
       x_idx_selected = (*iterator)(0);
       // if (!_doorstep_case)
@@ -1030,8 +1033,7 @@ float CMPCLocomotion_Cv::_updateTrajHeight(size_t foot)
   double out;
   // cout << "MAXELL = " << _max_cell << endl;
   // double obst_h = _max_cell - footSwingTrajectories[foot].getInitialPosition()(2);
-  double obst_h =
-    std::abs(footSwingTrajectories[foot].getFinalPosition()(2));
+  double obst_h = std::abs(footSwingTrajectories[foot].getFinalPosition()(2));
   // double obst_h =
   //   std::abs(footSwingTrajectories[foot].getFinalPosition()(2) - footSwingTrajectories[foot].getInitialPosition()(2));
   h = obst_h + k;
@@ -1074,8 +1076,8 @@ void CMPCLocomotion_Cv::_longStep(const grid_map::GridMap& map, int foot)
 
   int row_idx_body_com = map.getSize()(0) / 2;
   int col_idx_body_com = map.getSize()(1) / 2;
-  int p0_x_idx = col_idx_body_com - floor(local_p0[0] / map.getResolution());
-  int p0_y_idx = row_idx_body_com - floor(local_p0[1] / map.getResolution());
+  int p0_x_idx = col_idx_body_com - ceil(local_p0[0] / map.getResolution());
+  int p0_y_idx = row_idx_body_com - ceil(local_p0[1] / map.getResolution());
   grid_map::Index p0_index(p0_x_idx, p0_y_idx);
 
   grid_map::Index cell_search_coord(p0_index);
@@ -1132,4 +1134,16 @@ std::vector<float> CMPCLocomotion_Cv::calcDesVel()
 
   out[0] = 1.0;
   return out;
+}
+
+void CMPCLocomotion_Cv::_hipSefetyCircle(Vec3<float>& pDesLeg, Vec3<float>& pDesFootWorld, const int& foot)
+{
+  if (((pDesLeg[0] * pDesLeg[0]) + (pDesLeg[2] * pDesLeg[2])) / (_data->staticParams->r_circle * _data->staticParams->r_circle) <
+      1)
+  {
+    pDesLeg[2] = -std::sqrt((_data->staticParams->r_circle * _data->staticParams->r_circle) - (pDesLeg[0] * pDesLeg[0]));
+    pDesFootWorld = _data->stateEstimator->getResult().rBody.transpose() * (pDesLeg + _data->quadruped->getHipLocation(foot)) +
+                    _data->stateEstimator->getResult().position;
+    ROS_INFO_THROTTLE(1, "Cut foot swing trajectory by hip-centered circle");
+  }
 }

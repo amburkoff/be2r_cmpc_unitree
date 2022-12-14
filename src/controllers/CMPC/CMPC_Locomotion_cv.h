@@ -78,6 +78,7 @@ private:
                              const grid_map::Index* cell_idx = nullptr);
 
   void _longStep(const grid_map::GridMap& map, int foot);
+  void _hipSefetyCircle(Vec3<float>& pDesLeg, Vec3<float>& pDesFootWorld, const int& foot);
   std::vector<float> calcDesVel();
 
   // Parameters
