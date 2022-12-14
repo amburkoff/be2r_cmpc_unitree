@@ -164,7 +164,8 @@ Vec4<float> ContactEnergy::getFinalLegCost()
       // Body COM velocity and position in the global frame
       _position = this->_data->_stateEstimator->getResult().position;
       _vBody = this->_data->_stateEstimator->getResult().vBody;
-
+      // Eigen::Matrix<T, 9, 1>;
+      // this->_data->_legController->datas[i].v;
 
 
       Vec3<float> p_rel = _ph + this->_data->_legController->datas[i].p; // Local frame distance from COM to leg(i)

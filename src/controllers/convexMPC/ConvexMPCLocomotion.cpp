@@ -82,6 +82,7 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int iterations_between_mpc, 
   for (int i = 0; i < 4; i++)
   {
     firstSwing[i] = true;
+    footSwingTrajectories[i].setStateEstimatorAdress(data->_stateEstimator);
   }
 
   initSparseMPC();
@@ -89,6 +90,8 @@ ConvexMPCLocomotion::ConvexMPCLocomotion(float _dt, int iterations_between_mpc, 
   pBody_des.setZero();
   vBody_des.setZero();
   aBody_des.setZero();
+  
+
 }
 
 void ConvexMPCLocomotion::initialize()
@@ -134,7 +137,6 @@ void ConvexMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 
   Kd = Vec3<float>(_dyn_params->Kd_cartesian_0, _dyn_params->Kd_cartesian_1, _dyn_params->Kd_cartesian_2).asDiagonal();
   Kd_stance = Kd;
-  footSwingTrajectories->setStateEstimatorAdress(data._stateEstimator);
 }
 
 template<>
@@ -459,8 +461,9 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         geometry_msgs::PoseStamped Emptypose;
         pose[foot] = Emptypose;
       }
-
+      std::cout<<"Leg N "<< foot<<" Swing highest point ";
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot],data._quadruped->getSideSign(foot));
+
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
@@ -509,7 +512,6 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
     {
       firstSwing[foot] = true;
       pDesFootWorldStance[foot] = pFoot[foot];
-
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
       // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> vDesFootWorld = Vec3<float>::Zero();

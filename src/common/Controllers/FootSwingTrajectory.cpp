@@ -18,12 +18,21 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, 
 {
   Vec3<float> _flag(0,1,1);
   // T yp, yv, ya;*
-  auto seR = this->_stateEstimator->getResult();
-  T yaw = seR.rpy[2];
+  T yaw = T(0);
+
+  if (_stateEstimator != nullptr){
+    
+    auto seR = this->_stateEstimator->getResult();
+    yaw = seR.rpy[2];
+    std::cout << " :"<< yaw << ": " << endl;
+  }
+   
   Mat3<T> R = coordinateRotation(CoordinateAxis::Z,yaw);
   //  R.transpose()*
   // std::cout << this->_stateEstimator->getResult().rpy[2] << " " << std::endl;
-  Vec3<T> _shifted_extr= R*Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[2]);
+  Vec3<T> _shifted_extr= Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[2]);
+  Vec3<T> _pf_shift = R*(_pf - _p0);
+  std::cout << _shifted_extr[0]<< " "<< _shifted_extr[1]<< " "<< _shifted_extr[2]<<" yaw: " << yaw << std::endl;
   for (int i = 0; i < 3; i++)
   {
     if (_flag[i]==1)
@@ -33,32 +42,32 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, 
         // zp = Interpolate::cubicBezier<T>(_p0[2], _p0[2] + _shifted_extr[3] phase * 2);
         // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 2 / swingTime;
         // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2], _p0[2] + _shifted_extr[3], phase * 2) * 4 / (swingTime * swingTime);
-        _p[i] = Interpolate::cubicBezier<T>(_p0[i], _p0[i]+ _shifted_extr[i], phase * 2);
-        _v[i] = Interpolate::cubicBezierFirstDerivative<T>(_p0[i], _p0[i] + _shifted_extr[i], phase * 2) * 2 / swingTime;
-        _a[i] = Interpolate::cubicBezierSecondDerivative<T>(_p0[i], _p0[i] + _shifted_extr[i], phase * 2) * 4 / (swingTime * swingTime);
+        _p[i] = Interpolate::cubicBezier<T>(T(0), _shifted_extr[i], phase * 2);
+        _v[i] = Interpolate::cubicBezierFirstDerivative<T>(T(0), _shifted_extr[i], phase * 2) * 2 / swingTime;
+        _a[i] = Interpolate::cubicBezierSecondDerivative<T>(T(0), _shifted_extr[i], phase * 2) * 4 / (swingTime * swingTime);
       }
       else
       {
         // zp = Interpolate::cubicBezier<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1);
         // zv = Interpolate::cubicBezierFirstDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 2 / swingTime;
         // za = Interpolate::cubicBezierSecondDerivative<T>(_p0[2] + _shifted_extr[3], _pf[2], phase * 2 - 1) * 4 / (swingTime * swingTime);
-        _p[i] = Interpolate::cubicBezier<T>(_p0[i] + _shifted_extr[i], _pf[i], phase * 2 - 1);
-        _v[i] = Interpolate::cubicBezierFirstDerivative<T>(_p0[i] + _shifted_extr[i], _pf[i], phase * 2 - 1) * 2 / swingTime;
-        _a[i] = Interpolate::cubicBezierSecondDerivative<T>(_p0[i] + legside*_shifted_extr[i], _pf[i], phase * 2 - 1) * 4 / (swingTime * swingTime);
+        _p[i] = Interpolate::cubicBezier<T>( _shifted_extr[i], _pf_shift[i], phase * 2 - 1);
+        _v[i] = Interpolate::cubicBezierFirstDerivative<T>( _shifted_extr[i], _pf_shift[i], phase * 2 - 1) * 2 / swingTime;
+        _a[i] = Interpolate::cubicBezierSecondDerivative<T>(_shifted_extr[i], _pf_shift[i], phase * 2 - 1) * 4 / (swingTime * swingTime);
       }
     }
     else
     {
-      _p[i] = Interpolate::cubicBezier<T>(_p0[i], _pf[i], phase);
-      _v[i] = Interpolate::cubicBezierFirstDerivative<T>(_p0[i], _pf[i], phase) / swingTime;
-      _a[i] = Interpolate::cubicBezierSecondDerivative<T>(_p0[i], _pf[i], phase) / (swingTime * swingTime);
+      _p[i] = Interpolate::cubicBezier<T>(T(0), _pf_shift[i], phase);
+      _v[i] = Interpolate::cubicBezierFirstDerivative<T>(T(0), _pf_shift[i], phase) / swingTime;
+      _a[i] = Interpolate::cubicBezierSecondDerivative<T>(T(0), _pf_shift[i], phase) / (swingTime * swingTime);
     }
   }
   
   // T zp, zv, za;
-  // _p[2] = zp;
-  // _v[2] = zv;
-  // _a[2] = za;
+  _p = _p0 + R.transpose()*_p;
+  _v = R.transpose()*_v;
+  _a = R.transpose()*_a;
   // _p[1] = yp;
   // _v[1] = yv;
   // _a[1] = ya;

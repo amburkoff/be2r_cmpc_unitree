@@ -45,7 +45,9 @@ public:
    * Set the starting location of the foot
    * @param stateEstimator stateEstimator  : reference to the estimator data
    */
-  void setStateEstimatorAdress(StateEstimatorContainer<T>* stateEstimator) { _stateEstimator = stateEstimator; }
+  void setStateEstimatorAdress(StateEstimatorContainer<T>* stateEstimator) { _stateEstimator = stateEstimator; 
+  // std::cout<< "Set State Estimator Adress was completed succesfully!"<< std::endl;
+  }
 
     /*!
    * Set the mode for the basis function: 
