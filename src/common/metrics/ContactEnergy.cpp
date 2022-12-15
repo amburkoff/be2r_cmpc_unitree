@@ -234,6 +234,10 @@ Vec4<float> ContactEnergy::getFinalLegCost()
   // //     _PotEnergyLeg.operator()(i) += globalCOMp_leg.operator()(2,1)*quadruped._hipInertia.getMass();
   // //     _PotEnergyLeg.operator()(i) += globalCOMp_leg.operator()(2,2)*quadruped._kneeInertia.getMass();
       }
+      else
+      {
+        dE[i] = _data->debug->metric_data.final_leg_cost[i];
+      }
   }
   // _KinEnergyLeg = float(0.5) * _KinEnergyLeg;
   // _PotEnergyLeg = g[2] * _PotEnergyLeg;

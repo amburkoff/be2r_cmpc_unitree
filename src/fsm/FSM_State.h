@@ -109,9 +109,9 @@ public:
 
   // Holds all of the relevant control data
   ControlFSMData<T>* _data;
-  // SystemEnergy* _metric;
+  SystemEnergy* _metric;
   // EnergyConsume* _metric;
-  ContactEnergy* _metric;
+  // ContactEnergy* _metric;
 
 
   // FSM State info

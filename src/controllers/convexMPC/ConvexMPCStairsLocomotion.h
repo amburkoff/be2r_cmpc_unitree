@@ -154,9 +154,9 @@ private:
   float dt;
   float dtMPC;
   int iterationCounter = 0;
-  // SystemEnergy Energy;
+  SystemEnergy Energy;
   // EnergyConsume Energy;
-  ContactEnergy Energy;
+  // ContactEnergy Energy;
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
