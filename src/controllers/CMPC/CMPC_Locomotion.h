@@ -16,80 +16,11 @@
 using Eigen::Array4f;
 using Eigen::Array4i;
 
-template <typename T>
+template<typename T>
 struct CMPC_result
 {
   LegControllerCommand<T> commands[4];
   Vec4<T> contactPhase;
-};
-
-struct CMPC_jump
-{
-  static constexpr int START_SEG = 6;
-  static constexpr int END_SEG = 0;
-  static constexpr int END_COUNT = 2;
-  bool jump_pending = false;
-  bool jump_in_progress = false;
-  bool pressed = false;
-  int seen_end_count = 0;
-  int last_seg_seen = 0;
-  int jump_wait_counter = 0;
-
-  void debug(int seg)
-  {
-    (void)seg;
-    // printf("[%d] pending %d running %d\n", seg, jump_pending, jump_in_progress);
-  }
-
-  void trigger_pressed(int seg, bool trigger)
-  {
-    (void)seg;
-    if (!pressed && trigger)
-    {
-      if (!jump_pending && !jump_in_progress)
-      {
-        jump_pending = true;
-        // printf("jump pending @ %d\n", seg);
-      }
-    }
-    pressed = trigger;
-  }
-
-  bool should_jump(int seg)
-  {
-    debug(seg);
-
-    if (jump_pending && seg == START_SEG)
-    {
-      jump_pending = false;
-      jump_in_progress = true;
-      // printf("jump begin @ %d\n", seg);
-      seen_end_count = 0;
-      last_seg_seen = seg;
-      return true;
-    }
-
-    if (jump_in_progress)
-    {
-      if (seg == END_SEG && seg != last_seg_seen)
-      {
-        seen_end_count++;
-        if (seen_end_count == END_COUNT)
-        {
-          seen_end_count = 0;
-          jump_in_progress = false;
-          // printf("jump end @ %d\n", seg);
-          last_seg_seen = seg;
-          return false;
-        }
-      }
-      last_seg_seen = seg;
-      return true;
-    }
-
-    last_seg_seen = seg;
-    return false;
-  }
 };
 
 class CMPCLocomotion
@@ -100,7 +31,7 @@ public:
   CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc_unitree::ros_dynamic_paramsConfig* parameters);
   void initialize();
 
-  template <typename T>
+  template<typename T>
   void run(ControlFSMData<T>& data);
   bool currently_jumping = false;
 
@@ -153,7 +84,7 @@ private:
   Vec3<float> f_ff[4];
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
-  OffsetDurationGaitContact trotting, trot_contact, standing, two_leg_balance;
+  OffsetDurationGaitContact trotting, standing;
   Mat3<float> Kp, Kd, Kp_stance, Kd_stance;
   bool firstRun = true;
   bool firstSwing[4];
@@ -173,8 +104,6 @@ private:
   ros::NodeHandle _nh;
   visualization_msgs::Marker marker[4];
   ros::Publisher _vis_pub[4];
-
-  CMPC_jump jump_state;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
 
