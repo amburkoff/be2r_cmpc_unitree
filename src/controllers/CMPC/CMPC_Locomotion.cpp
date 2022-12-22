@@ -410,7 +410,6 @@ void CMPCLocomotion::run(ControlFSMData<double>& data)
 
 void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode)
 {
-  // iterationsBetweenMPC = 30;
   if ((iterationCounter % iterationsBetweenMPC) == 0)
   {
     auto seResult = data._stateEstimator->getResult();
@@ -494,25 +493,25 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
 
         if (i > 0)
         {
-          trajAll[12 * i + 2] = trajAll[12 * (i - 1) + 2] + dtMPC * vBody_Ori_des[2];
-          trajAll[12 * i + 3] = trajAll[12 * (i - 1) + 3] + dtMPC * vBody_des[0];
-          trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + dtMPC * vBody_des[1];
+          trajAll[12 * i + 2] = trajAll[12 * (i - 1) + 2] + dtMPC * _yaw_turn_rate;
+          trajAll[12 * i + 3] = trajAll[12 * (i - 1) + 3] + dtMPC * v_des_world[0];
+          trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + dtMPC * v_des_world[1];
         }
       }
-
-      Timer solveTimer;
-
-      if (_parameters->cmpc_use_sparse > 0.5)
-      {
-        solveSparseMPC(mpcTable, data);
-      }
-      else
-      {
-        solveDenseMPC(mpcTable, data);
-      }
-
-      // printf("TOTAL SOLVE TIME: %.3f\n", solveTimer.getMs());
     }
+
+    Timer solveTimer;
+
+    if (_parameters->cmpc_use_sparse > 0.5)
+    {
+      solveSparseMPC(mpcTable, data);
+    }
+    else
+    {
+      solveDenseMPC(mpcTable, data);
+    }
+
+    // printf("TOTAL SOLVE TIME: %.3f\n", solveTimer.getMs());
   }
 }
 
@@ -520,12 +519,17 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
   auto seResult = data._stateEstimator->getResult();
 
-  // original
-  float Q[12] = { 2.5, 2.5, 10, 50, 50, 100, 0, 0, 5, 0.2, 0.2, 0.1 };
+  // float Q[12] = {0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2};
 
+  // float Q[12] = {0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1};
+  // //original
+  float Q[12] = { 2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1 };
+
+  // float Q[12] = {0.25, 0.25, 10, 2, 2, 40, 0, 0, 0.3, 0.2, 0.2, 0.2};
   float yaw = seResult.rpy[2];
   float* weights = Q;
   float alpha = 4e-5; // make setting eventually
+  // float alpha = 4e-7; // make setting eventually: DH
   float* p = seResult.position.data();
   float* v = seResult.vWorld.data();
   float* w = seResult.omegaWorld.data();
