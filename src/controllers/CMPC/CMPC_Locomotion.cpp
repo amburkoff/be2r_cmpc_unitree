@@ -35,7 +35,8 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc
   dtMPC = dt * iterationsBetweenMPC;
   default_iterations_between_mpc = iterationsBetweenMPC;
   printf("[Convex MPC] dt: %.3f iterations: %d, dtMPC: %.3f\n", dt, iterationsBetweenMPC, dtMPC);
-  setup_problem(dtMPC, horizonLength, 0.4, 120); // original
+  // setup_problem(dtMPC, horizonLength, 0.4, 120); // original
+  setup_problem(dtMPC, horizonLength, 0.4, 220); // original
   rpy_comp[0] = 0;
   rpy_comp[1] = 0;
   rpy_comp[2] = 0;
@@ -86,7 +87,7 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _body_height = _parameters->body_height;
 
   float x_vel_cmd, y_vel_cmd;
-  float filter(0.01);
+  float filter(0.005);
 
   _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
   x_vel_cmd = data._desiredStateCommand->leftAnalogStick[1];
@@ -524,7 +525,7 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   // float Q[12] = { 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2 };
   // float Q[12] = { 2.5, 2.5, 5, 2, 2, 10, 0, 0, 0.3, 2, 2, 2 };
 
-  float Q[12] = { 2.5, 2.5, 10, 5, 5, 10, 0, 0, 0.5, 0.2, 0.2, 0.1 };
+  float Q[12] = { 2.5, 2.5, 10, 5, 5, 10, 0, 0, 0.5, 2, 2, 2 };
 
   // norm
   //  float Q[12] = { 2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1 };
@@ -559,7 +560,8 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 
   Timer t1;
   dtMPC = dt * iterationsBetweenMPC;
-  setup_problem(dtMPC, horizonLength, 0.4, 120);
+  // setup_problem(dtMPC, horizonLength, 0.4, 120);
+  setup_problem(dtMPC, horizonLength, 0.4, 220);
   update_x_drag(x_comp_integral);
 
   if (vxy[0] > 0.3 || vxy[0] < -0.3)
