@@ -60,6 +60,8 @@ CMPCLocomotion::CMPCLocomotion(float _dt, int _iterations_between_mpc, be2r_cmpc
   _pub_des_traj[2] = _nh.advertise<nav_msgs::Path>("/des_traj_2", 1);
   _pub_des_traj[3] = _nh.advertise<nav_msgs::Path>("/des_traj_3", 1);
 
+  _pub_ref_traj = _nh.advertise<nav_msgs::Path>("/reference_trajectory", 1);
+
   _vis_pub[0] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_0", 1);
   _vis_pub[1] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_1", 1);
   _vis_pub[2] = _nh.advertise<visualization_msgs::Marker>("/visualization_marker_2", 1);
@@ -240,7 +242,7 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
     Vec3<float> offset(0, side_sign[i] * data._quadruped->_abadLinkLength, 0);
 
-    Vec3<float> pRobotFrame = (data._quadruped->getHipLocation(i) + offset);
+    Vec3<float> pRobotFrame = data._quadruped->getHipLocation(i) + offset;
 
     pRobotFrame[1] += interleave_y[i] * v_abs * interleave_gain;
     float stance_time = gait->getCurrentStanceTime(dtMPC, i);
@@ -486,6 +488,25 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
                                 vBody_des[1],     // 10 vy body des
                                 vBody_des[2] };   // 11 vz body des
 
+      _reference_trajectory.poses.clear();
+      _reference_trajectory.header.frame_id = "odom";
+      _reference_trajectory.header.stamp = ros::Time::now();
+
+      geometry_msgs::PoseStamped pose_of_traj;
+
+      pose_of_traj.pose.position.x = pBody_des[0];
+      pose_of_traj.pose.position.y = pBody_des[1];
+      pose_of_traj.pose.position.z = pBody_des[2];
+
+      tf::Quaternion quat(tf::Vector3(0, 0, 1), pBody_RPY_des[2]);
+
+      pose_of_traj.pose.orientation.x = quat.getX();
+      pose_of_traj.pose.orientation.y = quat.getY();
+      pose_of_traj.pose.orientation.z = quat.getZ();
+      pose_of_traj.pose.orientation.w = quat.getW();
+
+      _reference_trajectory.poses.push_back(pose_of_traj);
+
       for (int i = 0; i < horizonLength; i++)
       {
         for (int j = 0; j < 12; j++)
@@ -493,13 +514,50 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
           trajAll[12 * i + j] = trajInitial[j];
         }
 
-        if (i > 0)
-        {
-          trajAll[12 * i + 2] = trajAll[12 * (i - 1) + 2] + dtMPC * _yaw_turn_rate;
-          trajAll[12 * i + 3] = trajAll[12 * (i - 1) + 3] + dtMPC * v_des_world[0];
-          trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + dtMPC * v_des_world[1];
-        }
+        // if (i > 0)
+        // {
+        //   trajAll[12 * i + 2] = trajAll[12 * (i - 1) + 2] + dtMPC * _yaw_turn_rate;
+        //   trajAll[12 * i + 3] = trajAll[12 * (i - 1) + 3] + dtMPC * v_des_world[0];
+        //   trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + dtMPC * v_des_world[1];
+        // }
       }
+
+      Eigen::Vector3f rpy_hat(0, 0, 0);
+
+      for (int i = 1; i < horizonLength; i++)
+      {
+        trajAll[12 * i + 2] = trajAll[12 * (i - 1) + 2] + dtMPC * _yaw_turn_rate;
+        rpy_hat(2) += dtMPC * _yaw_turn_rate;
+
+        tf::Quaternion quat(tf::Vector3(0, 0, 1), rpy_hat(2));
+        tf::Matrix3x3 Rot(quat);
+        Eigen::Matrix<float, 3, 3> R;
+
+        for (uint8_t i = 0; i < 3; i++)
+        {
+          for (uint8_t j = 0; j < 3; j++)
+          {
+            R(i, j) = Rot[i][j];
+          }
+        }
+
+        trajAll[12 * i + 3] = trajAll[12 * (i - 1) + 3] + (R * dtMPC * v_des_world)[0];
+        trajAll[12 * i + 4] = trajAll[12 * (i - 1) + 4] + (R * dtMPC * v_des_world)[1];
+
+        pose_of_traj.pose.position.x = trajAll[12 * i + 3];
+        pose_of_traj.pose.position.y = trajAll[12 * i + 4];
+        pose_of_traj.pose.position.z = trajAll[12 * i + 5];
+
+        quat.setRPY(0, 0, trajAll[12 * i + 2]);
+        pose_of_traj.pose.orientation.x = quat.getX();
+        pose_of_traj.pose.orientation.y = quat.getY();
+        pose_of_traj.pose.orientation.z = quat.getZ();
+        pose_of_traj.pose.orientation.w = quat.getW();
+
+        _reference_trajectory.poses.push_back(pose_of_traj);
+      }
+
+      _pub_ref_traj.publish(_reference_trajectory);
     }
 
     Timer solveTimer;

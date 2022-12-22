@@ -8,20 +8,12 @@
 #include <SparseCMPC/SparseCMPC.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
-#include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 
 #include <cstdio>
 
 using Eigen::Array4f;
 using Eigen::Array4i;
-
-template<typename T>
-struct CMPC_result
-{
-  LegControllerCommand<T> commands[4];
-  Vec4<T> contactPhase;
-};
 
 class CMPCLocomotion
 {
@@ -98,12 +90,13 @@ private:
   Vec3<float> rpy_comp;
   float x_comp_integral = 0;
   Vec3<float> pFoot[4];
-  CMPC_result<float> result;
   float trajAll[12 * 36];
   ros::Publisher _pub_des_traj[4];
   ros::NodeHandle _nh;
   visualization_msgs::Marker marker[4];
   ros::Publisher _vis_pub[4];
+  nav_msgs::Path _reference_trajectory;
+  ros::Publisher _pub_ref_traj;
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
 
