@@ -1,0 +1,68 @@
+# Static parameters fsm stand up for a1 sim
+standup:
+  Kp_joint0: 80
+  Kp_joint1: 50
+  Kp_joint2: 50
+
+  Kd_joint0: 3
+  Kd_joint1: 3
+  Kd_joint2: 3
+
+  Kp_cartesian_x: 1000
+  Kp_cartesian_y: 1000
+  Kp_cartesian_z: 1200
+
+  Kd_cartesian_x: 35
+  Kd_cartesian_y: 35
+  Kd_cartesian_z: 55
+
+#-------------------------------
+static_params:
+  max_vel_x: 0.7
+  max_vel_y: 0.4
+  max_turn_rate: 2.5
+
+  # qpOASES
+  mpc_alpha: 4.e-6
+  Q_roll: 0.25
+  Q_pitch: 0.25
+  Q_yaw: 10
+  Q_x: 2
+  Q_y: 2
+  Q_z: 50
+  Q_w_roll: 0
+  Q_w_pitch: 0
+  Q_w_yaw: 0.3
+  Q_vx: 1
+  Q_vy: 1
+  Q_vz: 15
+
+  # osqp
+  # mpc_alpha: 0.7e-5
+  # Q_roll: 1
+  # Q_pitch: 5
+  # Q_yaw: 1
+  # Q_x: 1
+  # Q_y: 1
+  # Q_z: 100
+  # Q_w_roll: 0.1
+  # Q_w_pitch: 0.05
+  # Q_w_yaw: 0.1
+  # Q_vx: 1
+  # Q_vy: 1
+  # Q_vz: 10
+
+  # jcqp
+  # mpc_alpha: 0.2e-5
+  # Q_roll: 5
+  # Q_pitch: 5
+  # Q_yaw: 1
+  # Q_x: 0.1
+  # Q_y: 0.1
+  # Q_z: 10
+  # Q_w_roll: 5
+  # Q_w_pitch: 5
+  # Q_w_yaw: 1
+  # Q_vx: 20
+  # Q_vy: 20
+  # Q_vz: 10
