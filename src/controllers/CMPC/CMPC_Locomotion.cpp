@@ -357,6 +357,10 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kdCartesian = Kd_stance;
       }
 
+      data.debug->all_legs_info.leg[foot].mpc_force.x = f_ff[foot][0];
+      data.debug->all_legs_info.leg[foot].mpc_force.y = f_ff[foot][1];
+      data.debug->all_legs_info.leg[foot].mpc_force.z = f_ff[foot][2];
+
       se_contactState[foot] = contactState;
 
       data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
@@ -468,19 +472,6 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
       world_position_desired[0] = xStart;
       world_position_desired[1] = yStart;
 
-      // float trajInitial[12] = { (float)rpy_comp[0],  // 0
-      //                           (float)rpy_comp[1],  // 1
-      //                           _yaw_des,            // 2
-      //                           xStart,              // 3
-      //                           yStart,              // 4
-      //                           (float)_body_height, // 5
-      //                           0,                   // 6
-      //                           0,                   // 7
-      //                           _yaw_turn_rate,      // 8
-      //                           v_des_world[0],      // 9
-      //                           v_des_world[1],      // 10
-      //                           0 };                 // 11
-
       float trajInitial[12] = { pBody_RPY_des[0], // 0 roll des
                                 pBody_RPY_des[1], // 1 pitch des
                                 pBody_RPY_des[2], // 2 yaw des
@@ -529,17 +520,18 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
 {
   auto seResult = data._stateEstimator->getResult();
 
-  // float Q[12] = {0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2};
-
-  // float Q[12] = {0.25, 0.25, 10, 2, 2, 50, 0, 0, 0.3, 0.2, 0.2, 0.1};
   // //original
-  float Q[12] = { 2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1 };
+  // float Q[12] = { 0.25, 0.25, 10, 2, 2, 20, 0, 0, 0.3, 0.2, 0.2, 0.2 };
+  // float Q[12] = { 2.5, 2.5, 5, 2, 2, 10, 0, 0, 0.3, 2, 2, 2 };
 
-  // float Q[12] = {0.25, 0.25, 10, 2, 2, 40, 0, 0, 0.3, 0.2, 0.2, 0.2};
+  float Q[12] = { 2.5, 2.5, 10, 5, 5, 10, 0, 0, 0.5, 0.2, 0.2, 0.1 };
+
+  // norm
+  //  float Q[12] = { 2.5, 2.5, 10, 50, 50, 100, 0, 0, 0.5, 0.2, 0.2, 0.1 };
+
   float yaw = seResult.rpy[2];
   float* weights = Q;
   float alpha = 4e-5; // make setting eventually
-  // float alpha = 4e-7; // make setting eventually: DH
   float* p = seResult.position.data();
   float* v = seResult.vWorld.data();
   float* w = seResult.omegaWorld.data();
@@ -568,7 +560,6 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
   Timer t1;
   dtMPC = dt * iterationsBetweenMPC;
   setup_problem(dtMPC, horizonLength, 0.4, 120);
-  // setup_problem(dtMPC,horizonLength,0.4,650); //DH
   update_x_drag(x_comp_integral);
 
   if (vxy[0] > 0.3 || vxy[0] < -0.3)
