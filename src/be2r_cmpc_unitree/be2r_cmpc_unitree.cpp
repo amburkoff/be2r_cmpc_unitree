@@ -3,7 +3,9 @@
 using namespace std;
 
 Body_Manager::Body_Manager()
-    : _zero_time(0), safe(UNITREE_LEGGED_SDK::LeggedType::A1), udp(UNITREE_LEGGED_SDK::LOWLEVEL)
+  : _zero_time(0),
+    safe(UNITREE_LEGGED_SDK::LeggedType::A1),
+    udp(UNITREE_LEGGED_SDK::LOWLEVEL)
 {
   footContactState = Vec4<uint8_t>::Zero();
   f = boost::bind(&Body_Manager::_callbackDynamicROSParam, this, _1, _2);
@@ -19,9 +21,15 @@ Body_Manager::~Body_Manager()
   delete _stateEstimator;
 }
 
-void Body_Manager::UDPRecv() { udp.Recv(); }
+void Body_Manager::UDPRecv()
+{
+  udp.Recv();
+}
 
-void Body_Manager::UDPSend() { udp.Send(); }
+void Body_Manager::UDPSend()
+{
+  udp.Send();
+}
 
 UNITREE_LEGGED_SDK::LowCmd Body_Manager::_rosCmdToUdp(unitree_legged_msgs::LowCmd ros_low_cmd)
 {
@@ -143,8 +151,7 @@ void Body_Manager::init()
 
   // Initializes the Control FSM with all the
   // required data
-  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler,
-                                      _desiredStateCommand, &controlParameters, &_rosParameters, _debug);
+  _controlFSM = new ControlFSM<float>(&_quadruped, _stateEstimator, _legController, _gaitScheduler, _desiredStateCommand, &controlParameters, &_rosParameters, _debug);
 
   controlParameters.control_mode = 0;
 }
@@ -189,7 +196,7 @@ void Body_Manager::_readRobotData()
   vectorNavData.quat[2] = _low_state.imu.quaternion[2]; // y
   vectorNavData.quat[3] = _low_state.imu.quaternion[3]; // z
 
-  //binary contact
+  // binary contact
   int16_t force_threshold = 10;
 
   for (size_t i = 0; i < 4; i++)
@@ -206,22 +213,6 @@ void Body_Manager::_readRobotData()
     }
   }
 
-  // // Датчики контакта на лапах
-  // for (size_t leg = 0; leg < 4; leg++)
-  // {
-  //   footContactState(leg) = msg.footForce[leg];
-
-  //   //    if
-  //   //    ((_stateEstimator->getResult().contactEstimate[leg]
-  //   //    <= 0.001) &&
-  //   //      (footContactState(leg) == 1) )
-  //   //    {
-  //   ////      std::cout << "EARLY CONTACT" <<
-  //   /// std::endl;
-
-  //   //    }
-  // }
-
   _stateEstimator->setContactSensorData(footContactState);
 
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
@@ -232,8 +223,7 @@ void Body_Manager::_readRobotData()
 
 void Body_Manager::run()
 {
-  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1],
-                             _low_state.footForce[2], _low_state.footForce[3]);
+  Vec4<float> contact_states(_low_state.footForce[0], _low_state.footForce[1], _low_state.footForce[2], _low_state.footForce[3]);
 
   if (is_udp_connection)
   {
@@ -272,8 +262,8 @@ void Body_Manager::run()
   finalizeStep();
 
 #ifdef FSM_AUTO
-  //оставляю эту часть для автоматического
-  //перехода между режимами, если понадобится
+  // оставляю эту часть для автоматического
+  // перехода между режимами, если понадобится
   if (count_ini > 100 && count_ini < 1500)
   {
     ROS_INFO_STREAM_ONCE("Stand up " << count_ini);
@@ -298,7 +288,7 @@ void Body_Manager::setupStep()
   _legController->updateData(&spiData);
 
   // Setup the leg controller for a new iteration
-  _legController->zeroCommand(); //нельзя убирать
+  _legController->zeroCommand(); // нельзя убирать
   _legController->setEnabled(true);
   _legController->is_low_level = _is_low_level;
 
@@ -314,7 +304,7 @@ void Body_Manager::finalizeStep()
 
   _debug->all_legs_info.header.stamp = _zero_time + delta_t;
 
-  //put actual body info
+  // put actual body info
   _debug->body_info.pos_act.x = _stateEstimator->getResult().position.x();
   _debug->body_info.pos_act.y = _stateEstimator->getResult().position.y();
   _debug->body_info.pos_act.z = _stateEstimator->getResult().position.z();
@@ -336,7 +326,7 @@ void Body_Manager::finalizeStep()
   _debug->body_info.vel_act.angular.y = _stateEstimator->getResult().omegaBody[1];
   _debug->body_info.vel_act.angular.z = _stateEstimator->getResult().omegaBody[2];
 
-  //put actual q and dq in debug class
+  // put actual q and dq in debug class
   for (size_t leg_num = 0; leg_num < 4; leg_num++)
   {
     _debug->all_legs_info.leg.at(leg_num).joint.at(0).q = spiData.q_abad[leg_num];
@@ -380,7 +370,7 @@ void Body_Manager::finalizeStep()
     _torqueCalculator(&spiCommand, &spiData, &_spi_torque, i);
   }
 
-  uint8_t mode[4] = {MOTOR_BREAK};
+  uint8_t mode[4] = { MOTOR_BREAK };
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -480,10 +470,8 @@ void Body_Manager::initializeStateEstimator()
 
 void Body_Manager::_initSubscribers()
 {
-  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this,
-                                 ros::TransportHints().tcpNoDelay(true));
-  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this,
-                               ros::TransportHints().tcpNoDelay(true));
+  _sub_low_state = _nh.subscribe("/low_state", 1, &Body_Manager::_lowStateCallback, this, ros::TransportHints().tcpNoDelay(true));
+  _sub_cmd_vel = _nh.subscribe("/cmd_vel", 1, &Body_Manager::_cmdVelCallback, this, ros::TransportHints().tcpNoDelay(true));
 }
 
 void Body_Manager::_initPublishers()
@@ -526,22 +514,14 @@ void Body_Manager::_lowStateCallback(unitree_legged_msgs::LowState msg)
   for (size_t leg = 0; leg < 4; leg++)
   {
     footContactState(leg) = msg.footForce[leg];
-    //    if
-    //    ((_stateEstimator->getResult().contactEstimate[leg]
-    //    <= 0.001) &&
-    //      (footContactState(leg) == 1) )
-    //    {
-    ////      std::cout << "EARLY CONTACT" <<
-    /// std::endl;
-
-    //    }
   }
 
-  // cout << "bm: " << (int)footContactState(0) << endl;
   _stateEstimator->setContactSensorData(footContactState);
 
-  // Фильтрация данных
-  //  _filterInput();
+  for (size_t leg_num = 0; leg_num < 4; leg_num++)
+  {
+    _debug->all_legs_info.leg[leg_num].is_contact = _stateEstimator->getContactSensorData()(leg_num);
+  }
 }
 
 void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
@@ -556,25 +536,15 @@ void Body_Manager::_cmdVelCallback(geometry_msgs::Twist msg)
 /*!
  * Emulate the spi board to estimate the torque.
  */
-void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out,
-                                     int board_num)
+void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_t* torque_out, int board_num)
 {
   if (_legController->is_low_level == false)
   {
-    torque_out->tau_abad[board_num] =
-        cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) +
-        cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) +
-        cmd->tau_abad_ff[board_num];
+    torque_out->tau_abad[board_num] = cmd->kp_abad[board_num] * (cmd->q_des_abad[board_num] - data->q_abad[board_num]) + cmd->kd_abad[board_num] * (cmd->qd_des_abad[board_num] - data->qd_abad[board_num]) + cmd->tau_abad_ff[board_num];
 
-    torque_out->tau_hip[board_num] =
-        cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) +
-        cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) +
-        cmd->tau_hip_ff[board_num];
+    torque_out->tau_hip[board_num] = cmd->kp_hip[board_num] * (cmd->q_des_hip[board_num] - data->q_hip[board_num]) + cmd->kd_hip[board_num] * (cmd->qd_des_hip[board_num] - data->qd_hip[board_num]) + cmd->tau_hip_ff[board_num];
 
-    torque_out->tau_knee[board_num] =
-        cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) +
-        cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) +
-        cmd->tau_knee_ff[board_num];
+    torque_out->tau_knee[board_num] = cmd->kp_knee[board_num] * (cmd->q_des_knee[board_num] - data->q_knee[board_num]) + cmd->kd_knee[board_num] * (cmd->qd_des_knee[board_num] - data->qd_knee[board_num]) + cmd->tau_knee_ff[board_num];
   }
   else
   {
@@ -585,8 +555,8 @@ void Body_Manager::_torqueCalculator(SpiCommand* cmd, SpiData* data, spi_torque_
     torque_out->tau_knee[board_num] = cmd->tau_knee_ff[board_num];
   }
 
-  const float safe_torque[3] = {4.f, 4.f, 4.f};
-  const float max_torque[3] = {17.f, 17.f, 26.f};
+  const float safe_torque[3] = { 4.f, 4.f, 4.f };
+  const float max_torque[3] = { 17.f, 17.f, 26.f };
   const float* torque_limits;
 
   if (_is_torque_safe)
@@ -641,4 +611,6 @@ void Body_Manager::_callbackDynamicROSParam(be2r_cmpc_unitree::ros_dynamic_param
   ROS_INFO_STREAM("New dynamic data!");
 }
 
-void Body_Manager::_filterInput() {}
+void Body_Manager::_filterInput()
+{
+}

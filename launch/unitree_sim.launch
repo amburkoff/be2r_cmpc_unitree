@@ -6,6 +6,8 @@
   <include file="$(find be2r_cmpc_unitree)/launch/set_dyn_params.launch" />
 
   <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find raisim_unitree_ros_driver)/description/urdf/a1_edited.urdf' " />
+  <!-- <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_a1.yaml"/> -->
+  <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_a1_sim.yaml"/>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 

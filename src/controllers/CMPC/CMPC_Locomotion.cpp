@@ -86,17 +86,18 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   _body_height = _parameters->body_height;
 
   float x_vel_cmd, y_vel_cmd;
-  float filter(0.1);
+  float filter(0.01);
 
   _yaw_turn_rate = data._desiredStateCommand->rightAnalogStick[0];
   x_vel_cmd = data._desiredStateCommand->leftAnalogStick[1];
   y_vel_cmd = data._desiredStateCommand->leftAnalogStick[0];
-  // _yaw_turn_rate = 0;
-  // x_vel_cmd = 0;
-  // y_vel_cmd = 0;
 
   _x_vel_des = _x_vel_des * (1 - filter) + x_vel_cmd * filter;
   _y_vel_des = _y_vel_des * (1 - filter) + y_vel_cmd * filter;
+
+  x_vel_cmd *= 0.7;
+  y_vel_cmd *= 0.4;
+  _yaw_turn_rate *= 2.5;
 
   _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
   _roll_des = 0.;
@@ -109,13 +110,6 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
 
   Kd = Vec3<float>(_parameters->Kd_cartesian_0, _parameters->Kd_cartesian_1, _parameters->Kd_cartesian_2).asDiagonal();
   Kd_stance = Kd;
-
-  // for real
-  //  Kp << 150, 0, 0, 0, 150, 0, 0, 0, 150;
-  //  Kp_stance = 0 * Kp;
-
-  //  Kd << 3, 0, 0, 0, 3, 0, 0, 0, 3;
-  //  Kd_stance = Kd;
 }
 
 template<>
@@ -126,11 +120,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
   // Command Setup
   _SetupCommand(data);
   gaitNumber = data.userParameters->cmpc_gait;
-  if (gaitNumber >= 10)
-  {
-    gaitNumber -= 10;
-    omniMode = true;
-  }
 
   auto& seResult = data._stateEstimator->getResult();
 
@@ -147,8 +136,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     world_position_desired[1] = stand_traj[1];
   }
 
-  // cout << "[CMPCLocomotion] get res done" << endl;
-
   // pick gait
   Gait_contact* gait = &trotting;
 
@@ -163,9 +150,9 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
   current_gait = gaitNumber;
 
-  //  gait->restoreDefaults();
+  gait->restoreDefaults();
   gait->setIterations(iterationsBetweenMPC, iterationCounter);
-  //  gait->earlyContactHandle(seResult.contactSensor, iterationsBetweenMPC, iterationCounter);
+  gait->earlyContactHandle(data._stateEstimator->getContactSensorData(), iterationsBetweenMPC, iterationCounter);
 
   // integrate position setpoint
   Vec3<float> v_des_robot(_x_vel_des, _y_vel_des, 0);
@@ -254,7 +241,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
     Vec3<float> Pf = seResult.position + seResult.rBody.transpose() * (pYawCorrected + des_vel * swingTimeRemaining[i]);
 
-    // float p_rel_max = 0.35f;
     float p_rel_max = 0.3f;
 
     // Using the estimated velocity is correct
@@ -263,9 +249,11 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
     pfx_rel = fminf(fmaxf(pfx_rel, -p_rel_max), p_rel_max);
     pfy_rel = fminf(fmaxf(pfy_rel, -p_rel_max), p_rel_max);
+
     Pf[0] += pfx_rel;
     Pf[1] += pfy_rel;
     Pf[2] = 0.0;
+
     footSwingTrajectories[i].setFinalPosition(Pf);
   }
 
@@ -289,6 +277,9 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
     float contactState = contactStates[foot];
     float swingState = swingStates[foot];
 
+    data.debug->all_legs_info.leg[foot].swing_time = swingState;
+    data.debug->all_legs_info.leg[foot].stance_time = contactState;
+
     if (swingState > 0) // foot is in swing
     {
       if (firstSwing[foot])
@@ -296,10 +287,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
         firstSwing[foot] = false;
         footSwingTrajectories[foot].setInitialPosition(pFoot[foot]);
         // is_stance[foot] = 0;
-
-        path[foot].poses.clear();
-        geometry_msgs::PoseStamped Emptypose;
-        pose[foot] = Emptypose;
       }
 
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot]);
@@ -308,22 +295,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-
-      pose[foot].pose.position.x = pDesFootWorld.x();
-      pose[foot].pose.position.y = pDesFootWorld.y();
-      pose[foot].pose.position.z = pDesFootWorld.z();
-
-      pose[foot].pose.orientation.x = 0;
-      pose[foot].pose.orientation.y = 0;
-      pose[foot].pose.orientation.z = 0;
-      pose[foot].pose.orientation.w = 1;
-
-      path[foot].poses.push_back(pose[foot]);
-
-      path[foot].header.stamp = ros::Time::now();
-      path[foot].header.frame_id = "odom";
-
-      // _pub_des_traj[foot].publish(path[foot]);
 
       // Update for WBC
       pFoot_des[foot] = pDesFootWorld;
@@ -346,57 +317,19 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
         data._legController->commands[foot].kpCartesian = Kp;
         data._legController->commands[foot].kdCartesian = Kd;
       }
-
-      std::string names[4] = { "FR_hip", "FL_hip", "RR_hip", "RL_hip" };
-
-      marker[foot].header.frame_id = names[foot];
-      marker[foot].header.stamp = ros::Time();
-      marker[foot].ns = "my_namespace";
-      marker[foot].id = 0;
-      marker[foot].type = visualization_msgs::Marker::ARROW;
-      marker[foot].action = visualization_msgs::Marker::ADD;
-      // pose and orientation must be zero, except orientation.w = 1
-      marker[foot].pose.position.x = 0;
-      marker[foot].pose.position.y = 0;
-      marker[foot].pose.position.z = 0;
-      marker[foot].pose.orientation.x = 0.0;
-      marker[foot].pose.orientation.y = 0.0;
-      marker[foot].pose.orientation.z = 0.0;
-      marker[foot].pose.orientation.w = 1.0;
-      marker[foot].scale.x = 0.005; // shaft diameter
-      marker[foot].scale.y = 0.01;  // head diameter
-      marker[foot].scale.z = 0.0;   // if not zero, specifies head length
-      marker[foot].color.a = 1.0;   // Don't forget to set the alpha!
-      marker[foot].color.r = 1.0;
-      marker[foot].color.g = 0.0;
-      marker[foot].color.b = 0.0;
-      geometry_msgs::Point p1, p2;
-      // start point
-      p1.x = 0;
-      p1.y = 0;
-      p1.z = 0;
-      // finish point
-      p2.x = 0;
-      p2.y = 0;
-      p2.z = 0;
-      marker[foot].points.clear();
-      marker[foot].points.push_back(p1);
-      marker[foot].points.push_back(p2);
-
-      // _vis_pub[foot].publish(marker[foot]);
     }
     else // foot is in stance
     {
       firstSwing[foot] = true;
 
       Vec3<float> pDesFootWorld = footSwingTrajectories[foot].getPosition();
-      Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+      // Vec3<float> vDesFootWorld = footSwingTrajectories[foot].getVelocity();
+      Vec3<float> vDesFootWorld = Vec3<float>::Zero();
       Vec3<float> pDesLeg = seResult.rBody * (pDesFootWorld - seResult.position) - data._quadruped->getHipLocation(foot);
       Vec3<float> vDesLeg = seResult.rBody * (vDesFootWorld - seResult.vWorld);
-      // cout << "Foot " << foot << " relative velocity desired: " <<
-      // vDesLeg.transpose() << "\n";
 
-      if (!data.userParameters->use_wbc) // wbc off
+      // wbc off
+      if (!data.userParameters->use_wbc)
       {
         data._legController->commands[foot].pDes = pDesLeg;
         data._legController->commands[foot].vDes = vDesLeg;
@@ -405,15 +338,10 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
         data._legController->commands[foot].forceFeedForward = f_ff[foot];
         data._legController->commands[foot].kdJoint = Vec3<float>(_parameters->Kd_joint_0, _parameters->Kd_joint_1, _parameters->Kd_joint_2).asDiagonal();
-
-        //      footSwingTrajectories[foot]->updateFF(hw_i->leg_controller->leg_datas[foot].q,
-        //                                          hw_i->leg_controller->leg_datas[foot].qd,
-        //                                          0); todo removed
-        // hw_i->leg_controller->leg_commands[foot].tau_ff +=
-        // 0*footSwingController[foot]->getTauFF();
       }
       else
-      { // Stance foot damping
+      {
+        // Stance foot damping
         data._legController->commands[foot].pDes = pDesLeg;
         data._legController->commands[foot].vDes = vDesLeg;
         data._legController->commands[foot].kpCartesian = 0. * Kp_stance;
@@ -422,6 +350,8 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
 
       se_contactState[foot] = contactState;
 
+      // data.debug->all_legs_info.leg[foot].is_contact = con
+
       data.debug->all_legs_info.leg[foot].p_des.x = pDesLeg[0];
       data.debug->all_legs_info.leg[foot].p_des.y = pDesLeg[1];
       data.debug->all_legs_info.leg[foot].p_des.z = pDesLeg[2];
@@ -429,44 +359,6 @@ void CMPCLocomotion::run(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg[foot].v_des.x = vDesLeg[0];
       data.debug->all_legs_info.leg[foot].v_des.y = vDesLeg[1];
       data.debug->all_legs_info.leg[foot].v_des.z = vDesLeg[2];
-
-      // Update for WBC
-      std::string names[4] = { "FR_hip", "FL_hip", "RR_hip", "RL_hip" };
-      marker[foot].header.frame_id = names[foot];
-      marker[foot].header.stamp = ros::Time();
-      marker[foot].ns = "my_namespace";
-      marker[foot].id = 0;
-      marker[foot].type = visualization_msgs::Marker::ARROW;
-      marker[foot].action = visualization_msgs::Marker::ADD;
-      // pose and orientation must be zero, except orientation.w = 1
-      marker[foot].pose.position.x = 0;
-      marker[foot].pose.position.y = 0;
-      marker[foot].pose.position.z = 0;
-      marker[foot].pose.orientation.x = 0.0;
-      marker[foot].pose.orientation.y = 0.0;
-      marker[foot].pose.orientation.z = 0.0;
-      marker[foot].pose.orientation.w = 1.0;
-      marker[foot].scale.x = 0.005; // shaft diameter
-      marker[foot].scale.y = 0.01;  // head diameter
-      marker[foot].scale.z = 0.0;   // if not zero, specifies head length
-      marker[foot].color.a = 0.8;   // Don't forget to set the alpha!
-      marker[foot].color.r = 1.0;
-      marker[foot].color.g = 0.0;
-      marker[foot].color.b = 0.0;
-      geometry_msgs::Point p1, p2;
-      // start point
-      p1.x = pDesLeg[0];
-      p1.y = pDesLeg[1];
-      p1.z = pDesLeg[2];
-      // finish point
-      float koef = 500;
-      p2.x = pDesLeg[0] + (-f_ff[foot][0] / koef);
-      p2.y = pDesLeg[1] + (-f_ff[foot][1] / koef);
-      p2.z = pDesLeg[2] + (-f_ff[foot][2] / koef);
-      marker[foot].points.clear();
-      marker[foot].points.push_back(p1);
-      marker[foot].points.push_back(p2);
-      // _vis_pub[foot].publish(marker[foot]);
     }
   }
 

@@ -160,8 +160,6 @@ public:
   void setContactSensorData(Vec4<uint8_t>& state)
   {
     *_data.contactSensor = state;
-
-    // std::cout << "&: " << (int)state(0) << " data: " << _data.contactSensor[0] << " end" << std::endl;
   }
 
   void setContactSensorData(Vec4<uint8_t>* state)

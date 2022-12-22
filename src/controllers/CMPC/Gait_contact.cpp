@@ -1,9 +1,10 @@
 #include "Gait_contact.h"
 
 // Offset - Duration Gait
-OffsetDurationGaitContact::OffsetDurationGaitContact(int nSegment, Vec4<int> offsets, Vec4<int> durations, const std::string& name) : _offsets(offsets.array()),
-                                                                                                                                      _durations(durations.array()),
-                                                                                                                                      _nIterations(nSegment)
+OffsetDurationGaitContact::OffsetDurationGaitContact(int nSegment, Vec4<int> offsets, Vec4<int> durations, const std::string& name)
+  : _offsets(offsets.array()),
+    _durations(durations.array()),
+    _nIterations(nSegment)
 {
   _name = name;
   // allocate memory for MPC gait table
@@ -23,7 +24,10 @@ OffsetDurationGaitContact::OffsetDurationGaitContact(int nSegment, Vec4<int> off
   _swing = nSegment - durations[0];
 }
 
-OffsetDurationGaitContact::~OffsetDurationGaitContact() { delete[] _mpc_table; }
+OffsetDurationGaitContact::~OffsetDurationGaitContact()
+{
+  delete[] _mpc_table;
+}
 
 Vec4<float> OffsetDurationGaitContact::getContactState()
 {
@@ -147,9 +151,15 @@ void OffsetDurationGaitContact::setIterations(int iterationsPerMPC, int currentI
   _phase = (float)(currentIteration % (iterationsPerMPC * _nIterations)) / (float)(iterationsPerMPC * _nIterations);
 }
 
-int OffsetDurationGaitContact::getCurrentGaitIteration() { return _iteration; }
+int OffsetDurationGaitContact::getCurrentGaitIteration()
+{
+  return _iteration;
+}
 
-float OffsetDurationGaitContact::getCurrentGaitPhase() { return _phase; }
+float OffsetDurationGaitContact::getCurrentGaitPhase()
+{
+  return _phase;
+}
 
 float OffsetDurationGaitContact::getCurrentSwingTime(float dtMPC, int leg)
 {
@@ -172,6 +182,8 @@ void OffsetDurationGaitContact::earlyContactHandle(Vec4<uint8_t> footSensorState
     // Если ранний контакт обнаружен в заключительной части свинг фазы
     if ((getSwingState()[leg] > 0.65f) && (footSensorState(leg) == 1))
     {
+      // std::cout << "Leg " << leg << " early contact" << std::endl;
+
       // Уменьшить оффсет, увеличить duration на ту же величину
       // std::cout << "SWING STATE before" << getSwingState()[leg] << std::endl;
       float difference = _offsetsFloat(leg) - _phase < -0.001f ? _offsetsFloat(leg) - _phase + 1.0f : _offsetsFloat(leg) - _phase;

@@ -18,8 +18,12 @@ public:
   virtual float getCurrentSwingTime(float dtMPC, int leg) = 0;
   virtual float getCurrentGaitPhase() = 0;
   virtual int getCurrentGaitIteration() = 0;
-  virtual void earlyContactHandle(Vec4<uint8_t>, int, int) {}
-  virtual void restoreDefaults() {}
+  virtual void earlyContactHandle(Vec4<uint8_t>, int, int)
+  {
+  }
+  virtual void restoreDefaults()
+  {
+  }
 
 protected:
   std::string _name;
