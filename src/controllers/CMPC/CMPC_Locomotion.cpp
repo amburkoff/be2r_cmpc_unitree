@@ -99,7 +99,17 @@ void CMPCLocomotion::_SetupCommand(ControlFSMData<float>& data)
   y_vel_cmd *= 0.4;
   _yaw_turn_rate *= 2.5;
 
-  _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  if ((M_PI - abs(_yaw_des)) <= 0.1)
+  {
+    _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+  }
+  else
+  {
+    _yaw_des += dt * _yaw_turn_rate;
+  }
+
+  // _yaw_des = data._stateEstimator->getResult().rpy[2] + dt * _yaw_turn_rate;
+
   _roll_des = 0.;
   _pitch_des = 0.;
 
