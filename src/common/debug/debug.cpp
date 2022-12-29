@@ -76,6 +76,10 @@ void Debug::updatePlot()
     all_legs_info.leg.at(leg_num).v_error.x = all_legs_info.leg.at(leg_num).v_des.x - all_legs_info.leg.at(leg_num).v_act.x;
     all_legs_info.leg.at(leg_num).v_error.y = all_legs_info.leg.at(leg_num).v_des.y - all_legs_info.leg.at(leg_num).v_act.y;
     all_legs_info.leg.at(leg_num).v_error.z = all_legs_info.leg.at(leg_num).v_des.z - all_legs_info.leg.at(leg_num).v_act.z;
+    all_legs_info.leg.at(leg_num).mpc_force.x = leg_force[leg_num].x;
+    all_legs_info.leg.at(leg_num).mpc_force.y = leg_force[leg_num].y;
+    all_legs_info.leg.at(leg_num).mpc_force.z = leg_force[leg_num].z;
+
   }
 
   body_info.state_error.p.x = body_info.pos_des.x - body_info.pos_act.x;
