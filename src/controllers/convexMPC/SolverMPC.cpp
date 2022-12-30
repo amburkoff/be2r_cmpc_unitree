@@ -653,12 +653,12 @@ Eigen::Matrix<float, 13, 1>  printcost(problem_setup* setup)
     }
 
   }
- Eigen::Matrix<float, 13, 1> F;
- F.setZero();
- _U_qpT = qH*_U_qp+qg;
- F(0)= _U_qp.adjoint()*(qH*_U_qp/2+qg);
+  Eigen::Matrix<float, 13, 1> F;
+  F.setZero();
+  _U_qpT = qH*_U_qp+qg;
+  F(12)= _U_qp.adjoint()*(qH*_U_qp/2+qg);
   // _U_qp= qH*_U_qp+qg;
-F.block(1,0,12,1) =0.5*_U_qpT.block(0,0,12,1);
+  F.block(0,0,12,1) =0.5*_U_qpT.block(0,0,12,1);
   // return _U_qp.block(0,0,12,1);
   return F;
 }

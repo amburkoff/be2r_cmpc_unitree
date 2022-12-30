@@ -59,12 +59,13 @@ void Debug::updateMetrics()
   data_metric.final_cost.x = metric_data.final_cost.operator()(1);
   data_metric.final_cost.y = metric_data.final_cost.operator()(2);
   data_metric.final_cost.z = metric_data.final_cost.operator()(3);
-  // for (int legnum = 0;legnum<4;legnum++)
-  // {
-  //   data_metric.gradient_cost.at(legnum).x = metric_data.gradient_cost[legnum](0);
-  //   data_metric.gradient_cost.at(legnum).y = metric_data.gradient_cost[legnum](1);
-  //   data_metric.gradient_cost.at(legnum).z = metric_data.gradient_cost[legnum](2);
-  // }
+  for (int legnum = 0;legnum<4;legnum++)
+  {
+    data_metric.gradient_cost.at(legnum).x = metric_data.gradient_cost[legnum](0);
+    data_metric.gradient_cost.at(legnum).y = metric_data.gradient_cost[legnum](1);
+    data_metric.gradient_cost.at(legnum).z = metric_data.gradient_cost[legnum](2);
+    data_metric.gradient_cost.at(legnum).w = std::sqrt(metric_data.gradient_cost[legnum].dot(metric_data.gradient_cost[legnum]));
+  }
   data_metric.cost = metric_data.mpc_cost;
   _pub_metric_info.publish(data_metric);
 

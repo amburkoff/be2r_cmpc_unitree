@@ -774,15 +774,17 @@ void ConvexMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
   update_problem_data_floats(p, v, q, w, r, roll, pitch, yaw, weights, trajAll, alpha, mpcTable);
   // t2.stopPrint("Run MPC");
   // printf("MPC Solve time %f ms\n", t2.getMs());
-  float Cost = get_costFunc(int(0));
   Vec12<float> grad_CostF;
   grad_CostF.setZero();
-  for (int i=0;i<12;i++)
+  for (int i=0;i<4;i++)
   {
-  // grad_CostF(i) = get_costFunc(int(i+1));
+    for (int j=0;j<3;j++)
+    {
+      data.debug->metric_data.gradient_cost[i](j)=get_costFunc(int(3*i+j));
+    }
   }
-  // data.debug->metric_data.
-  std::cout<< "Cost Function "<< Cost<< endl;
+  data.debug->metric_data.mpc_cost= get_costFunc(int(12));
+  // std::cout<< "Cost Function "<< data.debug->metric_data.mpc_cost<< endl;
   for (int leg = 0; leg < 4; leg++)
   {
     Vec3<float> f;
