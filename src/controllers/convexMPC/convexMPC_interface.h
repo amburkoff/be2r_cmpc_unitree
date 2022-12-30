@@ -3,6 +3,7 @@
 #define K_MAX_GAIT_SEGMENTS 36
 
 //#include "common_types.h"
+#include <eigen3/Eigen/Dense>
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"
@@ -25,6 +26,7 @@ struct update_data_t
   float q[4];
   float w[3];
   float r[12];
+  float forces[12];
   float roll;
   float pitch;
   float yaw;
@@ -41,7 +43,8 @@ struct update_data_t
 
 EXTERNC void setup_problem(double dt, int horizon, double mu, double f_max);
 EXTERNC void update_problem_data(double* p, double* v, double* q, double* w, double* r, double yaw, double* weights, double* state_trajectory, double alpha, int* gait);
-EXTERNC double get_solution(int index);
+EXTERNC float get_solution(int index);
+EXTERNC float get_costFunc(int index);
 EXTERNC void update_solver_settings(int max_iter, double rho, double sigma, double solver_alpha, double terminate, double use_jcqp);
 EXTERNC void update_problem_data_floats(float* p, float* v, float* q, float* w,
                                         float* r, float roll, float pitch, float yaw, float* weights,

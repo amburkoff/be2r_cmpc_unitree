@@ -24,7 +24,7 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, 
     
     auto seR = this->_stateEstimator->getResult();
     yaw = seR.rpy[2];
-    std::cout << " :"<< yaw << ": " << endl;
+    // std::cout << " :"<< yaw << ": " << endl;
   }
    
   Mat3<T> R = coordinateRotation(CoordinateAxis::Z,yaw);
@@ -32,7 +32,7 @@ void FootSwingTrajectory<T>::computeSwingTrajectoryBezier(T phase, T swingTime, 
   // std::cout << this->_stateEstimator->getResult().rpy[2] << " " << std::endl;
   Vec3<T> _shifted_extr= Vec3<T>(_highestpoint[0],legside*_highestpoint[1],_highestpoint[2]);
   Vec3<T> _pf_shift = R*(_pf - _p0);
-  std::cout << _shifted_extr[0]<< " "<< _shifted_extr[1]<< " "<< _shifted_extr[2]<<" yaw: " << yaw << std::endl;
+  // std::cout << _shifted_extr[0]<< " "<< _shifted_extr[1]<< " "<< _shifted_extr[2]<<" yaw: " << yaw << std::endl;
   for (int i = 0; i < 3; i++)
   {
     if (_flag[i]==1)

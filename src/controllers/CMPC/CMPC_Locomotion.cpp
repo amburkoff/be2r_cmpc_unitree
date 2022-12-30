@@ -1146,8 +1146,9 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
     for (int axis = 0; axis < 3; axis++)
     {
       f[axis] = get_solution(leg * 3 + axis);
+      cost[axis] = get_costFunc(leg * 3 + axis);
     }
-
+    std::cout<< cost[1]<<' '<< cost[2]<< endl;
     // printf("[%d] %7.3f %7.3f %7.3f\n", leg, f[0], f[1], f[2]);
 
     f_ff[leg] = -seResult.rBody * f;

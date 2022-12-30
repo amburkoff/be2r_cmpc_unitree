@@ -29,10 +29,12 @@ using std::endl;
 // #define PUB_IMU_AND_ODOM
 
 struct MetricData
-{
+{ 
   Vec4<float> final_body_cost; 
   Vec4<float> final_cost;
   Vec4<float> final_leg_cost;
+  Vec3<float> gradient_cost[4];
+  float mpc_cost;
 };
 
 class Debug

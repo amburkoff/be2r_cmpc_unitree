@@ -6,11 +6,11 @@ using Eigen::Array4f;
 using Eigen::Array4i;
 
 // template <typename T>
-class ContactEnergy : public Metric 
+class CostFunc_MPC : public Metric 
 {
 public:
-  ContactEnergy();
-  ~ContactEnergy() = default;
+  CostFunc_MPC();
+  ~CostFunc_MPC() = default;
 
   Vec4<float> getFinalBodyCost();
   Vec4<float> getFinalCost();
@@ -23,20 +23,12 @@ public:
   Vec3<float> g;
 
 private:
-  Eigen::Matrix<float, 9, 9> _Total_mass_matrix;
-  Eigen::Matrix<float, 3, 3> _Leg_mass_matrix;
-  Eigen::Matrix<float, 6, 9> _Total_Jacobi_body;
-  Eigen::Matrix<float, 6, 9> _Total_Jacobi_world;
-  Eigen::Matrix<float, 24, 12> _Contact_matrix;
-  Eigen::Matrix<float, 6, 3> _Leg_Jacobi;
-  Vec4<float> _test;
-  Vec3<float> _vBody;
-  Vec3<float> _position;
-  Vec3<float> _state_coord;
+  Eigen::Matrix<float, 12, 12> _Q;
+  Eigen::Matrix<float, 12, 12> _R;
+  Vec12<float> _state;
+  Vec12<float> _forces;
   LegControllerData<float> datas[4];
-  float _KinLinEnergy;
-  float _KinRotEnergy;
-  Vec4<float> _KinEnergyLeg;
-  float _PotEnergy;
-  Vec4<float> _PotEnergyLeg;
+  float _Cost2go;
+  Vec12<float> _Gradient;
+
 };

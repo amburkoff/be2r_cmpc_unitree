@@ -153,10 +153,18 @@ void update_x_drag(float x_drag)
   update.x_drag = x_drag;
 }
 
-double get_solution(int index)
+float get_solution(int index)
 {
   if (!has_solved)
     return 0.f;
   mfp* qs = get_q_soln();
   return qs[index];
+}
+float get_costFunc(int index)
+{
+  if (!has_solved)
+    return 0.f;
+  Eigen::Matrix<float, 13, 1> F = printcost(&problem_configuration);
+
+  return float(F(index));
 }

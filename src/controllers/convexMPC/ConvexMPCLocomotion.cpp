@@ -461,7 +461,7 @@ void ConvexMPCLocomotion::run(ControlFSMData<float>& data)
         geometry_msgs::PoseStamped Emptypose;
         pose[foot] = Emptypose;
       }
-      std::cout<<"Leg N "<< foot<<" Swing highest point ";
+      // std::cout<<"Leg N "<< foot<<" Swing highest point ";
       footSwingTrajectories[foot].computeSwingTrajectoryBezier(swingState, swingTimes[foot],data._quadruped->getSideSign(foot));
 
 
@@ -774,7 +774,15 @@ void ConvexMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& da
   update_problem_data_floats(p, v, q, w, r, roll, pitch, yaw, weights, trajAll, alpha, mpcTable);
   // t2.stopPrint("Run MPC");
   // printf("MPC Solve time %f ms\n", t2.getMs());
-
+  float Cost = get_costFunc(int(0));
+  Vec12<float> grad_CostF;
+  grad_CostF.setZero();
+  for (int i=0;i<12;i++)
+  {
+  // grad_CostF(i) = get_costFunc(int(i+1));
+  }
+  // data.debug->metric_data.
+  std::cout<< "Cost Function "<< Cost<< endl;
   for (int leg = 0; leg < 4; leg++)
   {
     Vec3<float> f;
