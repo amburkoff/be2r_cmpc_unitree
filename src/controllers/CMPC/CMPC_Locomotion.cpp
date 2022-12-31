@@ -538,6 +538,7 @@ void CMPCLocomotion::original(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
 
       data.debug->leg_force[foot] = ros::toMsg(f_ff[foot]);
+      // data.debug->leg_force[foot].w = ros::toMsg(f_ff[foot]);
     }
   }
 
@@ -938,7 +939,10 @@ void CMPCLocomotion::myVersion(ControlFSMData<float>& data)
       data.debug->all_legs_info.leg.at(foot).p_w_des = ros::toMsg(pDesFootWorld);
       data.debug->all_legs_info.leg.at(foot).v_w_des = ros::toMsg(vDesFootWorld);
 
-      data.debug->leg_force[foot] = ros::toMsg(f_ff[foot]);
+      // data.debug->leg_force[foot] = ros::toMsg(f_ff[foot]);
+      
+      data.debug->leg_force[foot] = ros::toMsg(Fr_des[foot]);
+
     }
   }
 
@@ -1148,7 +1152,6 @@ void CMPCLocomotion::solveDenseMPC(int* mpcTable, ControlFSMData<float>& data)
       f[axis] = get_solution(leg * 3 + axis);
       cost[axis] = get_costFunc(leg * 3 + axis);
     }
-    std::cout<< cost[1]<<' '<< cost[2]<< endl;
     // printf("[%d] %7.3f %7.3f %7.3f\n", leg, f[0], f[1], f[2]);
 
     f_ff[leg] = -seResult.rBody * f;

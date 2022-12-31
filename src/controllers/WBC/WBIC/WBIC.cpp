@@ -107,7 +107,7 @@ void WBIC<T>::MakeTorque(DVec<T>& cmd, void* extra_input)
   }
 
   // std::cout << "f: " << f << std::endl;
-  //std::cout << "x: " << z << std::endl;
+  // std::cout << "x: " << z << std::endl;
 
   // DVec<T> check_eq = _dyn_CE * _data->_opt_result + _dyn_ce0;
   // pretty_print(check_eq, std::cout, "equality constr");
@@ -256,6 +256,7 @@ void WBIC<T>::_GetSolution(const DVec<T>& qddot, DVec<T>& cmd)
     for (size_t i(0); i < _dim_rf; ++i)
     {
       _data->_Fr[i] = z[i + _dim_floating] + _Fr_des[i];
+      // std::cout<<i<<endl;
     }
 
     tot_tau = WB::A_ * qddot + WB::cori_ + WB::grav_ - _Jc.transpose() * _data->_Fr;

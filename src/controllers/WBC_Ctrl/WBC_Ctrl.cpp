@@ -111,6 +111,38 @@ void WBC_Ctrl<T>::run(void* input, ControlFSMData<T>& data)
   // cout << "dq: " << dq << endl;
 
   // Update Leg Command
+  Vec4<T> contact = data._stateEstimator->getResult().contactEstimate;
+  int shift = 0;
+  for (size_t leg(0); leg < cheetah::num_leg; ++leg)
+  {
+    // std::cout<<contact(leg)<<endl;
+    if (shift<2)
+    {
+
+    
+    if (contact(leg) > 0.01)
+    {
+
+      data.debug->all_legs_info.leg[leg].wbc_force.x = -_wbic_data->_Fr(cheetah::num_leg_joint * shift );
+      data.debug->all_legs_info.leg[leg].wbc_force.y = -_wbic_data->_Fr(cheetah::num_leg_joint * shift +1);
+      data.debug->all_legs_info.leg[leg].wbc_force.z = -_wbic_data->_Fr(cheetah::num_leg_joint * shift +2);
+      shift = shift +1;
+      // std::cout<<shift<<endl;
+    }
+    else
+    {
+      data.debug->all_legs_info.leg[leg].wbc_force.x = 0;
+      data.debug->all_legs_info.leg[leg].wbc_force.y = 0;
+      data.debug->all_legs_info.leg[leg].wbc_force.z = 0;
+    }
+    }
+    // data.debug->all_legs_info.leg[i].wbc_force.x = _wbic_data->_opt_result(3*i);
+    // data.debug->all_legs_info.leg[i].wbc_force.y = _wbic_data->_opt_result(3*i+1);
+    // data.debug->all_legs_info.leg[i].wbc_force.z = _wbic_data->_opt_result(3*i+2);
+    // data.debug->all_legs_info.leg[i].wbc_force.w = std::sqrt(_wbic_data->_opt_result.block(3*i,0,3,1).dot(_wbic_data->_opt_result.block(3*i,0,3,1)));
+    // data.debug->all_legs_info.leg[i].wbc_force.x = _wbic_data->_Fr(3);
+  }
+  
   _UpdateLegCMD(data);
 }
 
@@ -119,14 +151,22 @@ void WBC_Ctrl<T>::_UpdateLegCMD(ControlFSMData<T>& data)
 {
   LegControllerCommand<T>* cmd = data._legController->commands;
   Vec4<T> contact = data._stateEstimator->getResult().contactEstimate;
-
+  int shift = 0;
   for (size_t leg(0); leg < cheetah::num_leg; ++leg)
   {
     cmd[leg].zero();
-
+    // if (contact(leg) == 1)
+    // {
+    //   data.debug->all_legs_info.leg[leg].wbc_force.x = -_wbic_data->_Fr(cheetah::num_leg_joint * shift );
+    //   data.debug->all_legs_info.leg[leg].wbc_force.y = -_wbic_data->_Fr(cheetah::num_leg_joint * shift +1);
+    //   data.debug->all_legs_info.leg[leg].wbc_force.z = -_wbic_data->_Fr(cheetah::num_leg_joint * shift +2);
+    //   shift = shift +1;
+    // }
     for (size_t jidx(0); jidx < cheetah::num_leg_joint; ++jidx)
     {
       cmd[leg].tauFeedForward[jidx] = _tau_ff[cheetah::num_leg_joint * leg + jidx];
+
+
       cmd[leg].qDes[jidx] = _des_jpos[cheetah::num_leg_joint * leg + jidx];
       cmd[leg].qdDes[jidx] = _des_jvel[cheetah::num_leg_joint * leg + jidx];
 
