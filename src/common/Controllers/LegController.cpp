@@ -150,8 +150,14 @@ void LegController<T>::updateCommand(SpiCommand* spiCommand)
     footForce += commands[leg].kdCartesian * (commands[leg].vDes - datas[leg].v);
 
     // Torque
-    legTorque += datas[leg].J.transpose() * footForce;
+    Vec3<T> legTorqueMPC = datas[leg].J.transpose() * footForce;
+    legTorque += legTorqueMPC;
     // legTorque += commands[leg].tauSafe;
+
+    // set MPC command:
+    spiCommand->tau_abad_mpc[leg] = legTorqueMPC(0);
+    spiCommand->tau_hip_mpc[leg] = legTorqueMPC(1);
+    spiCommand->tau_knee_mpc[leg] = legTorqueMPC(2);
 
     // set command:
     spiCommand->tau_abad_ff[leg] = legTorque(0);
