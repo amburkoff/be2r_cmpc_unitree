@@ -438,7 +438,18 @@ void CMPCLocomotion::updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& dat
     // Stand gait
     if (current_gait == 4)
     {
-      float trajInitial[12] = { _roll_des, _pitch_des /*-hw_i->state_estimator->se_ground_pitch*/, (float)stand_traj[5] /*+(float)stateCommand->data.stateDes[11]*/, (float)stand_traj[0] /*+(float)fsm->main_control_settings.p_des[0]*/, (float)stand_traj[1] /*+(float)fsm->main_control_settings.p_des[1]*/, (float)_body_height /*fsm->main_control_settings.p_des[2]*/, 0, 0, 0, 0, 0, 0 };
+      float trajInitial[12] = { _roll_des,            //
+                                _pitch_des,           //
+                                (float)stand_traj[5], //
+                                (float)stand_traj[0], //
+                                (float)stand_traj[1], //
+                                (float)_body_height,  //
+                                0,                    //
+                                0,                    //
+                                0,                    //
+                                0,                    //
+                                0,
+                                0 };                  //
 
       for (int i = 0; i < horizonLength; i++)
       {

@@ -65,7 +65,7 @@ void FSM_State_StandUp<T>::run()
   }
 
   auto& seResult = this->_data->_stateEstimator->getResult();
-  float mass = 8;
+  float mass = 14;
   Vec3<float> leg_force;
   leg_force << 0, 0, 0;
   float force = -mass * 9.81 / 4;
@@ -87,8 +87,10 @@ void FSM_State_StandUp<T>::run()
     // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(10, 10, 10).asDiagonal();
 
     //for real with gravity compensation
-    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1000, 1000, 1000).asDiagonal();
-    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(15, 15, 15).asDiagonal();
+    // this->_data->_legController->commands[i].kpCartesian = Vec3<T>(1000, 1000, 1000).asDiagonal();
+    // this->_data->_legController->commands[i].kdCartesian = Vec3<T>(15, 15, 15).asDiagonal();
+    this->_data->_legController->commands[i].kpCartesian = Vec3<T>(100, 10, 1000).asDiagonal();
+    this->_data->_legController->commands[i].kdCartesian = Vec3<T>(15, 5, 25).asDiagonal();
 
     this->_data->_legController->commands[i].pDes = _ini_foot_pos[i];
     this->_data->_legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
