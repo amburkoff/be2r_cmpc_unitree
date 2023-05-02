@@ -8,7 +8,7 @@
   <include file="$(find be2r_cmpc_unitree)/launch/set_dyn_params.launch" />
 
   <group if="$(eval arg('robot_type') == 'a1')">
-    <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/a1_edited.urdf' " />
+    <param name = "robot_description" command = "$(find xacro)/xacro --inorder '$(find a1_description)/urdf/a1_lidar.urdf' " />
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/joint_limits_a1.yaml"/>
     <rosparam command = "load" file = "$(find be2r_cmpc_unitree)/config/config_a1_sim.yaml"/>
   </group>

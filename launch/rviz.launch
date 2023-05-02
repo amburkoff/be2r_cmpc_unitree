@@ -1,5 +1,5 @@
 <launch>
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find a1_description)/xacro/robot.xacro DEBUG:=false"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find a1_description)/urdf/a1_lidar.urdf DEBUG:=false"/>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     <arg name="rvizconfig" default="$(find elevation_mapping_demos)/rviz/visualMPC.rviz" />
