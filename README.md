@@ -274,5 +274,8 @@ F_{foot} = K_{p_{cart}}(p_{des}-p_{act}) + K_{d_{cart}}(\dot{p}_{des}-\dot{p}_{a
 Наглядное представление фазы походки одной ноги:  
 ![image info](./images/gait_cycle.png)
 
+# CV walking
+Для запуска с импользованием зрения и карты проходимости необходимо использовать репозиторий: [elevation_map](https://gitlab.com/rl-unitree-a1/elevation_map)
+
 # Article
 Artem A.Egorov, Maxim V. Lyahovski, Denis A. Sokolov, Alexey M.Burkov, Sergey A. Kolyubin. Design and performance evaluation of receding horizon controllers for quadrupedal robots: case study on stairs climbing and balancing.[HERE](doc/IFAC_WC_quadro__3_.pdf)
