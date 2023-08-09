@@ -59,10 +59,14 @@ include_directories(
   ${UNITREE_LEGGED_SDK_PATH}/include
 )
 
-link_directories(${UNITREE_LEGGED_SDK_PATH}/lib)
-string(CONCAT LEGGED_SDK_NAME libunitree_legged_sdk_${UNITREE_PLATFORM}.so)
-set(EXTRA_LIBS ${LEGGED_SDK_NAME})
-add_definitions(-DSDK3_2)
+link_directories(${CMAKE_SOURCE_DIR}/unitree_legged_sdk/lib/cpp/amd64)
+set(EXTRA_LIBS -pthread "$ENV{UNITREE_LEGGED_SDK_PATH}/lib/cpp/amd64/libunitree_legged_sdk.a")
+set(CMAKE_CXX_FLAGS "-O3 -fPIC")
+#link_directories(${UNITREE_LEGGED_SDK_PATH}/lib)
+#link_directories(${UNITREE_LEGGED_SDK_PATH}/lib "../unitree_legged_sdk/lib/cpp/amd64/libunitree_legged_sdk.a")
+#string(CONCAT LEGGED_SDK_NAME libunitree_legged_sdk.a)
+#set(EXTRA_LIBS ${LEGGED_SDK_NAME})
+#add_definitions(-DSDK3_2)
 
 set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
 -Wextra -Wcast-align -Wdisabled-optimization -Wformat=2 \

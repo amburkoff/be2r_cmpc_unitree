@@ -130,8 +130,10 @@ void Body_Manager::init()
 
   if (is_udp_connection)
   {
-    udp = new UNITREE_LEGGED_SDK::UDP(UNITREE_LEGGED_SDK::LOWLEVEL);
+    udp = new UNITREE_LEGGED_SDK::UDP(8080, "192.168.123.10", 8007, UNITREE_LEGGED_SDK::LOW_CMD_LENGTH, UNITREE_LEGGED_SDK::LOW_STATE_LENGTH, false, UNITREE_LEGGED_SDK::RecvEnum::block);
     udp->InitCmdData(_udp_low_cmd);
+    //udp = new UNITREE_LEGGED_SDK::UDP(UNITREE_LEGGED_SDK::LOWLEVEL);
+    //udp->InitCmdData(_udp_low_cmd);
   }
   else
   {
