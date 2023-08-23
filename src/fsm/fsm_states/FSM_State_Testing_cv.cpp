@@ -44,6 +44,8 @@ FSM_State_Testing_Cv<T>::FSM_State_Testing_Cv(ControlFSMData<T>* _controlFSMData
   ros::readParam("~map_plane_seg", map_topic_plane, std::string("elevation_map_raw"));
   _map_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_filter, 1, &FSM_State_Testing_Cv<T>::_elevMapCallback, this);
   _map_raw_sub = _nh.subscribe<grid_map_msgs::GridMap>(map_topic_raw, 1, &FSM_State_Testing_Cv<T>::_elevMapRawCallback, this);
+  _map_plane_sub =
+    _nh.subscribe<grid_map_msgs::GridMap>(map_topic_plane, 1, &FSM_State_Testing_Cv<T>::_elevMapPlaneCallback, this);
 }
 
 template<typename T>
@@ -52,6 +54,7 @@ void FSM_State_Testing_Cv<T>::_elevMapCallback(const grid_map_msgs::GridMapConst
   grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map);
   if (!_grid_map.isDefaultStartIndex())
     _grid_map.convertToDefaultStartIndex();
+  CMPC->setGridMapFilter(_grid_map);
 }
 
 template<typename T>
@@ -60,6 +63,16 @@ void FSM_State_Testing_Cv<T>::_elevMapRawCallback(const grid_map_msgs::GridMapCo
   grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_raw);
   if (!_grid_map_raw.isDefaultStartIndex())
     _grid_map_raw.convertToDefaultStartIndex();
+  CMPC->setGridMapRaw(_grid_map_raw);
+}
+
+template<typename T>
+void FSM_State_Testing_Cv<T>::_elevMapPlaneCallback(const grid_map_msgs::GridMapConstPtr& msg)
+{
+  grid_map::GridMapRosConverter::fromMessage(*msg, _grid_map_plane);
+  if (!_grid_map_plane.isDefaultStartIndex())
+    _grid_map_plane.convertToDefaultStartIndex();
+  CMPC->setGridMapPlane(_grid_map_plane);
 }
 
 template<typename T>
@@ -101,45 +114,7 @@ T LinearInterpolation(T initPos, T targetPos, double rate)
 template<typename T>
 void FSM_State_Testing_Cv<T>::run()
 {
-  switch (this->_data->userParameters->test)
-  {
-    case 0:
-      // test locomotion with CMPC controller
-      LocomotionControlStep();
-      break;
-
-    case 1:
-      // joint test
-      test1();
-      break;
-
-    case 2:
-      // impedance test
-      test2(0.05);
-      break;
-
-    case 3:
-      // impedance test
-      test2(0);
-      break;
-
-    case 4:
-      gravTest();
-      break;
-  }
-
-  // if (this->_data->userParameters->test == 0)
-  // {
-  // }
-  // else if (!this->_data->userParameters->test && !this->_data->userParameters->test1)
-  // {
-  // }
-  // else if (this->_data->userParameters->test1)
-  // {
-  //   test2(0);
-  // }
-
-  // safeJointTest();
+  LocomotionControlStep();
 }
 
 template<typename T>
@@ -550,6 +525,10 @@ FSM_StateName FSM_State_Testing_Cv<T>::checkTransition()
       this->nextStateName = FSM_StateName::VISION;
       break;
 
+    case K_TESTING:
+      this->nextStateName = FSM_StateName::TESTING;
+      break;
+
     default:
       std::cout << "[CONTROL FSM] Bad Request: Cannot transition from " << K_TESTING_CV << " to "
                 << this->_data->userParameters->FSM_State << std::endl;
@@ -587,6 +566,10 @@ TransitionData<T> FSM_State_Testing_Cv<T>::transition()
       this->transitionData.done = true;
       break;
 
+    case FSM_StateName::TESTING:
+      this->transitionData.done = true;
+      break;
+
     default:
       std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }
@@ -613,7 +596,7 @@ void FSM_State_Testing_Cv<T>::LocomotionControlStep()
   // Contact state logic
   // estimateContact();
 
-  CMPC->run(*this->_data, _grid_map, _grid_map_raw);
+  CMPC->myVersion(*this->_data);
 
   Vec3<T> pDes_backup[4];
   Vec3<T> vDes_backup[4];

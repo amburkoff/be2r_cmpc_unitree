@@ -20,7 +20,7 @@
 using std::cout;
 using std::endl;
 
-// #define PUB_IMU_AND_ODOM
+#define PUB_IMU_AND_ODOM
 
 class Debug
 {
@@ -29,6 +29,7 @@ public:
 
   void updatePlot();
   void updateVisualization();
+  void tfOdomPublishRS_t265(ros::Time stamp);
   void tfOdomPublish(ros::Time stamp);
   void tfPublish();
 
@@ -48,6 +49,7 @@ public:
 
   bool is_map_upd_stop;
   ros::Time time_stamp_udp_get;
+  double vio_z;
 
 private:
   void _init();

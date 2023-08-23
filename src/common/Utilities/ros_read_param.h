@@ -74,6 +74,7 @@ struct StaticParams
     readRosParam("/bigpid_params/D_roll", D_roll);
     readRosParam("/bigpid_params/D_pitch", D_pitch);
     readRosParam("/bigpid_params/D_yaw", D_yaw);
+    readRosParam("/static_params/r_circle", r_circle);
   }
 
   double controller_dt;
@@ -119,6 +120,9 @@ struct StaticParams
   float D_roll = 1;
   float D_pitch = 1;
   float D_yaw = 1;
+
+  float r_circle = 0;
+
 };
 
 #endif // ROS_READ_PARAM_H

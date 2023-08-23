@@ -11,12 +11,17 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <ros/ros.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 #include <visualization_msgs/Marker.h>
 
 #include <cstdio>
 
 using Eigen::Array4f;
 using Eigen::Array4i;
+
+#define MAX_STEP_HEIGHT 0.17
 
 class CMPCLocomotion_Cv
 {
@@ -26,10 +31,12 @@ public:
   CMPCLocomotion_Cv(float _dt, int _iterations_between_mpc, ControlFSMData<float>* data);
   void initialize();
 
-  void run(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
+  void run(ControlFSMData<float>& data);
   void original(ControlFSMData<float>& data);
-  void myVersion(ControlFSMData<float>& data, const grid_map::GridMap& height_map, const grid_map::GridMap& height_map_raw);
-  bool currently_jumping = false;
+  void myVersion(ControlFSMData<float>& data);
+  void setGridMapRaw(const grid_map::GridMap& map) { _grid_map_raw = map; }
+  void setGridMapFilter(const grid_map::GridMap& map) { _grid_map_filter = map; }
+  void setGridMapPlane(const grid_map::GridMap& map) { _grid_map_plane = map; }
 
   Vec3<float> pBody_des;
   Vec3<float> vBody_des;
@@ -47,7 +54,7 @@ public:
   Vec4<float> contact_state;
 
 private:
-  void _SetupCommand(ControlFSMData<float>& data);
+  void _SetupCommand(float cmd_vel_x, float cmd_vel_y);
   void _recompute_timing(int iterations_per_mpc);
   void _updateMPCIfNeeded(int* mpcTable, ControlFSMData<float>& data, bool omniMode);
   void _solveDenseMPC(int* mpcTable, ControlFSMData<float>& data);
@@ -55,31 +62,37 @@ private:
   void _initSparseMPC();
   void _updateModel(const StateEstimate<float>& state_est, const LegControllerData<float>* leg_data);
 
-  void _updateFoothold(Vec3<float>& pf,
-                       const Vec3<float>& body_pos,
-                       const grid_map::GridMap& height_map,
-                       const grid_map::GridMap& height_map_raw,
-                       int leg);
+  void _updateFoothold(Vec3<float>& pf, const Vec3<float>& body_pos, const int& leg);
 
-  void _idxMapChecking(Vec3<float>& Pf,
-                       int x_idx,
-                       int y_idx,
-                       int& x_idx_selected,
-                       int& y_idx_selected,
-                       const grid_map::GridMap& height_map,
-                       const grid_map::GridMap& height_map_raw,
-                       int leg);
+  void _idxMapChecking(Vec3<float>& Pf, int x_idx, int y_idx, int& x_idx_selected, int& y_idx_selected, const int& leg);
+
+  void _findPF(Vec3<float>& v_des_world, size_t foot);
+
+  void _body_height_heuristics(std::string type);
+
+  float _updateTrajHeight(size_t foot);
+
+  double _findMaxInMapByLine(const grid_map::GridMap& map,
+                             grid_map::Index start,
+                             grid_map::Index end,
+                             const grid_map::Index* cell_idx = nullptr);
+
+  void _longStep(const grid_map::GridMap& map, int foot);
+  void _hipSefetyCircle(Vec3<float>& pDesLeg, Vec3<float>& pDesFootWorld, const int& foot);
+  std::vector<float> calcDesVel();
 
   // Parameters
   ControlFSMData<float>* _data;
   be2r_cmpc_unitree::ros_dynamic_paramsConfig* _parameters = nullptr;
 
   // Gait
+  Gait_contact* _gait;
   int _gait_period;
   int _gait_period_long;
   OffsetDurationGaitContact trotting, trot_long, standing, walking;
   int current_gait;
   int _gait_des;
+  bool _doorstep_case;
 
   Vec4<float> swingTimes;
   FootSwingTrajectory<float> footSwingTrajectories[4];
@@ -109,7 +122,6 @@ private:
 
   int iterationCounter = 0;
   int iterationsBetweenMPC;
-
   int horizonLength;
   int default_iterations_between_mpc;
   float dt;
@@ -120,7 +132,6 @@ private:
   bool firstRun = true;
   bool firstSwing[4];
   float stand_traj[6];
-  int gaitNumber;
 
   float x_comp_integral = 0;
   Vec3<float> pFoot[4];
@@ -130,6 +141,17 @@ private:
 
   vectorAligned<Vec12<double>> _sparseTrajectory;
   SparseCMPC _sparseCMPC;
+
+  double _max_cell;
+  bool long_step_run = false;
+  bool long_step_trigger = false;
+  bool long_step_vel = false;
+  grid_map::GridMap _grid_map_raw;
+  grid_map::GridMap _grid_map_filter;
+  grid_map::GridMap _grid_map_plane;
+
+  tf2_ros::Buffer _tf_buffer;
+  tf2_ros::TransformListener _tf_listener;
 };
 
 Eigen::Array2i checkBoundariess(const grid_map::GridMap& map, int col, int row);

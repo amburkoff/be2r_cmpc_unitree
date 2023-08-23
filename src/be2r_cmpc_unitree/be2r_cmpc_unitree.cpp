@@ -238,7 +238,7 @@ void Body_Manager::_odomPublish()
 
   if (is_udp_connection)
   {
-    _debug->tfOdomPublish(_debug->time_stamp_udp_get);
+    _debug->tfOdomPublishRS_t265(_debug->time_stamp_udp_get);
   }
   else
   {

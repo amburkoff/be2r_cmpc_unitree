@@ -672,6 +672,10 @@ TransitionData<T> FSM_State_Testing<T>::transition()
       this->transitionData.done = true;
       break;
 
+    case FSM_StateName::TESTING_CV:
+      this->transitionData.done = true;
+      break;
+
     default:
       std::cout << "[CONTROL FSM] Something went wrong in transition" << std::endl;
   }

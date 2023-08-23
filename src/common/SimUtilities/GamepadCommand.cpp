@@ -11,24 +11,31 @@ void GamepadCommand::_joyCallback(sensor_msgs::Joy msg)
 {
   zeroButtons();
 
-  if (msg.axes[6] > 0)
+  if (msg.axes.size() >= 7)
   {
-    left = true;
-  }
+    if (msg.axes[6] > 0)
+    {
+      left = true;
+    }
 
-  if (msg.axes[6] < 0)
-  {
-    right = true;
-  }
+    if (msg.axes[6] < 0)
+    {
+      right = true;
+    }
 
-  if (msg.axes[7] > 0)
-  {
-    up = true;
-  }
+    if (msg.axes[7] > 0)
+    {
+      up = true;
+    }
 
-  if (msg.axes[7] < 0)
+    if (msg.axes[7] < 0)
+    {
+      down = true;
+    }
+  }
+  if (msg.buttons[4] && msg.buttons[9])
   {
-    down = true;
+    chord_op_l1 = true;
   }
 
   cross = msg.buttons[0];
@@ -70,6 +77,7 @@ void GamepadCommand::zeroButtons()
   R1 = false;
   L3 = false;
   R3 = false;
+  chord_op_l1 = false;
 
   L2 = 0.0;
   R2 = 0.0;

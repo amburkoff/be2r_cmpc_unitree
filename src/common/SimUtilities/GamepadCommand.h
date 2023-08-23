@@ -34,9 +34,9 @@ up - axes[7] = 1
  * * * * * * * * * * * * * * */
 
 #include "cppTypes.h"
+#include <iostream>
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
-#include <iostream>
 
 enum StairsMode
 {
@@ -58,6 +58,7 @@ public:
   bool share;
   bool options;
   bool PS;
+  bool chord_op_l1;
 
   float L2, R2;
 
