@@ -20,8 +20,6 @@ find_package(catkin REQUIRED COMPONENTS
 # Eigen find
 find_package (Eigen3 REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
 set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk")
-# set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk-3.4.2")
-set(UNITREE_PLATFORM "amd64")
 
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)
 
@@ -31,6 +29,14 @@ catkin_package(
 #  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
+
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64.*")
+  set(ARCH amd64)
+else()
+  set(ARCH arm64)
+endif()
+
+link_directories(${CMAKE_SOURCE_DIR}/unitree_legged_sdk/lib/cpp/${ARCH})
 
 # вынести пути к исходникам отдельных частей mit контроллера в отдельные паременные и уже их кидать в include_directories. Для наглядности
 
@@ -56,16 +62,10 @@ include_directories(
   src/third_party/qpOASES/include
   ${catkin_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}
-  ${UNITREE_LEGGED_SDK_PATH}/include
 )
 
-link_directories(${CMAKE_SOURCE_DIR}/unitree_legged_sdk/lib/cpp/amd64)
-set(EXTRA_LIBS -pthread "$ENV{UNITREE_LEGGED_SDK_PATH}/lib/cpp/amd64/libunitree_legged_sdk.a")
+set(EXTRA_LIBS -pthread libunitree_legged_sdk.a)
 set(CMAKE_CXX_FLAGS "-O3 -fPIC")
-#link_directories(${UNITREE_LEGGED_SDK_PATH}/lib)
-#link_directories(${UNITREE_LEGGED_SDK_PATH}/lib "../unitree_legged_sdk/lib/cpp/amd64/libunitree_legged_sdk.a")
-#string(CONCAT LEGGED_SDK_NAME libunitree_legged_sdk.a)
-#set(EXTRA_LIBS ${LEGGED_SDK_NAME})
 #add_definitions(-DSDK3_2)
 
 set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
@@ -86,7 +86,7 @@ add_subdirectory(src/fsm)
 
 #основная либа ноды
 add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
-target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} controllers_lib fsm_lib Eigen3::Eigen)
+target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} ${EXTRA_LIBS} controllers_lib fsm_lib Eigen3::Eigen)
 
 #бинарник ноды
 add_executable(unitree_ctrl src/be2r_cmpc_unitree_node.cpp)
