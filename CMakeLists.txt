@@ -21,6 +21,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package (Eigen3 REQUIRED NO_MODULE PATHS /usr/lib/cmake/eigen3/ NO_DEFAULT_PATH)
 set(UNITREE_LEGGED_SDK_PATH "../unitree_legged_sdk")
 
+include_directories(${UNITREE_LEGGED_SDK_PATH}/include)
+link_directories(${UNITREE_LEGGED_SDK_PATH}/lib "../unitree_legged_sdk/lib/cpp/amd64/libunitree_legged_sdk.a")
+
 generate_dynamic_reconfigure_options(config/ros_dynamic_params.cfg)
 
 catkin_package(
@@ -36,7 +39,7 @@ else()
   set(ARCH arm64)
 endif()
 
-link_directories(${CMAKE_SOURCE_DIR}/unitree_legged_sdk/lib/cpp/${ARCH})
+link_directories(${CMAKE_SOURCE_DIR}/../unitree_legged_sdk/lib/cpp/${ARCH})
 
 # вынести пути к исходникам отдельных частей mit контроллера в отдельные паременные и уже их кидать в include_directories. Для наглядности
 
@@ -86,7 +89,7 @@ add_subdirectory(src/fsm)
 
 #основная либа ноды
 add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
-target_include_directories(be2r_cmpc_unitree_lib PUBLIC ${CMAKE_SOURCE_DIR}/unitree_legged_sdk/include/)
+target_include_directories(be2r_cmpc_unitree_lib PUBLIC ${CMAKE_SOURCE_DIR}/../unitree_legged_sdk/include/)
 target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} ${EXTRA_LIBS} controllers_lib fsm_lib Eigen3::Eigen)
 
 #бинарник ноды
