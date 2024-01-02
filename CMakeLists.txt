@@ -1,7 +1,15 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.13.4)
 project(be2r_cmpc_unitree)
 
 set(CMAKE_CXX_STANDARD 17)
+
+# check arch and os
+message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64.*")
+  set(ARCH amd64)
+else()
+  set(ARCH arm64)
+endif()
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -30,16 +38,6 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64.*")
-  set(ARCH amd64)
-else()
-  set(ARCH arm64)
-endif()
-
-link_directories(${CMAKE_SOURCE_DIR}/unitree_legged_sdk/lib/cpp/${ARCH})
-
-# вынести пути к исходникам отдельных частей mit контроллера в отдельные паременные и уже их кидать в include_directories. Для наглядности
-
 include_directories(
   src
   src/be2r_cmpc_unitree
@@ -62,11 +60,13 @@ include_directories(
   src/third_party/qpOASES/include
   ${catkin_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}
+  ${UNITREE_LEGGED_SDK_PATH}/include/
 )
 
-set(EXTRA_LIBS -pthread libunitree_legged_sdk.a)
-set(CMAKE_CXX_FLAGS "-O3 -fPIC")
-#add_definitions(-DSDK3_2)
+link_directories(${UNITREE_LEGGED_SDK_PATH}/lib/cpp/${ARCH})
+set(EXTRA_LIBS libunitree_legged_sdk.a)
+# set(CMAKE_CXX_FLAGS "-O3 -fPIC")
+add_definitions(-DSDK3_2)
 
 set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
 -Wextra -Wcast-align -Wdisabled-optimization -Wformat=2 \
@@ -84,9 +84,19 @@ add_subdirectory(src/common)
 add_subdirectory(src/controllers)
 add_subdirectory(src/fsm)
 
+# find_library(LEGGED_SDK_LIB unitree_legged_sdk
+#            PATHS ${UNITREE_LEGGED_SDK_PATH}/lib/cpp/${ARCH}/
+#             NO_DEFAULT_PATH)
+
+# if(${LEGGED_SDK_LIB} STREQUAL LEGGED_SDK-NOTFOUND)
+#  message(FATAL_ERROR "UNITREE_LEGGED_SDK not found")
+# else()
+#  message(STATUS "UNITREE_LEGGED_SDK found")
+# endif()
+
 #основная либа ноды
 add_library(be2r_cmpc_unitree_lib src/be2r_cmpc_unitree/be2r_cmpc_unitree.cpp)
-target_include_directories(be2r_cmpc_unitree_lib PUBLIC ${CMAKE_SOURCE_DIR}/unitree_legged_sdk/include/)
+target_include_directories(be2r_cmpc_unitree_lib PUBLIC ${UNITREE_LEGGED_SDK_PATH}/include/)
 target_link_libraries(be2r_cmpc_unitree_lib ${catkin_LIBRARIES} ${EXTRA_LIBS} controllers_lib fsm_lib Eigen3::Eigen)
 
 #бинарник ноды
