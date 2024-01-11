@@ -2,7 +2,7 @@
 <!--Parameters-->
   <arg name="sim" default="true" />
   <arg name="rqt_reconfigure" default="true" />
-  <arg name="robot_type" default="a1"/>
+  <arg name="robot_type" default="go1"/>
   <arg name="rviz" default="false" />
   <arg name="torque_safe_limit" default="0"/>
 
@@ -57,10 +57,14 @@
     </node>
   </group>
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+        <param name="publish_frequency" type="double" value="1000.0"/>
+  </node>
+
+  <!-- node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
         <param name="publish_frequency" type="double" value="1000.0"/>
-    </node>
+    </node> -->
   <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="publish_default_positions" value="False" /> -->
     <!-- <param name="source_list" value="joint_states" /> -->
