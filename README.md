@@ -25,7 +25,7 @@ git clone https://github.com/anybotics/kindr_ros
 catkin build
 ```
 
-Test update (building Go1 version)
+Build Go1 version
 ```
 sudo apt install libeigen3-dev liblcm-dev ros-noetic-pcl-ros ros-noetic-grid-map
 git clone -b test_go1 https://git.sberrobots.ru/quadruped_memorandum/be2r_cmpc_unitree/-/tree/go1_version
@@ -33,9 +33,13 @@ git clone https://gitlab.com/rl-unitree-a1/go1_description.git
 git clone https://github.com/anybotics/kindr
 git clone https://github.com/anybotics/kindr_ros
 git clone https://gitlab.com/rl-unitree-a1/raisim_ros_wrapper.git
-git clone https://gitlab.com/rl-unitree-a1/raisim_unitree_ros_driver.git
+git clone -b go1 https://gitlab.com/rl-unitree-a1/raisim_unitree_ros_driver.git
 git clone -b go1_version https://gitlab.com/rl-unitree-a1/unitree_legged_msgs.git
 git clone -b go1 https://github.com/unitreerobotics/unitree_legged_sdk.git
+git clone https://github.com/perchess/elevation_mapping.git
+
+# Need to update to go1 version. Should work as is
+# git clone https://gitlab.com/rl-unitree-a1/realsense_ros_raspberry.git
 
 # I prefer to use catkin build instead of catkin_make. If one want to use it, install
 sudo apt install python3-catkin-tools
