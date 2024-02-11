@@ -1,8 +1,8 @@
 # Static parameters fsm stand up for a1 real
 standup:
-  Kp_joint0: 20
-  Kp_joint1: 15
-  Kp_joint2: 15
+  Kp_joint0: 90
+  Kp_joint1: 90
+  Kp_joint2: 90
 
   Kd_joint0: 3
   Kd_joint1: 3
@@ -14,7 +14,7 @@ standup:
 
   Kd_cartesian_x: 5
   Kd_cartesian_y: 5
-  Kd_cartesian_z: 5
+  Kd_cartesian_z: 7
 
 #-------------------------------
 static_params:

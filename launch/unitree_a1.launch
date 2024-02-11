@@ -3,8 +3,9 @@
   <arg name="sim" default="true" />
   <arg name="rqt_reconfigure" default="true" />
   <arg name="robot_type" default="go1"/>
-  <arg name="rviz" default="false" />
+  <arg name="rviz" default="true" />
   <arg name="torque_safe_limit" default="0"/>
+  <arg name="joystick" default= "/dev/input/js1"/>
 
   <!-- Choose robot type -->
   <group if="$(eval arg('robot_type') == 'a1')">
@@ -61,10 +62,6 @@
         <param name="publish_frequency" type="double" value="1000.0"/>
   </node>
 
-  <!-- node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
-        <param name="publish_frequency" type="double" value="1000.0"/>
-    </node> -->
   <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="publish_default_positions" value="False" /> -->
     <!-- <param name="source_list" value="joint_states" /> -->
@@ -79,7 +76,7 @@
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
   </group>
 
-  <node name = "joy" pkg = "joy" type = "joy_node" output = "screen"/>
+  <node name = "joy" pkg = "joy" type = "joy_node" args="$(arg joystick)" output = "screen"/>
 
   <node pkg="tf" type="static_transform_publisher" name="t265_odom_broadcaster" args="-0.0545 -0.076 0.205 -1.57 0 0 odom camera_t265_odom_frame 100" />
 

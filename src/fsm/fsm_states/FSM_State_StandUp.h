@@ -20,6 +20,7 @@ public:
 
   void standUpImpedance();
   void standUpJointPD();
+  void StandUpWithPositionControl();
 
   // Checks for any transition triggers
   FSM_StateName checkTransition();
