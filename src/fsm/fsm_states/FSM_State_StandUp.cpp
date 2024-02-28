@@ -89,48 +89,6 @@ void FSM_State_StandUp<T>::run()
   standUpJointPD();
 }
 
-/*
-// TODO: to finish this member function
-template<typename T>
-void FSM_State_StandUp<T>::StandUpWithPositionControl() {
-  auto& seResult = this->_data->stateEstimator->getResult();
-  float mass = this->_data->quadruped->_bodyMass;
-  Vec3<float> leg_force;
-  leg_force << 0, 0, 0;
-  float force = -mass * 9.81 / 4;
-  leg_force = seResult.rBody * Vec3<float>(0, 0, force);
-
-  T max_height_of_robot_leg {0.25};
-  progress = 0.5 * iter * this->_data->staticParams->controller_dt;
-
-  if (progress > 1.)
-  {
-    progress = 1.;
-  }
-
-  for (int i = 0; i < 4; i++)
-  {
-    // for real with gravity compensation
-    this->_data->legController->commands[i].kpCartesian = Kp_cartesian;
-    this->_data->legController->commands[i].kdCartesian = Kd_cartesian;
-
-    this->_data->legController->commands[i].pDes = _ini_foot_pos[i];
-    this->_data->legController->commands[i].pDes[2] = progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2];
-
-    std::cout << "leg number: " << i << " pDes: " << progress * (-hMax) + (1. - progress) * _ini_foot_pos[i][2] << '\n';
-    std::cout << "leg number: " << i << " pReal: " << this->_data->legController->datas[i].p << std::endl;
-
-    this->_data->debug->last_p_local_stance[i] =
-      ros::toMsg(this->_data->legController->datas[i].p + this->_data->quadruped->getHipLocation(i));
-
-    this->_data->legController->commands[i].forceFeedForward = leg_force;
-  }
-
-  // std::vector<Vec3<T>> leg_positions(4);
-}
-*/
-
-
 template<typename T>
 void FSM_State_StandUp<T>::standUpImpedance()
 {
@@ -177,7 +135,7 @@ template<typename T>
 void FSM_State_StandUp<T>::standUpJointPD()
 {
   T hMax = 0.25;
-  T progress = 0.5 * iter * this->_data->staticParams->controller_dt;
+  T progress = 1.25 * iter * this->_data->staticParams->controller_dt;
 
   if (progress > 1.)
   {

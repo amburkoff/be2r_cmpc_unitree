@@ -28,15 +28,9 @@ FSM_State<T>::FSM_State(ControlFSMData<T>* _controlFSMData, FSM_StateName stateN
  */
 template<typename T>
 void FSM_State<T>::jointPDControl(int leg, Vec3<T> qDes, Vec3<T> qdDes)
-{
-  // MIT old params
-  kpMat << 80, 0, 0, 0, 80, 0, 0, 0, 80;
-  kdMat << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-
-  _data->legController->commands[leg].kpJoint = Eigen::DiagonalMatrix<T, 3>(_data->userParameters->Kp_joint_0, _data->userParameters->Kp_joint_1,
-                                                                             _data->userParameters->Kp_joint_2);
-  _data->legController->commands[leg].kdJoint = Eigen::DiagonalMatrix<T, 3>(_data->userParameters->Kd_joint_0, _data->userParameters->Kd_joint_1,
-                                                                             _data->userParameters->Kd_joint_2);
+{ 
+  _data->legController->commands[leg].kpJoint = Vec3<T>(90, 50, 50).asDiagonal();
+  _data->legController->commands[leg].kdJoint = Vec3<T>(3, 3, 3).asDiagonal();
 
   _data->legController->commands[leg].qDes = qDes;
   _data->legController->commands[leg].qdDes = qdDes;

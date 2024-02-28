@@ -3,9 +3,12 @@
 
 #include "FSM_State.h"
 
-/**
- *
- */
+enum class TypeOfMotion {
+  kFoldLegs,
+  kStandUp,
+  kRollOver,
+};
+
 template <typename T>
 class FSM_State_RecoveryStand : public FSM_State<T> {
  public:
@@ -30,56 +33,37 @@ class FSM_State_RecoveryStand : public FSM_State<T> {
 
  private:
   // Keep track of the control iterations
-  int iter = 0;
-  int _motion_start_iter = 0;
+  int iter_{};
+  int motion_start_iter_{};
 
-  static constexpr int StandUp = 0;
-  static constexpr int FoldLegs = 1;
-  static constexpr int RollOver = 2;
-
-  unsigned long long _state_iter;
-  int _flag = FoldLegs;
+  unsigned long long state_iter_{};
+  TypeOfMotion motion_flag_{TypeOfMotion::kFoldLegs};
 
   // JPos
-  Vec3<T> fold_jpos[4];
-  Vec3<T> stand_jpos[4];
-  Vec3<T> rolling_jpos[4];
-  Vec3<T> initial_jpos[4];
-  Vec3<T> zero_vec3;
+  Vec3<T> fold_jpos_[4];
+  Vec3<T> stand_jpos_[4];
+  Vec3<T> rolling_jpos_[4];
+  Vec3<T> initial_jpos_[4];
+  Vec3<T> zero_vec3_{Vec3<T>::Zero()};
 
-  Vec3<T> f_ff;
+  Vec3<T> f_ff_{};
 
-  // iteration setup
-  //const int rollover_ramp_iter = 300;
-  //const int rollover_settle_iter = 300;
+  const int kRolloverRampIter_{150};
+  const int kRolloverSettleIter_{150};
 
-  //const int fold_ramp_iter = 1000;
-  //const int fold_settle_iter = 1000;
+  const int kFoldRampIter_{400};
+  const int kFoldSettleIter_{700};
 
-  //const int standup_ramp_iter = 500;
-  //const int standup_settle_iter = 500;
+  const int kStandupRampIter_{500};
+  const int kStandupSettleIter_{250};
 
-  // 0.5 kHz
-  const int rollover_ramp_iter = 150;
-  const int rollover_settle_iter = 150;
+  void RollOver_(int iter);
+  void StandUp_(int iter);
+  void FoldLegs_(int iter);
 
-  //const int fold_ramp_iter = 500;
-  //const int fold_settle_iter = 500;
-  const int fold_ramp_iter = 400;
-  const int fold_settle_iter = 700;
-
-  const int standup_ramp_iter = 250;
-  const int standup_settle_iter = 250;
-
-  void _RollOver(const int & iter);
-  void _StandUp(const int & iter);
-  void _FoldLegs(const int & iter);
-
-  bool _UpsideDown();
-  void _SetJPosInterPts(
-      const size_t & curr_iter, size_t max_iter, int leg, 
-      const Vec3<T> & ini, const Vec3<T> & fin);
-
+  bool IsUpsideDown_();
+  void SetJPosInterPts_(size_t curr_iter, size_t max_iter, int leg, const Vec3<T>& ini,
+                        const Vec3<T>& fin);
 };
 
 #endif  // FSM_STATE_RECOVERY_STANDUP_H
