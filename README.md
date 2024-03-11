@@ -1,3 +1,8 @@
+## be2r cmpc
+Исходный код к научной статье: "Design and performance evaluation of receding horizon controllers for quadrupedal robots: case study on stairs climbing and balancing"
+Авторы: Artem A. Egorov , Maxim V. Lyahovski , Denis A. Sokolov , Alexey M. Burkov , Sergey A. Kolyubin
+Это научный код, авторы не несут ответственность за работоспособность и поддержка осуществляется по мере возможности.
+
 [](url)## Dependencies
 Install Eigen3 from apt
 ```
@@ -28,7 +33,7 @@ catkin build
 Build Go1 version
 ```
 sudo apt install libeigen3-dev liblcm-dev ros-noetic-pcl-ros ros-noetic-grid-map
-git clone -b test_go1 https://git.sberrobots.ru/quadruped_memorandum/be2r_cmpc_unitree/-/tree/go1_version
+git clone -b test_go1 https://github.com/amburkoff/be2r_cmpc_unitree/
 git clone https://gitlab.com/rl-unitree-a1/go1_description.git
 git clone https://github.com/anybotics/kindr
 git clone https://github.com/anybotics/kindr_ros
@@ -296,6 +301,9 @@ F_{foot} = K_{p_{cart}}(p_{des}-p_{act}) + K_{d_{cart}}(\dot{p}_{des}-\dot{p}_{a
 
 # CV walking
 Для запуска с импользованием зрения и карты проходимости необходимо использовать репозиторий: [elevation_map](https://gitlab.com/rl-unitree-a1/elevation_map)
+
+# При разработке за основу были взяты различные репозитории с открытым исходным кодом
+https://github.com/mit-biomimetics/Cheetah-Software
 
 # Article
 Artem A.Egorov, Maxim V. Lyahovski, Denis A. Sokolov, Alexey M.Burkov, Sergey A. Kolyubin. Design and performance evaluation of receding horizon controllers for quadrupedal robots: case study on stairs climbing and balancing.[HERE](doc/IFAC_WC_quadro__3_.pdf)
